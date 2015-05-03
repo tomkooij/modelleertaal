@@ -1,8 +1,3 @@
 /*test model voor modelleertaal interpreter*/
 
-a := 1; ' := en = zijn beide toegestaan
-t = 0;  // C-style commentaar
-v = 0; # dit is ook commentaar
-dt = 0.1;
-v = v + a * dt;
-t = t + dt;
+t = 5 + 3;

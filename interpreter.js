@@ -13,9 +13,12 @@ module.exports = parser;
 var program = fs.readFileSync("model.txt", "utf8")
 
 // for some reason the jison example uses print()
-//  I can't find it in my CommonJS. Define it.
-function print(string) {
-    console.log(string);
+// this is a lame implemenations to allow:
+// print(string) and print("var = ", variable)
+function print(string1, string2) {
+    if (arguments.length == 1) {
+        console.log(string1)
+    } else { console.log(string1, string2) }
 }
 
 
@@ -29,25 +32,42 @@ function main () {
     print('*** AST ***');
     print(ast);
 
+    print('*** evaluating the AST ***')
     evaluate(ast);
 
-    //source = codegen(ast);
-    //print('*** generated source');
-    //print(source);
 }
 
-var evaluate = function (parseTree) {
-  var parseNode = function (node) {
-      print('* parseNode!');
-      print(node);
-  };
-  var output = "";
-  for (var i = 0; i < parseTree.length; i++) {
-    var value = parseNode(parseTree[i]);
-    if (typeof value !== "undefined") output += value + "\n";
-  }
-  return output;
+function evaluate(ast) {
+    function parseNode(node) {
+        print('* parseNode: ', node.type);
+        print(node);
+        // dit is een poging om door de AST te wandelen, maar werkt niet!
+        if (node.type == 'Assignment') {
+        print('** entering Assigment recursion');
+            right = parseNode(node.right);
+            print('return value (Assignment) = ', right)
+            return right
+        }
+        if (node.type == 'Addition') {
+        print('** entering Addition recursion');
+            left = parseNode(node.left);
+            right = parseNode(node.right);
+            sum = left + right;
+            print('return value (Assignment) = ', sum)
+            return sum;
+        }
+        if (node.type == 'Number') {
+            var value = parseFloat(node.value)
+            print('return value (Number) = ', value)
+            return value;
+        }
+    };
+
+    var value = parseNode(ast[0]);
+    print("AST evaluates to ", value);
+    return value;
 };
+
 
 
 

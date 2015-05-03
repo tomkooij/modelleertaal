@@ -98,11 +98,10 @@ stmt_list
 stmt
   : IDENT ASSIGN expr
     { $$ = {
-                type: 'Assign',
-                arguments: [
-                    $1,
-                    $3
-                ]
+                type: 'Assignment',
+                left: $1,
+                right: $3
+
             };
         }
 
@@ -118,16 +117,14 @@ expr
 
  | expr '+' expr
     {$$ = {
-                type: 'addition',
-                arguments: [
-                    $1,
-                    $3
-                ]
+                type: 'Addition',
+                left: $1,
+                right: $3
           };
         }
   | expr '*' expr
      {$$ = {
-                 type: 'multiplication',
+                 type: 'Multiplication',
                  arguments: [
                      $1,
                      $3
@@ -136,8 +133,8 @@ expr
          }
   | NUMBER
       {$$ = {
-                  type: 'number',
-                  arguments: [$1]
+                  type: 'Number',
+                  value: $1
               };
            }
     ;
