@@ -32,37 +32,41 @@ function main () {
     print('*** AST ***');
     print(ast);
 
-    print('*** evaluating the AST ***')
+    print('')
     evaluate(ast);
 
 }
 
 function evaluate(ast) {
     function parseNode(node) {
-        print('* parseNode: ', node.type);
-        print(node);
+        // add an extra space to identation for recursive each call
+        identation = identation+'  ';
+
+        print(identation+'parseNode: ', node.type);
+        print(identation,node);
         // dit is een poging om door de AST te wandelen, maar werkt niet!
         if (node.type == 'Assignment') {
-        print('** entering Assigment recursion');
+        print(identation+'Assigment recursion');
             right = parseNode(node.right);
-            print('return value (Assignment) = ', right)
+            print(identation+'return value (Assignment) = ', right)
             return right
         }
         if (node.type == 'Addition') {
-        print('** entering Addition recursion');
+        print(identation+'Addition recursion');
             left = parseNode(node.left);
             right = parseNode(node.right);
             sum = left + right;
-            print('return value (Assignment) = ', sum)
+            print(identation+'return value (Addition) = ', sum)
             return sum;
         }
         if (node.type == 'Number') {
-            var value = parseFloat(node.value)
-            print('return value (Number) = ', value)
-            return value;
+            return parseFloat(node.value);
         }
     };
 
+    identation = ''; // string used for identation (debugging)
+
+    print("***** Start evaluation of AST *** ")
     var value = parseNode(ast[0]);
     print("AST evaluates to ", value);
     return value;
