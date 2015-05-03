@@ -1,0 +1,8 @@
+/*test model voor modelleertaal parser/interpreter*/
+
+// dit is commentaar
+dt = 0.1; // dit is commentaar
+t = 0;
+z = t + dt;
+
+show z;
