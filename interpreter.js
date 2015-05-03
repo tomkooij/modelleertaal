@@ -37,6 +37,17 @@ function main () {
 
 }
 
+// http://stackoverflow.com/questions/7364150/find-object-by-id-in-array-of-javascript-objects
+// array = [{key:value},{key:value}]
+function objectFindByKey(array, key, value) {
+    for (var i = 0; i < array.length; i++) {
+        if (array[i][key] === value) {
+            return array[i];
+        }
+    }
+    return null;
+}
+
 function InterpreterVariable(variableName, value) {
   this.variableName = variableName;
   this.value = value;
@@ -58,7 +69,13 @@ function evaluate(ast) {
             print(identation+'return value (Assignment) = ', right)
             return value
         }
-
+        if (node.type == 'Variable') {
+            print(identation+'Variable recursion');
+            print(identation+"looking up",node.name)
+            var value = objectFindByKey(variables, 'variableName', node.name).value;
+            print(identation+"found: ", value);
+            return value;
+        }
         if (node.type == 'Addition') {
             print(identation+'Addition recursion');
             var left = parseNode(node.left);
