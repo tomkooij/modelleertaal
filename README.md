@@ -1,8 +1,7 @@
 Simple parser / interpreter for *Modelleertaal*
 ==========================================
 
-Modelleertaal grammar in jison
-Interpreter in javascript
+Modelleertaal grammar and interpreter in javascript/jison.
 
 Parses the language used for "natuurkundig modelleren" (dynamical models in
  high school physics in NL). The language is a subset of "CoachTaal" which
