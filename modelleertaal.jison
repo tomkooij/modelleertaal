@@ -106,12 +106,6 @@ stmt
             };
         }
 
-  | SHOW expr
-    { $$ = {
-                type: 'Show',
-                arguments: [$2]
-            };
-        }
   ;
 
 expr
