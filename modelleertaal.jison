@@ -24,7 +24,9 @@
  TODO:
    geen ; nodig
    Numerieke expressies
-   Wetenschappelijke notatie voor floats (1E+9)
+   Wetenschappelijke notatie voor floats (1E+9) (gedaan? via openscad.jison)
+   SysNat gebruikt de komma "," ipv "." voor floats. Inbouwen?
+   SysNat gebruikt 'modelregels en 'startwaarden als soort van keywords
    Logische expressies
    Als Dan (EindAls)
    Stop
@@ -35,18 +37,38 @@
 
 \s+                                     /* ignore whitespaces */
 \t+                                     /* ignore whitespaces */
-"/*"(.|\n)*?"*/"           /* ignore comment */
-"//"[^\n]*            /* ignore comment */
-"="                                     { return 'ASSIGN'; }
-"show"                                  { return 'SHOW'; }
-/* number (floats) form openscad.jison */
+"'"[^\n]*                               /* modelleertaal comment */
+"/*"(.|\n)*?"*/"                        /* C-style comment */
+"//"[^\n]*                              /* C-style comment */
+"#"[^\n]*                               /* Python style comment */
+
+// assign value to var
+"="                                     return 'ASSIGN'
+":="                                    return 'ASSIGN'
+
+// number (floats) form openscad.jison 
 [0-9]*"."[0-9]+([Ee][+-]?[0-9]+)?       return 'NUMBER'
 [0-9]+"."[0-9]*([Ee][+-]?[0-9]+)?       return 'NUMBER'
 [0-9]+([Ee][+-]?[0-9]+)?                return 'NUMBER'
+
+// identifiers
 [a-zA-Z]+                               { return 'IDENT'; }
+
+// math
 "+"                                     { return '+'; }
-";"                                     { return ';'; }
-<<EOF>>                                 { return 'EOF'; }
+
+// flow control
+"Als"                                   return 'IF'
+"Dan"                                   return 'THEN'
+"EindAls"                               return 'ENDIF'
+
+// termination
+";"                                     return ';'
+
+"\'modelregels"                         return 'STARTMODEL' /* SysNat */
+"\'startwaarden"                        return 'INITALCONDITIONS' /* SysNat */
+
+<<EOF>>                                 return 'EOF'
 
 /lex
 
@@ -76,6 +98,7 @@ stmt
                 ]
             };
         }
+
   | SHOW expr
     { $$ = {
                 type: 'Show',
@@ -91,6 +114,7 @@ expr
                 name: yytext
             };
         }
+
   | NUMBER
     {$$ = {
                 type: 'number',

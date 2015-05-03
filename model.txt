@@ -1,8 +1,6 @@
-/*test model voor modelleertaal parser/interpreter*/
+/*test model voor modelleertaal interpreter*/
 
-// dit is commentaar
-dt = 0.1; // dit is commentaar
-t = 0;
-z = t + dt;
-
-show z;
+a := 1; ' := en = zijn beide toegestaan
+t = 0;  // C-style commentaar
+dt = 0.1;  # dit is ook commentaar
+t = t + dt;
