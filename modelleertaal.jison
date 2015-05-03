@@ -46,16 +46,17 @@
 "="                                     return 'ASSIGN'
 ":="                                    return 'ASSIGN'
 
-// number (floats) form openscad.jison 
+// number (floats) form openscad.jison
 [0-9]*"."[0-9]+([Ee][+-]?[0-9]+)?       return 'NUMBER'
 [0-9]+"."[0-9]*([Ee][+-]?[0-9]+)?       return 'NUMBER'
 [0-9]+([Ee][+-]?[0-9]+)?                return 'NUMBER'
 
 // identifiers
-[a-zA-Z]+                               { return 'IDENT'; }
+[a-zA-Z]+                               return 'IDENT'
 
 // math
-"+"                                     { return '+'; }
+"+"                                     return '+'
+"*"                                     return '*'
 
 // flow control
 "Als"                                   return 'IF'
@@ -72,7 +73,13 @@
 
 /lex
 
-%left '+'
+/* operator associations and precedence */
+%left '+' '-'
+%left '*' '/'
+%left '^'
+%right '!'
+%right '%'
+%left UMINUS
 
 %%
 
@@ -115,13 +122,7 @@ expr
             };
         }
 
-  | NUMBER
-    {$$ = {
-                type: 'number',
-                arguments: [$1]
-            };
-         }
-  | expr '+' expr
+ | expr '+' expr
     {$$ = {
                 type: 'addition',
                 arguments: [
@@ -130,4 +131,19 @@ expr
                 ]
           };
         }
+  | expr '*' expr
+     {$$ = {
+                 type: 'multiplication',
+                 arguments: [
+                     $1,
+                     $3
+                 ]
+           };
+         }
+  | NUMBER
+      {$$ = {
+                  type: 'number',
+                  arguments: [$1]
+              };
+           }
     ;
