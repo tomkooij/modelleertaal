@@ -43,33 +43,45 @@ function evaluate(ast) {
         identation = identation+'  ';
 
         print(identation+'parseNode: ', node.type);
-        print(identation,node);
         // dit is een poging om door de AST te wandelen, maar werkt niet!
         if (node.type == 'Assignment') {
         print(identation+'Assigment recursion');
-            right = parseNode(node.right);
+            var right = parseNode(node.right);
             print(identation+'return value (Assignment) = ', right)
             return right
         }
         if (node.type == 'Addition') {
         print(identation+'Addition recursion');
-            left = parseNode(node.left);
-            right = parseNode(node.right);
+            var left = parseNode(node.left);
+            var right = parseNode(node.right);
             sum = left + right;
             print(identation+'return value (Addition) = ', sum)
             return sum;
         }
+        if (node.type == 'Multiplication') {
+        print(identation+'Multiplication recursion');
+            var left = parseNode(node.left);
+            var right = parseNode(node.right);
+            result = left * right;
+            print(identation+'return value (Multiplication) = ', result)
+            return result;
+        }
         if (node.type == 'Number') {
+            print(identation+'return value (Number) =', parseFloat(node.value));
             return parseFloat(node.value);
         }
     };
 
-    identation = ''; // string used for identation (debugging)
+
 
     print("***** Start evaluation of AST *** ")
-    var value = parseNode(ast[0]);
-    print("AST evaluates to ", value);
-    return value;
+    for (var i = 0; i < ast.length; i++) {
+        identation = ''; // string used for identation (debugging)
+        print("AST item = ",ast[i])
+        print("*** start evaluate()")
+        var value = parseNode(ast[i]); }
+        print("item evaluates to ", value);
+
 };
 
 

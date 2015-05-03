@@ -125,10 +125,8 @@ expr
   | expr '*' expr
      {$$ = {
                  type: 'Multiplication',
-                 arguments: [
-                     $1,
-                     $3
-                 ]
+                 left: $1,
+                 right: $3
            };
          }
   | NUMBER

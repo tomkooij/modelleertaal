@@ -1,3 +1,4 @@
 /*test model voor modelleertaal interpreter*/
 
-t = 5 + 3;
+t = 5 + 1 * 12;
+z = 2.5 * 2.0 + 4.5E-3;
