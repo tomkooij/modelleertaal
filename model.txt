@@ -1,4 +1,5 @@
 /*test model voor modelleertaal interpreter*/
 
 t = 5 + 1 * 12;
-z = t + 1;
+z = t + 0.1;
+t = t + 1;

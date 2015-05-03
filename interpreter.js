@@ -64,9 +64,15 @@ function evaluate(ast) {
         if (node.type == 'Assignment') {
             print(identation+'Assigment recursion');
             var value = parseNode(node.right);
-            variables.push(new InterpreterVariable(node.left, value))
-            print(identation+'vars = ',variables)
-            print(identation+'return value (Assignment) = ', right)
+
+            // check if variable already in the array of variables
+            if (objectFindByKey(variables, 'variableName', node.left)==null) {
+                variables.push(new InterpreterVariable(node.left, value)) }
+            else {
+                objectFindByKey(variables, 'variableName', node.left).value=value;
+            };
+            print(identation+'vars = ',variables);
+            print(identation+'return value (Assignment) = ', right);
             return value
         }
         if (node.type == 'Variable') {
