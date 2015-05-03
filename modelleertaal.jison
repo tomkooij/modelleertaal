@@ -108,14 +108,7 @@ stmt
   ;
 
 expr
-  : IDENT
-    { $$ = {
-                type: 'Identifier',
-                name: yytext
-            };
-        }
-
- | expr '+' expr
+ : expr '+' expr
     {$$ = {
                 type: 'Addition',
                 left: $1,

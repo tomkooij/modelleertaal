@@ -37,6 +37,12 @@ function main () {
 
 }
 
+function InterpreterVariable(variableName, value) {
+  this.variableName = variableName;
+  this.value = value;
+}
+
+
 function evaluate(ast) {
     function parseNode(node) {
         // add an extra space to identation for recursive each call
@@ -45,13 +51,16 @@ function evaluate(ast) {
         print(identation+'parseNode: ', node.type);
         // dit is een poging om door de AST te wandelen, maar werkt niet!
         if (node.type == 'Assignment') {
-        print(identation+'Assigment recursion');
-            var right = parseNode(node.right);
+            print(identation+'Assigment recursion');
+            var value = parseNode(node.right);
+            variables.push(new InterpreterVariable(node.left, value))
+            print(identation+'vars = ',variables)
             print(identation+'return value (Assignment) = ', right)
-            return right
+            return value
         }
+
         if (node.type == 'Addition') {
-        print(identation+'Addition recursion');
+            print(identation+'Addition recursion');
             var left = parseNode(node.left);
             var right = parseNode(node.right);
             sum = left + right;
@@ -59,7 +68,7 @@ function evaluate(ast) {
             return sum;
         }
         if (node.type == 'Multiplication') {
-        print(identation+'Multiplication recursion');
+            print(identation+'Multiplication recursion');
             var left = parseNode(node.left);
             var right = parseNode(node.right);
             result = left * right;
@@ -72,7 +81,7 @@ function evaluate(ast) {
         }
     };
 
-
+    var variables = [];  // list of variables for the interpreter
 
     print("***** Start evaluation of AST *** ")
     for (var i = 0; i < ast.length; i++) {
@@ -81,6 +90,8 @@ function evaluate(ast) {
         print("*** start evaluate()")
         var value = parseNode(ast[i]); }
         print("item evaluates to ", value);
+
+    print("*** variables at end of execution = ", variables)
 
 };
 
