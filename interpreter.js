@@ -43,7 +43,7 @@ function main () {
     print(JSON.stringify(ast, undefined, 4));
 
     print('')
-    evaluate(ast);
+    interpreter(ast);
 }
 
 
@@ -63,16 +63,12 @@ function InterpreterVariable(variableName, value) {
   this.value = value;
 }
 
-function evaluate(ast) {
+function interpreter(ast) {
 
-    /* This is the interpreter */
-
-    /* TODO:
-        evaluate needs to be recursive! After and IF .. THEN ... ENDIF
-        we need to evaluate a seperate AST (stmt_list in .jison) between THEN .. ENDIF
-        an ast is an array of JSON nodes. evaluate evaluates each node in the array by
-         recursively calling parseNode.
+    /* Interpret AST tree
+        :param: ast = array of json asts
     */
+
 
     function parseNode(node) {
         /* parseNode is a recursive function that parses an item
@@ -173,8 +169,7 @@ function evaluate(ast) {
                     print(identation+'result of if = ', left)
                     if (left) {
                         // execute the tree between then .. endif
-                        // WARNING HACK! node.right is a stmt_list and thus an array of ASTs
-                        var right = parseNode(node.right[0]) // this is an AST!
+                        var right = evaluate(node.right) // this is an AST!
                         return right
                         }
                     return null
@@ -219,15 +214,26 @@ function evaluate(ast) {
     };
 }; */
 
+    function evaluate(ast) {
+    /* Evaluate (part of) AST tree
+        :param: ast = array of json asts
+
+    called by interpret() of recursive by itself
+    */
+        print("*** start evaluate()")
+        for (var i = 0; i < ast.length; i++) {
+            identation = ''; // string used for identation (debugging)
+
+            print("AST item = ",ast[i])
+            var value = parseNode(ast[i]);
+            print("item evaluates to ", value);
+        }
+    };
+
     var variables = [];  // list of variables for the interpreter
 
-    print("***** Start evaluation of AST *** ")
-    for (var i = 0; i < ast.length; i++) {
-        identation = ''; // string used for identation (debugging)
-        print("AST item = ",ast[i])
-        print("*** start evaluate()")
-        var value = parseNode(ast[i]); }
-        print("item evaluates to ", value);
+
+    evaluate(ast);
 
     print("*** variables at end of execution = ", variables)
 

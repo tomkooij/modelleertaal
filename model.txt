@@ -4,4 +4,5 @@ test model voor modelleertaal interpreter
 
 b = 2 + 2^-(5-10) / (10 - -6) - 11; // -7
 // Als (b == -7) Dan a = 1; EindAls;  // (b==-7) geeft nog een parseerror
-Als 1 Dan a = 1; b = 2; EindAls;   // let op dat b = 2; nog niet wordt uitgevoerd.
+Als 1 Dan a = 1; c = 2; EindAls;
+Als (0) Dan d = 1234; EindAls;
