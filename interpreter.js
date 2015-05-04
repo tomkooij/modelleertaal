@@ -1,16 +1,26 @@
-// myparser.js
+/*
+    Interpreter for Modelleertaal (modelregels)
+    Simple dynamical models for highschool Physics in NL
+
+    The language is described in modelleertaal.jison
+
+    usage:
+      npm install path_to/jison
+      node interpreter.js
+*/
+
+
+// CommonJS
 var fs = require("fs");
 var jison = require("jison");
 
+// input sourcode:
+var program = fs.readFileSync("model.txt", "utf8")
+
+// parser compiled on execution by jison.js
 var bnf = fs.readFileSync("modelleertaal.jison", "utf8");
 var parser = new jison.Parser(bnf);
 
-module.exports = parser;
-
-// the original grammar.js include is below:
-// var parser = require('./grammar').parser;
-
-var program = fs.readFileSync("model.txt", "utf8")
 
 // for some reason the jison example uses print()
 // this is a lame implemenations to allow:
@@ -22,8 +32,8 @@ function print(string1, string2) {
 }
 
 
-function main () {
 
+function main () {
     print('*** input ***');
     print(program);
 
@@ -34,8 +44,8 @@ function main () {
 
     print('')
     evaluate(ast);
-
 }
+
 
 // http://stackoverflow.com/questions/7364150/find-object-by-id-in-array-of-javascript-objects
 // array = [{key:value},{key:value}]
@@ -132,9 +142,6 @@ function evaluate(ast) {
     print("*** variables at end of execution = ", variables)
 
 };
-
-
-
 
 
 main();
