@@ -36,7 +36,7 @@
 \s+                                     /* ignore whitespaces */
 \t+                                     /* ignore whitespaces */
 "'"[^\n]*                               /* modelleertaal comment */
-"/*"(.|\n)*?"*/"                        /* C-style comment */
+"/*"(.|\n|\r)*?"*/"                     /* C-style multiline comment */
 "//"[^\n]*                              /* C-style comment */
 "#"[^\n]*                               /* Python style comment */
 
