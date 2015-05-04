@@ -93,24 +93,6 @@ function evaluate(ast) {
             return value;
         }
 
-        if (node.type == 'Addition') {
-            print(identation+'Addition recursion');
-            var left = parseNode(node.left);
-            var right = parseNode(node.right);
-            sum = left + right;
-            print(identation+'return value (Addition) = ', sum)
-            return sum;
-        }
-
-        if (node.type == 'Multiplication') {
-            print(identation+'Multiplication recursion');
-            var left = parseNode(node.left);
-            var right = parseNode(node.right);
-            result = left * right;
-            print(identation+'return value (Multiplication) = ', result)
-            return result;
-        }
-
         if (node.type == 'Binary') {
             print(identation+'Binary operator recursion');
             print(identation+'Operator = ', node.operator);
