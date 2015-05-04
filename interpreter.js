@@ -30,7 +30,7 @@ function main () {
     var ast = parser.parse(program);
 
     print('*** AST ***');
-    print(ast);
+    print(JSON.stringify(ast, undefined, 4));
 
     print('')
     evaluate(ast);
@@ -53,14 +53,20 @@ function InterpreterVariable(variableName, value) {
   this.value = value;
 }
 
-
 function evaluate(ast) {
+
+    /* This is the interpreter */
+
     function parseNode(node) {
+        /* parseNode is a recursive function that parses an item
+            of the JSON AST. Calls itself to traverse through nodes.
+        */
+
         // add an extra space to identation for recursive each call
         identation = identation+'  ';
 
         print(identation+'parseNode: ', node.type);
-        // dit is een poging om door de AST te wandelen, maar werkt niet!
+
         if (node.type == 'Assignment') {
             print(identation+'Assigment recursion');
             var value = parseNode(node.right);
@@ -75,13 +81,18 @@ function evaluate(ast) {
             print(identation+'return value (Assignment) = ', right);
             return value
         }
+
         if (node.type == 'Variable') {
             print(identation+'Variable recursion');
+
+            // TODO: Add constants list and look that up first
             print(identation+"looking up",node.name)
             var value = objectFindByKey(variables, 'variableName', node.name).value;
+
             print(identation+"found: ", value);
             return value;
         }
+
         if (node.type == 'Addition') {
             print(identation+'Addition recursion');
             var left = parseNode(node.left);
@@ -90,6 +101,7 @@ function evaluate(ast) {
             print(identation+'return value (Addition) = ', sum)
             return sum;
         }
+
         if (node.type == 'Multiplication') {
             print(identation+'Multiplication recursion');
             var left = parseNode(node.left);
@@ -98,12 +110,14 @@ function evaluate(ast) {
             print(identation+'return value (Multiplication) = ', result)
             return result;
         }
+
         if (node.type == 'Number') {
             print(identation+'return value (Number) =', parseFloat(node.value));
             return parseFloat(node.value);
         }
     };
 
+    // TODO: Add list of constants (startwaarden)
     var variables = [];  // list of variables for the interpreter
 
     print("***** Start evaluation of AST *** ")

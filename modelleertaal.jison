@@ -24,11 +24,9 @@
  TODO:
    geen ; nodig
    Numerieke expressies
-   Wetenschappelijke notatie voor floats (1E+9) (gedaan? via openscad.jison)
-   SysNat gebruikt de komma "," ipv "." voor floats. Inbouwen?
-   SysNat gebruikt 'modelregels en 'startwaarden als soort van keywords
+   Functies (inclusief sin() en cos() )
    Logische expressies
-   Als Dan (EindAls)
+   Als Dan EindAls
    Stop
  */
 
