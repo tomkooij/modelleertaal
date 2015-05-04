@@ -49,23 +49,6 @@ function main () {
     interpreter(startwaarden_ast, modelregels_ast);
 }
 
-
-// http://stackoverflow.com/questions/7364150/find-object-by-id-in-array-of-javascript-objects
-// array = [{key:value},{key:value}]
-function objectFindByKey(array, key, value) {
-    for (var i = 0; i < array.length; i++) {
-        if (array[i][key] === value) {
-            return array[i];
-        }
-    }
-    return null;
-}
-
-function InterpreterVariable(variableName, value) {
-  this.variableName = variableName;
-  this.value = value;
-}
-
 function interpreter(startwaarden_ast, modelregels_ast) {
 
     /* Interpret AST tree
@@ -97,12 +80,14 @@ function interpreter(startwaarden_ast, modelregels_ast) {
         if (node.type == 'Variable') {
             print(identation+'Variable recursion');
 
-            if (namespace.Startwaarden.hasOwnProperty(node.name)) {
-                return namespace.Startwaarden[node.name];
-            }
             if (namespace.Variables.hasOwnProperty(node.name)) {
                 return namespace.Variables[node.name];
             }
+            
+            if (namespace.Startwaarden.hasOwnProperty(node.name)) {
+                return namespace.Startwaarden[node.name];
+            }
+
             throw new SyntaxError('Unknown identifier');
 
         }
@@ -236,7 +221,7 @@ function interpreter(startwaarden_ast, modelregels_ast) {
     namespace.Startwaarden = namespace.Variables;
     namespace.Variables = {};
 
-    for (i=0; i < 2; i++) {
+    for (i=0; i < 10; i++) {
         evaluate(modelregels_ast);
     }
 
