@@ -15,7 +15,8 @@ var fs = require("fs");
 var jison = require("jison");
 
 // input sourcode:
-var program = fs.readFileSync("model.txt", "utf8")
+var modelregels = fs.readFileSync("modelregels.txt", "utf8")
+var startwaarden = fs.readFileSync("startwaarden.txt", "utf8")
 
 // parser compiled on execution by jison.js
 var bnf = fs.readFileSync("modelleertaal.jison", "utf8");
@@ -35,15 +36,17 @@ function print(string1, string2) {
 
 function main () {
     print('*** input ***');
-    print(program);
+    print(startwaarden);
+    print(modelregels);
 
-    var ast = parser.parse(program);
+    var startwaarden_ast = parser.parse(startwaarden)
+    var modelregels_ast = parser.parse(modelregels);
 
-    print('*** AST ***');
-    print(JSON.stringify(ast, undefined, 4));
+    print('*** AST modelregels ***');
+    print(JSON.stringify(modelregels_ast, undefined, 4));
 
     print('')
-    interpreter(ast);
+    interpreter(startwaarden_ast, modelregels_ast);
 }
 
 
@@ -63,10 +66,11 @@ function InterpreterVariable(variableName, value) {
   this.value = value;
 }
 
-function interpreter(ast) {
+function interpreter(startwaarden_ast, modelregels_ast) {
 
     /* Interpret AST tree
-        :param: ast = array of json asts
+        :param: startwaarden_ast = array of json ast. Startwaarden to be loaded into namespace
+        :param: modelregels_ast = array of json asts. Modelregels to be executed many times
     */
 
 
@@ -92,7 +96,6 @@ function interpreter(ast) {
             else {
                 objectFindByKey(variables, 'variableName', node.left).value=value;
             };
-            print(identation+'vars = ',variables);
             print(identation+'return value (Assignment) = ', value);
             return value
         }
@@ -234,8 +237,10 @@ function interpreter(ast) {
 
     var variables = [];  // list of variables for the interpreter
 
-
-    evaluate(ast);
+    evaluate(startwaarden_ast);
+    for (i=0; i < 10; i++) {
+        evaluate(modelregels_ast);
+    }
 
     print("*** variables at end of execution = ", variables)
 

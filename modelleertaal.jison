@@ -74,9 +74,6 @@
 // termination
 ";"                                     return ';'
 
-"\'modelregels"                         return 'STARTMODEL' /* SysNat */
-"\'startwaarden"                        return 'INITALCONDITIONS' /* SysNat */
-
 // identifiers
 [a-zA-Z]+                               return 'IDENT'
 
