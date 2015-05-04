@@ -2,6 +2,17 @@
 test model voor modelleertaal interpreter
 */
 
-a := 5;
-Als (a == 4+1) Dan gelukt := 1; EindAls;
-c := 4;
+Fmotor = 500; 'N
+m = 800; 'kg
+dt = 1.0; 's
+v = 0;'m/s
+s = 0; 'm/s
+t = 0; 's
+
+Fres= Fmotor;
+a = Fres/m;
+dv = a * dt;
+v = v + dv;
+ds = v * dt;
+s = s + ds;
+t = t + dt;
