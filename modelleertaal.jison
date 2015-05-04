@@ -43,6 +43,9 @@
 "("                                     return '('
 ")"                                     return ')'
 
+// logical
+"=="                                    return 'EQUALS'
+
 // assign value to var
 "="                                     return 'ASSIGN'
 ":="                                    return 'ASSIGN'
@@ -61,8 +64,6 @@
 "/"                                     return '/'
 
 
-// logical
-"=="                                    return 'EQUALS'
 
 
 // flow control
@@ -122,7 +123,7 @@ stmt
             };
         }
 
-  | IF expr THEN stmt_list ENDIF
+  | IF condition THEN stmt_list ENDIF
     { $$ = {
                 type: 'Flowcontrol',
                 operator: 'if',
@@ -130,6 +131,21 @@ stmt
                 right: $4
             };
         }
+  ;
+
+condition
+  : expr
+     {$$ = $1;}
+/*
+    | expr EQUALS expr
+     {$$ = {
+                 type: 'Logical',
+                 operator: '==',
+                 left: $1,
+                 right: $3
+         };
+     }
+ */
   ;
 
 expr
@@ -140,14 +156,14 @@ expr
             };
         }
 
- | expr EQUALS expr
-    {$$ = {
-                type: 'Logical',
-                operator: '==',
-                left: $1,
-                right: $3
-        };
-    }
+| expr EQUALS expr
+   {$$ = {
+               type: 'Logical',
+               operator: '==',
+               left: $1,
+               right: $3
+       };
+   }
 
  | expr '^' expr
       {$$ = {

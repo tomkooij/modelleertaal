@@ -73,6 +73,8 @@ function interpreter(ast) {
     function parseNode(node) {
         /* parseNode is a recursive function that parses an item
             of the JSON AST. Calls itself to traverse through nodes.
+
+            :param: node = (part of) JSON tree
         */
 
         // add an extra space to identation for recursive each call
