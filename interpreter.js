@@ -89,26 +89,22 @@ function interpreter(startwaarden_ast, modelregels_ast) {
         if (node.type == 'Assignment') {
             print(identation+'Assigment recursion');
             var value = parseNode(node.right);
-
-            // check if variable already in the array of variables
-            if (objectFindByKey(variables, 'variableName', node.left)==null) {
-                variables.push(new InterpreterVariable(node.left, value)) }
-            else {
-                objectFindByKey(variables, 'variableName', node.left).value=value;
-            };
-            print(identation+'return value (Assignment) = ', value);
-            return value
+            namespace.Variables[node.left] = value;
+            return value;
+        
         }
 
         if (node.type == 'Variable') {
             print(identation+'Variable recursion');
 
-            // TODO: Add constants list and look that up first
-            print(identation+"looking up",node.name)
-            var value = objectFindByKey(variables, 'variableName', node.name).value;
+            if (namespace.Startwaarden.hasOwnProperty(node.name)) {
+                return namespace.Startwaarden[node.name];
+            }
+            if (namespace.Variables.hasOwnProperty(node.name)) {
+                return namespace.Variables[node.name];
+            }
+            throw new SyntaxError('Unknown identifier');
 
-            print(identation+"found: ", value);
-            return value;
         }
 
         if (node.type == 'Binary') {
@@ -190,34 +186,32 @@ function interpreter(startwaarden_ast, modelregels_ast) {
         }
     };
 
-    // TODO: Add list of constants (startwaarden)
-    // Or better: Add "namespace object" from: "tapdigit.js"
-    /* Namespace = function () {
+
+    Namespace = function () {
     var  Functions;
 
-    // inspired by tapdigit.js
-    Functions = {
-        abs: Math.abs,
-        acos: Math.acos,
-        asin: Math.asin,
-        atan: Math.atan,
-        ceil: Math.ceil,
-        cos: Math.cos,
-        exp: Math.exp,
-        floor: Math.floor,
-        ln: Math.ln,
-        random: Math.random,
-        sin: Math.sin,
-        sqrt: Math.sqrt,
-        tan: Math.tan
-    };
+        Functions = {
+            abs: Math.abs,
+            acos: Math.acos,
+            asin: Math.asin,
+            atan: Math.atan,
+            ceil: Math.ceil,
+            cos: Math.cos,
+            exp: Math.exp,
+            floor: Math.floor,
+            ln: Math.ln,
+            random: Math.random,
+            sin: Math.sin,
+            sqrt: Math.sqrt,
+            tan: Math.tan
+        };
 
-    return {
-        Startwaarden: {},
-        Functions: Functions,
-        Variables: {}
+        return {
+            Startwaarden: {},
+            Functions: Functions,
+            Variables: {}
+        };
     };
-}; */
 
     function evaluate(ast) {
     /* Evaluate (part of) AST tree
@@ -235,14 +229,14 @@ function interpreter(startwaarden_ast, modelregels_ast) {
         }
     };
 
-    var variables = [];  // list of variables for the interpreter
+    var namespace = new Namespace();
 
     evaluate(startwaarden_ast);
-    for (i=0; i < 10; i++) {
+    for (i=0; i < 2; i++) {
         evaluate(modelregels_ast);
     }
 
-    print("*** variables at end of execution = ", variables)
+    print("*** variables at end of execution = ", namespace)
 
 };
 
