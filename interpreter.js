@@ -117,6 +117,8 @@ function evaluate(ast) {
                     return left * right;
                 case '/':
                     return left / right;
+                case '^':
+                    return Math.pow(left, right);
                 default:
                     throw new SyntaxError('Unknown binary operator ' + node.operator);
                 }

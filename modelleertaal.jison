@@ -56,6 +56,7 @@
 [a-zA-Z]+                               return 'IDENT'
 
 // math
+"^"                                     return '^'
 "+"                                     return '+'
 "-"                                     return '-'
 "*"                                     return '*'
@@ -81,7 +82,6 @@
 %left '*' '/'
 %left '^'
 %right '!'
-%right '%'
 %left UMINUS
 
 %%
@@ -118,7 +118,15 @@ expr
             };
         }
 
- | expr '+' expr
+ | expr '^' expr
+      {$$ = {
+                 type: 'Binary',
+                 operator: '^',
+                 left: $1,
+                 right: $3
+           };
+         }
+  | expr '+' expr
     {$$ = {
                 type: 'Binary',
                 operator: '+',
