@@ -42,6 +42,9 @@
 "//"[^\n]*                              /* C-style comment */
 "#"[^\n]*                               /* Python style comment */
 
+"("                                     return '('
+")"                                     return ')'
+
 // assign value to var
 "="                                     return 'ASSIGN'
 ":="                                    return 'ASSIGN'
@@ -129,6 +132,8 @@ expr
                  right: $3
            };
          }
+  | '(' expr ')'
+      {$$ = $2;}
   | NUMBER
       {$$ = {
                   type: 'Number',
