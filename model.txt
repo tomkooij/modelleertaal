@@ -1,4 +1,7 @@
-/*test model voor modelleertaal interpreter*/
+/*
+test model voor modelleertaal interpreter
+*/
 
-b = -3 * 2;
-c = (1+1-7+7*1) ^ -(-1*5); // 32
+b = 2 + 2^-(5-10) / (10 - -6) - 11; // -7
+// Als (b == -7) Dan a = 1; EindAls;  // (b==-7) geeft nog een parseerror
+Als 1 Dan a = 1; b = 2; EindAls;   // let op dat b = 2; nog niet wordt uitgevoerd.

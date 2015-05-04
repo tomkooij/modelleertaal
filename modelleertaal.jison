@@ -52,8 +52,6 @@
 [0-9]+"."[0-9]*([Ee][+-]?[0-9]+)?       return 'NUMBER'
 [0-9]+([Ee][+-]?[0-9]+)?                return 'NUMBER'
 
-// identifiers
-[a-zA-Z]+                               return 'IDENT'
 
 // math
 "^"                                     return '^'
@@ -61,6 +59,11 @@
 "-"                                     return '-'
 "*"                                     return '*'
 "/"                                     return '/'
+
+
+// logical
+"=="                                    return 'EQUALS'
+
 
 // flow control
 "Als"                                   return 'IF'
@@ -73,9 +76,17 @@
 "\'modelregels"                         return 'STARTMODEL' /* SysNat */
 "\'startwaarden"                        return 'INITALCONDITIONS' /* SysNat */
 
+// identifiers
+[a-zA-Z]+                               return 'IDENT'
+
 <<EOF>>                                 return 'EOF'
 
 /lex
+
+%token IF
+%token THEN
+%token ENDIF
+%token EQUALS
 
 /* operator associations and precedence */
 %left '+' '-'
@@ -83,6 +94,9 @@
 %left '^'
 %right '!'
 %left UMINUS
+
+%left EQUALS
+%left IF
 
 %%
 
@@ -108,6 +122,14 @@ stmt
             };
         }
 
+  | IF expr THEN stmt_list ENDIF
+    { $$ = {
+                type: 'Flowcontrol',
+                operator: 'if',
+                left: $2,
+                right: $4
+            };
+        }
   ;
 
 expr
@@ -117,6 +139,15 @@ expr
                 name: yytext
             };
         }
+
+ | expr EQUALS expr
+    {$$ = {
+                type: 'Logical',
+                operator: '==',
+                left: $1,
+                right: $3
+        };
+    }
 
  | expr '^' expr
       {$$ = {

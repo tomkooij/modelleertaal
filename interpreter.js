@@ -67,6 +67,13 @@ function evaluate(ast) {
 
     /* This is the interpreter */
 
+    /* TODO:
+        evaluate needs to be recursive! After and IF .. THEN ... ENDIF
+        we need to evaluate a seperate AST (stmt_list in .jison) between THEN .. ENDIF
+        an ast is an array of JSON nodes. evaluate evaluates each node in the array by
+         recursively calling parseNode.
+    */
+
     function parseNode(node) {
         /* parseNode is a recursive function that parses an item
             of the JSON AST. Calls itself to traverse through nodes.
@@ -138,6 +145,45 @@ function evaluate(ast) {
                     throw new SyntaxError('Unknown unary operator ' + node.operator);
                 }
         }
+
+        if (node.type == 'Logical') {
+            print(identation+'Logical operator recursion');
+            print(identation+'Operator = ', node.operator);
+            var right = parseNode(node.right);
+            var left = parseNode(node.left);
+            switch (node.operator) {
+                case '==':
+                    if (left == right) {
+                        return true;
+                    } else {
+                        return false;
+                    }
+
+                default:
+                    throw new SyntaxError('Unknown logical operator ' + node.operator);
+                }
+        }
+
+        if (node.type == 'Flowcontrol') {
+            print(identation+'Flowcontrol operator recursion');
+            print(identation+'Operator = ', node.operator);
+            switch (node.operator) {
+                case 'if': {
+                    var left = parseNode(node.left);
+                    print(identation+'result of if = ', left)
+                    if (left) {
+                        // execute the tree between then .. endif
+                        // WARNING HACK! node.right is a stmt_list and thus an array of ASTs
+                        var right = parseNode(node.right[0]) // this is an AST!
+                        return right
+                        }
+                    return null
+                    }
+                default:
+                    throw new SyntaxError('Unknown flow control statement' + node.operator);
+                }
+        }
+
         if (node.type == 'Number') {
             print(identation+'return value (Number) =', parseFloat(node.value));
             return parseFloat(node.value);
@@ -145,6 +191,34 @@ function evaluate(ast) {
     };
 
     // TODO: Add list of constants (startwaarden)
+    // Or better: Add "namespace object" from: "tapdigit.js"
+    /* Namespace = function () {
+    var  Functions;
+
+    // inspired by tapdigit.js
+    Functions = {
+        abs: Math.abs,
+        acos: Math.acos,
+        asin: Math.asin,
+        atan: Math.atan,
+        ceil: Math.ceil,
+        cos: Math.cos,
+        exp: Math.exp,
+        floor: Math.floor,
+        ln: Math.ln,
+        random: Math.random,
+        sin: Math.sin,
+        sqrt: Math.sqrt,
+        tan: Math.tan
+    };
+
+    return {
+        Startwaarden: {},
+        Functions: Functions,
+        Variables: {}
+    };
+}; */
+
     var variables = [];  // list of variables for the interpreter
 
     print("***** Start evaluation of AST *** ")
