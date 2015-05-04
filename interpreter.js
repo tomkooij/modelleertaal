@@ -88,7 +88,7 @@ function evaluate(ast) {
                 objectFindByKey(variables, 'variableName', node.left).value=value;
             };
             print(identation+'vars = ',variables);
-            print(identation+'return value (Assignment) = ', right);
+            print(identation+'return value (Assignment) = ', value);
             return value
         }
 
@@ -118,10 +118,24 @@ function evaluate(ast) {
                 case '/':
                     return left / right;
                 default:
-                    throw new SyntaxError('Unknown operator ' + node.operator);
+                    throw new SyntaxError('Unknown binary operator ' + node.operator);
                 }
         }
 
+        if (node.type == 'Unary') {
+            print(identation+'Unary operator recursion');
+            print(identation+'Operator = ', node.operator);
+            var right = parseNode(node.right);
+            switch (node.operator) {
+                case '+':
+                    return right;
+                case '-':
+                    return -right;
+
+                default:
+                    throw new SyntaxError('Unknown unary operator ' + node.operator);
+                }
+        }
         if (node.type == 'Number') {
             print(identation+'return value (Number) =', parseFloat(node.value));
             return parseFloat(node.value);

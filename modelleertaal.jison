@@ -151,8 +151,18 @@ expr
          };
        }
 
+  | '-' expr %prec UMINUS
+      {$$ = {
+                  type: 'Unary',
+                  operator: '-',
+                  right: $2
+            };
+          }
+
+  /* parentheses (in math) are handled in the parser */
   | '(' expr ')'
       {$$ = $2;}
+
   | NUMBER
       {$$ = {
                   type: 'Number',
