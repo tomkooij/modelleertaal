@@ -91,7 +91,7 @@ function interpreter(startwaarden_ast, modelregels_ast) {
             var value = parseNode(node.right);
             namespace.Variables[node.left] = value;
             return value;
-        
+
         }
 
         if (node.type == 'Variable') {
@@ -231,7 +231,11 @@ function interpreter(startwaarden_ast, modelregels_ast) {
 
     var namespace = new Namespace();
 
+    // evaluate startwaarden. Move Variables into Startwaarden
     evaluate(startwaarden_ast);
+    namespace.Startwaarden = namespace.Variables;
+    namespace.Variables = {};
+
     for (i=0; i < 2; i++) {
         evaluate(modelregels_ast);
     }
