@@ -1,5 +1,6 @@
 /*test model voor modelleertaal interpreter*/
 
-t = 5 + 1 * 12;
-z = t + 0.1;
-t = t + 1;
+a = 3 - 7; // -4
+t = 3 * 4 - 1;  // 11
+c = 5 * 7 - 1; // 34
+d = 36 / (12 + 4); // 2.25

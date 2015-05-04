@@ -57,7 +57,9 @@
 
 // math
 "+"                                     return '+'
+"-"                                     return '-'
 "*"                                     return '*'
+"/"                                     return '/'
 
 // flow control
 "Als"                                   return 'IF'
@@ -118,18 +120,37 @@ expr
 
  | expr '+' expr
     {$$ = {
-                type: 'Addition',
+                type: 'Binary',
+                operator: '+',
                 left: $1,
                 right: $3
           };
         }
-  | expr '*' expr
+  | expr '-' expr
      {$$ = {
-                 type: 'Multiplication',
+                 type: 'Binary',
+                 operator: '-',
                  left: $1,
                  right: $3
            };
          }
+  | expr '*' expr
+     {$$ = {
+                 type: 'Binary',
+                 operator: '*',
+                 left: $1,
+                 right: $3
+           };
+         }
+  | expr '/' expr
+   {$$ = {
+               type: 'Binary',
+               operator: '/',
+               left: $1,
+               right: $3
+         };
+       }
+
   | '(' expr ')'
       {$$ = $2;}
   | NUMBER

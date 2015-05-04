@@ -111,6 +111,25 @@ function evaluate(ast) {
             return result;
         }
 
+        if (node.type == 'Binary') {
+            print(identation+'Binary operator recursion');
+            print(identation+'Operator = ', node.operator);
+            var left = parseNode(node.left);
+            var right = parseNode(node.right);
+            switch (node.operator) {
+                case '+':
+                    return left + right;
+                case '-':
+                    return left - right;
+                case '*':
+                    return left * right;
+                case '/':
+                    return left / right;
+                default:
+                    throw new SyntaxError('Unknown operator ' + node.operator);
+                }
+        }
+
         if (node.type == 'Number') {
             print(identation+'return value (Number) =', parseFloat(node.value));
             return parseFloat(node.value);
