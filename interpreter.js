@@ -74,13 +74,13 @@ function interpreter(startwaarden_ast, modelregels_ast) {
         // add an extra space to identation for recursive each call
         identation = identation+'  ';
 
-        print(identation+'parseNode: ', node.type);
+        //print(identation+'parseNode: ', node.type);
 
         switch(node.type) {
 
             case 'Assignment':
             {
-                print(identation+'Assigment recursion');
+                //print(identation+'Assigment recursion');
                 var value = parseNode(node.right);
                 namespace.Variables[node.left] = value;
                 return value;
@@ -89,7 +89,7 @@ function interpreter(startwaarden_ast, modelregels_ast) {
 
             case 'Variable':
             {
-                print(identation+'Variable recursion');
+                //print(identation+'Variable recursion');
 
                 if (namespace.Variables.hasOwnProperty(node.name)) {
                     return namespace.Variables[node.name];
@@ -104,8 +104,8 @@ function interpreter(startwaarden_ast, modelregels_ast) {
 
             case 'Binary':
             {
-                print(identation+'Binary operator recursion');
-                print(identation+'Operator = ', node.operator);
+                //print(identation+'Binary operator recursion');
+                //print(identation+'Operator = ', node.operator);
                 var left = parseNode(node.left);
                 var right = parseNode(node.right);
                 switch (node.operator) {
@@ -126,8 +126,8 @@ function interpreter(startwaarden_ast, modelregels_ast) {
 
             case 'Unary':
             {
-                print(identation+'Unary operator recursion');
-                print(identation+'Operator = ', node.operator);
+                //print(identation+'Unary operator recursion');
+                //print(identation+'Operator = ', node.operator);
                 var right = parseNode(node.right);
                 switch (node.operator) {
                     case '+':
@@ -142,8 +142,8 @@ function interpreter(startwaarden_ast, modelregels_ast) {
 
             case 'Logical':
             {
-                print(identation+'Logical operator recursion');
-                print(identation+'Operator = ', node.operator);
+                //print(identation+'Logical operator recursion');
+                //print(identation+'Operator = ', node.operator);
                 var right = parseNode(node.right);
                 var left = parseNode(node.left);
                 switch (node.operator) {
@@ -161,8 +161,8 @@ function interpreter(startwaarden_ast, modelregels_ast) {
 
             case 'Flowcontrol':
             {
-                print(identation+'Flowcontrol operator recursion');
-                print(identation+'Operator = ', node.operator);
+                //print(identation+'Flowcontrol operator recursion');
+                //print(identation+'Operator = ', node.operator);
                 switch (node.operator) {
                     case 'if': {
                         var left = parseNode(node.left);
@@ -181,7 +181,7 @@ function interpreter(startwaarden_ast, modelregels_ast) {
 
             case 'Number':
             {
-                print(identation+'return value (Number) =', parseFloat(node.value));
+                //print(identation+'return value (Number) =', parseFloat(node.value));
                 return parseFloat(node.value);
             }
         } /* switch (node.type) */
@@ -224,9 +224,9 @@ function interpreter(startwaarden_ast, modelregels_ast) {
         for (var i = 0; i < ast.length; i++) {
             identation = ''; // string used for identation (debugging)
 
-            print("AST item = ",ast[i])
+            //print("AST item = ",ast[i])
             var value = parseNode(ast[i]);
-            print("item evaluates to ", value);
+            //print("item evaluates to ", value);
         }
     };
 
