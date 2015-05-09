@@ -68,7 +68,6 @@
 "Dan"|"dan"                             return 'THEN'
 "EindAls"|"Eindals"|"eindals"           return 'ENDIF'
 
-
 // identifiers
 [a-zA-Z]+                               return 'IDENT'
 
@@ -118,10 +117,9 @@ stmt
 
   | IF condition THEN stmt_list ENDIF
     { $$ = {
-                type: 'Flowcontrol',
-                operator: 'if',
-                left: $2,
-                right: $4
+                type: 'If',
+                cond: $2,
+                then: $4
             };
         }
   ;
