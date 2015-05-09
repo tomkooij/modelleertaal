@@ -76,106 +76,115 @@ function interpreter(startwaarden_ast, modelregels_ast) {
 
         print(identation+'parseNode: ', node.type);
 
-        if (node.type == 'Assignment') {
-            print(identation+'Assigment recursion');
-            var value = parseNode(node.right);
-            namespace.Variables[node.left] = value;
-            return value;
+        switch(node.type) {
 
-        }
+            case 'Assignment':
+            {
+                print(identation+'Assigment recursion');
+                var value = parseNode(node.right);
+                namespace.Variables[node.left] = value;
+                return value;
 
-        if (node.type == 'Variable') {
-            print(identation+'Variable recursion');
-
-            if (namespace.Variables.hasOwnProperty(node.name)) {
-                return namespace.Variables[node.name];
             }
 
-            if (namespace.Startwaarden.hasOwnProperty(node.name)) {
-                return namespace.Startwaarden[node.name];
+            case 'Variable':
+            {
+                print(identation+'Variable recursion');
+
+                if (namespace.Variables.hasOwnProperty(node.name)) {
+                    return namespace.Variables[node.name];
+                }
+
+                if (namespace.Startwaarden.hasOwnProperty(node.name)) {
+                    return namespace.Startwaarden[node.name];
+                }
+
+                throw new SyntaxError('Unknown identifier');
             }
 
-            throw new SyntaxError('Unknown identifier');
-
-        }
-
-        if (node.type == 'Binary') {
-            print(identation+'Binary operator recursion');
-            print(identation+'Operator = ', node.operator);
-            var left = parseNode(node.left);
-            var right = parseNode(node.right);
-            switch (node.operator) {
-                case '+':
-                    return left + right;
-                case '-':
-                    return left - right;
-                case '*':
-                    return left * right;
-                case '/':
-                    return left / right;
-                case '^':
-                    return Math.pow(left, right);
-                default:
-                    throw new SyntaxError('Unknown binary operator ' + node.operator);
-                }
-        }
-
-        if (node.type == 'Unary') {
-            print(identation+'Unary operator recursion');
-            print(identation+'Operator = ', node.operator);
-            var right = parseNode(node.right);
-            switch (node.operator) {
-                case '+':
-                    return right;
-                case '-':
-                    return -right;
-
-                default:
-                    throw new SyntaxError('Unknown unary operator ' + node.operator);
-                }
-        }
-
-        if (node.type == 'Logical') {
-            print(identation+'Logical operator recursion');
-            print(identation+'Operator = ', node.operator);
-            var right = parseNode(node.right);
-            var left = parseNode(node.left);
-            switch (node.operator) {
-                case '==':
-                    if (left == right) {
-                        return true;
-                    } else {
-                        return false;
+            case 'Binary':
+            {
+                print(identation+'Binary operator recursion');
+                print(identation+'Operator = ', node.operator);
+                var left = parseNode(node.left);
+                var right = parseNode(node.right);
+                switch (node.operator) {
+                    case '+':
+                        return left + right;
+                    case '-':
+                        return left - right;
+                    case '*':
+                        return left * right;
+                    case '/':
+                        return left / right;
+                    case '^':
+                        return Math.pow(left, right);
+                    default:
+                        throw new SyntaxError('Unknown binary operator ' + node.operator);
                     }
+            }
 
-                default:
-                    throw new SyntaxError('Unknown logical operator ' + node.operator);
-                }
-        }
+            case 'Unary':
+            {
+                print(identation+'Unary operator recursion');
+                print(identation+'Operator = ', node.operator);
+                var right = parseNode(node.right);
+                switch (node.operator) {
+                    case '+':
+                        return right;
+                    case '-':
+                        return -right;
 
-        if (node.type == 'Flowcontrol') {
-            print(identation+'Flowcontrol operator recursion');
-            print(identation+'Operator = ', node.operator);
-            switch (node.operator) {
-                case 'if': {
-                    var left = parseNode(node.left);
-                    print(identation+'result of if = ', left)
-                    if (left) {
-                        // execute the tree between then .. endif
-                        var right = evaluate(node.right) // this is an AST!
-                        return right
+                    default:
+                        throw new SyntaxError('Unknown unary operator ' + node.operator);
+                    }
+            }
+
+            case 'Logical':
+            {
+                print(identation+'Logical operator recursion');
+                print(identation+'Operator = ', node.operator);
+                var right = parseNode(node.right);
+                var left = parseNode(node.left);
+                switch (node.operator) {
+                    case '==':
+                        if (left == right) {
+                            return true;
+                        } else {
+                            return false;
                         }
-                    return null
-                    }
-                default:
-                    throw new SyntaxError('Unknown flow control statement' + node.operator);
-                }
-        }
 
-        if (node.type == 'Number') {
-            print(identation+'return value (Number) =', parseFloat(node.value));
-            return parseFloat(node.value);
-        }
+                    default:
+                        throw new SyntaxError('Unknown logical operator ' + node.operator);
+                    }
+            }
+
+            case 'Flowcontrol':
+            {
+                print(identation+'Flowcontrol operator recursion');
+                print(identation+'Operator = ', node.operator);
+                switch (node.operator) {
+                    case 'if': {
+                        var left = parseNode(node.left);
+                        print(identation+'result of if = ', left)
+                        if (left) {
+                            // execute the tree between then .. endif
+                            var right = evaluate(node.right) // this is an AST!
+                            return right
+                            }
+                        return null
+                        }
+                    default:
+                        throw new SyntaxError('Unknown flow control statement' + node.operator);
+                    }
+            }
+
+            case 'Number':
+            {
+                print(identation+'return value (Number) =', parseFloat(node.value));
+                return parseFloat(node.value);
+            }
+        } /* switch (node.type) */
     };
 
 
@@ -228,11 +237,11 @@ function interpreter(startwaarden_ast, modelregels_ast) {
     namespace.Startwaarden = namespace.Variables;
     namespace.Variables = {};
 
-    for (i=0; i < 1e5; i++) {
+    for (i=0; i < 1e6; i++) {
         evaluate(modelregels_ast);
     }
 
-    print("*** variables at end of execution = ", namespace)
+    console.log("*** variables at end of execution = ", namespace)
 
 };
 
