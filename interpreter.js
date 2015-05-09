@@ -48,15 +48,29 @@ function main () {
     print(JSON.stringify(modelregels_ast, undefined, 4));
 
     print('')
-    var t1 = Date.now();
 
     startwaarden_code = js_codegen(startwaarden_ast);
     modelregels_code = js_codegen(modelregels_ast);
 
     print(startwaarden_code);
-    print(modelregels_code);
+    model = "for (var i=0; i < 1e6; i++) { " + modelregels_code  + " }";
+
+    print(model);
+
+    var t1 = Date.now();
+
+    eval(startwaarden_code);
+
+    // eval(model); // slow.... in chrome21
+    (new Function(model))();
 
     var t2 = Date.now();
+
+    print("* Fmotor = ", Fmotor);
+
+    print("* t = ", t);
+    print("* s = ", s);
+
     console.log("Time: " + (t2 - t1) + "ms");
 }
 
@@ -118,8 +132,7 @@ function parseNode(node) {
     function js_if(node) {
         return "if ("
         +      parseNode(node.cond) + ")"
-        +      " { " + js_codegen(node.then) + " } "
-        +  ");";
+        +      " { " + js_codegen(node.then) + " }; ";
     }
 
     function js_unary(node) {
