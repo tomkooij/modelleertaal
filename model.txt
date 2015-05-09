@@ -2,6 +2,8 @@
 test model voor modelleertaal interpreter
 */
 
+' alleen de puntkomma ; delimiters zijn toegevoegd
+
 Fmotor = 500; 'N
 m = 800; 'kg
 dt = 1.0; 's
