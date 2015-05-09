@@ -248,7 +248,6 @@ expr
         }
   }
 
-
   /* parentheses are handled in the parser */
   | '(' expr ')'
       {$$ = $2;}
@@ -259,4 +258,16 @@ expr
                   value: $1
               };
            }
-    ;
+  | TRUE /* There must be a better way... */
+      {$$ = {
+                type: 'True',
+                value: $1
+            };
+         }
+  | FALSE
+      {$$ = {
+                type: 'False',
+                value: $1
+            };
+         }
+  ;

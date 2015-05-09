@@ -115,6 +115,8 @@ function parseNode(node) {
         case 'Logical': return js_logical(node);
         case 'If': return js_if(node);
         case 'Number': return js_number(node);
+        case 'True' : return 'true';
+        case 'False' : return 'false';
 
     } /* switch (node.type) */
 
