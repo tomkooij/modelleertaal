@@ -74,6 +74,7 @@
 "Als"|"als"                             return 'IF'
 "Dan"|"dan"                             return 'THEN'
 "EindAls"|"Eindals"|"eindals"           return 'ENDIF'
+"Stop"|"stop"                           return 'STOP'
 
 // identifiers
 [a-zA-Z]+                               return 'IDENT'
@@ -132,6 +133,12 @@ stmt
                 type: 'If',
                 cond: $2,
                 then: $4
+            };
+        }
+  | STOP
+     {$$ = {
+                 type: 'Stop',
+                 value: $1
             };
         }
   ;
@@ -270,4 +277,5 @@ expr
                 value: $1
             };
          }
+
   ;

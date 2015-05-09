@@ -60,7 +60,7 @@ function main () {
     print(startwaarden_code);
 
 
-    model = "for (var i=0; i < "+Nmax+"; i++) { " + modelregels_code  + " }";
+    model = "try {\n for (var i=0; i < "+Nmax+"; i++) { \n " + modelregels_code  + " } \n } catch (e) {console.log(e)}";
 
     print(model);
 
@@ -117,6 +117,7 @@ function parseNode(node) {
         case 'Number': return js_number(node);
         case 'True' : return 'true';
         case 'False' : return 'false';
+        case 'Stop' : return 'throw \'StopIteration\''
 
     } /* switch (node.type) */
 
