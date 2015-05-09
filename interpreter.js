@@ -152,7 +152,11 @@ function parseNode(node) {
     }
 
     function js_unary(node) {
-        return "(-1. * " + parseNode(node.right)
+        switch(node.operator) {
+            case '-':   return "(-1. * " + parseNode(node.right);
+            case 'NOT':  return "!("+ parseNode(node.right) + ")";
+        }
+
     }
 };
 

@@ -49,6 +49,9 @@
 "<="                                    return '<='
 ">"                                     return '>'
 "<"                                     return '<'
+"!"|"Niet"|"niet"                       return 'NOT'
+"Waar"|"waar"                           return 'TRUE'
+"Onwaar"|"onwaar"|"OnWaar"|"False"      return 'FALSE'
 
 // assign value to var
 "="                                     return 'ASSIGN'
@@ -88,8 +91,9 @@
 %left '+' '-'
 %left '*' '/'
 %left '^'
-%right '!'
+%right NOT
 %left UMINUS
+
 
 %left '=='
 %left '<='
@@ -235,8 +239,17 @@ expr
                   right: $2
             };
           }
+  | NOT expr %prec NOT
+    {$$ = {
+                type: 'Unary',
+                operator: 'NOT',
+                right: $2
+          };
+        }
+  }
 
-  /* parentheses (in math) are handled in the parser */
+
+  /* parentheses are handled in the parser */
   | '(' expr ')'
       {$$ = $2;}
 
