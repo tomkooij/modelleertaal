@@ -17,10 +17,15 @@ var jison = require("jison");
 // input sourcode:
 var modelregels = fs.readFileSync("modelregels.txt", "utf8")
 var startwaarden = fs.readFileSync("startwaarden.txt", "utf8")
+// aantal iteraties
+const Nmax = 1e2;
+
+
 
 // parser compiled on execution by jison.js
 var bnf = fs.readFileSync("modelleertaal.jison", "utf8");
 var parser = new jison.Parser(bnf);
+
 
 
 // for some reason the jison example uses print()
@@ -53,7 +58,9 @@ function main () {
     modelregels_code = js_codegen(modelregels_ast);
 
     print(startwaarden_code);
-    model = "for (var i=0; i < 1e6; i++) { " + modelregels_code  + " }";
+
+
+    model = "for (var i=0; i < "+Nmax+"; i++) { " + modelregels_code  + " }";
 
     print(model);
 
@@ -64,7 +71,7 @@ function main () {
     // eval(model); // slow... in chrome >23
     //  the optimising compiler does not optimise eval() in local scope
     //  http://moduscreate.com/javascript-performance-tips-tricks/
-    (new Function(model))();
+    (new Function(model))(); // eval(model);
 
     var t2 = Date.now();
 
@@ -124,7 +131,14 @@ function parseNode(node) {
     }
 
     function js_binary(node) {
-        return "(" + parseNode(node.left) + node.operator + parseNode(node.right) + ")";
+        if (node.operator == '^') {
+            return "(Math.pow("+parseNode(node.left)+","+parseNode(node.right)+"))"
+        } else {
+            return "(" + parseNode(node.left) + node.operator + parseNode(node.right) + ")";
+        }
+    }
+    function js_logical(node) {
+        return "(" + parseNode(node.left) + node.operator + parseNode(node.right) + ")"
     }
 
     function js_assign(node) {
@@ -141,6 +155,17 @@ function parseNode(node) {
         return "(-1. * " + parseNode(node.right)
     }
 };
+
+
+
+
+
+
+
+
+
+
+
 
 function interpreter(startwaarden_ast, modelregels_ast) {
 

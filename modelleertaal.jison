@@ -44,7 +44,11 @@
 ")"                                     return ')'
 
 // logical
-"=="                                    return 'EQUALS'
+"=="                                    return '=='
+">="                                    return '>='
+"<="                                    return '<='
+">"                                     return '>'
+"<"                                     return '<'
 
 // assign value to var
 "="                                     return 'ASSIGN'
@@ -87,7 +91,11 @@
 %right '!'
 %left UMINUS
 
-%left EQUALS
+%left '=='
+%left '<='
+%left '<'
+%left '>='
+%left '>'
 %left IF
 
 %%
@@ -127,16 +135,6 @@ stmt
 condition
   : expr
      {$$ = $1;}
-/*
-    | expr EQUALS expr
-     {$$ = {
-                 type: 'Logical',
-                 operator: '==',
-                 left: $1,
-                 right: $3
-         };
-     }
- */
   ;
 
 expr
@@ -147,7 +145,7 @@ expr
             };
         }
 
-| expr EQUALS expr
+ | expr '==' expr
    {$$ = {
                type: 'Logical',
                operator: '==',
@@ -155,6 +153,39 @@ expr
                right: $3
        };
    }
+
+ | expr '>' expr
+  {$$ = {
+              type: 'Logical',
+              operator: '>',
+              left: $1,
+              right: $3
+      };
+  }
+  | expr '>=' expr
+    {$$ = {
+                type: 'Logical',
+                operator: '>=',
+                left: $1,
+                right: $3
+        };
+    }
+  | expr '<' expr
+   {$$ = {
+               type: 'Logical',
+               operator: '<',
+               left: $1,
+               right: $3
+       };
+   }
+  | expr '<=' expr
+      {$$ = {
+                  type: 'Logical',
+                  operator: '<=',
+                  left: $1,
+                  right: $3
+          };
+      }
 
  | expr '^' expr
       {$$ = {
