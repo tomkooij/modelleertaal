@@ -61,7 +61,9 @@ function main () {
 
     eval(startwaarden_code);
 
-    // eval(model); // slow.... in chrome21
+    // eval(model); // slow... in chrome >23
+    //  the optimising compiler does not optimise eval() in local scope
+    //  http://moduscreate.com/javascript-performance-tips-tricks/
     (new Function(model))();
 
     var t2 = Date.now();
