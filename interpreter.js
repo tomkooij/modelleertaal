@@ -28,8 +28,10 @@ var parser = new jison.Parser(bnf);
 // print(string) and print("var = ", variable)
 function print(string1, string2) {
     if (arguments.length == 1) {
-        console.log(string1)
-    } else { console.log(string1, string2) }
+        //console.log(string1)
+    } else {
+        //console.log(string1, string2)
+    }
 }
 
 
@@ -39,14 +41,19 @@ function main () {
     print(startwaarden);
     print(modelregels);
 
-    var startwaarden_ast = parser.parse(startwaarden)
+    var startwaarden_ast = parser.parse(startwaarden);
     var modelregels_ast = parser.parse(modelregels);
 
     print('*** AST modelregels ***');
     print(JSON.stringify(modelregels_ast, undefined, 4));
 
     print('')
+    var t1 = Date.now();
+
     interpreter(startwaarden_ast, modelregels_ast);
+
+    var t2 = Date.now();
+    console.log("Time: " + (t2 - t1) + "ms");
 }
 
 function interpreter(startwaarden_ast, modelregels_ast) {
@@ -221,7 +228,7 @@ function interpreter(startwaarden_ast, modelregels_ast) {
     namespace.Startwaarden = namespace.Variables;
     namespace.Variables = {};
 
-    for (i=0; i < 10; i++) {
+    for (i=0; i < 1e5; i++) {
         evaluate(modelregels_ast);
     }
 
