@@ -81,7 +81,7 @@ function js_codegen(ast) {
 
     for (var i = 0; i < ast.length; i++) {
         //print("AST item = ",ast[i])
-        code = code.concat(parseNode(ast[i]));
+        code += parseNode(ast[i]);
 
     }
     return code
