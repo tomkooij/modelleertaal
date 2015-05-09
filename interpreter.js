@@ -18,7 +18,7 @@ var jison = require("jison");
 var modelregels = fs.readFileSync("modelregels.txt", "utf8")
 var startwaarden = fs.readFileSync("startwaarden.txt", "utf8")
 // aantal iteraties
-const Nmax = 1e2;
+const Nmax = 1e6;
 
 
 
@@ -40,7 +40,6 @@ function print(string1, string2) {
 }
 
 
-
 function main () {
     print('*** input ***');
     print(startwaarden);
@@ -59,26 +58,29 @@ function main () {
 
     print(startwaarden_code);
 
+    var namespace = {};
 
     model = "try {\n for (var i=0; i < "+Nmax+"; i++) { \n " + modelregels_code  + " } \n } catch (e) {console.log(e)}";
 
     print(model);
 
     var t1 = Date.now();
-
-    eval(startwaarden_code);
-
+    with (namespace) {
+        eval(startwaarden_code);
+    }
     // eval(model); // slow... in chrome >23
     //  the optimising compiler does not optimise eval() in local scope
     //  http://moduscreate.com/javascript-performance-tips-tricks/
-    (new Function(model))(); // eval(model);
+    var model = new Function('namespace',model);
+    model(namespace);
 
     var t2 = Date.now();
 
-    print("* Fmotor = ", Fmotor);
+    print("* Fmotor = ", namespace.Fmotor);
 
-    print("* t = ", t);
-    print("* s = ", s);
+    print("* t = ", namespace.t);
+    print("* s = ", namespace.s);
+    print("namespace", namespace)
 
     console.log("Time: " + (t2 - t1) + "ms");
 }
@@ -126,7 +128,7 @@ function parseNode(node) {
     }
 
     function make_var(name) {
-        return name;
+        return "namespace."+name;
     }
 
     function js_var(node) {
@@ -145,7 +147,7 @@ function parseNode(node) {
     }
 
     function js_assign(node) {
-        return node.left + ' = (' + parseNode(node.right) + ');\n';
+        return make_var(node.left) + ' = (' + parseNode(node.right) + ');\n';
     }
 
     function js_if(node) {
