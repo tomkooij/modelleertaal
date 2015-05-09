@@ -63,16 +63,11 @@
 "*"                                     return '*'
 "/"                                     return '/'
 
-
-
-
 // flow control
-"Als"                                   return 'IF'
-"Dan"                                   return 'THEN'
-"EindAls"                               return 'ENDIF'
+"Als"|"als"                             return 'IF'
+"Dan"|"dan"                             return 'THEN'
+"EindAls"|"Eindals"|"eindals"           return 'ENDIF'
 
-// termination
-";"                                     return ';'
 
 // identifiers
 [a-zA-Z]+                               return 'IDENT'
@@ -104,13 +99,14 @@ program
   ;
 
 stmt_list
-  : stmt ';'
+  : stmt
     { $$ = [$1]; }
-  | stmt_list stmt ';'
+  | stmt_list stmt
     { $1.push($2); $$ = $1; }
   ;
 
 stmt
+
   : IDENT ASSIGN expr
     { $$ = {
                 type: 'Assignment',

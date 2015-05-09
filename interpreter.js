@@ -83,7 +83,7 @@ function interpreter(startwaarden_ast, modelregels_ast) {
             if (namespace.Variables.hasOwnProperty(node.name)) {
                 return namespace.Variables[node.name];
             }
-            
+
             if (namespace.Startwaarden.hasOwnProperty(node.name)) {
                 return namespace.Startwaarden[node.name];
             }

@@ -7,10 +7,13 @@ modelregels
 
 ' alleen de puntkomma ; delimiters zijn toegevoegd
 
-Fres= Fmotor;
-a = Fres/m;
-dv = a * dt;
-v = v + dv;
-ds = v * dt;
-s = s + ds;
-t = t + dt;
+Fres= Fmotor
+a = Fres/m
+dv = a * dt
+v = v + dv
+ds = v * dt
+s = s + ds
+als (1)
+dan
+   t = t + dt
+EindAls
