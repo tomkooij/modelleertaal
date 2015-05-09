@@ -65,14 +65,16 @@ function main () {
     print(model);
 
     var t1 = Date.now();
+
     with (namespace) {
         eval(startwaarden_code);
     }
+
     // eval(model); // slow... in chrome >23
     //  the optimising compiler does not optimise eval() in local scope
     //  http://moduscreate.com/javascript-performance-tips-tricks/
-    var model = new Function('namespace',model);
-    model(namespace);
+    var runModel = new Function('namespace',model);
+    runModel(namespace);
 
     var t2 = Date.now();
 
