@@ -19,8 +19,10 @@ var jison = require("jison");
 var modelregels = fs.readFileSync("modelregels.txt", "utf8");
 var startwaarden = fs.readFileSync("startwaarden.txt", "utf8");
 // aantal iteraties
-var Nmax = 1e6;
+var N = 1e6; // iterations
+var k = 1e3; // store every k iterations
 
+var variablePrefix = "env_" // prefix voor variables in generated js code
 
 // parser compiled on execution by jison.js
 var bnf = fs.readFileSync("modelleertaal.jison", "utf8");
@@ -48,10 +50,11 @@ function main () {
     var model =  "try \n"
                 +"  { \n"
                 +startwaarden_code + "\n"
-                +"    var storage = [];\n"
-                +"    for (var i=0; i < "+Nmax+"; i++) { \n "
+                +namespace.generate_var_storage_js_code()
+                +"    for (var i=0; i < "+N+"; i++) { \n "
                 +modelregels_code + "\n"
-                +"    storage[i]=env.s; } \n"
+                +namespace.generate_storage_js_code()
+                +"    } \n"
                 +"  } catch (e) \n"
                 +"  { console.log(e)} \n "
                 +"return storage;\n";
@@ -65,19 +68,15 @@ function main () {
     //  http://moduscreate.com/javascript-performance-tips-tricks/
 
     var env = {};  // object for storing variables "local" to the model
-    var runModel = new Function('env',model);
-    var result = runModel(env);
+    var runModel = new Function('N','k',model);
+    var result = runModel(N,k);
 
     var t2 = Date.now();
 
-    console.log("* Fmotor = ", env.Fmotor);
-    console.log("* t = ", env.t);
-    console.log("* s = ", env.s);
-    console.log("enviroments: ", env ); // Object.keys(env)
     console.log("namespace object: ", namespace);
-    console.log("result[100]", result[100]);
+    console.log("result", result.env_t[1000000-1]);
+    console.log("result", result.env_s[1000000-1]);
     console.log("Time: " + (t2 - t1) + "ms");
-
 }
 
 /*
@@ -104,7 +103,20 @@ namespace.moveStartWaarden = function () {
     this.constNames = this.varNames;
     this.varNames = {};
 }
-
+namespace.generate_var_storage_js_code = function() {
+    var code = 'var storage = {} \n';
+    for (var variable in this.varNames) {
+        code += "storage."+variable+" = []; \n";
+    }
+    return code;
+}
+namespace.generate_storage_js_code = function() {
+    var code = '';
+    for (var variable in this.varNames) {
+        code += "storage."+variable+"[i]= "+variable+"; \n";
+    }
+    return code;
+}
 function js_codegen(ast) {
 
     var code = "";
@@ -148,8 +160,8 @@ function parseNode(node) {
     }
 
     function make_var(name) {
-        namespace.createVar(name);
-        return "env."+name;
+        namespace.createVar(variablePrefix+name);
+        return variablePrefix+name;
     }
 
     function js_var(node) {
