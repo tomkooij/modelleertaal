@@ -51,8 +51,10 @@ function main () {
                 +"  { \n"
                 +startwaarden_code + "\n"
                 +namespace.generate_var_storage_js_code()
-                +"    for (var i=0; i < "+N+"; i++) { \n "
+                +"    for (var i=0; i < "+N/k+"; i++) { \n "
+                +"      for (var inner=0; inner <"+k+"; inner++) {\n"
                 +modelregels_code + "\n"
+                +"      } \n"
                 +namespace.generate_storage_js_code()
                 +"    } \n"
                 +"  } catch (e) \n"
@@ -61,6 +63,9 @@ function main () {
 
     console.log(model);
 
+    console.log("*** running! *** ");
+    console.log("N = ", N);
+    console.log("k = ", k);
     var t1 = Date.now();
 
     // eval(model); // slow... in chrome >23
@@ -73,10 +78,12 @@ function main () {
 
     var t2 = Date.now();
 
-    console.log("namespace object: ", namespace);
-    console.log("result", result.env_t[1000000-1]);
-    console.log("result", result.env_s[1000000-1]);
+    //console.log("namespace object: ", namespace);
+    console.log("result t[1000]=", result.env_t[1000-1]);
+    console.log("result s[1000]=", result.env_t[1000-1]);
     console.log("Time: " + (t2 - t1) + "ms");
+
+
 }
 
 /*
