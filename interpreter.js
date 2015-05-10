@@ -40,6 +40,7 @@ function main () {
     //console.log('');
 
     var startwaarden_code = js_codegen(startwaarden_ast);
+    namespace.moveStartWaarden(); // keep namespace clean
     var modelregels_code = js_codegen(modelregels_ast);
 
     console.log('*** generated js ***');
@@ -73,12 +74,36 @@ function main () {
     console.log("* t = ", env.t);
     console.log("* s = ", env.s);
     console.log("enviroments: ", env ); // Object.keys(env)
-
+    console.log("namespace object: ", namespace);
     console.log("result[100]", result[100]);
     console.log("Time: " + (t2 - t1) + "ms");
 
 }
 
+/*
+ The namespace
+
+ Variables are created in this.varNames = {} (a list of variable names)
+
+ Startwaarden are copied to this.constNames and varNames are erased after
+ parsing "startwaarden.txt". This is a trick to keep startwaarden seperate
+*/
+
+var namespace = new Object;
+namespace.varNames = {}; // list of created variables
+namespace.constNames = {}; // list of startwaarden that remain constant in execution
+namespace.createVar = function(name) {
+    if (this.varNames[name]) {
+        console.log(name, ' already created!.')
+    } else {
+        console.log('creating: ',name)
+        this.varNames[name] = true;
+    }
+}
+namespace.moveStartWaarden = function () {
+    this.constNames = this.varNames;
+    this.varNames = {};
+}
 
 function js_codegen(ast) {
 
@@ -123,6 +148,7 @@ function parseNode(node) {
     }
 
     function make_var(name) {
+        namespace.createVar(name);
         return "env."+name;
     }
 
