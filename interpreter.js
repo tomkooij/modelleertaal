@@ -19,8 +19,8 @@ var jison = require("jison");
 var modelregels = fs.readFileSync("modelregels.txt", "utf8");
 var startwaarden = fs.readFileSync("startwaarden.txt", "utf8");
 // aantal iteraties
-var N = 1e6; // iterations
-var k = 1e3; // store every k iterations
+var N = 1e3; // iterations
+var Nresults = 100; // store every Nresults iterations
 
 var variablePrefix = "env_" // prefix voor variables in generated js code
 
@@ -51,8 +51,8 @@ function main () {
                 +"  { \n"
                 +startwaarden_code + "\n"
                 +namespace.generate_var_storage_js_code()
-                +"    for (var i=0; i < "+N/k+"; i++) { \n "
-                +"      for (var inner=0; inner <"+k+"; inner++) {\n"
+                +"    for (var i=0; i < Nresults; i++) { \n "
+                +"      for (var inner=0; inner <N/Nresults; inner++) {\n"
                 +modelregels_code + "\n"
                 +"      } \n"
                 +namespace.generate_storage_js_code()
@@ -65,7 +65,7 @@ function main () {
 
     console.log("*** running! *** ");
     console.log("N = ", N);
-    console.log("k = ", k);
+    console.log("Nresults = ", Nresults);
     var t1 = Date.now();
 
     // eval(model); // slow... in chrome >23
@@ -73,14 +73,14 @@ function main () {
     //  http://moduscreate.com/javascript-performance-tips-tricks/
 
     var env = {};  // object for storing variables "local" to the model
-    var runModel = new Function('N','k',model);
-    var result = runModel(N,k);
+    var runModel = new Function('N','Nresults',model);
+    var result = runModel(N,Nresults);
 
     var t2 = Date.now();
 
     //console.log("namespace object: ", namespace);
-    console.log("result t[1000]=", result.env_t[1000-1]);
-    console.log("result s[1000]=", result.env_t[1000-1]);
+    console.log("result t[100]=", result.env_t[100-1]);
+    console.log("result s[100]=", result.env_s[100-1]);
     console.log("Time: " + (t2 - t1) + "ms");
 
     writeCSV("output.csv", result)
@@ -90,7 +90,7 @@ function writeCSV(filename, result) {
     var stream = fs.createWriteStream(filename);
     stream.once('open', function(fd) {
         stream.write("t; s\n");
-        for (var i=0; i<k; i++) {
+        for (var i=0; i<Nresults; i++) {
             var csvrow = result.env_t[i]+";"+result.env_s[i]+"\n";
             stream.write(csvrow.replace('.',',').replace('.',','));
         }
