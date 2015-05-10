@@ -83,7 +83,19 @@ function main () {
     console.log("result s[1000]=", result.env_t[1000-1]);
     console.log("Time: " + (t2 - t1) + "ms");
 
+    writeCSV("output.csv", result)
+}
 
+function writeCSV(filename, result) {
+    var stream = fs.createWriteStream(filename);
+    stream.once('open', function(fd) {
+        stream.write("t; s\n");
+        for (var i=0; i<k; i++) {
+            var csvrow = result.env_t[i]+";"+result.env_s[i]+"\n";
+            stream.write(csvrow.replace('.',',').replace('.',','));
+        }
+        stream.end();
+    });
 }
 
 /*
