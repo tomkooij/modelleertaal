@@ -80,7 +80,7 @@ function main () {
 
     //console.log("namespace object: ", namespace);
     console.log("result t[100]=", result.env_t[100-1]);
-    console.log("result s[100]=", result.env_s[100-1]);
+    console.log("result y[100]=", result.env_y[100-1]);
     console.log("Time: " + (t2 - t1) + "ms");
 
     writeCSV("output.csv", result)
@@ -89,10 +89,10 @@ function main () {
 function writeCSV(filename, result) {
     var stream = fs.createWriteStream(filename);
     stream.once('open', function(fd) {
-        stream.write("t; s\n");
+        stream.write("t; h\n");
         for (var i=0; i<Nresults; i++) {
-            var csvrow = result.env_t[i]+";"+result.env_s[i]+"\n";
-            stream.write(csvrow.replace('.',',').replace('.',','));
+            var csvrow = result.env_t[i]+";"+result.env_h[i]+";"+result.env_v[i]+"\n";
+            stream.write(csvrow.replace('.',',').replace('.',',').replace('.',','));
         }
         stream.end();
     });

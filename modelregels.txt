@@ -1,19 +1,13 @@
-/*
-test model voor modelleertaal interpreter
-
-SysNat deel 5 H5 model 5 Optrekken van een auto
-modelregels
-*/
-
-' alleen de puntkomma ; delimiters zijn toegevoegd
-
-Fres= Fmotor
+'model 9 parachutesprong
+'modelregels
+Fwr = k * v^2
+Fres = Fzw - Fwr
 a = Fres/m
 dv = a * dt
 v = v + dv
-ds = v * dt
-s = s + ds
-als (1)
-dan
-   t = t + dt
-EindAls
+dy = v * dt
+y = y + dy
+h = ho - y
+t = t + dt
+als h < 400 dan k = 0.6 * (400 - h) eindals
+als h < 350 dan k = 30 eindals

@@ -1,10 +1,12 @@
-/*
-SysNat deel 5 H5 model 5 Optrekken van een auto
-startwaarden
-*/
-Fmotor = 500 'N
-m = 800 'kg
-dt = 1.0 's
-v = 0'm/s
-s = 0 'm/s
-t = 0 's
+'model 9 parachutesprong
+
+'startwaarden
+k = 0.22
+m = 80
+g = 9.81
+Fzw = m * g
+v = 0
+y = 0
+ho = 1600
+t = 0
+dt = 0.1
