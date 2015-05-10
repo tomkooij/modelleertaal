@@ -44,18 +44,16 @@ function main () {
 
     console.log('*** generated js ***');
 
-    var env = {};
-
-    var model =  "try "
-                +"  { "
-                +startwaarden_code
-                +"    var storage = [];"
+    var model =  "try \n"
+                +"  { \n"
+                +startwaarden_code + "\n"
+                +"    var storage = [];\n"
                 +"    for (var i=0; i < "+Nmax+"; i++) { \n "
-                +modelregels_code
+                +modelregels_code + "\n"
                 +"    storage[i]=env.s; } \n"
-                +"  } catch (e) "
-                +"  { console.log(e)} "
-                +"return storage;";
+                +"  } catch (e) \n"
+                +"  { console.log(e)} \n "
+                +"return storage;\n";
 
     console.log(model);
 
@@ -64,6 +62,8 @@ function main () {
     // eval(model); // slow... in chrome >23
     //  the optimising compiler does not optimise eval() in local scope
     //  http://moduscreate.com/javascript-performance-tips-tricks/
+
+    var env = {};  // object for storing variables "local" to the model
     var runModel = new Function('env',model);
     var result = runModel(env);
 
