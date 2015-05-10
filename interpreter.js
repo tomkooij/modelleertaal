@@ -8,7 +8,8 @@
       npm install path_to/jison
       node interpreter.js
 */
-//"use strict"
+
+"use strict"
 
 // CommonJS
 var fs = require("fs");
@@ -21,48 +22,34 @@ var startwaarden = fs.readFileSync("startwaarden.txt", "utf8")
 var Nmax = 1e6;
 
 
-
 // parser compiled on execution by jison.js
 var bnf = fs.readFileSync("modelleertaal.jison", "utf8");
 var parser = new jison.Parser(bnf);
 
 
-
-// for some reason the jison example uses print()
-// this is a lame implemenations to allow:
-// print(string) and print("var = ", variable)
-function print(string1, string2) {
-    if (arguments.length == 1) {
-        console.log(string1)
-    } else {
-        console.log(string1, string2)
-    }
-}
-
-
 function main () {
-    print('*** input ***');
-    print(startwaarden);
-    print(modelregels);
+    console.log('*** input ***');
+    console.log(startwaarden);
+    console.log(modelregels);
 
     var startwaarden_ast = parser.parse(startwaarden);
     var modelregels_ast = parser.parse(modelregels);
 
-    print('*** AST modelregels ***');
-    print(JSON.stringify(modelregels_ast, undefined, 4));
+    console.log('*** AST modelregels ***');
+    console.log(JSON.stringify(modelregels_ast, undefined, 4));
 
-    print('')
+    console.log('')
 
     var startwaarden_code = js_codegen(startwaarden_ast);
     var modelregels_code = js_codegen(modelregels_ast);
 
-    print(startwaarden_code);
+    console.log(startwaarden_code);
 
     var env = {};
 
     var model = "try {\n var storage = []; for (var i=0; i < "+Nmax+"; i++) { \n " + modelregels_code  + " storage[i]=env.s; } \n } catch (e) {console.log(e)} return storage;";
 
-    print(model);
+    console.log(model);
 
     var t1 = Date.now();
 
@@ -77,12 +64,12 @@ function main () {
 
     var t2 = Date.now();
 
-    print("* Fmotor = ", env.Fmotor);
-    print("* t = ", env.t);
-    print("* s = ", env.s);
-    print("enviroments: ", env ); // Object.keys(env)
+    console.log("* Fmotor = ", env.Fmotor);
+    console.log("* t = ", env.t);
+    console.log("* s = ", env.s);
+    console.log("enviroments: ", env ); // Object.keys(env)
 
-    print("result[100]", result[10000]);
+    console.log("result[100]", result[100]);
     console.log("Time: " + (t2 - t1) + "ms");
 
 }
@@ -93,7 +80,7 @@ function js_codegen(ast) {
     var code = "";
 
     for (var i = 0; i < ast.length; i++) {
-        //print("AST item = ",ast[i])
+        //console.log("AST item = ",ast[i])
         code += parseNode(ast[i]);
 
     }
