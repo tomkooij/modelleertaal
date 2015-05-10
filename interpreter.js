@@ -35,26 +35,31 @@ function main () {
     var startwaarden_ast = parser.parse(startwaarden);
     var modelregels_ast = parser.parse(modelregels);
 
-    console.log('*** AST modelregels ***');
-    console.log(JSON.stringify(modelregels_ast, undefined, 4));
-
-    console.log('')
+    //console.log('*** AST modelregels ***');
+    //console.log(JSON.stringify(modelregels_ast, undefined, 4));
+    //console.log('');
 
     var startwaarden_code = js_codegen(startwaarden_ast);
     var modelregels_code = js_codegen(modelregels_ast);
 
-    console.log(startwaarden_code);
+    console.log('*** generated js ***');
 
     var env = {};
 
-    var model = "try {\n var storage = []; for (var i=0; i < "+Nmax+"; i++) { \n " + modelregels_code  + " storage[i]=env.s; } \n } catch (e) {console.log(e)} return storage;";
+    var model =  "try "
+                +"  { "
+                +startwaarden_code
+                +"    var storage = [];"
+                +"    for (var i=0; i < "+Nmax+"; i++) { \n "
+                +modelregels_code
+                +"    storage[i]=env.s; } \n"
+                +"  } catch (e) "
+                +"  { console.log(e)} "
+                +"return storage;";
 
     console.log(model);
 
     var t1 = Date.now();
-
-    var runStartWaarden = new Function('env', startwaarden_code);
-    runStartWaarden(env);
 
     // eval(model); // slow... in chrome >23
     //  the optimising compiler does not optimise eval() in local scope
