@@ -9,15 +9,15 @@
       node interpreter.js
 */
 
-"use strict"
+"use strict";
 
 // CommonJS
 var fs = require("fs");
 var jison = require("jison");
 
 // input sourcode:
-var modelregels = fs.readFileSync("modelregels.txt", "utf8")
-var startwaarden = fs.readFileSync("startwaarden.txt", "utf8")
+var modelregels = fs.readFileSync("modelregels.txt", "utf8");
+var startwaarden = fs.readFileSync("startwaarden.txt", "utf8");
 // aantal iteraties
 var Nmax = 1e6;
 
@@ -109,7 +109,8 @@ function parseNode(node) {
         case 'True' : return 'true';
         case 'False' : return 'false';
         case 'Stop' : return 'throw \'StopIteration\''
-
+        default:
+            throw new Error("Unable to parseNode() :" + JSON.stringify(node));
     } /* switch (node.type) */
 
     function js_number(node) {
@@ -149,10 +150,12 @@ function parseNode(node) {
         switch(node.operator) {
             case '-':   return "(-1. * " + parseNode(node.right);
             case 'NOT':  return "!("+ parseNode(node.right) + ")";
+            default:
+                throw new Error("Unknown unary:" + JSON.stringify(node));
         }
 
     }
-};
+}
 
 
 main();
