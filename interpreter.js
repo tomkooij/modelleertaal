@@ -8,7 +8,7 @@
       npm install path_to/jison
       node interpreter.js
 */
-
+//"use strict"
 
 // CommonJS
 var fs = require("fs");
@@ -18,7 +18,7 @@ var jison = require("jison");
 var modelregels = fs.readFileSync("modelregels.txt", "utf8")
 var startwaarden = fs.readFileSync("startwaarden.txt", "utf8")
 // aantal iteraties
-const Nmax = 1e6;
+var Nmax = 1e6;
 
 
 
@@ -53,38 +53,38 @@ function main () {
 
     print('')
 
-    startwaarden_code = js_codegen(startwaarden_ast);
-    modelregels_code = js_codegen(modelregels_ast);
+    var startwaarden_code = js_codegen(startwaarden_ast);
+    var modelregels_code = js_codegen(modelregels_ast);
 
     print(startwaarden_code);
 
-    var namespace = {};
+    var env = {};
 
-    model = "try {\n for (var i=0; i < "+Nmax+"; i++) { \n " + modelregels_code  + " } \n } catch (e) {console.log(e)}";
+    var model = "try {\n var storage = []; for (var i=0; i < "+Nmax+"; i++) { \n " + modelregels_code  + " storage[i]=env.s; } \n } catch (e) {console.log(e)} return storage;";
 
     print(model);
 
     var t1 = Date.now();
 
-    with (namespace) {
-        eval(startwaarden_code);
-    }
+    var runStartWaarden = new Function('env', startwaarden_code);
+    runStartWaarden(env);
 
     // eval(model); // slow... in chrome >23
     //  the optimising compiler does not optimise eval() in local scope
     //  http://moduscreate.com/javascript-performance-tips-tricks/
-    var runModel = new Function('namespace',model);
-    runModel(namespace);
+    var runModel = new Function('env',model);
+    var result = runModel(env);
 
     var t2 = Date.now();
 
-    print("* Fmotor = ", namespace.Fmotor);
+    print("* Fmotor = ", env.Fmotor);
+    print("* t = ", env.t);
+    print("* s = ", env.s);
+    print("enviroments: ", env ); // Object.keys(env)
 
-    print("* t = ", namespace.t);
-    print("* s = ", namespace.s);
-    print("namespace", namespace)
-
+    print("result[100]", result[10000]);
     console.log("Time: " + (t2 - t1) + "ms");
+
 }
 
 
@@ -130,7 +130,7 @@ function parseNode(node) {
     }
 
     function make_var(name) {
-        return "namespace."+name;
+        return "env."+name;
     }
 
     function js_var(node) {
@@ -165,81 +165,6 @@ function parseNode(node) {
         }
 
     }
-};
-
-
-
-
-
-
-
-
-
-
-
-
-function interpreter(startwaarden_ast, modelregels_ast) {
-
-    /* Interpret AST tree
-            :param: startwaarden_ast = array of json ast. Startwaarden to be loaded into namespace
-            :param: modelregels_ast = array of json asts. Modelregels to be executed many times
-                    */
-
-    Namespace = function () {
-    var  Functions;
-
-        Functions = {
-            abs: Math.abs,
-            acos: Math.acos,
-            asin: Math.asin,
-            atan: Math.atan,
-            ceil: Math.ceil,
-            cos: Math.cos,
-            exp: Math.exp,
-            floor: Math.floor,
-            ln: Math.ln,
-            random: Math.random,
-            sin: Math.sin,
-            sqrt: Math.sqrt,
-            tan: Math.tan
-        };
-
-        return {
-            Startwaarden: {},
-            Functions: Functions,
-            Variables: {}
-        };
-    };
-
-    function evaluate(ast) {
-    /* Evaluate (part of) AST tree
-        :param: ast = array of json asts
-
-    called by interpret() of recursive by itself
-    */
-        print("*** start evaluate()")
-        for (var i = 0; i < ast.length; i++) {
-            identation = ''; // string used for identation (debugging)
-
-            //print("AST item = ",ast[i])
-            var value = parseNode(ast[i]);
-            //print("item evaluates to ", value);
-        }
-    };
-
-    var namespace = new Namespace();
-
-    // evaluate startwaarden. Move Variables into Startwaarden
-    evaluate(startwaarden_ast);
-    namespace.Startwaarden = namespace.Variables;
-    namespace.Variables = {};
-
-    for (i=0; i < 1e6; i++) {
-        evaluate(modelregels_ast);
-    }
-
-    console.log("*** variables at end of execution = ", namespace)
-
 };
 
 
