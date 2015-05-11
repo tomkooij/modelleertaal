@@ -23,8 +23,8 @@ var parser = new jison.Parser(bnf);
 function main() {
 
     // input sourcode:
-    var modelregels = fs.readFileSync("modelregels.txt", "utf8");
-    var startwaarden = fs.readFileSync("startwaarden.txt", "utf8");
+    var modelregels = fs.readFileSync("modellen/modelregels.txt", "utf8");
+    var startwaarden = fs.readFileSync("modellen/startwaarden.txt", "utf8");
 
 
     var N = 1e3; // aantal iteraties
@@ -37,7 +37,7 @@ function main() {
     console.log("t[100]=", results.t[100-1]);
     console.log("y[100]=", results.y[100-1]);
     console.log(results.test_[100-1]);
-    
+
     var res = new Results(evaluator.namespace);
     res.getAllandCleanUp(results);
 
