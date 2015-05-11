@@ -12,10 +12,12 @@ Parses the language used for "natuurkundig modelleren" (dynamical models in
  Comments start with '
 
  Example:
-   Als (a = '0') En Niet(b = Waar) Dan Stop       'modelleertaal
+   a = 0
+   Als (a == 0) En Niet(b = Waar) Dan Stop       'modelleertaal
 
  In Pascal this would be:
-   If (a = '0') AND !(b = True) then Halt(0);
+   a := 0;
+   If (a = 0) AND !(b = True) then Halt(0);
 
 Extensions to the language:
 CoachTaal (and Pascal) use ':=' as the assign keyword. We also allow '='
