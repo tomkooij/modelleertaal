@@ -72,7 +72,7 @@
 "Stop"|"stop"                           return 'STOP'
 
 // identifiers
-[a-zA-Z]+([a-zA-Z0-9_])?                 return 'IDENT'
+[a-zA-Z]+([a-zA-Z0-9_])?                return 'IDENT'
 
 <<EOF>>                                 return 'EOF'
 
@@ -143,16 +143,29 @@ condition
      {$$ = $1;}
   ;
 
-expr
+direct_declarator
   : IDENT
-    { $$ = {
-                type: 'Variable',
-                name: yytext
-            };
-        }
+      { $$ = {
+                  type: 'Variable',
+                  name: yytext
+              };
+          }
 
- | expr '==' expr
-   {$$ = {
+  | IDENT '(' expr ')'
+      {$$ = {
+              type: 'Function',
+              func: $1,
+              expr: $3
+      };
+  }
+  ;
+
+expr
+  : direct_declarator
+    {$$ = $1;}
+
+  | expr '==' expr
+       {$$ = {
                type: 'Logical',
                operator: '==',
                left: $1,

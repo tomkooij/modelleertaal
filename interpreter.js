@@ -30,13 +30,14 @@ function main() {
     var N = 1e3; // aantal iteraties
     var Nresults = 100; // store every Nresults iterations
 
-    var evaluator = new ModelregelsEvaluator(startwaarden, modelregels);
+    var evaluator = new ModelregelsEvaluator(startwaarden, modelregels, true);
     var results = evaluator.run(N, Nresults);
 
     // TODO: put results in class
     console.log("t[100]=", results.t[100-1]);
     console.log("y[100]=", results.y[100-1]);
-
+    console.log(results.test_[100-1]);
+    
     var res = new Results(evaluator.namespace);
     res.getAllandCleanUp(results);
 
@@ -206,6 +207,17 @@ CodeGenerator.prototype.parseNode = function(node) {
 
         case 'If':
                 return "if (" + this.parseNode(node.cond) + ") {" + this.generateCodeFromAst(node.then) + " }; ";
+        case 'Function':
+                switch(node.func.toLowerCase()) {
+                    case 'sin': return "Math.sin("+this.parseNode(node.expr)+")";
+                    case 'cos': return "Math.cos("+this.parseNode(node.expr)+")";
+                    case 'tan': return "Math.tan("+this.parseNode(node.expr)+")";
+                    case 'exp': return "Math.exp("+this.parseNode(node.expr)+")";
+                    case 'ln':  return "Math.log("+this.parseNode(node.expr)+")";
+                    case 'sqrt': return "Math.sqrt("+this.parseNode(node.expr)+")";
+                    default:
+                        throw new Error("Unkown function:" + JSON.stringify(node));
+                    }
         case 'Number':
                 return parseFloat(node.value);
         case 'True':
