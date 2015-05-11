@@ -22,8 +22,6 @@ var startwaarden = fs.readFileSync("startwaarden.txt", "utf8");
 var N = 1e3; // iterations
 var Nresults = 100; // store every Nresults iterations
 
-var variablePrefix = "env_" // prefix voor variables in generated js code
-
 // parser compiled on execution by jison.js
 var bnf = fs.readFileSync("modelleertaal.jison", "utf8");
 var parser = new jison.Parser(bnf);
@@ -41,21 +39,26 @@ function main () {
     //console.log(JSON.stringify(modelregels_ast, undefined, 4));
     //console.log('');
 
-    var startwaarden_code = js_codegen(startwaarden_ast);
+    var namespace = new Namespace();
+    var codegenerator = new CodeGenerator(namespace);
+
+    console.log('javascriptCodeGenerator: ', codegenerator);
+
+    var startwaarden_code = codegenerator.generateCodeFromAst(startwaarden_ast);
     namespace.moveStartWaarden(); // keep namespace clean
-    var modelregels_code = js_codegen(modelregels_ast);
+    var modelregels_code = codegenerator.generateCodeFromAst(modelregels_ast);
 
     console.log('*** generated js ***');
 
     var model =  "try \n"
                 +"  { \n"
                 +startwaarden_code + "\n"
-                +namespace.generate_var_storage_js_code()
+                +codegenerator.generateVariableInitialisationCode()
                 +"    for (var i=0; i < Nresults; i++) { \n "
                 +"      for (var inner=0; inner <N/Nresults; inner++) {\n"
                 +modelregels_code + "\n"
                 +"      } \n"
-                +namespace.generate_storage_js_code()
+                +codegenerator.generateVariableStorageCode()
                 +"    } \n"
                 +"  } catch (e) \n"
                 +"  { console.log(e)} \n "
@@ -79,8 +82,8 @@ function main () {
     var t2 = Date.now();
 
     //console.log("namespace object: ", namespace);
-    console.log("result t[100]=", result.env_t[100-1]);
-    console.log("result y[100]=", result.env_y[100-1]);
+    console.log("result t[100]=", result.var_t[100-1]);
+    console.log("result y[100]=", result.var_y[100-1]);
     console.log("Time: " + (t2 - t1) + "ms");
 
     writeCSV("output.csv", result)
@@ -89,9 +92,9 @@ function main () {
 function writeCSV(filename, result) {
     var stream = fs.createWriteStream(filename);
     stream.once('open', function(fd) {
-        stream.write("t; h\n");
+        stream.write("t; h; v\n");
         for (var i=0; i<Nresults; i++) {
-            var csvrow = result.env_t[i]+";"+result.env_h[i]+";"+result.env_v[i]+"\n";
+            var csvrow = result.var_t[i]+";"+result.var_h[i]+";"+result.var_v[i]+"\n";
             stream.write(csvrow.replace('.',',').replace('.',',').replace('.',','));
         }
         stream.end();
@@ -107,12 +110,21 @@ function writeCSV(filename, result) {
  parsing "startwaarden.txt". This is a trick to keep startwaarden seperate
 */
 
-function namespaceClass() {};
+function Namespace() {
 
-namespaceClass.prototype.varNames = {}; // list of created variables
-namespaceClass.prototype.constNames = {}; // list of startwaarden that remain constant in execution
+    // prefix to prevent variable name collision with reserved words
+    this.varPrefix = "var_";
 
-namespaceClass.prototype.createVar = function(name) {
+    this.varNames = {}; // list of created variables
+    this.constNames = {}; // list of startwaarden that remain constant in execution
+
+};
+
+
+Namespace.prototype.createVar = function(name) {
+
+    name = this.varPrefix + name;
+
     if (this.varNames[name]) {
         console.log(name, ' already created!.')
     } else {
@@ -121,48 +133,58 @@ namespaceClass.prototype.createVar = function(name) {
     }
 }
 
-namespaceClass.prototype.moveStartWaarden = function () {
+Namespace.prototype.moveStartWaarden = function () {
     this.constNames = this.varNames;
     this.varNames = {};
 }
 
-// TODO!!!
-// move methods that generate js code to js_codegen()
-namespaceClass.prototype.generate_var_storage_js_code = function() {
+
+
+/*
+ Class Codegenerator
+ */
+function CodeGenerator(namespace) {
+        this.namespace = namespace;
+}
+
+CodeGenerator.prototype.setNamespace = function(namespace) {
+    this.namespace = namespace; // storage for variable names
+    console.log('*** set Namespace. Result of this.namspace:', this.namespace);
+};
+
+CodeGenerator.prototype.generateVariableInitialisationCode = function() {
     var code = 'var storage = {} \n';
-    for (var variable in this.varNames) {
+    for (var variable in this.namespace.varNames) {
         code += "storage."+variable+" = []; \n";
     }
     return code;
 }
 
-namespaceClass.prototype.generate_storage_js_code = function() {
+CodeGenerator.prototype.generateVariableStorageCode = function() {
     var code = '';
-    for (var variable in this.varNames) {
+    for (var variable in this.namespace.varNames) {
         code += "storage."+variable+"[i]= "+variable+"; \n";
     }
     return code;
 }
-// Class namespaceClass
-var namespace = new namespaceClass();
 
-/*
- Class codegen
- */
-
-function js_codegen(ast) {
+CodeGenerator.prototype.generateCodeFromAst = function(ast) {
 
     var code = "";
-
+    console.log('DEBUG in generateCodeFromAst: this=', this)
     for (var i = 0; i < ast.length; i++) {
         //console.log("AST item = ",ast[i])
-        code += parseNode(ast[i]);
+        code += this.parseNode(ast[i]);
 
     }
     return code
 }
 
-function parseNode(node) {
+CodeGenerator.prototype.makeVar = function(name) {
+    return this.namespace.createVar(name);
+}
+
+CodeGenerator.prototype.parseNode = function(node) {
     /* parseNode is a recursive function that parses an item
         of the JSON AST. Calls itself to traverse through nodes.
 
@@ -174,64 +196,48 @@ function parseNode(node) {
 
     switch(node.type) {
 
-        case 'Assignment':  return js_assign(node);
-        case 'Variable': return js_var(node);
-        case 'Binary': return js_binary(node);
-        case 'Unary': return js_unary(node);
-        case 'Logical': return js_logical(node);
-        case 'If': return js_if(node);
-        case 'Number': return js_number(node);
-        case 'True' : return 'true';
-        case 'False' : return 'false';
-        case 'Stop' : return 'throw \'StopIteration\''
+        case 'Assignment':
+                return this.makeVar(node.left) + ' = (' + this.parseNode(node.right) + ');\n';
+        case 'Variable':
+                return this.makeVar(node.name);
+        case 'Binary': {
+                    if (node.operator == '^') {
+                        return "(Math.pow("+this.parseNode(node.left)+","+this.parseNode(node.right)+"))"
+                    } else {
+                        return "(" + this.parseNode(node.left) + node.operator + this.parseNode(node.right) + ")";
+                    }
+                }
+        case 'Unary':
+                {
+                    switch(node.operator) {
+                        case '-':   return "(-1. * " + this.parseNode(node.right);
+                        case 'NOT':  return "!("+ this.parseNode(node.right) + ")";
+                        default:
+                            throw new Error("Unknown unary:" + JSON.stringify(node));
+                        }
+                }
+        case 'Logical':
+                return "(" + this.parseNode(node.left) + node.operator + this.parseNode(node.right) + ")"
+
+        case 'If':
+                return "if (" + this.parseNode(node.cond) + ") {" + this.generateCodeFromAst(node.then) + " }; ";
+        case 'Number':
+                return parseFloat(node.value);
+        case 'True':
+                return 'true';
+        case 'False':
+                return 'false';
+        case 'Stop':
+                return 'throw \'StopIteration\''
         default:
             throw new Error("Unable to parseNode() :" + JSON.stringify(node));
     } /* switch (node.type) */
 
-    function js_number(node) {
-        return parseFloat(node.value);
-    }
 
-    function make_var(name) {
-        namespace.createVar(variablePrefix+name);
-        return variablePrefix+name;
-    }
+} /* end of parseNode()  */
+// end of javascriptCodeGenerator()
 
-    function js_var(node) {
-        return make_var(node.name);
-    }
 
-    function js_binary(node) {
-        if (node.operator == '^') {
-            return "(Math.pow("+parseNode(node.left)+","+parseNode(node.right)+"))"
-        } else {
-            return "(" + parseNode(node.left) + node.operator + parseNode(node.right) + ")";
-        }
-    }
-    function js_logical(node) {
-        return "(" + parseNode(node.left) + node.operator + parseNode(node.right) + ")"
-    }
-
-    function js_assign(node) {
-        return make_var(node.left) + ' = (' + parseNode(node.right) + ');\n';
-    }
-
-    function js_if(node) {
-        return "if ("
-        +      parseNode(node.cond) + ")"
-        +      " { " + js_codegen(node.then) + " }; ";
-    }
-
-    function js_unary(node) {
-        switch(node.operator) {
-            case '-':   return "(-1. * " + parseNode(node.right);
-            case 'NOT':  return "!("+ parseNode(node.right) + ")";
-            default:
-                throw new Error("Unknown unary:" + JSON.stringify(node));
-        }
-
-    }
-}
 
 
 main();
