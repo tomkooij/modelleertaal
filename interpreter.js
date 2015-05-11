@@ -15,30 +15,34 @@
 var fs = require("fs");
 var jison = require("jison");
 
-
 // parser compiled on execution by jison.js
 var bnf = fs.readFileSync("modelleertaal.jison", "utf8");
 var parser = new jison.Parser(bnf);
 
 
 function main() {
+
     // input sourcode:
     var modelregels = fs.readFileSync("modelregels.txt", "utf8");
     var startwaarden = fs.readFileSync("startwaarden.txt", "utf8");
-    // aantal iteraties
-    var N = 1e3; // iterations
+
+
+    var N = 1e3; // aantal iteraties
     var Nresults = 100; // store every Nresults iterations
 
     var evaluator = new ModelregelsEvaluator(startwaarden, modelregels, true);
-    evaluator.run(N, Nresults);
+    var results = evaluator.run(N, Nresults);
 
+    // TODO: put results in class
+    writeCSV("output.csv", results, 100)
 }
 
-function writeCSV(filename, result) {
+function writeCSV(filename, result, Nresults) {
     var stream = fs.createWriteStream(filename);
     stream.once('open', function(fd) {
         stream.write("t; h; v\n");
         for (var i=0; i<Nresults; i++) {
+            // HELP! Put results in a class and write methods that can do this
             var csvrow = result.var_t[i]+";"+result.var_h[i]+";"+result.var_v[i]+"\n";
             stream.write(csvrow.replace('.',',').replace('.',',').replace('.',','));
         }
@@ -254,6 +258,9 @@ ModelregelsEvaluator.prototype.run = function(N, Nresults) {
         console.log("result t[100]=", result.var_t[100-1]);
         console.log("result y[100]=", result.var_y[100-1]);
         console.log("Time: " + (t2 - t1) + "ms");
+
+    return result;
+
     }
 }
 
