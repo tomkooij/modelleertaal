@@ -43,7 +43,7 @@ function writeCSV(filename, result, Nresults) {
         stream.write("t; h; v\n");
         for (var i=0; i<Nresults; i++) {
             // HELP! Put results in a class and write methods that can do this
-            var csvrow = result.var_t[i]+";"+result.var_h[i]+";"+result.var_v[i]+"\n";
+            var csvrow = result.t[i]+";"+result.h[i]+";"+result.v[i]+"\n";
             stream.write(csvrow.replace('.',',').replace('.',',').replace('.',','));
         }
         stream.end();
@@ -83,6 +83,13 @@ Namespace.prototype.createVar = function(name) {
     return name;
 }
 
+Namespace.prototype.removePrefix = function(name) {
+
+    var regex = new RegExp("^" + this.varPrefix);
+    return name.replace(regex, '');
+}
+
+
 Namespace.prototype.moveStartWaarden = function () {
     this.constNames = this.varNames;
     this.varNames = {};
@@ -105,7 +112,7 @@ CodeGenerator.prototype.setNamespace = function(namespace) {
 CodeGenerator.prototype.generateVariableInitialisationCode = function() {
     var code = 'var storage = {} \n';
     for (var variable in this.namespace.varNames) {
-        code += "storage."+variable+" = []; \n";
+        code += "storage."+this.namespace.removePrefix(variable)+" = []; \n";
     }
     return code;
 }
@@ -113,7 +120,7 @@ CodeGenerator.prototype.generateVariableInitialisationCode = function() {
 CodeGenerator.prototype.generateVariableStorageCode = function() {
     var code = '';
     for (var variable in this.namespace.varNames) {
-        code += "storage."+variable+"[i]= "+variable+"; \n";
+        code += "storage."+this.namespace.removePrefix(variable)+"[i]= "+variable+"; \n";
     }
     return code;
 }
@@ -255,8 +262,8 @@ ModelregelsEvaluator.prototype.run = function(N, Nresults) {
     var t2 = Date.now();
 
     if (this.debug) {
-        console.log("result t[100]=", result.var_t[100-1]);
-        console.log("result y[100]=", result.var_y[100-1]);
+        console.log("result t[100]=", result.t[100-1]);
+        console.log("result y[100]=", result.y[100-1]);
         console.log("Time: " + (t2 - t1) + "ms");
 
     return result;
