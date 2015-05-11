@@ -30,7 +30,7 @@ function main() {
     var N = 1e3; // aantal iteraties
     var Nresults = 100; // store every Nresults iterations
 
-    var evaluator = new ModelregelsEvaluator(startwaarden, modelregels, true);
+    var evaluator = new ModelregelsEvaluator(startwaarden, modelregels);
     var results = evaluator.run(N, Nresults);
 
     // TODO: put results in class
@@ -74,12 +74,9 @@ Namespace.prototype.createVar = function(name) {
 
     name = this.varPrefix + name;
 
-    if (this.varNames[name]) {
-        console.log(name, ' already created!.')
-    } else {
-        console.log('creating: ',name)
+    if (!this.varNames[name])
         this.varNames[name] = true;
-    }
+
     return name;
 }
 
@@ -106,7 +103,6 @@ function CodeGenerator(namespace) {
 
 CodeGenerator.prototype.setNamespace = function(namespace) {
     this.namespace = namespace; // storage for variable names
-    console.log('*** set Namespace. Result of this.namspace:', this.namespace);
 };
 
 CodeGenerator.prototype.generateVariableInitialisationCode = function() {
@@ -128,7 +124,6 @@ CodeGenerator.prototype.generateVariableStorageCode = function() {
 CodeGenerator.prototype.generateCodeFromAst = function(ast) {
 
     var code = "";
-    console.log('DEBUG in generateCodeFromAst: this=', this)
     for (var i = 0; i < ast.length; i++) {
         //console.log("AST item = ",ast[i])
         code += this.parseNode(ast[i]);
@@ -196,9 +191,11 @@ CodeGenerator.prototype.parseNode = function(node) {
 
 
 function ModelregelsEvaluator(startwaarden, modelregels, debug) {
-    if (typeof debug === 'undefined')
-        { this.debug = false; }
-    else this.debug = debug;
+    if (typeof debug === 'undefined') {
+        this.debug = false;
+    } else {
+        this.debug = true;
+    }
 
     this.namespace = new Namespace();
     this.codegenerator = new CodeGenerator(this.namespace);
@@ -221,7 +218,6 @@ function ModelregelsEvaluator(startwaarden, modelregels, debug) {
 
 ModelregelsEvaluator.prototype.run = function(N, Nresults) {
 
-
     var startwaarden_code = this.codegenerator.generateCodeFromAst(this.startwaarden_ast);
     this.namespace.moveStartWaarden(); // keep namespace clean
     var modelregels_code = this.codegenerator.generateCodeFromAst(this.modelregels_ast);
@@ -243,7 +239,6 @@ ModelregelsEvaluator.prototype.run = function(N, Nresults) {
     if (this.debug) {
         console.log('*** generated js ***');
         console.log(model);
-
         console.log("*** running! *** ");
         console.log("N = ", N);
         console.log("Nresults = ", Nresults);
@@ -264,13 +259,13 @@ ModelregelsEvaluator.prototype.run = function(N, Nresults) {
     if (this.debug) {
         console.log("result t[100]=", result.t[100-1]);
         console.log("result y[100]=", result.y[100-1]);
-        console.log("Time: " + (t2 - t1) + "ms");
+    }
+
+    console.log("Time: " + (t2 - t1) + "ms");
 
     return result;
 
-    }
 }
-
 
 
 
