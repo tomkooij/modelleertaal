@@ -13,21 +13,16 @@
   Comments start with '
 
   Example:
-    Als (a = '0') En Niet(b = Waar) Dan Stop       'modelleertaal
+    Als (a == 0) En Niet(b == Waar) Dan Stop       'modelleertaal
 
   In Pascal this would be:
-    If (a = '0') AND !(b = True) then Halt(0);
+    If (a = 0) AND !(b = True) then Halt(0);
 
 
  This was originally based on git://github.com/zaach/zii-jsconf2010-talk.git
 
  TODO:
-   geen ; nodig
-   Numerieke expressies
    Functies (inclusief sin() en cos() )
-   Logische expressies
-   Als Dan EindAls
-   Stop
  */
 
 %lex
@@ -77,7 +72,7 @@
 "Stop"|"stop"                           return 'STOP'
 
 // identifiers
-[a-zA-Z]+                               return 'IDENT'
+[a-zA-Z]+([a-zA-Z0-9_])?                 return 'IDENT'
 
 <<EOF>>                                 return 'EOF'
 
