@@ -37,17 +37,20 @@ function main() {
     console.log("t[100]=", results.t[100-1]);
     console.log("y[100]=", results.y[100-1]);
 
-    writeCSV("output.csv", results, 100)
+    var res = new Results(evaluator.namespace);
+    res.getAllandCleanUp(results);
+
+    writeCSV("output.csv", res, 100)
 }
+
+
 
 function writeCSV(filename, result, Nresults) {
     var stream = fs.createWriteStream(filename);
     stream.once('open', function(fd) {
         stream.write("t; h; v\n");
         for (var i=0; i<Nresults; i++) {
-            // HELP! Put results in a class and write methods that can do this
-            var csvrow = result.t[i]+";"+result.h[i]+";"+result.v[i]+"\n";
-            stream.write(csvrow.replace('.',',').replace('.',',').replace('.',','));
+            stream.write(result.t[i]+"; "+result.h[i]+"; "+result.v[i]+"\n");
         }
         stream.end();
     });
@@ -95,6 +98,33 @@ Namespace.prototype.moveStartWaarden = function () {
     this.varNames = {};
 }
 
+/*
+ Class Results
+ Store and manipulate results
+*/
+function Results(namespace) {
+    this.namespace = namespace;
+};
+
+Results.prototype.getAllandCleanUp = function(resultObject) {
+    /* copy results and "clean" (round) the numbers */
+
+    // http://stackoverflow.com/questions/661562/how-to-format-a-float-in-javascript
+    function humanize(x) {
+      return x.toFixed(3).replace(/\.?0*$/,'').replace('.',',');
+    }
+
+    for (var varName in this.namespace.varNames) {
+        varName = this.namespace.removePrefix(varName);
+        // push / pop ?!!?!?
+        var bb = resultObject[varName];
+        var temp = [];
+        for (var i = 0; i < resultObject[varName].length; i++ ) {
+            temp[i] = humanize(bb[i]);
+        }
+        this[varName] = temp;
+    }
+}
 
 
 /*
