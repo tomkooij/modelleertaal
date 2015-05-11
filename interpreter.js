@@ -131,6 +131,7 @@ Namespace.prototype.createVar = function(name) {
         console.log('creating: ',name)
         this.varNames[name] = true;
     }
+    return name;
 }
 
 Namespace.prototype.moveStartWaarden = function () {
