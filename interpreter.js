@@ -99,7 +99,7 @@ function writeCSV(filename, result) {
 }
 
 /*
- The namespace
+ Class namespace
 
  Variables are created in this.varNames = {} (a list of variable names)
 
@@ -107,10 +107,12 @@ function writeCSV(filename, result) {
  parsing "startwaarden.txt". This is a trick to keep startwaarden seperate
 */
 
-var namespace = new Object;
-namespace.varNames = {}; // list of created variables
-namespace.constNames = {}; // list of startwaarden that remain constant in execution
-namespace.createVar = function(name) {
+function namespaceClass() {};
+
+namespaceClass.prototype.varNames = {}; // list of created variables
+namespaceClass.prototype.constNames = {}; // list of startwaarden that remain constant in execution
+
+namespaceClass.prototype.createVar = function(name) {
     if (this.varNames[name]) {
         console.log(name, ' already created!.')
     } else {
@@ -118,24 +120,36 @@ namespace.createVar = function(name) {
         this.varNames[name] = true;
     }
 }
-namespace.moveStartWaarden = function () {
+
+namespaceClass.prototype.moveStartWaarden = function () {
     this.constNames = this.varNames;
     this.varNames = {};
 }
-namespace.generate_var_storage_js_code = function() {
+
+// TODO!!!
+// move methods that generate js code to js_codegen()
+namespaceClass.prototype.generate_var_storage_js_code = function() {
     var code = 'var storage = {} \n';
     for (var variable in this.varNames) {
         code += "storage."+variable+" = []; \n";
     }
     return code;
 }
-namespace.generate_storage_js_code = function() {
+
+namespaceClass.prototype.generate_storage_js_code = function() {
     var code = '';
     for (var variable in this.varNames) {
         code += "storage."+variable+"[i]= "+variable+"; \n";
     }
     return code;
 }
+// Class namespaceClass
+var namespace = new namespaceClass();
+
+/*
+ Class codegen
+ */
+
 function js_codegen(ast) {
 
     var code = "";
