@@ -34,6 +34,9 @@ function main() {
     var results = evaluator.run(N, Nresults);
 
     // TODO: put results in class
+    console.log("t[100]=", results.t[100-1]);
+    console.log("y[100]=", results.y[100-1]);
+
     writeCSV("output.csv", results, 100)
 }
 
@@ -255,11 +258,6 @@ ModelregelsEvaluator.prototype.run = function(N, Nresults) {
     var result = runModel(N,Nresults);
 
     var t2 = Date.now();
-
-    if (this.debug) {
-        console.log("result t[100]=", result.t[100-1]);
-        console.log("result y[100]=", result.y[100-1]);
-    }
 
     console.log("Time: " + (t2 - t1) + "ms");
 
