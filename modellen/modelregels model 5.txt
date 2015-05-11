@@ -1,0 +1,20 @@
+/*
+test model voor modelleertaal interpreter
+
+SysNat deel 5 H5 model 5 Optrekken van een auto
+modelregels
+*/
+
+' alleen de puntkomma ; delimiters zijn toegevoegd
+
+Fres= Fmotor
+a = Fres/m
+dv = a * dt
+v = v + dv
+ds = v * dt
+s = s + ds
+t = t + dt
+als (0)
+dan
+  Stop
+EindAls
