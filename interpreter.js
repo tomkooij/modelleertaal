@@ -15,78 +15,23 @@
 var fs = require("fs");
 var jison = require("jison");
 
-// input sourcode:
-var modelregels = fs.readFileSync("modelregels.txt", "utf8");
-var startwaarden = fs.readFileSync("startwaarden.txt", "utf8");
-// aantal iteraties
-var N = 1e3; // iterations
-var Nresults = 100; // store every Nresults iterations
 
 // parser compiled on execution by jison.js
 var bnf = fs.readFileSync("modelleertaal.jison", "utf8");
 var parser = new jison.Parser(bnf);
 
 
-function main () {
-    console.log('*** input ***');
-    console.log(startwaarden);
-    console.log(modelregels);
+function main() {
+    // input sourcode:
+    var modelregels = fs.readFileSync("modelregels.txt", "utf8");
+    var startwaarden = fs.readFileSync("startwaarden.txt", "utf8");
+    // aantal iteraties
+    var N = 1e3; // iterations
+    var Nresults = 100; // store every Nresults iterations
 
-    var startwaarden_ast = parser.parse(startwaarden);
-    var modelregels_ast = parser.parse(modelregels);
+    var evaluator = new ModelregelsEvaluator(startwaarden, modelregels, true);
+    evaluator.run(N, Nresults);
 
-    //console.log('*** AST modelregels ***');
-    //console.log(JSON.stringify(modelregels_ast, undefined, 4));
-    //console.log('');
-
-    var namespace = new Namespace();
-    var codegenerator = new CodeGenerator(namespace);
-
-    console.log('javascriptCodeGenerator: ', codegenerator);
-
-    var startwaarden_code = codegenerator.generateCodeFromAst(startwaarden_ast);
-    namespace.moveStartWaarden(); // keep namespace clean
-    var modelregels_code = codegenerator.generateCodeFromAst(modelregels_ast);
-
-    console.log('*** generated js ***');
-
-    var model =  "try \n"
-                +"  { \n"
-                +startwaarden_code + "\n"
-                +codegenerator.generateVariableInitialisationCode()
-                +"    for (var i=0; i < Nresults; i++) { \n "
-                +"      for (var inner=0; inner <N/Nresults; inner++) {\n"
-                +modelregels_code + "\n"
-                +"      } \n"
-                +codegenerator.generateVariableStorageCode()
-                +"    } \n"
-                +"  } catch (e) \n"
-                +"  { console.log(e)} \n "
-                +"return storage;\n";
-
-    console.log(model);
-
-    console.log("*** running! *** ");
-    console.log("N = ", N);
-    console.log("Nresults = ", Nresults);
-    var t1 = Date.now();
-
-    // eval(model); // slow... in chrome >23
-    //  the optimising compiler does not optimise eval() in local scope
-    //  http://moduscreate.com/javascript-performance-tips-tricks/
-
-    var env = {};  // object for storing variables "local" to the model
-    var runModel = new Function('N','Nresults',model);
-    var result = runModel(N,Nresults);
-
-    var t2 = Date.now();
-
-    //console.log("namespace object: ", namespace);
-    console.log("result t[100]=", result.var_t[100-1]);
-    console.log("result y[100]=", result.var_y[100-1]);
-    console.log("Time: " + (t2 - t1) + "ms");
-
-    writeCSV("output.csv", result)
 }
 
 function writeCSV(filename, result) {
@@ -237,6 +182,80 @@ CodeGenerator.prototype.parseNode = function(node) {
 
 } /* end of parseNode()  */
 // end of javascriptCodeGenerator()
+
+
+function ModelregelsEvaluator(startwaarden, modelregels, debug) {
+    if (typeof debug === 'undefined')
+        { this.debug = false; }
+    else this.debug = debug;
+
+    this.namespace = new Namespace();
+    this.codegenerator = new CodeGenerator(this.namespace);
+    if (this.debug) {
+        console.log('*** input ***');
+        console.log(startwaarden);
+        console.log(modelregels);
+    }
+
+    this.startwaarden_ast = parser.parse(startwaarden);
+    this.modelregels_ast = parser.parse(modelregels);
+
+    if (this.debug) {
+        console.log('*** AST modelregels ***');
+        console.log(JSON.stringify(this.modelregels_ast, undefined, 4));
+        console.log('');
+    }
+
+}
+
+ModelregelsEvaluator.prototype.run = function(N, Nresults) {
+
+
+    var startwaarden_code = this.codegenerator.generateCodeFromAst(this.startwaarden_ast);
+    this.namespace.moveStartWaarden(); // keep namespace clean
+    var modelregels_code = this.codegenerator.generateCodeFromAst(this.modelregels_ast);
+
+    var model =  "try \n"
+                +"  { \n"
+                +startwaarden_code + "\n"
+                +this.codegenerator.generateVariableInitialisationCode()
+                +"    for (var i=0; i < Nresults; i++) { \n "
+                +"      for (var inner=0; inner <N/Nresults; inner++) {\n"
+                +modelregels_code + "\n"
+                +"      } \n"
+                +this.codegenerator.generateVariableStorageCode()
+                +"    } \n"
+                +"  } catch (e) \n"
+                +"  { console.log(e)} \n "
+                +"return storage;\n";
+
+    if (this.debug) {
+        console.log('*** generated js ***');
+        console.log(model);
+
+        console.log("*** running! *** ");
+        console.log("N = ", N);
+        console.log("Nresults = ", Nresults);
+    }
+
+    var t1 = Date.now();
+
+    // eval(model); // slow... in chrome >23
+    //  the optimising compiler does not optimise eval() in local scope
+    //  http://moduscreate.com/javascript-performance-tips-tricks/
+
+    var env = {};  // object for storing variables "local" to the model
+    var runModel = new Function('N','Nresults',model);
+    var result = runModel(N,Nresults);
+
+    var t2 = Date.now();
+
+    if (this.debug) {
+        console.log("result t[100]=", result.var_t[100-1]);
+        console.log("result y[100]=", result.var_y[100-1]);
+        console.log("Time: " + (t2 - t1) + "ms");
+    }
+}
 
 
 
