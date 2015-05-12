@@ -9,8 +9,9 @@
       node interpreter.js
 */
 
-//jshint strict:true
+//jshint node:true
 //jshint devel:true
+//jshint evil:true
 "use strict";
 
 // CommonJS
@@ -187,26 +188,26 @@ CodeGenerator.prototype.parseNode = function(node) {
                 return this.makeVar(node.left) + ' = (' + this.parseNode(node.right) + ');\n';
         case 'Variable':
                 return this.makeVar(node.name);
-        case 'Binary':
-                    if (node.operator == '^') {
+        case 'Binary': {
+                    if (node.operator == '^')
                         return "(Math.pow("+this.parseNode(node.left)+","+this.parseNode(node.right)+"))";
-                    } else {
+                    else
                         return "(" + this.parseNode(node.left) + node.operator + this.parseNode(node.right) + ")";
+                    break;
                     }
         case 'Unary':
-                {
                     switch(node.operator) {
                         case '-':   return "(-1. * " + this.parseNode(node.right);
                         case 'NOT':  return "!("+ this.parseNode(node.right) + ")";
                         default:
                             throw new Error("Unknown unary:" + JSON.stringify(node));
-                        }
-                }
+                    }
+        /* falls through */   
         case 'Logical':
                 return "(" + this.parseNode(node.left) + node.operator + this.parseNode(node.right) + ")";
         case 'If':
                 return "if (" + this.parseNode(node.cond) + ") {" + this.generateCodeFromAst(node.then) + " }; ";
-        case 'Function':
+        case 'Function': {
                 switch(node.func.toLowerCase()) {
                     case 'sin': return "Math.sin("+this.parseNode(node.expr)+")";
                     case 'cos': return "Math.cos("+this.parseNode(node.expr)+")";
@@ -217,6 +218,8 @@ CodeGenerator.prototype.parseNode = function(node) {
                     default:
                         throw new Error("Unkown function:" + JSON.stringify(node));
                     }
+                break;
+                }
         case 'Number':
                 return parseFloat(node.value);
         case 'True':
