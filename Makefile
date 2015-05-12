@@ -7,5 +7,6 @@ modelleertaal.js: modelleertaal.jison
 
 .PHONY: test
 test:
-	jshint interpreter.js
+	jshint evaluator.js
+	jshint run.js
 	mocha

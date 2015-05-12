@@ -1,0 +1,12 @@
+'model 17 satelliet
+'startwaarden
+G = 6,67*10^-11
+Ma = 6,0*10^24 'kg
+Ra = 6,4*10^6 'm
+ms = 1,0*10^3 'kg
+dt = 10 's
+t = 0 's
+x = 0 'm
+y = 1,0*10^7 'm
+vx = 6,5*10^3 'm/s
+vy = 0 'm/s

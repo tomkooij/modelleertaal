@@ -9,56 +9,17 @@
       node interpreter.js
 */
 
+
 //jshint node:true
 //jshint devel:true
 //jshint evil:true
 "use strict";
 
-// CommonJS
+// parser compiled on execution by jison.js
 var fs = require("fs");
 var jison = require("jison");
-
-// parser compiled on execution by jison.js
 var bnf = fs.readFileSync("modelleertaal.jison", "utf8");
 var parser = new jison.Parser(bnf);
-
-
-function main() {
-
-    // input sourcode:
-    var modelregels = fs.readFileSync("modellen/modelregels model 17.txt", "utf8");
-    var startwaarden = fs.readFileSync("modellen/startwaarden model 17.txt", "utf8");
-
-
-    var N = 1e3; // aantal iteraties
-    var Nresults = 100; // store every Nresults iterations
-
-    var evaluator = new ModelregelsEvaluator(startwaarden, modelregels, true);
-    var results = evaluator.run(N, Nresults);
-
-    // Debug output
-    console.log("t["+Nresults+"]= ", results.t[Nresults-1]);
-    console.log("y["+Nresults+"]= ", results.y[Nresults-1]);
-    console.log("test", results.test[Nresults-1]);
-
-    var res = new Results(evaluator.namespace);
-    res.getAllandCleanUp(results);
-
-    writeCSV("output.csv", res, Nresults);
-}
-
-
-
-function writeCSV(filename, result, Nresults) {
-    var stream = fs.createWriteStream(filename);
-    stream.once('open', function() {
-        stream.write("t; x; y\n");
-        for (var i=0; i<Nresults; i++) {
-            stream.write(result.t[i]+"; "+result.x[i]+"; "+result.y[i]+"\n");
-        }
-        stream.end();
-    });
-}
 
 /*
  Class namespace
@@ -310,6 +271,5 @@ ModelregelsEvaluator.prototype.run = function(N, Nresults) {
 
 };
 
-
-
-main();
+exports.ModelregelsEvaluator = ModelregelsEvaluator;
+exports.Results = Results;
