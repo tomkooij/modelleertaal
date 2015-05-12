@@ -26,8 +26,8 @@ var parser = new jison.Parser(bnf);
 function main() {
 
     // input sourcode:
-    var modelregels = fs.readFileSync("modellen/modelregels.txt", "utf8");
-    var startwaarden = fs.readFileSync("modellen/startwaarden.txt", "utf8");
+    var modelregels = fs.readFileSync("modellen/modelregels model 17.txt", "utf8");
+    var startwaarden = fs.readFileSync("modellen/startwaarden model 17.txt", "utf8");
 
 
     var N = 1e3; // aantal iteraties
@@ -202,7 +202,7 @@ CodeGenerator.prototype.parseNode = function(node) {
                         default:
                             throw new Error("Unknown unary:" + JSON.stringify(node));
                     }
-        /* falls through */   
+        /* falls through */
         case 'Logical':
                 return "(" + this.parseNode(node.left) + node.operator + this.parseNode(node.right) + ")";
         case 'If':
@@ -256,6 +256,8 @@ function ModelregelsEvaluator(startwaarden, modelregels, debug) {
     this.modelregels_ast = parser.parse(modelregels);
 
     if (this.debug) {
+        console.log('*** AST startwaarden ***');
+        console.log(JSON.stringify(this.startwaarden_ast, undefined, 4));
         console.log('*** AST modelregels ***');
         console.log(JSON.stringify(this.modelregels_ast, undefined, 4));
         console.log('');
