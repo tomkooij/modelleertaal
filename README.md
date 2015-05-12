@@ -1,6 +1,9 @@
 Simple parser / interpreter for *Modelleertaal*
 ==========================================
 
+[![Travis Status](https://travis-ci.org/tomkooij/modelleertaal.svg)]
+(https://travis-ci.org/tomkooij/modelleertaal)
+
 Modelleertaal grammar and interpreter in javascript/jison.
 
 Parses the language used for "natuurkundig modelleren" (dynamical models in
@@ -13,7 +16,7 @@ Parses the language used for "natuurkundig modelleren" (dynamical models in
 
  Example:
    a = 0
-   Als (a == 0) En Niet(b = Waar) Dan Stop       'modelleertaal
+   Als (a == 0) En Niet(b == Waar) Dan Stop       'modelleertaal
 
  In Pascal this would be:
    a := 0;
@@ -21,7 +24,7 @@ Parses the language used for "natuurkundig modelleren" (dynamical models in
 
 Extensions to the language:
 CoachTaal (and Pascal) use ':=' as the assign keyword. We also allow '='
- because our textbook and exams use '='
+ because our textbook and exams use '='. Use '==' for comparison.
 C/Java style comments are allowed
 ```
 
