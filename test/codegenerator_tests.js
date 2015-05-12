@@ -87,6 +87,42 @@ describe('CodeGenertor.generateCodeFromAst() correct output of math expressions'
     it('Math.sin: sin(45/180*pi) = ', function() {
         ast = parser.parse("t=sin(45/180*pi)");
         code = codegenerator.generateCodeFromAst(ast);
-        assert.equal(Math.round(1000*eval(code))/1000,0.707);
+        assert.closeTo(eval(code),0.707,0.01);
     })
+});
+
+describe('CodeGenertor.generateCodeFromAst() correct flow control', function(){
+
+    it('als dan eindals', function() {
+        ast = parser.parse("t = 0 \n als waar dan t = 3 eindals");
+        code = codegenerator.generateCodeFromAst(ast);
+        assert.equal(eval(code),3);
+    })
+    it('Multiple statements between dan ... eindals', function() {
+        ast = parser.parse("t = 0 \n als waar dan t = 3 \n a = 5 \n b = 17 \n eindals");
+        code = codegenerator.generateCodeFromAst(ast);
+        assert.equal(eval(code),17);
+    })
+    it('Correct functionality of == > >= < <= in als dan statement', function() {
+        ast = parser.parse("t = 0 \n als 1==1 dan t = 3 eindals");
+        code = codegenerator.generateCodeFromAst(ast);
+        assert.equal(eval(code),3);
+        ast = parser.parse("t = 0 \n als 1>0 dan t = 3 eindals");
+        code = codegenerator.generateCodeFromAst(ast);
+        assert.equal(eval(code),3);
+        ast = parser.parse("t = 0 \n als 2>=2 dan t = 3 eindals");
+        code = codegenerator.generateCodeFromAst(ast);
+        assert.equal(eval(code),3);
+        ast = parser.parse("t = 0 \n als 2<=2 dan t = 3 eindals");
+        code = codegenerator.generateCodeFromAst(ast);
+        assert.equal(eval(code),3);
+        ast = parser.parse("t = 0 \n als 2<2 dan t = 3 eindals");
+        code = codegenerator.generateCodeFromAst(ast);
+        assert.equal(eval(code),0);
+        ast = parser.parse("t = 0 \n als 2>2 dan t = 3 eindals");
+        code = codegenerator.generateCodeFromAst(ast);
+        assert.equal(eval(code),0);
+    })
+    
+
 });
