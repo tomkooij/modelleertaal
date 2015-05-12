@@ -9,6 +9,8 @@
       node interpreter.js
 */
 
+//jshint strict:true
+//jshint devel:true
 "use strict";
 
 // CommonJS
@@ -33,22 +35,21 @@ function main() {
     var evaluator = new ModelregelsEvaluator(startwaarden, modelregels, true);
     var results = evaluator.run(N, Nresults);
 
-    // TODO: put results in class
-    console.log("t[100]=", results.t[100-1]);
-    console.log("y[100]=", results.y[100-1]);
-    console.log(results.test_[100-1]);
+    // Debug output
+    console.log("t["+Nresults+"]= ", results.t[Nresults-1]);
+    console.log("y["+Nresults+"]= ", results.y[Nresults-1]);
 
     var res = new Results(evaluator.namespace);
     res.getAllandCleanUp(results);
 
-    writeCSV("output.csv", res, 100)
+    writeCSV("output.csv", res, Nresults);
 }
 
 
 
 function writeCSV(filename, result, Nresults) {
     var stream = fs.createWriteStream(filename);
-    stream.once('open', function(fd) {
+    stream.once('open', function() {
         stream.write("t; h; v\n");
         for (var i=0; i<Nresults; i++) {
             stream.write(result.t[i]+"; "+result.h[i]+"; "+result.v[i]+"\n");
@@ -74,7 +75,7 @@ function Namespace() {
     this.varNames = {}; // list of created variables
     this.constNames = {}; // list of startwaarden that remain constant in execution
 
-};
+}
 
 
 Namespace.prototype.createVar = function(name) {
@@ -85,19 +86,19 @@ Namespace.prototype.createVar = function(name) {
         this.varNames[name] = true;
 
     return name;
-}
+};
 
 Namespace.prototype.removePrefix = function(name) {
 
     var regex = new RegExp("^" + this.varPrefix);
     return name.replace(regex, '');
-}
+};
 
 
 Namespace.prototype.moveStartWaarden = function () {
     this.constNames = this.varNames;
     this.varNames = {};
-}
+};
 
 /*
  Class Results
@@ -105,7 +106,7 @@ Namespace.prototype.moveStartWaarden = function () {
 */
 function Results(namespace) {
     this.namespace = namespace;
-};
+}
 
 Results.prototype.getAllandCleanUp = function(resultObject) {
     /* copy results and "clean" (round) the numbers */
@@ -125,7 +126,7 @@ Results.prototype.getAllandCleanUp = function(resultObject) {
         }
         this[varName] = temp;
     }
-}
+};
 
 
 /*
@@ -145,7 +146,7 @@ CodeGenerator.prototype.generateVariableInitialisationCode = function() {
         code += "storage."+this.namespace.removePrefix(variable)+" = []; \n";
     }
     return code;
-}
+};
 
 CodeGenerator.prototype.generateVariableStorageCode = function() {
     var code = '';
@@ -153,7 +154,7 @@ CodeGenerator.prototype.generateVariableStorageCode = function() {
         code += "storage."+this.namespace.removePrefix(variable)+"[i]= "+variable+"; \n";
     }
     return code;
-}
+};
 
 CodeGenerator.prototype.generateCodeFromAst = function(ast) {
 
@@ -163,12 +164,12 @@ CodeGenerator.prototype.generateCodeFromAst = function(ast) {
         code += this.parseNode(ast[i]);
 
     }
-    return code
-}
+    return code;
+};
 
 CodeGenerator.prototype.makeVar = function(name) {
     return this.namespace.createVar(name);
-}
+};
 
 CodeGenerator.prototype.parseNode = function(node) {
     /* parseNode is a recursive function that parses an item
@@ -186,13 +187,12 @@ CodeGenerator.prototype.parseNode = function(node) {
                 return this.makeVar(node.left) + ' = (' + this.parseNode(node.right) + ');\n';
         case 'Variable':
                 return this.makeVar(node.name);
-        case 'Binary': {
+        case 'Binary':
                     if (node.operator == '^') {
-                        return "(Math.pow("+this.parseNode(node.left)+","+this.parseNode(node.right)+"))"
+                        return "(Math.pow("+this.parseNode(node.left)+","+this.parseNode(node.right)+"))";
                     } else {
                         return "(" + this.parseNode(node.left) + node.operator + this.parseNode(node.right) + ")";
                     }
-                }
         case 'Unary':
                 {
                     switch(node.operator) {
@@ -203,8 +203,7 @@ CodeGenerator.prototype.parseNode = function(node) {
                         }
                 }
         case 'Logical':
-                return "(" + this.parseNode(node.left) + node.operator + this.parseNode(node.right) + ")"
-
+                return "(" + this.parseNode(node.left) + node.operator + this.parseNode(node.right) + ")";
         case 'If':
                 return "if (" + this.parseNode(node.cond) + ") {" + this.generateCodeFromAst(node.then) + " }; ";
         case 'Function':
@@ -225,13 +224,13 @@ CodeGenerator.prototype.parseNode = function(node) {
         case 'False':
                 return 'false';
         case 'Stop':
-                return 'throw \'StopIteration\''
+                return 'throw \'StopIteration\'';
         default:
             throw new Error("Unable to parseNode() :" + JSON.stringify(node));
     } /* switch (node.type) */
 
 
-} /* end of parseNode()  */
+}; /* end of parseNode()  */
 // end of javascriptCodeGenerator()
 
 
@@ -267,19 +266,19 @@ ModelregelsEvaluator.prototype.run = function(N, Nresults) {
     this.namespace.moveStartWaarden(); // keep namespace clean
     var modelregels_code = this.codegenerator.generateCodeFromAst(this.modelregels_ast);
 
-    var model =  "try \n"
-                +"  { \n"
-                +startwaarden_code + "\n"
-                +this.codegenerator.generateVariableInitialisationCode()
-                +"    for (var i=0; i < Nresults; i++) { \n "
-                +"      for (var inner=0; inner <N/Nresults; inner++) {\n"
-                +modelregels_code + "\n"
-                +"      } \n"
-                +this.codegenerator.generateVariableStorageCode()
-                +"    } \n"
-                +"  } catch (e) \n"
-                +"  { console.log(e)} \n "
-                +"return storage;\n";
+    var model =  "try \n" +
+                 "  { \n" +
+                 startwaarden_code + "\n" +
+                 this.codegenerator.generateVariableInitialisationCode() +
+                 "    for (var i=0; i < Nresults; i++) { \n " +
+                 "      for (var inner=0; inner <N/Nresults; inner++) {\n" +
+                 modelregels_code + "\n" +
+                 "      } \n" +
+                 this.codegenerator.generateVariableStorageCode() +
+                 "    } \n" +
+                 "  } catch (e) \n" +
+                 "  { console.log(e)} \n " +
+                 "return storage;\n";
 
     if (this.debug) {
         console.log('*** generated js ***');
@@ -294,8 +293,6 @@ ModelregelsEvaluator.prototype.run = function(N, Nresults) {
     // eval(model); // slow... in chrome >23
     //  the optimising compiler does not optimise eval() in local scope
     //  http://moduscreate.com/javascript-performance-tips-tricks/
-
-    var env = {};  // object for storing variables "local" to the model
     var runModel = new Function('N','Nresults',model);
     var result = runModel(N,Nresults);
 
@@ -305,7 +302,7 @@ ModelregelsEvaluator.prototype.run = function(N, Nresults) {
 
     return result;
 
-}
+};
 
 
 
