@@ -39,6 +39,7 @@ function main() {
     // Debug output
     console.log("t["+Nresults+"]= ", results.t[Nresults-1]);
     console.log("y["+Nresults+"]= ", results.y[Nresults-1]);
+    console.log("test", results.test[Nresults-1]);
 
     var res = new Results(evaluator.namespace);
     res.getAllandCleanUp(results);
@@ -221,7 +222,7 @@ CodeGenerator.prototype.parseNode = function(node) {
                 break;
                 }
         case 'Number':
-                return parseFloat(node.value);
+                return parseFloat(node.value.replace(',','.'));
         case 'True':
                 return 'true';
         case 'False':

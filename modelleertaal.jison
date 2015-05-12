@@ -15,14 +15,23 @@
   Example:
     Als (a == 0) En Niet(b == Waar) Dan Stop       'modelleertaal
 
-  In Pascal this would be:
+  In Pascal:
     If (a = 0) AND !(b = True) then Halt(0);
 
-
- This was originally based on git://github.com/zaach/zii-jsconf2010-talk.git
-
- TODO:
-   Functies (inclusief sin() en cos() )
+  Real world example (SysNat model 9):
+    'model 9 parachutesprong
+    'modelregels
+    Fwr = k * v^2
+    Fres = Fzw - Fwr
+    a = Fres/m
+    dv = a * dt
+    v = v + dv
+    dy = v * dt
+    y = y + dy
+    h = h0 - y
+    t = t + dt
+    als h < 400 dan k = 0.6 * (400 - h) eindals
+    als h < 350 dan k = 30 eindals
  */
 
 %lex
@@ -53,8 +62,8 @@
 ":="                                    return 'ASSIGN'
 
 // number (floats) form openscad.jison
-[0-9]*"."[0-9]+([Ee][+-]?[0-9]+)?       return 'NUMBER'
-[0-9]+"."[0-9]*([Ee][+-]?[0-9]+)?       return 'NUMBER'
+[0-9]*["."","][0-9]+([Ee][+-]?[0-9]+)?       return 'NUMBER'
+[0-9]+["."","][0-9]*([Ee][+-]?[0-9]+)?       return 'NUMBER'
 [0-9]+([Ee][+-]?[0-9]+)?                return 'NUMBER'
 
 
