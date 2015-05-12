@@ -4,11 +4,11 @@ node_js:
 
 before_install:
   - npm install -g jshint
-  - wget https://raw.githubusercontent.com/mozilla/html5-lint/master/html5check.py
+#  - wget https://raw.githubusercontent.com/mozilla/html5-lint/master/html5check.py
   - npm install jison
 
 script:
-  - CHECK=$(for file in *.html; do python ./html5check.py -geh $file; done;)
-  - if [[ ! -z "$CHECK" ]]; then echo "$CHECK"; exit 1; fi;
-  - jshint --extract auto *.html
+#  - CHECK=$(for file in *.html; do python ./html5check.py -geh $file; done;)
+#  - if [[ ! -z "$CHECK" ]]; then echo "$CHECK"; exit 1; fi;
+#  - jshint --extract auto *.html
   - jshint *.js
