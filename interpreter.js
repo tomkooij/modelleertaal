@@ -51,9 +51,9 @@ function main() {
 function writeCSV(filename, result, Nresults) {
     var stream = fs.createWriteStream(filename);
     stream.once('open', function() {
-        stream.write("t; h; v\n");
+        stream.write("t; x; y\n");
         for (var i=0; i<Nresults; i++) {
-            stream.write(result.t[i]+"; "+result.h[i]+"; "+result.v[i]+"\n");
+            stream.write(result.t[i]+"; "+result.x[i]+"; "+result.y[i]+"\n");
         }
         stream.end();
     });
