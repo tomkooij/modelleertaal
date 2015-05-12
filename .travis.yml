@@ -3,12 +3,16 @@ node_js:
   - "0.10"
 
 before_install:
+# actually a dependency. Should use packages.json
+  - npm install -g jison
+# test suite
   - npm install -g jshint
 #  - wget https://raw.githubusercontent.com/mozilla/html5-lint/master/html5check.py
-  - npm install jison
+  - npm install -g mocha
 
 script:
 #  - CHECK=$(for file in *.html; do python ./html5check.py -geh $file; done;)
 #  - if [[ ! -z "$CHECK" ]]; then echo "$CHECK"; exit 1; fi;
 #  - jshint --extract auto *.html
   - jshint *.js
+  - make all
