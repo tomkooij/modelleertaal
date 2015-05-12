@@ -8,6 +8,7 @@ before_install:
 # test suite
   - npm install -g jshint
 #  - wget https://raw.githubusercontent.com/mozilla/html5-lint/master/html5check.py
+  - npm install chai
   - npm install -g mocha
 
 script:
