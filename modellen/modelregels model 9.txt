@@ -11,4 +11,3 @@ h = h0 - y
 t = t + dt
 als h < 400 dan k = 0.6 * (400 - h) eindals
 als h < 350 dan k = 30 eindals
-test_ = Exp(2)
