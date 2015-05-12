@@ -47,6 +47,8 @@
 "("                                     return '('
 ")"                                     return ')'
 
+"pi"                                    return 'PI'
+
 // logical
 "=="                                    return '=='
 ">="                                    return '>='
@@ -282,6 +284,14 @@ expr
                   value: $1
               };
            }
+
+  | PI
+      {$$ = {
+              type: 'Number',
+              value: "3.14159265359"
+          };
+       }
+
   | TRUE /* There must be a better way... */
       {$$ = {
                 type: 'True',
