@@ -1,6 +1,6 @@
 var assert = require('chai').assert;
 
-var codegen = require("../evaluator.js").CodeGenerator; // jison generated parser
+var codegen = require("../evaluator.js").CodeGenerator;
 codegenerator = new codegen();
 var parser = require("../modelleertaal.js").parser; // jison generated parser
 
@@ -84,11 +84,17 @@ describe('CodeGenertor.generateCodeFromAst() correct output of math expressions'
         assert.equal(eval(code),3.14159265359);
     })
 
-    it('Math.sin: sin(45/180*pi) = ', function() {
+    it('Math.sin: sin(45/180*pi) = 0.707..', function() {
         ast = parser.parse("t=sin(45/180*pi)");
         code = codegenerator.generateCodeFromAst(ast);
         assert.closeTo(eval(code),0.707,0.01);
     })
+    it('SysNat scientific notation: G = 6,67*10^-11', function() {
+        ast = parser.parse("G = 6,67*10^-11");
+        code = codegenerator.generateCodeFromAst(ast);
+        assert.closeTo(eval(code),6.67e-11,0.01);
+    })
+
 });
 
 describe('CodeGenertor.generateCodeFromAst() correct flow control', function(){
@@ -123,6 +129,6 @@ describe('CodeGenertor.generateCodeFromAst() correct flow control', function(){
         code = codegenerator.generateCodeFromAst(ast);
         assert.equal(eval(code),0);
     })
-    
+
 
 });
