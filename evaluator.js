@@ -93,7 +93,11 @@ Results.prototype.getAllandCleanUp = function(resultObject) {
  Class Codegenerator
  */
 function CodeGenerator(namespace) {
+    if (typeof namespace === 'undefined') {
+        this.namespace = new Namespace();
+    } else {
         this.namespace = namespace;
+    }
 }
 
 CodeGenerator.prototype.setNamespace = function(namespace) {
@@ -270,3 +274,5 @@ ModelregelsEvaluator.prototype.run = function(N, Nresults) {
 
 exports.ModelregelsEvaluator = ModelregelsEvaluator;
 exports.Results = Results;
+exports.CodeGenerator = CodeGenerator;
+exports.Namespace = Namespace;
