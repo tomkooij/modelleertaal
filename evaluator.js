@@ -16,10 +16,7 @@
 "use strict";
 
 // parser compiled on execution by jison.js
-var fs = require("fs");
-var jison = require("jison");
-var bnf = fs.readFileSync("modelleertaal.jison", "utf8");
-var parser = new jison.Parser(bnf);
+var parser = require("./modelleertaal").parser;
 
 /*
  Class namespace
