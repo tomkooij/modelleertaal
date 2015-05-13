@@ -44,28 +44,46 @@ function Model() {
 
 Model.prototype.readXMLFile = function(filename) {
 
-    var result = xml.parseFileSync(filename);
-    if (result.name == 'modelleertaal') {
+    var xmlJSON = xml.parseFileSync(filename);
+    this.parseXML(xmlJSON);
+};
 
-        for (var i = 0; i < result.childs.length; i++) {
+Model.prototype.readXMLString = function(xmlString) {
 
-            switch(result.childs[i].name){
+    var xmlJSON = xml.parseString(xmlString);
+    this.parseXML(xmlJSON);
+};
+
+
+Model.prototype.parseXML = function(xmlJSON) {
+
+    if (xmlJSON.name == 'modelleertaal') {
+
+        for (var i = 0; i < xmlJSON.childs.length; i++) {
+
+            switch(xmlJSON.childs[i].name){
                 case 'startwaarden':  {
-                    this.startwaarden = result.childs[i].childs[0];
+                    this.startwaarden = xmlJSON.childs[i].childs[0];
                     break;
                 }
                 case 'modelregels':  {
-                    this.modelregels = result.childs[i].childs[0];
+                    this.modelregels = xmlJSON.childs[i].childs[0];
                     break;
                 }
                 default:
-                        throw new Error('Unable to handle xml item: ', result.childs[i]);
+                        throw new Error('Unable to handle xml item: ', xmlJSON.childs[i]);
             }
         }
     }
 };
 
+// TODO: Make model/exports. Unittests!
+
 var model = new Model();
 model.readXMLFile('modellen/model.xml');
+console.log(model.startwaarden);
+console.log(model.modelregels);
+
+model.readXMLString('<modelleertaal><startwaarden>t = 0</startwaarden><modelregels>t = t + 1</modelregels></modelleertaal>');
 console.log(model.startwaarden);
 console.log(model.modelregels);
