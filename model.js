@@ -92,9 +92,9 @@ Model.prototype.readBogusXMLFile = function(filename) {
     for(var line = 1; line < lines.length; line++) {
         console.log(lines[line]);
         switch(lines[line]) {
-            case '<modelregels>': { action = 1; break; }
+            case '<modelregels>': { action = 1; lines[line] = '/* modelregels */'; break; }
             case '</modelregels>': { action = 0; break; }
-            case '<startwaarden>': { action = 2; break; }
+            case '<startwaarden>': { action = 2; lines[line] = '/* startwaarden */'; break; }
             case '</startwaarden>': { action = 0; break; }
         }
         if (action==1) this.modelregels += lines[line]+'\n';
@@ -105,10 +105,10 @@ Model.prototype.readBogusXMLFile = function(filename) {
 
 };
 
-function test() {
+function test_bogusXML() {
     var model = new Model();
     model.readBogusXMLFile('modellen/model 17.xml');
 }
 
-test();
+
 exports.Model = Model;

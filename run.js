@@ -10,7 +10,7 @@ function main() {
     var Nresults = 100; // store every Nresults iterations
 
     var model = new modelmodule.Model();
-    model.readXMLFile('modellen/model 17.xml');
+    model.readBogusXMLFile('modellen/model 17.xml');
 
     var evaluator = new evalmodule.ModelregelsEvaluator(model, true);
     var results = evaluator.run(N, Nresults);
