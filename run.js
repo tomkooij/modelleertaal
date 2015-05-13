@@ -1,4 +1,5 @@
 // CommonJS
+var fs = require("fs");
 var modelmodule = require("./model.js");
 var evalmodule = require("./evaluator.js");
 
