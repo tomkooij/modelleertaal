@@ -36,6 +36,7 @@
 */
 
 var xml = require('node-xml-lite');
+var fs = require('fs');
 
 function Model() {
     this.modelregels = '';
@@ -77,4 +78,37 @@ Model.prototype.parseXML = function(xmlJSON) {
     }
 };
 
+Model.prototype.readBogusXMLFile = function(filename) {
+
+    // This read a "bogus" XML file that still includes < instead of &lt;
+    var buf = fs.readFileSync(filename, "utf8");
+
+    var lines = buf.split('\n');
+    var action = 0; // 0 = do nothing, 1 = modelregels, 2 = startwaarden
+
+    this.startwaarden = '';
+    this.modelregels = '';
+
+    for(var line = 1; line < lines.length; line++) {
+        console.log(lines[line]);
+        switch(lines[line]) {
+            case '<modelregels>': { action = 1; break; }
+            case '</modelregels>': { action = 0; break; }
+            case '<startwaarden>': { action = 2; break; }
+            case '</startwaarden>': { action = 0; break; }
+        }
+        if (action==1) this.modelregels += lines[line]+'\n';
+        if (action==2) this.startwaarden += lines[line]+'\n';
+    }
+    console.log(this.modelregels);
+    console.log(this.startwaarden);
+
+};
+
+function test() {
+    var model = new Model();
+    model.readBogusXMLFile('modellen/model 17.xml');
+}
+
+test();
 exports.Model = Model;

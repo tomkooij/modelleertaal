@@ -14,7 +14,7 @@
     vy = vy + dvy
     dy = vy * dt
     y = y + dy
-    als r &lt; Ra dan stop eindals
+    als r < Ra dan stop eindals
     t = t + dt
 </modelregels>
 <startwaarden>
