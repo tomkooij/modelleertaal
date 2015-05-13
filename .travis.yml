@@ -5,6 +5,7 @@ node_js:
 before_install:
 # actually a dependency. Should use packages.json
   - npm install -g jison
+  - npm install xml2js
 # test suite
   - npm install -g jshint
 #  - wget https://raw.githubusercontent.com/mozilla/html5-lint/master/html5check.py
