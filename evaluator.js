@@ -200,7 +200,7 @@ CodeGenerator.prototype.parseNode = function(node) {
 // end of javascriptCodeGenerator()
 
 
-function ModelregelsEvaluator(startwaarden, modelregels, debug) {
+function ModelregelsEvaluator(model, debug) {
     if (typeof debug === 'undefined') {
         this.debug = false;
     } else {
@@ -209,14 +209,21 @@ function ModelregelsEvaluator(startwaarden, modelregels, debug) {
 
     this.namespace = new Namespace();
     this.codegenerator = new CodeGenerator(this.namespace);
-    if (this.debug) {
-        console.log('*** input ***');
-        console.log(startwaarden);
-        console.log(modelregels);
+
+    if (typeof model === 'undefined') {
+        this.model = new Model();
+    } else {
+        this.model = model;
     }
 
-    this.startwaarden_ast = parser.parse(startwaarden);
-    this.modelregels_ast = parser.parse(modelregels);
+    if (this.debug) {
+        console.log('*** input ***');
+        console.log(this.model.startwaarden);
+        console.log(this.model.modelregels);
+    }
+
+    this.startwaarden_ast = parser.parse(this.model.startwaarden);
+    this.modelregels_ast = parser.parse(this.model.modelregels);
 
     if (this.debug) {
         console.log('*** AST startwaarden ***');

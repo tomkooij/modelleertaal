@@ -1,19 +1,17 @@
 // CommonJS
-var fs = require("fs");
+var modelmodule = require("./model.js");
 var evalmodule = require("./evaluator.js");
 
 
 function main() {
 
-    // input sourcode:
-    var modelregels = fs.readFileSync("modellen/modelregels model 17.txt", "utf8");
-    var startwaarden = fs.readFileSync("modellen/startwaarden model 17.txt", "utf8");
-
-
     var N = 1e3; // aantal iteraties
     var Nresults = 100; // store every Nresults iterations
 
-    var evaluator = new evalmodule.ModelregelsEvaluator(startwaarden, modelregels, true);
+    var model = new modelmodule.Model();
+    model.readXMLFile('modellen/model 17.xml');
+
+    var evaluator = new evalmodule.ModelregelsEvaluator(model, true);
     var results = evaluator.run(N, Nresults);
 
     // Debug output

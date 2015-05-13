@@ -77,13 +77,4 @@ Model.prototype.parseXML = function(xmlJSON) {
     }
 };
 
-// TODO: Make model/exports. Unittests!
-
-var model = new Model();
-model.readXMLFile('modellen/model.xml');
-console.log(model.startwaarden);
-console.log(model.modelregels);
-
-model.readXMLString('<modelleertaal><startwaarden>t = 0</startwaarden><modelregels>t = t + 1</modelregels></modelleertaal>');
-console.log(model.startwaarden);
-console.log(model.modelregels);
+exports.Model = Model;
