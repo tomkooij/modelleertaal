@@ -16,6 +16,7 @@
 "use strict";
 
 // parser compiled on execution by jison.js
+var modelmodule = require("./model.js");
 var parser = require("./modelleertaal").parser;
 
 /*
@@ -211,7 +212,7 @@ function ModelregelsEvaluator(model, debug) {
     this.codegenerator = new CodeGenerator(this.namespace);
 
     if (typeof model === 'undefined') {
-        this.model = new Model();
+        this.model = new modelmodule.Model();
     } else {
         this.model = model;
     }
