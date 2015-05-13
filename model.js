@@ -35,8 +35,7 @@
  </modelleertaal>
 */
 
-var fs = require('fs'),
-    xml2js = require('xml2js');
+var xml = require('node-xml-lite');
 
 function Model() {
     this.modelregels = '';
@@ -45,19 +44,28 @@ function Model() {
 
 Model.prototype.readXMLFile = function(filename) {
 
-    var parser = new xml2js.Parser();
-    fs.readFile(filename, function(err, data) {
-            parser.parseString(data, function (err, result) {
-                // TODO: Error handling!
-                console.log(result.modelleertaal.startwaarden[0]);
-                this.startwaarden = result.modelleertaal.startwaarden[0];
-                this.modelregels = result.modelleertaal.modelregels[0];
-            });
-    });
+    var result = xml.parseFileSync(filename);
+    if (result.name == 'modelleertaal') {
+
+        for (var i = 0; i < result.childs.length; i++) {
+
+            switch(result.childs[i].name){
+                case 'startwaarden':  {
+                    this.startwaarden = result.childs[i].childs[0];
+                    break;
+                }
+                case 'modelregels':  {
+                    this.modelregels = result.childs[i].childs[0];
+                    break;
+                }
+                default:
+                        throw new Error('Unable to handle xml item: ', result.childs[i]);
+            }
+        }
+    }
 };
 
 var model = new Model();
 model.readXMLFile('modellen/model.xml');
-// handle async!!!
 console.log(model.startwaarden);
 console.log(model.modelregels);
