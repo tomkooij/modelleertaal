@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>Modelleertaal test webpagina</title>
+
+	<style>
+    html {
+      font-family: Helvetica, Arial, sans-serif;
+      font-size: 100%;
+      background: #333;
+    }
+
+    #modelBestand {
+      width: 600px;
+      background: #FFF;
+      padding: 1em;
+      margin: 1em auto;
+      min-height: 300px;
+      border-top: 5px solid #69c773;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.8);
+    }
+
+    #bestandInhoud {
+      margin-top: 2em;
+      width: 100%;
+      overflow-x: auto;
+    }
+
+    </style>
+</head>
+<body>
+	<div id="modelBestand">
+        <textarea rows=10 cols=40> Modelregels </textarea>
+        <textarea rows=10 cols=15> Startwaarden </textarea>
+		<h3>Kies model:</h3>
+		<div>
+			Kies bestand:
+			<input type="file" id="fileInput">
+		</div>
+        <pre id="bestandInhoud"></pre>
+	</div>
+
+	<script src="loadfile.js"></script>
+</body>
+</html>
