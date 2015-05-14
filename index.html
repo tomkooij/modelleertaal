@@ -19,17 +19,36 @@
 
 
     </style>
+    <script src="jquery-1.11.3.js"></script>
 </head>
 <body>
 	<div id="werkBlad"> <!-- CSS zorg voor met werkvlak met schaduw -->
-        <h1>Modeltest</h1>
+        <h2>Modeltest</h2>
         <div>
 			Kies bestand:
 			<input type="file" id="fileInput">
 		</div>
+
+        <div>
+            <input id="open" type="button" value= "Open model.xml via HTTP/get">
+            <script>
+            $(document).ready(function() {
+                $("#open").click(function() {
+                    $.ajax({
+                        url : "modellen/model.xml",
+                        dataType: "text",
+                        success : function (data) {
+                            $("#bestandInhoud").text(data);
+                            }
+                        });
+                });
+            });
+            </script>
+        </div>
+
         <p>
-        <textarea rows=10 cols=40> Modelregels </textarea>
-        <textarea rows=10 cols=15> Startwaarden </textarea>
+        <textarea id="modelregels"  rows=10 cols=40> Modelregels </textarea>
+        <textarea id="startwaarden" rows=10 cols=15> Startwaarden </textarea>
 
         <pre id="bestandInhoud"></pre>
 	</div>
