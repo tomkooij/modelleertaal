@@ -38,7 +38,8 @@
                         url : "modellen/model.xml",
                         dataType: "text",
                         success : function (data) {
-                            $("#bestandInhoud").text(data);
+                            $("#bestandInhoud").html(data);
+                            $("#modelregels").val(data);
                             }
                         });
                 });
