@@ -24,10 +24,6 @@
 <body>
 	<div id="werkBlad"> <!-- CSS zorg voor met werkvlak met schaduw -->
         <h2>Modeltest</h2>
-        <div>
-			Kies bestand:
-			<input type="file" id="fileInput">
-		</div>
 
         <div>
             <input id="open" type="button" value= "Open model.xml via HTTP/get">
@@ -38,8 +34,11 @@
                         url : "modellen/model.xml",
                         dataType: "text",
                         success : function (data) {
-                            $("#bestandInhoud").html(data);
-                            $("#modelregels").val(data);
+							$("#bestandInhoud").html(data);
+                            model = new model_js.Model();
+							model.parseBogusXMLString(data);
+							$("#modelregels").val(model.modelregels);
+							$("#startwaarden").val(model.startwaarden);
                             }
                         });
                 });
@@ -47,13 +46,35 @@
             </script>
         </div>
 
-        <p>
-        <textarea id="modelregels"  rows=10 cols=40> Modelregels </textarea>
-        <textarea id="startwaarden" rows=10 cols=15> Startwaarden </textarea>
 
+
+		<div>
+			<input id="run" type="button" value= "RUN!">
+			<script>
+			$(document).ready(function() {
+				$("#run").click(function() {
+					console.log('RUN! clicked.');
+					console.log('model = ', model);
+				    var evaluator = new evaluator_js.ModelregelsEvaluator(model, true);
+					var N = 1000, Nresults = 100;
+					var results = evaluator.run(N, Nresults);
+					console.log("t["+Nresults+"]= ", results.t[Nresults-1]);
+				});
+			});
+		 	</script>
+		</div>
+
+		<p>
+		<textarea id="modelregels"  rows=10 cols=40> Modelregels </textarea>
+		<textarea id="startwaarden" rows=10 cols=25> Startwaarden </textarea>
         <pre id="bestandInhoud"></pre>
 	</div>
 
-	<script src="loadfile.js"></script>
+	<!-- script/modules created with:
+	     browserify SCRIPT.js -d -s SCRIPT_js -o SCRIPT_browserfied.js
+		 access functions using SCRIPT_js object
+	-->
+	<script src="model_browserified.js"></script>
+	<script src="evaluator_browserified.js"></script>
 </body>
 </html>
