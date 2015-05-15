@@ -79,15 +79,22 @@ Model.prototype.parseXML = function(xmlJSON) {
 };
 
 Model.prototype.readBogusXMLFile = function(filename) {
-
     // This read a "bogus" XML file that still includes < instead of &lt;
     var buf = fs.readFileSync(filename, "utf8");
 
-    var lines = buf.split('\n');
+    this.parseBogusXMLString(buf);
+};
+
+Model.prototype.parseBogusXMLString = function(xmlString) {
+
     var action = 0; // 0 = do nothing, 1 = modelregels, 2 = startwaarden
 
     this.startwaarden = '';
     this.modelregels = '';
+
+    console.log(xmlString);
+    
+    var lines = xmlString.split('\n');
 
     for(var line = 1; line < lines.length; line++) {
         console.log(lines[line]);
@@ -109,6 +116,5 @@ function test_bogusXML() {
     var model = new Model();
     model.readBogusXMLFile('modellen/model 17.xml');
 }
-
 
 exports.Model = Model;

@@ -3,6 +3,9 @@ var fs = require("fs");
 var modelmodule = require("./model.js");
 var evalmodule = require("./evaluator.js");
 
+var bogusModel = '<modelleertaal>\n<startwaarden>\nt=0 \n dt = 0.1\n</startwaarden>\n' +
+                        '<modelregels>\nt=t+dt\n</modelregels>\n';
+
 
 function main() {
 
@@ -10,19 +13,20 @@ function main() {
     var Nresults = 100; // store every Nresults iterations
 
     var model = new modelmodule.Model();
-    model.readBogusXMLFile('modellen/model 17.xml');
+    model.parseBogusXMLString(bogusModel);
+    console.log(model);
 
     var evaluator = new evalmodule.ModelregelsEvaluator(model, true);
     var results = evaluator.run(N, Nresults);
 
     // Debug output
     console.log("t["+Nresults+"]= ", results.t[Nresults-1]);
-    console.log("y["+Nresults+"]= ", results.y[Nresults-1]);
+    //console.log("y["+Nresults+"]= ", results.y[Nresults-1]);
 
     var res = new evalmodule.Results(evaluator.namespace);
     res.getAllandCleanUp(results);
 
-    writeCSV("output.csv", res, Nresults);
+    //writeCSV("output.csv", res, Nresults);
 }
 
 
