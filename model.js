@@ -98,7 +98,7 @@ Model.prototype.parseBogusXMLString = function(xmlString) {
 
         // HACK!! THIS NEED FIXING!
 
-        console.log('HACK! Fix me in model.js')
+        console.log('HACK! Fix me in model.js');
         console.log(action, lines[line].slice(1,12));
 
         switch(lines[line].slice(1,12)) {
@@ -111,9 +111,9 @@ Model.prototype.parseBogusXMLString = function(xmlString) {
         if (action==1) this.modelregels += lines[line]+'\n';
         if (action==2) this.startwaarden += lines[line]+'\n';
     }
-    console.log('DEBUG: in model.js parseBogusXMLString endresult this.modelregels:')
+    console.log('DEBUG: in model.js parseBogusXMLString endresult this.modelregels:');
     console.log(this.modelregels);
-    console.log('DEBUG: in model.js parseBogusXMLString endresult this.startwaarden:')
+    console.log('DEBUG: in model.js parseBogusXMLString endresult this.startwaarden:');
 
     console.log(this.startwaarden);
 
