@@ -60,20 +60,33 @@ describe('CodeGenertor.generateCodeFromAst() correct output of math expressions'
         assert.equal(eval(code),27);
     })
 
-    it('operator precedence: -3 ^ 2 = +9 (!!)', function() {
+    it('correct functionality of unary operator: 2 + -3 + 1 == 0', function() {
+        ast = parser.parse("t=2 + -3 + 1");
+        code = codegenerator.generateCodeFromAst(ast);
+        assert.equal(eval(code),0);
+    })
+
+
+    it('operator precedence: -3 ^ 2 = -9 ', function() {
         ast = parser.parse("t=-3^2");
+        code = codegenerator.generateCodeFromAst(ast);
+        assert.equal(eval(code),-9);
+    })
+
+    it('operator precedence: (-3)^ 2 = +9 ', function() {
+        ast = parser.parse("t=(-3)^2");
         code = codegenerator.generateCodeFromAst(ast);
         assert.equal(eval(code),9);
     })
 
-    it('operator precedence: -(3+2) ^ 2 = 25', function() {
+    it('operator precedence: -(3+2) ^ 2 = -25', function() {
         ast = parser.parse("t=-(3+2) ^ 2");
         code = codegenerator.generateCodeFromAst(ast);
-        assert.equal(eval(code),25);
+        assert.equal(eval(code),-25);
     })
 
-    it('some stupid long math expression: 2*5^2-3^(5-4)+3*sqrt(9) = 56 ', function() {
-        ast = parser.parse("t=2*5^2-3^(5-4)+3*sqrt(9)");
+    it('some stupid long math expression: 2*5^2-3^(5+-2^2)+3*sqrt(9) = 56 ', function() {
+        ast = parser.parse("t=2*5^2-3^(5+-2^2)+3*sqrt(9)");
         code = codegenerator.generateCodeFromAst(ast);
         assert.equal(eval(code),56);
     })

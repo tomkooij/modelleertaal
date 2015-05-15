@@ -99,7 +99,7 @@
 %left '*' '/'
 %left '^'
 %right NOT
-%left UMINUS
+%right UMINUS
 
 
 %left '=='
@@ -258,8 +258,8 @@ expr
          };
        }
 
-  | '-' expr %prec UMINUS
-      {$$ = {
+  | '-' expr
+            {$$ = {
                   type: 'Unary',
                   operator: '-',
                   right: $2
