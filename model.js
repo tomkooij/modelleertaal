@@ -92,22 +92,29 @@ Model.prototype.parseBogusXMLString = function(xmlString) {
     this.startwaarden = '';
     this.modelregels = '';
 
-    console.log(xmlString);
-    
     var lines = xmlString.split('\n');
 
     for(var line = 1; line < lines.length; line++) {
-        console.log(lines[line]);
-        switch(lines[line]) {
-            case '<modelregels>': { action = 1; lines[line] = '/* modelregels */'; break; }
-            case '</modelregels>': { action = 0; break; }
-            case '<startwaarden>': { action = 2; lines[line] = '/* startwaarden */'; break; }
-            case '</startwaarden>': { action = 0; break; }
+
+        // HACK!! THIS NEED FIXING!
+
+        console.log('HACK! Fix me in model.js')
+        console.log(action, lines[line].slice(1,12));
+
+        switch(lines[line].slice(1,12)) {
+            // < and > mess things up in the browser
+            case 'modelregels': { action = 1; lines[line] = '/* modelregels */'; break; }
+            case '/modelregel': { action = 0; break; }
+            case 'startwaarde': { action = 2; lines[line] = '/* startwaarden */'; break; }
+            case '/startwaard': { action = 0; break; }
         }
         if (action==1) this.modelregels += lines[line]+'\n';
         if (action==2) this.startwaarden += lines[line]+'\n';
     }
+    console.log('DEBUG: in model.js parseBogusXMLString endresult this.modelregels:')
     console.log(this.modelregels);
+    console.log('DEBUG: in model.js parseBogusXMLString endresult this.startwaarden:')
+
     console.log(this.startwaarden);
 
 };
