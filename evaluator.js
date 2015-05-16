@@ -280,6 +280,7 @@ ModelregelsEvaluator.prototype.run = function(N, Nresults) {
 
 };
 
+exports.Model = modelmodule.Model; // from model.js
 exports.ModelregelsEvaluator = ModelregelsEvaluator;
 exports.Results = Results;
 exports.CodeGenerator = CodeGenerator;

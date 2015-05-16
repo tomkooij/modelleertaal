@@ -29,20 +29,42 @@ module.exports = function(grunt) {
             src: ['test/**/*.js']
           }
       },
+
       jison: {
           my_parser : {
               files: { 'modelleertaal.js': 'modelleertaal.jison' }
             }
-      }
+      },
+
+      // dit moet equivalent zijn aan:
+      //   browserify SCRIPT.js -d -s SCRIPT_js -o /dist/SCRIPT_browserfied.js
+
+      browserify: {
+ 			build: {
+ 				files: {
+ 					'dist/evaluator.browser.js': ['evaluator.js']
+ 				},
+ 				options: {
+ 					browserifyOptions: {
+ 						standalone: 'evaluator_js',
+                         debug: true
+ 					}
+ 				}
+ 			}
+ 		},
+
     });
+
   /// Load plug-ins
   grunt.loadNpmTasks('grunt-contrib-jshint');
   grunt.loadNpmTasks('grunt-mocha-test');
   grunt.loadNpmTasks('grunt-jison');
+  grunt.loadNpmTasks('grunt-browserify');
 
   // define tasks
   grunt.registerTask('build', [
     'jison',
+    'browserify'
   ]);
 
   grunt.registerTask('test', [
