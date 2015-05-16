@@ -8,7 +8,7 @@ Modelleertaal to javascript compiler in javascript/jison.
 
 Modelleertaal is  the language used for "natuurkundig modelleren" 
  (dynamical models in  high school physics in NL). 
-The language is a subset of "CoachTaal" which is a ALGOL-like (i.e. Pascal) 
+The language is a subset of "CoachTaal" which is an ALGOL-like (i.e. Pascal) 
  with the keywords translated into Dutch.
 ```
  Note that keywords start with a capital (and are in dutch).
