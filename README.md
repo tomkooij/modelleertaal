@@ -1,14 +1,15 @@
-Simple parser / interpreter for *Modelleertaal*
+Simple compiler for *Modelleertaal*
 ==========================================
 
 [![Travis Status](https://travis-ci.org/tomkooij/modelleertaal.svg)]
 (https://travis-ci.org/tomkooij/modelleertaal)
 
-Modelleertaal grammar and interpreter in javascript/jison.
+Modelleertaal to javascript compiler in javascript/jison.
 
-Parses the language used for "natuurkundig modelleren" (dynamical models in
- high school physics in NL). The language is a subset of "CoachTaal" which
- is a ALGOL-like (i.e. Pascal) with the keywords translated into Dutch.
+Modelleertaal is  the language used for "natuurkundig modelleren" 
+ (dynamical models in  high school physics in NL). 
+The language is a subset of "CoachTaal" which is a ALGOL-like (i.e. Pascal) 
+ with the keywords translated into Dutch.
 ```
  Note that keywords start with a capital (and are in dutch).
  Statements are not ; terminated
