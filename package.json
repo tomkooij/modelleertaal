@@ -1,0 +1,18 @@
+{
+  "name": "modelleertaal",
+  "version": "0.0.1",
+  "author": "Tom Kooij",
+  "description": "Javascript implementatie van modelregels",
+  "repository": "https://github.com/tomkooij/modelleertaal.git",
+  "scripts": {
+    "test": "grunt"
+  },
+  "main": "run.js",
+  "devDependencies": {
+    "chai": "^2.3.0",
+    "grunt": "^0.4.5",
+    "grunt-contrib-jshint": "^0.11.2",
+    "jison": "^0.4.15",
+    "node-xml-lite": "0.0.3"
+  }
+}
