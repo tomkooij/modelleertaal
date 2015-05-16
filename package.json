@@ -5,14 +5,17 @@
   "description": "Javascript implementatie van modelregels",
   "repository": "https://github.com/tomkooij/modelleertaal.git",
   "scripts": {
-    "test": "grunt"
+    "test": "grunt test"
   },
   "main": "run.js",
   "devDependencies": {
     "chai": "^2.3.0",
     "grunt": "^0.4.5",
     "grunt-contrib-jshint": "^0.11.2",
+    "grunt-jison": "^1.3.2",
+    "grunt-mocha-test": "^0.12.7",
     "jison": "^0.4.15",
+    "mocha": "^2.2.5",
     "node-xml-lite": "0.0.3"
   }
 }

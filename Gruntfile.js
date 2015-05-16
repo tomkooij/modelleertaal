@@ -19,12 +19,38 @@ module.exports = function(grunt) {
         ]
 
       },
+
+      // run the mocha tests via Node.js
+      mochaTest: {
+          test: {
+            options: {
+              reporter: 'spec'
+            },
+            src: ['test/**/*.js']
+          }
+      },
+      jison: {
+          my_parser : {
+              files: { 'modelleertaal.js': 'modelleertaal.jison' }
+            }
+      }
     });
   /// Load plug-ins
   grunt.loadNpmTasks('grunt-contrib-jshint');
+  grunt.loadNpmTasks('grunt-mocha-test');
+  grunt.loadNpmTasks('grunt-jison');
 
   // define tasks
-  grunt.registerTask('default', [
+  grunt.registerTask('build', [
+    'jison',
+  ]);
+
+  grunt.registerTask('test', [
     'jshint',
+    'mochaTest',
+  ]);
+  grunt.registerTask('default', [
+    'build',
+    'test',
   ]);
 };
