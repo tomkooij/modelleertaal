@@ -96,32 +96,24 @@ Model.prototype.parseBogusXMLString = function(xmlString) {
 
     for(var line = 1; line < lines.length; line++) {
 
-        // HACK!! THIS NEED FIXING!
+        //console.log(action, lines[line]);
 
-        console.log('HACK! Fix me in model.js');
-        console.log(action, lines[line].slice(1,12));
-
-        switch(lines[line].slice(1,12)) {
+        switch(lines[line].replace('\r','')) {
             // < and > mess things up in the browser
-            case 'modelregels': { action = 1; lines[line] = '/* modelregels */'; break; }
-            case '/modelregel': { action = 0; break; }
-            case 'startwaarde': { action = 2; lines[line] = '/* startwaarden */'; break; }
-            case '/startwaard': { action = 0; break; }
+            case '<modelregels>': { action = 1; lines[line] = '/* modelregels */'; break; }
+            case '</modelregels>': { action = 0; break; }
+            case '<startwaarden>': { action = 2; lines[line] = '/* startwaarden */'; break; }
+            case '</startwaarden>': { action = 0; break; }
         }
         if (action==1) this.modelregels += lines[line]+'\n';
         if (action==2) this.startwaarden += lines[line]+'\n';
     }
-    console.log('DEBUG: in model.js parseBogusXMLString endresult this.modelregels:');
-    console.log(this.modelregels);
-    console.log('DEBUG: in model.js parseBogusXMLString endresult this.startwaarden:');
-
-    console.log(this.startwaarden);
+    //console.log('DEBUG: in model.js parseBogusXMLString endresult this.modelregels:');
+    //console.log(this.modelregels);
+    //console.log('DEBUG: in model.js parseBogusXMLString endresult this.startwaarden:');
+    //console.log(this.startwaarden);
 
 };
 
-function test_bogusXML() {
-    var model = new Model();
-    model.readBogusXMLFile('modellen/model 17.xml');
-}
 
 exports.Model = Model;
