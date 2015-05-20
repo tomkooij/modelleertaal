@@ -27,6 +27,7 @@
 
         <div>
             <input id="open" type="button" value= "Open model.xml via HTTP/get">
+			<p>
             <script>
             $(document).ready(function() {
                 $("#open").click(function() {
@@ -34,7 +35,6 @@
                         url : "modellen/model.xml",
                         dataType: "text",
                         success : function (data) {
-							$("#bestandInhoud").html(data);
                             model = new evaluator_js.Model();
 							model.parseBogusXMLString(data);
 							$("#modelregels").val(model.modelregels);
@@ -49,25 +49,41 @@
 
 
 		<div>
+			Number of iterations = <input type="text" id="NBox" value="1000">
+			<p>
+			Store <input type="text" id="NresultsBox" value="100"> iterations
+			<p>
 			<input id="run" type="button" value= "RUN!">
 			<script>
 			$(document).ready(function() {
 				$("#run").click(function() {
 					console.log('RUN! clicked.');
+
+					// read model from textarea
+					model = new evaluator_js.Model();
+					model.modelregels = $("#modelregels").val();
+					model.startwaarden = $("#startwaarden").val();
 					console.log('model = ', model);
+
+					// read N, Nresults from input fields
+					var N = $('#NBox').val();
+					var Nresults = $('#NresultsBox').val();
+					console.log(N, Nresults);
+
 				    var evaluator = new evaluator_js.ModelregelsEvaluator(model, true);
-					var N = 1000, Nresults = 100;
 					var results = evaluator.run(N, Nresults);
-					console.log("t["+Nresults+"]= ", results.t[Nresults-1]);
+					var output_str = "t["+Nresults+"]= "+ results.t[Nresults-1]
+					$("#output").html(output_str);
+					console.log(output_str);
 				});
 			});
 		 	</script>
 		</div>
 
 		<p>
-		<textarea id="modelregels"  rows=10 cols=40> Modelregels </textarea>
-		<textarea id="startwaarden" rows=10 cols=25> Startwaarden </textarea>
-        <pre id="bestandInhoud"></pre>
+		<textarea id="modelregels"  rows=15 cols=40> Modelregels </textarea>
+		<textarea id="startwaarden" rows=15 cols=25> Startwaarden </textarea>
+        <pre id="output"></pre>
 	</div>
 
 	<!-- script/modules created with:
