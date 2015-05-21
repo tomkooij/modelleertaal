@@ -6,20 +6,24 @@
 
 	<style>
     html {
-      font-family: Helvetica, Arial, sans-serif;
-      font-size: 100%;
+		font-family: Helvetica, Arial, sans-serif;
+		font-size: 100%;
     }
     /* schaduw rand om werkblad zodat afmetinging zichtbaar is
        handig voor debuggen */
     #werkBlad {
-      padding: 1em;
-      margin: 1em auto;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.8);
+		padding: 1em;
+		margin: 1em auto;
+		box-shadow: 0 2px 10px rgba(0,0,0,0.8);
     }
-
+	#graph {
+	    width: 450px;
+	    height: 200px;
+	}
 
     </style>
     <script src="jquery-1.11.3.js"></script>
+	<script src="jquery.flot.js"></script>
 </head>
 <body>
 	<div id="werkBlad"> <!-- CSS zorg voor met werkvlak met schaduw -->
@@ -30,7 +34,19 @@
 			<p>
             <script>
             $(document).ready(function() {
-                $("#open").click(function() {
+				// read model
+				$.ajax({
+					url : "modellen/model.xml",
+					dataType: "text",
+					success : function (data) {
+						model = new evaluator_js.Model();
+						model.parseBogusXMLString(data);
+						$("#modelregels").val(model.modelregels);
+						$("#startwaarden").val(model.startwaarden);
+						}
+					});
+				// read model after button press
+				$("#open").click(function() {
                     $.ajax({
                         url : "modellen/model.xml",
                         dataType: "text",
@@ -49,9 +65,9 @@
 
 
 		<div>
-			Number of iterations = <input type="text" id="NBox" value="1000">
+			Number of iterations = <input type="text" id="NBox" value="1000" size=5>
 			<p>
-			Store <input type="text" id="NresultsBox" value="100"> iterations
+			Store <input type="text" id="NresultsBox" value="20" size=5> iterations
 			<p>
 			<input id="run" type="button" value= "RUN!">
 			<script>
@@ -87,6 +103,25 @@
 						table += res.t[i]+'\t'+res.s[i]+'\t'+res.v[i]+'\n';
 					}
 					$("#output").html(table);
+
+					// graph!
+					var scatter_plot = [];
+					// create data series. This should be a method of Results()
+					for (var i=0; i < Nresults; i++) {
+						scatter_plot.push([parseFloat(res.t[i].replace(',', '.')), parseFloat(res.s[i].replace(',', '.'))]);
+					}
+					$("#graph").html(''); // remove text
+					$.plot($("#graph"), [scatter_plot],{
+							        series: {
+							            points: {
+							                radius: 3,
+							                show: true,
+							                fill: true,
+							                fillColor: "#058DC7"
+							            },
+							            color: "#058DC7"
+							        }});
+
 				});
 			});
 		 	</script>
@@ -95,13 +130,20 @@
 		<p>
 		<textarea id="modelregels"  rows=15 cols=40> Modelregels </textarea>
 		<textarea id="startwaarden" rows=15 cols=25> Startwaarden </textarea>
-
-	<div id="werkBlad">
-		<pre id="status"></pre>
 	</div>
 
 	<div id="werkBlad">
-		<pre id="output"></pre>
+		<pre id="status">Hi, I am a statusline! my id is #status !</pre>
+	</div>
+
+	<div id="werkBlad">
+		<p id="graph">
+		Graph goes here!
+		</p>
+	</div>
+
+	<div id="werkBlad">
+		<pre id="output">There should be output here...</pre>
 	</div>
 
 	<!-- script/modules created with:
