@@ -103,7 +103,7 @@ CodeGenerator.prototype.generateVariableInitialisationCode = function() {
     for (var variable in this.namespace.varNames) {
         code += "storage."+this.namespace.removePrefix(variable)+" = []; \n";
     }
-    code += "storage.row = [];\n"
+    code += "storage.row = [];\n";
     return code;
 };
 
@@ -111,7 +111,7 @@ CodeGenerator.prototype.generateVariableStorageCode = function() {
     var code = 'storage.row[i] = [];\n';
     for (var variable in this.namespace.varNames) {
         code += "storage."+this.namespace.removePrefix(variable)+"[i]= "+variable+"; \n";
-        code += "storage.row[i].push("+variable+");\n"
+        code += "storage.row[i].push("+variable+");\n";
     }
     return code;
 };
