@@ -17,7 +17,7 @@
 
 // parser compiled on execution by jison.js
 var modelmodule = require("./model.js");
-var resultsmodule = require("./results.js")
+var resultsmodule = require("./results.js");
 var parser = require("./modelleertaal").parser;
 
 /*
@@ -44,20 +44,19 @@ Namespace.prototype.createVar = function(name) {
 
     var prefixedName = this.varPrefix + name;
 
-    if (!this.varNames[prefixedName]) {
+    if (!this.varNames[prefixedName])  {
         this.varNames[prefixedName] = name;
     }
     return prefixedName;
 };
 
 Namespace.prototype.listAllVars = function() {
-    var a;
     var list = [];
     for (var a in this.varNames) {
         list.push(this.varNames[a]);
     }
     return list;
-}
+};
 
 Namespace.prototype.removePrefix = function(name) {
 
@@ -115,9 +114,28 @@ CodeGenerator.prototype.generateCodeFromAst = function(ast) {
     return code;
 };
 
+//  make (or reference) a variable that is on the left side of an assignment
 CodeGenerator.prototype.makeVar = function(name) {
-    return this.namespace.createVar(name);
+    var prefixedName = this.namespace.varPrefix + name;
+
+    // create if it does not exist.
+    if (!this.namespace.varNames[prefixedName]) {
+        return this.namespace.createVar(name);
+    }
+    return prefixedName;
 };
+
+// reference a variable that is on the right side of an assignment
+CodeGenerator.prototype.referenceVar = function(name) {
+    var prefixedName = this.namespace.varPrefix + name;
+
+    // it should exist!.
+    if ((!this.namespace.varNames[prefixedName]) && (!this.namespace.constNames[prefixedName])) {
+        throw new Error('Variable unknown: ', name);
+    }
+    return prefixedName;
+};
+
 
 CodeGenerator.prototype.parseNode = function(node) {
     /* parseNode is a recursive function that parses an item
@@ -134,7 +152,7 @@ CodeGenerator.prototype.parseNode = function(node) {
         case 'Assignment':
                 return this.makeVar(node.left) + ' = (' + this.parseNode(node.right) + ');\n';
         case 'Variable':
-                return this.makeVar(node.name);
+                return this.referenceVar(node.name);
         case 'Binary': {
                     if (node.operator == '^')
                         return "(Math.pow("+this.parseNode(node.left)+","+this.parseNode(node.right)+"))";

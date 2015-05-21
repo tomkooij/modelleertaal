@@ -24,7 +24,7 @@ describe('CodeGenertor.generateCodeFromAst() generate javascript from parsed AST
     })
 
     it('CodeGenerator generates sin/cos/tan math functions', function() {
-        ast = parser.parse("t=sin(x)+cos(x)+tan(x)");
+        ast = parser.parse("x=1\nt=sin(x)+cos(x)+tan(x)");
         code = codegenerator.generateCodeFromAst(ast);
         assert.include(code,'Math.sin');
         assert.include(code,'Math.cos');
@@ -32,7 +32,7 @@ describe('CodeGenertor.generateCodeFromAst() generate javascript from parsed AST
     })
 
     it('CodeGenerator generates ln/exp/sqrt math functions', function() {
-        ast = parser.parse("t=ln(x)+exp(x)+sqrt(x)");
+        ast = parser.parse("x=1\nt=ln(x)+exp(x)+sqrt(x)");
         code = codegenerator.generateCodeFromAst(ast);
         assert.include(code,'Math.log');
         assert.include(code,'Math.exp');

@@ -2,7 +2,7 @@
 var fs = require("fs");
 var evalmodule = require("./evaluator.js");
 
-var filename = 'modellen/model.xml'
+var filename = 'modellen/model.xml';
 
 
 function main() {
@@ -34,23 +34,25 @@ function bogusTable(results, Nresults) {
 
     // print all vars in Results class.
     var varList = results.namespace.listAllVars();
+    var i,j;
+
     console.log('varlist=',varList);
 
     // table header
     var header = '';
-    for (var i = 0, len = varList.length; i < len; i++) {
+    for (i = 0; i < varList.length; i++) {
         header += varList[i]+'\t';
     }
-    header += '\n'
+    header += '\n';
     console.log(header);
 
     // rows
     var row = '';
-    for (var i = 0; i < Nresults; i++) {
-        for (var j = 0, len = varList.length; j < len; j++) {
+    for (i = 0; i < Nresults; i++) {
+        for (j = 0, len = varList.length; j < len; j++) {
             row += results.row[i][j]+'\t';
         }
-        row += '\n'
+        row += '\n';
         console.log(row);
     }
 

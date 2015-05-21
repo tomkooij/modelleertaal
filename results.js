@@ -19,11 +19,12 @@ Results.prototype.getAllandCleanUp = function(resultObject, Nresults) {
     console.log(resultObject);
 
     var temp = [];
+    var varName;
 
     // copy results (array of COLUMNS) to this.row (array of ROWS)
     for (i = 0; i < Nresults; i++) {
         this.row[i] = [];
-        for (var varName in this.namespace.varNames) {
+        for (varName in this.namespace.varNames) {
             varName = this.namespace.removePrefix(varName);
             temp = resultObject[varName];
             this.row[i].push(humanize(temp[i]));
@@ -32,15 +33,15 @@ Results.prototype.getAllandCleanUp = function(resultObject, Nresults) {
 
     variableCounter = 0;
 
-    for (var varName in this.namespace.varNames) {
+    for (varName in this.namespace.varNames) {
         varName = this.namespace.removePrefix(varName);
         // push / pop ?!!?!?
         var bb = resultObject[varName];
-        var temp = [];
+        var tmp = [];
         for (var i = 0; i < resultObject[varName].length; i++ ) {
-            temp[i] = humanize(bb[i]);
+            tmp[i] = humanize(bb[i]);
         }
-        this[varName] = temp;
+        this[varName] = tmp;
         variableCounter++;
     }
 };
