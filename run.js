@@ -8,7 +8,7 @@ var filename = 'modellen/model.xml';
 function main() {
 
     var N = 1e3; // aantal iteraties
-    var Nresults = 2; // store every Nresults iterations
+    var Nresults = 5; // store every Nresults iterations
 
     var model = new evalmodule.Model();
     model.readBogusXMLFile(filename);
@@ -37,7 +37,7 @@ function bogusTable(results, Nresults) {
     var i,j;
 
     console.log('varlist=',varList);
-
+    console.log(results);
     // table header
     var header = '';
     for (i = 0; i < varList.length; i++) {
@@ -54,6 +54,7 @@ function bogusTable(results, Nresults) {
         }
         row += '\n';
         console.log(row);
+        row = '';
     }
 
 }

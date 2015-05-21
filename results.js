@@ -4,7 +4,6 @@
 */
 function Results(namespace) {
     this.namespace = namespace;
-    this.row = [[]];
     this.varList = this.namespace.listAllVars();
 }
 
@@ -16,26 +15,13 @@ Results.prototype.getAllandCleanUp = function(resultObject, Nresults) {
     function humanize(x) {
       return x.toFixed(3).replace(/\.?0*$/,'').replace('.',',');
     }
-    console.log(resultObject);
 
     var temp = [];
-    var varName;
-
-    // copy results (array of COLUMNS) to this.row (array of ROWS)
-    for (i = 0; i < Nresults; i++) {
-        this.row[i] = [];
-        for (varName in this.namespace.varNames) {
-            varName = this.namespace.removePrefix(varName);
-            temp = resultObject[varName];
-            this.row[i].push(humanize(temp[i]));
-        }
-    }
 
     variableCounter = 0;
 
-    for (varName in this.namespace.varNames) {
+    for (var varName in this.namespace.varNames) {
         varName = this.namespace.removePrefix(varName);
-        // push / pop ?!!?!?
         var bb = resultObject[varName];
         var tmp = [];
         for (var i = 0; i < resultObject[varName].length; i++ ) {
@@ -44,6 +30,8 @@ Results.prototype.getAllandCleanUp = function(resultObject, Nresults) {
         this[varName] = tmp;
         variableCounter++;
     }
+    // .map should be used the humanize these values... (or just for i, for j)
+    this.row = resultObject.row;
 };
 
 exports.Results = Results;

@@ -39,13 +39,24 @@ function Namespace() {
 
 }
 
-
+// create (or reference) variable that is on the left side of an assignment
 Namespace.prototype.createVar = function(name) {
-
     var prefixedName = this.varPrefix + name;
 
     if (!this.varNames[prefixedName])  {
         this.varNames[prefixedName] = name;
+    }
+    return prefixedName;
+};
+
+// reference a variable that is on the right side of an assignment
+// It should already exist if on the right side
+Namespace.prototype.referenceVar = function(name) {
+    var prefixedName = this.varPrefix + name;
+
+    // it should exist (but perhaps in "startwaarden" (constNames))
+    if ((!this.varNames[prefixedName]) && (!this.constNames[prefixedName])) {
+        throw new Error('Namespace: referenced variable unknown: ', name);
     }
     return prefixedName;
 };
@@ -92,13 +103,15 @@ CodeGenerator.prototype.generateVariableInitialisationCode = function() {
     for (var variable in this.namespace.varNames) {
         code += "storage."+this.namespace.removePrefix(variable)+" = []; \n";
     }
+    code += "storage.row = [];\n"
     return code;
 };
 
 CodeGenerator.prototype.generateVariableStorageCode = function() {
-    var code = '';
+    var code = 'storage.row[i] = [];\n';
     for (var variable in this.namespace.varNames) {
         code += "storage."+this.namespace.removePrefix(variable)+"[i]= "+variable+"; \n";
+        code += "storage.row[i].push("+variable+");\n"
     }
     return code;
 };
@@ -114,27 +127,7 @@ CodeGenerator.prototype.generateCodeFromAst = function(ast) {
     return code;
 };
 
-//  make (or reference) a variable that is on the left side of an assignment
-CodeGenerator.prototype.makeVar = function(name) {
-    var prefixedName = this.namespace.varPrefix + name;
 
-    // create if it does not exist.
-    if (!this.namespace.varNames[prefixedName]) {
-        return this.namespace.createVar(name);
-    }
-    return prefixedName;
-};
-
-// reference a variable that is on the right side of an assignment
-CodeGenerator.prototype.referenceVar = function(name) {
-    var prefixedName = this.namespace.varPrefix + name;
-
-    // it should exist!.
-    if ((!this.namespace.varNames[prefixedName]) && (!this.namespace.constNames[prefixedName])) {
-        throw new Error('Variable unknown: ', name);
-    }
-    return prefixedName;
-};
 
 
 CodeGenerator.prototype.parseNode = function(node) {
@@ -150,9 +143,9 @@ CodeGenerator.prototype.parseNode = function(node) {
     switch(node.type) {
 
         case 'Assignment':
-                return this.makeVar(node.left) + ' = (' + this.parseNode(node.right) + ');\n';
+                return this.namespace.createVar(node.left) + ' = (' + this.parseNode(node.right) + ');\n';
         case 'Variable':
-                return this.referenceVar(node.name);
+                return this.namespace.referenceVar(node.name);
         case 'Binary': {
                     if (node.operator == '^')
                         return "(Math.pow("+this.parseNode(node.left)+","+this.parseNode(node.right)+"))";
