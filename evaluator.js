@@ -17,6 +17,7 @@
 
 // parser compiled on execution by jison.js
 var modelmodule = require("./model.js");
+var resultsmodule = require("./results.js")
 var parser = require("./modelleertaal").parser;
 
 /*
@@ -41,13 +42,22 @@ function Namespace() {
 
 Namespace.prototype.createVar = function(name) {
 
-    name = this.varPrefix + name;
+    var prefixedName = this.varPrefix + name;
 
-    if (!this.varNames[name])
-        this.varNames[name] = true;
-
-    return name;
+    if (!this.varNames[prefixedName]) {
+        this.varNames[prefixedName] = name;
+    }
+    return prefixedName;
 };
+
+Namespace.prototype.listAllVars = function() {
+    var a;
+    var list = [];
+    for (var a in this.varNames) {
+        list.push(this.varNames[a]);
+    }
+    return list;
+}
 
 Namespace.prototype.removePrefix = function(name) {
 
@@ -61,33 +71,6 @@ Namespace.prototype.moveStartWaarden = function () {
     this.varNames = {};
 };
 
-/*
- Class Results
- Store and manipulate results
-*/
-function Results(namespace) {
-    this.namespace = namespace;
-}
-
-Results.prototype.getAllandCleanUp = function(resultObject) {
-    /* copy results and "clean" (round) the numbers */
-
-    // http://stackoverflow.com/questions/661562/how-to-format-a-float-in-javascript
-    function humanize(x) {
-      return x.toFixed(3).replace(/\.?0*$/,'').replace('.',',');
-    }
-
-    for (var varName in this.namespace.varNames) {
-        varName = this.namespace.removePrefix(varName);
-        // push / pop ?!!?!?
-        var bb = resultObject[varName];
-        var temp = [];
-        for (var i = 0; i < resultObject[varName].length; i++ ) {
-            temp[i] = humanize(bb[i]);
-        }
-        this[varName] = temp;
-    }
-};
 
 
 /*
@@ -280,8 +263,8 @@ ModelregelsEvaluator.prototype.run = function(N, Nresults) {
 
 };
 
+exports.Results = resultsmodule.Results; // from results.js
 exports.Model = modelmodule.Model; // from model.js
 exports.ModelregelsEvaluator = ModelregelsEvaluator;
-exports.Results = Results;
 exports.CodeGenerator = CodeGenerator;
 exports.Namespace = Namespace;
