@@ -20,6 +20,9 @@
 	    width: 450px;
 	    height: 200px;
 	}
+	#table {
+		font-size: 50%
+	}
 
     </style>
     <script src="jquery-1.11.3.js"></script>
@@ -93,16 +96,34 @@
 					$("#status").html(output_str);
 					console.log(output_str);
 
-					// clean up, and print results
+					// clean up results
 					var res = new evaluator_js.Results(evaluator.namespace);
 					res.getAllandCleanUp(results);
 
-					var table = 'Results:\n'
-					table += 't [s]\ts [m] \tv [m/s] \n'
-					for (var i=0; i < Nresults; i++) {
-						table += res.t[i]+'\t'+res.s[i]+'\t'+res.v[i]+'\n';
+					// make table
+					var dataset = res.rows;
+
+					var firstrow = $('<tr>')
+					var table = $('<table>').addClass('table');;
+
+					firstrow.append($('<th>').text('#'));
+
+            		var allVars = res.namespace.listAllVars();
+					console.log(allVars, allVars.length);
+					for (var k = 0; k < allVars.length; k++) {
+						firstrow.append($('<th>').text(allVars[k]));
 					}
-					$("#output").html(table);
+
+            		table.append(firstrow);
+
+					for (var i = 0; i < dataset.length; i++) {
+		                var row = $('<tr>');
+		                row.append($('<td>').text(i + 1));
+		                for (var j = 0; j < dataset[i].length; j++) {
+		                    row.append($('<td>').text(dataset[i][j]));}
+		                table.append(row);
+					}
+		        	$("#output").html(table);
 
 					// graph!
 					var scatter_plot = [];
