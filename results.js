@@ -33,7 +33,7 @@ Results.prototype.getAllandCleanUp = function(resultObject, Nresults) {
     }
 
     // humanize all items of resultObject.row[i][j]
-    this.row = resultObject.row.map( function(arr) {
+    this.rows = resultObject.rows.map( function(arr) {
         return arr.map(function (item) {
             return humanize(item);
         });

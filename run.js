@@ -36,8 +36,6 @@ function bogusTable(results, Nresults) {
     var varList = results.namespace.listAllVars();
     var i,j;
 
-    console.log('varlist=',varList);
-    console.log(results);
     // table header
     var header = '';
     for (i = 0; i < varList.length; i++) {
@@ -50,7 +48,7 @@ function bogusTable(results, Nresults) {
     var row = '';
     for (i = 0; i < Nresults; i++) {
         for (j = 0, len = varList.length; j < len; j++) {
-            row += results.row[i][j]+'\t';
+            row += results.rows[i][j]+'\t';
         }
         row += '\n';
         console.log(row);
