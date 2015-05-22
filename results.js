@@ -2,6 +2,9 @@
  Class Results
  Store and manipulate results
 */
+
+/*jshint loopfunc: true */
+
 function Results(namespace) {
     this.namespace = namespace;
     this.varList = this.namespace.listAllVars();
@@ -20,18 +23,21 @@ Results.prototype.getAllandCleanUp = function(resultObject, Nresults) {
 
     variableCounter = 0;
 
+    // iterate over each variable (which are arrays [0..Nresults])
+    //  humanize each item and store
     for (var varName in this.namespace.varNames) {
         varName = this.namespace.removePrefix(varName);
-        var bb = resultObject[varName];
-        var tmp = [];
-        for (var i = 0; i < resultObject[varName].length; i++ ) {
-            tmp[i] = humanize(bb[i]);
-        }
-        this[varName] = tmp;
-        variableCounter++;
+        this[varName] = resultObject[varName].map( function (item) {
+            return humanize(item);
+        });
     }
-    // .map should be used the humanize these values... (or just for i, for j)
-    this.row = resultObject.row;
+
+    // humanize all items of resultObject.row[i][j]
+    this.row = resultObject.row.map( function(arr) {
+        return arr.map(function (item) {
+            return humanize(item);
+        });
+    });
 };
 
 exports.Results = Results;
