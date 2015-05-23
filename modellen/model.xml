@@ -1,32 +1,34 @@
 <modelleertaal>
 <modelregels>
-    'Sysnat model 9 parachutesprong
-    Fwr = k * v^2
-    Fres = Fzw - Fwr
-    a = Fres/m
-    dv = a * dt
-    v = v + dv
-    dy = v * dt
+    r = sqrt(x^2 + y^2)
+    Fgrav = G * ms * Ma / r^2
+    Fresx = - Fgrav * x / r
+    ax = Fresx / ms
+    dvx = ax * dt
+    vx = vx + dvx
+    dx = vx * dt
+    x = x + dx
+    Fresy = - Fgrav * y / r
+    ay = Fresy / ms
+    dvy = ay * dt
+    vy = vy + dvy
+    dy = vy * dt
     y = y + dy
-    h = h0 - y
+    als r < Ra dan stop eindals
     t = t + dt
-    als h < 400 dan k = 0.6 * (400 - h) eindals
-    als h < 350 dan k = 30 eindals
-    'HACK!
-    s = h
 </modelregels>
 <startwaarden>
-    'model 9 parachutesprong
-
-    k = 0.22
-    m = 80
-    g = 9.81
-    Fzw = m * g
-    v = 0
-    y = 0
-    h0 = 1600
-    t = 0
-    dt = 0.1
-
+    'model 17 satelliet
+    'startwaarden
+    G = 6,67*10^-11
+    Ma = 6,0*10^24 'kg
+    Ra = 6,4*10^6 'm
+    ms = 1,0*10^3 'kg
+    dt = 10 's
+    t = 0 's
+    x = 0 'm
+    y = 1,0*10^7 'm
+    vx = 6,5*10^3 'm/s
+    vy = 0 'm/s
 </startwaarden>
 </modelleertaal>
