@@ -18,16 +18,6 @@
     "jison": "^0.4.15",
     "mocha": "^2.2.5",
     "node-xml-lite": "0.0.3"
-    },
-    "testling": {
-        "browsers": [
-          "ie8", "ie9", "ie10", "ie10",
-          "ff/15", "ff/20", "ff/25", "ff/nightly",
-          "chrome/29", "chrome/canary",
-          "opera/15", "opera/next",
-          "safari/6.0"
-        ],
-        "harness" : "mocha",
-        "files": "test/*.js"
-      }
+    }
+
 }
