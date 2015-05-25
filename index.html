@@ -129,7 +129,8 @@
 					var scatter_plot = [];
 					// create data series. This should be a method of Results()
 					for (var i=0; i < Nresults; i++) {
-						scatter_plot.push([parseFloat(res.t[i].replace(',', '.')), parseFloat(res.s[i].replace(',', '.'))]);
+						// plot the first two variables (should be (t,x))
+						scatter_plot.push([parseFloat(res.rows[i][0].replace(',', '.')), parseFloat(res.rows[i][1].replace(',', '.'))]);
 					}
 					$("#graph").html(''); // remove text
 					$.plot($("#graph"), [scatter_plot],{

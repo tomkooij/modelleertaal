@@ -91,6 +91,34 @@ Namespace.prototype.moveStartWaarden = function () {
     this.varNames = [];
 };
 
+Array.prototype.swap = function(a, b) {
+    this[a] = this.splice(b, 1, this[a])[0];
+    return this;
+};
+
+Namespace.prototype.sortVarNames = function () {
+    /* sort varNames. "Stock" variables (t, x, s) come first.
+       enables automatic graphs of important variables */
+
+    // now sorts on variable NAME. Should identify stock variables in AST.
+
+    // names of "special"variable names to sort, sort if found in order given
+    var nameList = ['t', 's', 'x', 'y', 'h', 'v', 'vx', 'vy'];
+    var nextVariableIndex = 0 ; // place to swap next "special"variable with
+
+    /*  nextVariableIndex = 0
+        for variable in nameList:
+            if variable in this.varNames:
+                swap variable with variable at nextVariableIndex
+                nextVariableIndex += 1
+    */
+    for (var i = 0; i < nameList.length; i++) {
+        var varNames_position = this.varNames.indexOf(nameList[i]);
+        if (varNames_position != -1) {
+            // swap and *afterwards* increase nextVariableIndex
+            this.varNames.swap(varNames_position, nextVariableIndex++); }
+    }
+};
 
 
 /*
@@ -246,6 +274,7 @@ ModelregelsEvaluator.prototype.run = function(N, Nresults) {
     var startwaarden_code = this.codegenerator.generateCodeFromAst(this.startwaarden_ast);
     this.namespace.moveStartWaarden(); // keep namespace clean
     var modelregels_code = this.codegenerator.generateCodeFromAst(this.modelregels_ast);
+    this.namespace.sortVarNames(); // sort variable names for better output
 
     var model =  "try \n" +
                  "  { \n" +

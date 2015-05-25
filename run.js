@@ -7,8 +7,8 @@ var filename = 'modellen/model.xml';
 
 function main() {
 
-    var N = 1e6; // aantal iteraties
-    var Nresults = 10; // store every Nresults iterations
+    var N = 1e3; // aantal iteraties
+    var Nresults = 2; // store every Nresults iterations
 
     var model = new evalmodule.Model();
     model.readBogusXMLFile(filename);
@@ -18,8 +18,8 @@ function main() {
     var results = evaluator.run(N, Nresults);
 
     // Debug output
-    console.log("t["+Nresults+"]= ", results.t[Nresults-1]);
-    //console.log("y["+Nresults+"]= ", results.y[Nresults-1]);
+    console.log(evaluator.namespace.varNames[0]+"["+Nresults+"]= ", results.rows[Nresults-1][0]);
+    console.log(evaluator.namespace.varNames[1]+"["+Nresults+"]= ", results.rows[Nresults-1][1]);
 
     var res = new evalmodule.Results(evaluator.namespace);
     res.getAllandCleanUp(results, Nresults);
@@ -34,6 +34,7 @@ function bogusTable(results, Nresults) {
 
     // print all vars in Results class.
     var i,j;
+
     var varNames = results.namespace.varNames;
 
     // table header
