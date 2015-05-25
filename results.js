@@ -7,7 +7,6 @@
 
 function Results(namespace) {
     this.namespace = namespace;
-    this.varList = this.namespace.listAllVars();
 }
 
 
@@ -19,14 +18,12 @@ Results.prototype.getAllandCleanUp = function(resultObject, Nresults) {
       return x.toFixed(3).replace(/\.?0*$/,'').replace('.',',');
     }
 
-    var temp = [];
-
-    variableCounter = 0;
+    var temp = [], varName;
 
     // iterate over each variable (which are arrays [0..Nresults])
     //  humanize each item and store
-    for (var varName in this.namespace.varNames) {
-        varName = this.namespace.removePrefix(varName);
+    for (var i =0; i < this.namespace.varNames.length; i++) {
+        varName = this.namespace.varNames[i];
         this[varName] = resultObject[varName].map( function (item) {
             return humanize(item);
         });

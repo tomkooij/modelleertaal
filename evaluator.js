@@ -34,39 +34,48 @@ function Namespace() {
     // prefix to prevent variable name collision with reserved words
     this.varPrefix = "var_";
 
-    this.varNames = {}; // list of created variables
-    this.constNames = {}; // list of startwaarden that remain constant in execution
+    this.varNames = []; // list of created variables
+    this.constNames = []; // list of startwaarden that remain constant in execution
 
+}
+
+if (!Array.prototype.indexOf) {
+  Array.prototype.indexOf = function (obj, fromIndex) {
+    if (fromIndex == null) {
+        fromIndex = 0;
+    } else if (fromIndex < 0) {
+        fromIndex = Math.max(0, this.length + fromIndex);
+    }
+    for (var i = fromIndex, j = this.length; i < j; i++) {
+        if (this[i] === obj)
+            return i;
+    }
+    return -1;
+  };
 }
 
 // create (or reference) variable that is on the left side of an assignment
 Namespace.prototype.createVar = function(name) {
-    var prefixedName = this.varPrefix + name;
-
-    if (!this.varNames[prefixedName])  {
-        this.varNames[prefixedName] = name;
+    if (this.varNames.indexOf(name) == -1)  {
+        this.varNames.push(name);
     }
-    return prefixedName;
+    return this.varPrefix + name;
 };
 
 // reference a variable that is on the right side of an assignment
 // It should already exist if on the right side
 Namespace.prototype.referenceVar = function(name) {
-    var prefixedName = this.varPrefix + name;
 
     // it should exist (but perhaps in "startwaarden" (constNames))
-    if ((!this.varNames[prefixedName]) && (!this.constNames[prefixedName])) {
+    if ((this.varNames.indexOf(name) == -1) && (this.constNames.indexOf(name) == -1)) {
         throw new Error('Namespace: referenced variable unknown: ', name);
     }
-    return prefixedName;
+    return this.varPrefix + name;
 };
 
 Namespace.prototype.listAllVars = function() {
-    var list = [];
-    for (var a in this.varNames) {
-        list.push(this.varNames[a]);
-    }
-    return list;
+
+    return this.VarNames;
 };
 
 Namespace.prototype.removePrefix = function(name) {
@@ -78,7 +87,7 @@ Namespace.prototype.removePrefix = function(name) {
 
 Namespace.prototype.moveStartWaarden = function () {
     this.constNames = this.varNames;
-    this.varNames = {};
+    this.varNames = [];
 };
 
 
@@ -100,8 +109,8 @@ CodeGenerator.prototype.setNamespace = function(namespace) {
 
 CodeGenerator.prototype.generateVariableInitialisationCode = function() {
     var code = 'var storage = {} \n';
-    for (var variable in this.namespace.varNames) {
-        code += "storage."+this.namespace.removePrefix(variable)+" = []; \n";
+    for (var i = 0; i < this.namespace.varNames.length; i++) {
+        code += "storage."+this.namespace.varNames[i]+" = []; \n";
     }
     code += "storage.rows = [];\n";
     return code;
@@ -109,9 +118,10 @@ CodeGenerator.prototype.generateVariableInitialisationCode = function() {
 
 CodeGenerator.prototype.generateVariableStorageCode = function() {
     var code = 'storage.rows[i] = [];\n';
-    for (var variable in this.namespace.varNames) {
-        code += "storage."+this.namespace.removePrefix(variable)+"[i]= "+variable+"; \n";
-        code += "storage.rows[i].push("+variable+");\n";
+    for (var i = 0; i < this.namespace.varNames.length; i++) {
+        var variable = this.namespace.varNames[i]
+        code += "storage."+variable+"[i]= "+this.namespace.varPrefix+variable+"; \n";
+        code += "storage.rows[i].push("+this.namespace.varPrefix+variable+");\n";
     }
     return code;
 };
