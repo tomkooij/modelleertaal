@@ -41,7 +41,7 @@ function Namespace() {
 
 if (!Array.prototype.indexOf) {
   Array.prototype.indexOf = function (obj, fromIndex) {
-    if (fromIndex == null) {
+    if (fromIndex === null) {
         fromIndex = 0;
     } else if (fromIndex < 0) {
         fromIndex = Math.max(0, this.length + fromIndex);
@@ -119,7 +119,7 @@ CodeGenerator.prototype.generateVariableInitialisationCode = function() {
 CodeGenerator.prototype.generateVariableStorageCode = function() {
     var code = 'storage.rows[i] = [];\n';
     for (var i = 0; i < this.namespace.varNames.length; i++) {
-        var variable = this.namespace.varNames[i]
+        var variable = this.namespace.varNames[i];
         code += "storage."+variable+"[i]= "+this.namespace.varPrefix+variable+"; \n";
         code += "storage.rows[i].push("+this.namespace.varPrefix+variable+");\n";
     }
