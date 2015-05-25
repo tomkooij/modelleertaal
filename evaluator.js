@@ -74,8 +74,9 @@ Namespace.prototype.referenceVar = function(name) {
 };
 
 Namespace.prototype.listAllVars = function() {
-
-    return this.VarNames;
+    // should really throw exception?
+    console.log("WARNING: called obsolete function namespace.listAllVars()");
+    return this.varNames;
 };
 
 Namespace.prototype.removePrefix = function(name) {
