@@ -3,6 +3,7 @@ readCMA.py
 
 read Coach 6 model bestand
 extract modelregels / startwaarden
+output modelleertaal/bogusXML
 
 fileinfo:
 
@@ -21,11 +22,19 @@ elke "sectie" start met:
     ModelInit ==> startwaarden
 
 """
+import sys
 
-FILENAME = '09.cma'
+DEFAULT_FILENAME = '09.cma'
 
 if __name__ == '__main__':
-    with open(FILENAME, "rb") as f:
+    if len(sys.argv)==2:
+        filename = sys.argv[1]
+    else:
+        filename = DEFAULT_FILENAME
+
+    print "reading: ", filename
+
+    with open(filename, "rb") as f:
         header = f.read(4)
         assert (header == 'CMA '), "Header != Coach 6 .cma activity file!"
 
