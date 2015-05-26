@@ -9,14 +9,15 @@ Modelleertaal to javascript compiler in javascript/jison.
 Modelleertaal is  the language used for "natuurkundig modelleren" 
  (dynamical models in  high school physics in NL). 
 The language is a subset of "CoachTaal" which is an imperative language derived from Pascal.
-Modollertaal tries to resemble the syntax used in Dutch textbooks and exams, which is CoachTaal with some differences:
 
-Statements are not ; terminated
-= is used for assignments (:= is allowed, and treated as an alias. Slightly different from CoachTaal)
-== is used for the 'equal' operator, instead of =. In practice the == operator should never be used. 
-Only 'als dan eindals' and 'stop' statements are implemented. Other flowcontrol is never used in modellertaal.
-Functions cannot be defined. Most math functions from CoachTaal are implemented.
-sin(x), cos(x) and tan(x) are always in radians.
+Modelleertaal tries to resemble the syntax used in NL textbooks and exams, which is CoachTaal with some differences:
+
+ - Statements are not ; terminated
+ - = is used for assignments (:= is allowed, and treated as an alias. Slightly different from CoachTaal)
+ - == is used for the 'equal' operator, instead of =. In practice the == operator should never be used. 
+ - Only 'als dan eindals' and 'stop' statements are implemented. Other flowcontrol is never used in modellertaal.
+ - Functions cannot be defined. Most math functions from CoachTaal are implemented.
+ - sin(x), cos(x) and tan(x) are always in radians.
 
 ```
 
