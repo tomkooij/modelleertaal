@@ -20,9 +20,7 @@
 	    width: 450px;
 	    height: 200px;
 	}
-	#table {
-		font-size: 50%
-	}
+
 
     </style>
     <script src="jquery-1.11.3.js"></script>
@@ -30,10 +28,30 @@
 </head>
 <body>
 	<div id="werkBlad"> <!-- CSS zorg voor met werkvlak met schaduw -->
-        <h2>Modeltest</h2>
-
+        <h2>Modelleertaal</h2>
         <div>
-            <input id="open" type="button" value= "Open model.xml via HTTP/get">
+			<input type="file" id="fileinput" />
+			<script type="text/javascript">
+			  function readSingleFile(evt) {
+			    var f = evt.target.files[0];
+
+			    if (f) {
+			      var r = new FileReader();
+			      r.onload = function(e) {
+				      var data = e.target.result;
+					model.parseBogusXMLString(data);
+					$("#modelregels").val(model.modelregels);
+					$("#startwaarden").val(model.startwaarden);
+			      }
+			      r.readAsText(f);
+			    }
+			  }
+
+			  document.getElementById('fileinput').addEventListener('change', readSingleFile, false);
+			</script>
+		</div>
+		<div>
+			<input id="open" type="button" value= "Open model.xml via HTTP/get">
 			<p>
             <script>
             $(document).ready(function() {
