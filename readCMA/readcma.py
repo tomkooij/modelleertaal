@@ -22,38 +22,49 @@ elke "sectie" start met:
     ModelInit ==> startwaarden
 
 """
+from __future__ import print_function
 import sys
 
-DEFAULT_FILENAME = '09.cma'
+MAGIC = '\x00\x00\x00\x00\x00\x00\x00\x0E\x00\x00\x00\x00'
+
+DEFAULT_INPUT = '09.cma'
+DEFAULT_OUTPUT = 'model.xml'
 
 if __name__ == '__main__':
     if len(sys.argv)==2:
         filename = sys.argv[1]
     else:
-        filename = DEFAULT_FILENAME
+        filename = DEFAULT_INPUT
 
-    print "reading: ", filename
+    print ('reading: ', filename)
 
-    with open(filename, "rb") as f:
+    with open(filename, 'rb') as f:
         header = f.read(4)
         assert (header == 'CMA '), "Header != Coach 6 .cma activity file!"
 
         contents = f.read()
 
-        parts = contents.split('\x00\x00\x00\x00\x00\x00\x00\x0E\x00\x00\x00\x00')
+        parts = contents.split(MAGIC)
 
         for part in parts:
             if part[1:10] == 'ModelInit':
                 modelinit = part[25:-1]
+                print ("found startwaarden:", modelinit)
             if part[1:10] == 'ModelBody':
                 modelbody = part[25:-1]
+                print ("found startwaarden:", modelbody)
 
-    # output bogusXML to stdout
-    print "<model>"
-    print "<startwaarden>"
-    print modelinit
-    print "</startwaarden>"
-    print "<modelregels>"
-    print modelbody
-    print "</modelregels>"
-    print "</model>"
+    outfilename = DEFAULT_OUTPUT
+
+    with open(outfilename, "w") as out_file:
+        print ("\nwriting: ", outfilename)
+
+        # output bogusXML
+        print ("<model>", file=out_file)
+        print ("<startwaarden>", file=out_file)
+        out_file.write(modelinit)
+        print ("</startwaarden>", file=out_file)
+        print ("<modelregels>", file=out_file)
+        out_file.write(modelbody)
+        print ("</modelregels>", file=out_file)
+        print ("</model>", file=out_file)
