@@ -52,7 +52,7 @@ if __name__ == '__main__':
                 print ("found startwaarden:", modelinit)
             if part[1:10] == 'ModelBody':
                 modelbody = part[25:-1]
-                print ("found startwaarden:", modelbody)
+                print ("found modelregels:", modelbody)
 
     outfilename = DEFAULT_OUTPUT
 
