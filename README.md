@@ -4,20 +4,21 @@ Simple compiler for *Modelleertaal*
 [![Travis Status](https://travis-ci.org/tomkooij/modelleertaal.svg)]
 (https://travis-ci.org/tomkooij/modelleertaal)
 
-Modelleertaal to javascript compiler in javascript/jison.
+*Modelleertaal* to javascript compiler in javascript/jison.
 
-Modelleertaal is  the language used for "natuurkundig modelleren" 
- (dynamical models in  high school physics in NL). 
+*Modelleertaal* is the language used for "natuurkundig modelleren"
+(dynamical models in high school physics in NL. System dynamics, Jay W. Forrester, DYNAMO, ...)
 The language is a subset of "CoachTaal" which is an imperative language derived from Pascal.
 
-Modelleertaal tries to resemble the syntax used in NL textbooks and exams, which is CoachTaal with some differences:
+*Modelleertaal* tries to resemble the syntax used in NL textbooks and exams, which is CoachTaal with some differences:
 
  - Statements are not ; terminated
  - = is used for assignments (:= is allowed, and treated as an alias. Slightly different from CoachTaal)
- - == is used for the 'equal' operator, instead of =. In practice the == operator should never be used. 
- - Only 'als dan eindals' and 'stop' statements are implemented. Other flowcontrol is never used in modellertaal.
+ - == is used for the 'equal' operator, instead of =. In practice the == operator should never be used.
+ - Only 'als dan eindals' and 'stop' statements are implemented. Other flowcontrol is never used in *Modelleertaal*.
  - Functions cannot be defined. Most math functions from CoachTaal are implemented.
  - sin(x), cos(x) and tan(x) are always in radians.
+ - C/Java style comments are allowed
 
 ```
 
@@ -42,11 +43,6 @@ Modelleertaal tries to resemble the syntax used in NL textbooks and exams, which
      t = t + dt
      als h < 400 dan k = 0.6 * (400 - h) eindals
      als h < 350 dan k = 30 eindals
-
-Extensions to the language:
-CoachTaal (and Pascal) use ':=' as the assign keyword. We also allow '='
- because our textbook and exams use '='. Use '==' for comparison.
-C/Java style comments are allowed
 ```
 
 This was originally based on git://github.com/zaach/zii-jsconf2010-talk.git
@@ -58,8 +54,8 @@ Node.js using npm and grunt:
 
 ```
 npm install -g grunt-cli
-npm install 
-grunt 
+npm install
+grunt
 ```
 
 Usage
