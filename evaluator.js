@@ -276,19 +276,24 @@ ModelregelsEvaluator.prototype.run = function(N, Nresults) {
     var modelregels_code = this.codegenerator.generateCodeFromAst(this.modelregels_ast);
     this.namespace.sortVarNames(); // sort variable names for better output
 
-    var model =  "try \n" +
+    // separate function run_model() inside anonymous Function()
+    // to prevent bailout of the V8 optimising compiler in try {} catch
+    var model =     "function run_model(N, Nresults) { \n " +
+                    startwaarden_code + "\n" +
+                    this.codegenerator.generateVariableInitialisationCode() +
+                    "    for (var i=0; i < Nresults; i++) { \n " +
+                    "      for (var inner=0; inner <N/Nresults; inner++) {\n" +
+                    modelregels_code + "\n" +
+                    "      }  \n" +
+                    this.codegenerator.generateVariableStorageCode() +
+                    "    }  \n" +
+                    " console.log(storage); return storage;} \n" +
+                 "    try \n" +
                  "  { \n" +
-                 startwaarden_code + "\n" +
-                 this.codegenerator.generateVariableInitialisationCode() +
-                 "    for (var i=0; i < Nresults; i++) { \n " +
-                 "      for (var inner=0; inner <N/Nresults; inner++) {\n" +
-                 modelregels_code + "\n" +
-                 "      } \n" +
-                 this.codegenerator.generateVariableStorageCode() +
-                 "    } \n" +
+                 "      var storage = run_model(N, Nresults); \n" +
                  "  } catch (e) \n" +
                  "  { console.log(e)} \n " +
-                 "return storage;\n";
+                 "console.log(storage); return storage;\n";
 
     if (this.debug) {
         console.log('*** generated js ***');
