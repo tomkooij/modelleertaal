@@ -103,9 +103,17 @@
 					console.log('model = ', model);
 
 					// read N, Nresults from input fields
-					var N = $('#NBox').val();
-					var Nresults = $('#NresultsBox').val();
+					var N = Number($('#NBox').val());
+					var Nresults = Number($('#NresultsBox').val());
 					console.log(N, Nresults);
+					if (Nresults > N) {
+						alert('Nresults > N !');
+						throw new Error('Nresults > N');
+						}
+					if (N > 1e6) {
+						alert('N too big!');
+						throw new Error('N too big!');
+					}
 
 					//run!
 				    var evaluator = new evaluator_js.ModelregelsEvaluator(model, true);
