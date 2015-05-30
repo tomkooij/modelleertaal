@@ -271,6 +271,13 @@ function ModelregelsEvaluator(model, debug) {
 
 ModelregelsEvaluator.prototype.run = function(N, Nresults) {
 
+    if (Nresults > N) {
+        Nresults = N;
+        console.log('WARNING: Nresults > N. Setting N = Nresults');
+        if (this.debug) {
+            throw new Error('Nresults > N'); }
+    }
+
     var startwaarden_code = this.codegenerator.generateCodeFromAst(this.startwaarden_ast);
     this.namespace.moveStartWaarden(); // keep namespace clean
     var modelregels_code = this.codegenerator.generateCodeFromAst(this.modelregels_ast);
