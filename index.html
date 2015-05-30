@@ -158,7 +158,7 @@
 						// plot the first two variables (should be (t,x))
 						scatter_plot.push([parseFloat(res.rows[i][0].replace(',', '.')), parseFloat(res.rows[i][1].replace(',', '.'))]);
 					}
-					$("#graph").html(''); // remove text
+					$("#graph").empty(); // nuke existing graph
 					$.plot($("#graph"), [scatter_plot],{
 							        series: {
 							            points: {
