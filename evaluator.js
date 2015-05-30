@@ -272,10 +272,14 @@ function ModelregelsEvaluator(model, debug) {
 ModelregelsEvaluator.prototype.run = function(N, Nresults) {
 
     if (Nresults > N) {
+        // throw error if we are in debugging state. Else fix and show warning.
+        // strict in testing, robust in production
+        if (this.debug) {
+            throw new Error('Nresults > N');
+        }
         Nresults = N;
         console.log('WARNING: Nresults > N. Setting N = Nresults');
-        if (this.debug) {
-            throw new Error('Nresults > N'); }
+
     }
 
     var startwaarden_code = this.codegenerator.generateCodeFromAst(this.startwaarden_ast);
