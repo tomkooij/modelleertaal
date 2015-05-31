@@ -3,7 +3,8 @@
  Store and manipulate results
 */
 
-/*jshint loopfunc: true */
+//jshint loopfunc: true 
+//jshint es3:true
 
 function Results(namespace) {
     this.namespace = namespace;
