@@ -124,7 +124,7 @@
 
 					// clean up results
 					var res = new evaluator_js.Results(evaluator.namespace);
-					res.getAllandCleanUp(results);
+					res.getAllandCleanUp(results, Nresults);
 
 					// make table
 					var dataset = res.rows;
@@ -162,7 +162,7 @@
 					$.plot($("#graph"), [scatter_plot],{
 							        series: {
 							            points: {
-							                radius: 3,
+							                radius: 1,
 							                show: true,
 							                fill: true,
 							                fillColor: "#058DC7"
