@@ -298,13 +298,13 @@ ModelregelsEvaluator.prototype.run = function(N, Nresults) {
                     "      }  \n" +
                     this.codegenerator.generateVariableStorageCode() +
                     "    }  \n" +
-                    " console.log(storage); return storage;} \n" +
+                    " return storage;} \n" +
                  "    try \n" +
                  "  { \n" +
                  "      var storage = run_model(N, Nresults); \n" +
                  "  } catch (e) \n" +
                  "  { console.log(e)} \n " +
-                 "console.log(storage); return storage;\n";
+                 "return storage;\n";
 
     if (this.debug) {
         console.log('*** generated js ***');
