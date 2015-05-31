@@ -18,10 +18,16 @@ Results.prototype.getAllandCleanUp = function(resultObject, Nresults) {
       return x.toFixed(3).replace(/\.?0*$/,'').replace('.',',');
     }
 
+    // make sure Nresults is set in function call
+    if (typeof Nresults === 'undefined') {
+        throw new Error('Results.prototype.getAllandCleanUp(): Nresults is undefined.');
+    }
+
     var temp = [], varName;
 
     // iterate over each variable (which are arrays [0..Nresults])
     //  humanize each item and store
+    // UNUSED!! TO BE REMOVED!
     for (var i =0; i < this.namespace.varNames.length; i++) {
         varName = this.namespace.varNames[i];
         this[varName] = resultObject[varName].map( function (item) {
@@ -30,11 +36,38 @@ Results.prototype.getAllandCleanUp = function(resultObject, Nresults) {
     }
 
     // humanize all items of resultObject.row[i][j]
+    //  for table output
     this.rows = resultObject.rows.map( function(arr) {
         return arr.map(function (item) {
             return humanize(item);
         });
     });
+
+    if (Nresults > 100) {
+        // select only 100 rows for graph output (performance!)
+        this.graph_rows = resultObject.rows.map( function (row_array, index) {
+            if (index == 0) {
+                console.log('graph_rows: first row!', row_array)
+                return row_array.map(Number);
+            }
+            // skip rows to keep only 100 rows for graph output (flot perfomance)
+            //  only valid for Nresults >= 100
+            if ((index % Math.floor(Nresults/100)) == 0) {
+                console.log('graph_rows row number', index);
+                return row_array.map(Number);
+            }
+            if (index == Nresults-1) {
+                // last row!
+                console.log('graph_rows: last row!', row_array);
+                return row_array.map(Number);
+            }
+        });
+    } else {
+        // Just convert results to float
+        this.graph_rows = resultObject.rows.map( function (row_array) {
+            return row_array.map(Number);
+        });
+    }
 };
 
 exports.Results = Results;
