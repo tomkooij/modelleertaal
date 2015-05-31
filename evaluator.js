@@ -13,6 +13,7 @@
 //jshint node:true
 //jshint devel:true
 //jshint evil:true
+//jshint es3:true
 "use strict";
 
 // parser compiled on execution by jison.js
@@ -209,6 +210,9 @@ CodeGenerator.prototype.parseNode = function(node) {
                     case 'sin': return "Math.sin("+this.parseNode(node.expr)+")";
                     case 'cos': return "Math.cos("+this.parseNode(node.expr)+")";
                     case 'tan': return "Math.tan("+this.parseNode(node.expr)+")";
+                    case 'arcsin': return "Math.asin("+this.parseNode(node.expr)+")";
+                    case 'arccos': return "Math.acos("+this.parseNode(node.expr)+")";
+                    case 'arctan': return "Math.atan("+this.parseNode(node.expr)+")";
                     case 'exp': return "Math.exp("+this.parseNode(node.expr)+")";
                     case 'ln':  return "Math.log("+this.parseNode(node.expr)+")";
                     case 'sqrt': return "Math.sqrt("+this.parseNode(node.expr)+")";

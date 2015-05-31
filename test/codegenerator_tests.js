@@ -31,6 +31,14 @@ describe('CodeGenertor.generateCodeFromAst() generate javascript from parsed AST
         assert.include(code,'Math.tan');
     })
 
+    it('CodeGenerator generates arcsin/arccos/arctan math functions', function() {
+        ast = parser.parse("x=1\nt=arcsin(x)+arccos(x)+arctan(x)");
+        code = codegenerator.generateCodeFromAst(ast);
+        assert.include(code,'Math.asin');
+        assert.include(code,'Math.acos');
+        assert.include(code,'Math.atan');
+    })
+
     it('CodeGenerator generates ln/exp/sqrt math functions', function() {
         ast = parser.parse("x=1\nt=ln(x)+exp(x)+sqrt(x)");
         code = codegenerator.generateCodeFromAst(ast);
@@ -102,6 +110,13 @@ describe('CodeGenertor.generateCodeFromAst() correct output of math expressions'
         code = codegenerator.generateCodeFromAst(ast);
         assert.closeTo(eval(code),0.707,0.01);
     })
+
+    it('Math.asin: arcsin(0.707) = 1/4*pi', function() {
+        ast = parser.parse("t=arcsin(0,707)");
+        code = codegenerator.generateCodeFromAst(ast);
+        assert.closeTo(eval(code),(1/4*3.1415),0.01);
+    })
+
     it('SysNat scientific notation: G = 6,67*10^-11', function() {
         ast = parser.parse("G = 6,67*10^-11");
         code = codegenerator.generateCodeFromAst(ast);
