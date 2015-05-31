@@ -7,8 +7,8 @@ var filename = 'modellen/model.xml';
 
 function main() {
 
-    var N = 1e3; // aantal iteraties
-    var Nresults = 2; // store every Nresults iterations
+    var N = 1e6; // aantal iteraties
+    var Nresults = 1000; // store every Nresults iterations
 
     var model = new evalmodule.Model();
     model.readBogusXMLFile(filename);
@@ -26,7 +26,7 @@ function main() {
 
     //writeCSV("output.csv", res, Nresults);
 
-    bogusTable(res, Nresults);
+    //bogusTable(res, Nresults);
 }
 
 // make a bogusTable to implement and test "table making" in the browser
