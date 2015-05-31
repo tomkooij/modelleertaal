@@ -157,6 +157,34 @@ describe('CodeGenertor.generateCodeFromAst() correct flow control', function(){
         code = codegenerator.generateCodeFromAst(ast);
         assert.equal(eval(code),0);
     })
+});
 
+describe('Namespace varDict correct handling / translation / mangling of variable names', function(){
+
+    it('case sensitivity of variables names', function() {
+        ast = parser.parse("A=3\na=2\nt=A");
+        code = codegenerator.generateCodeFromAst(ast);
+        assert.equal(eval(code),3);
+    })
+
+    it('special characters (illegal in javascript) in variable names', function() {
+        // this code *can* be legal javascript. Check translation/mangling
+        ast = parser.parse("t[35]=26\n");
+        codegenerator.namespace.varDict = {}; // clear
+        code = codegenerator.generateCodeFromAst(ast);
+        assert.equal(codegenerator.namespace.varDict['t[35]'],'var_t_lH_35_rH_');
+
+        // this code is illegal in javascipt. Check if it evals.
+        ast = parser.parse("t=9\nt_\{35\}\|=12\n");
+        code = codegenerator.generateCodeFromAst(ast);
+        assert.equal(eval(code),12);
+    })
+
+    it('js reserved words in variable names', function() {
+        // this code is illegal in javascipt. Check if it evals.
+        ast = parser.parse("function = 9\nif = 12\n");
+        code = codegenerator.generateCodeFromAst(ast);
+        assert.equal(eval(code),12);
+    })
 
 });

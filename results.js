@@ -3,7 +3,7 @@
  Store and manipulate results
 */
 
-//jshint loopfunc: true 
+//jshint loopfunc: true
 //jshint es3:true
 
 function Results(namespace) {
@@ -30,7 +30,7 @@ Results.prototype.getAllandCleanUp = function(resultObject, Nresults) {
     //  humanize each item and store
     // UNUSED!! TO BE REMOVED!
     for (var i =0; i < this.namespace.varNames.length; i++) {
-        varName = this.namespace.varNames[i];
+        varName = this.namespace.varDict[this.namespace.varNames[i]];
         this[varName] = resultObject[varName].map( function (item) {
             return humanize(item);
         });
