@@ -35,6 +35,9 @@
  </modelleertaal>
 */
 
+
+//jshint es3:true
+
 var xml = require('node-xml-lite');
 var fs = require('fs');
 

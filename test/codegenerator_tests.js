@@ -31,6 +31,14 @@ describe('CodeGenertor.generateCodeFromAst() generate javascript from parsed AST
         assert.include(code,'Math.tan');
     })
 
+    it('CodeGenerator generates arcsin/arccos/arctan math functions', function() {
+        ast = parser.parse("x=1\nt=arcsin(x)+arccos(x)+arctan(x)");
+        code = codegenerator.generateCodeFromAst(ast);
+        assert.include(code,'Math.asin');
+        assert.include(code,'Math.acos');
+        assert.include(code,'Math.atan');
+    })
+
     it('CodeGenerator generates ln/exp/sqrt math functions', function() {
         ast = parser.parse("x=1\nt=ln(x)+exp(x)+sqrt(x)");
         code = codegenerator.generateCodeFromAst(ast);
@@ -102,6 +110,13 @@ describe('CodeGenertor.generateCodeFromAst() correct output of math expressions'
         code = codegenerator.generateCodeFromAst(ast);
         assert.closeTo(eval(code),0.707,0.01);
     })
+
+    it('Math.asin: arcsin(0.707) = 1/4*pi', function() {
+        ast = parser.parse("t=arcsin(0,707)");
+        code = codegenerator.generateCodeFromAst(ast);
+        assert.closeTo(eval(code),(1/4*3.1415),0.01);
+    })
+
     it('SysNat scientific notation: G = 6,67*10^-11', function() {
         ast = parser.parse("G = 6,67*10^-11");
         code = codegenerator.generateCodeFromAst(ast);
@@ -142,6 +157,34 @@ describe('CodeGenertor.generateCodeFromAst() correct flow control', function(){
         code = codegenerator.generateCodeFromAst(ast);
         assert.equal(eval(code),0);
     })
+});
 
+describe('Namespace varDict correct handling / translation / mangling of variable names', function(){
+
+    it('case sensitivity of variables names', function() {
+        ast = parser.parse("A=3\na=2\nt=A");
+        code = codegenerator.generateCodeFromAst(ast);
+        assert.equal(eval(code),3);
+    })
+
+    it('special characters (illegal in javascript) in variable names', function() {
+        // this code *can* be legal javascript. Check translation/mangling
+        ast = parser.parse("t[35]=26\n");
+        codegenerator.namespace.varDict = {}; // clear
+        code = codegenerator.generateCodeFromAst(ast);
+        assert.equal(codegenerator.namespace.varDict['t[35]'],'var_t_lH_35_rH_');
+
+        // this code is illegal in javascipt. Check if it evals.
+        ast = parser.parse("t=9\nt_\{35\}\|=12\n");
+        code = codegenerator.generateCodeFromAst(ast);
+        assert.equal(eval(code),12);
+    })
+
+    it('js reserved words in variable names', function() {
+        // this code is illegal in javascipt. Check if it evals.
+        ast = parser.parse("function = 9\nif = 12\n");
+        code = codegenerator.generateCodeFromAst(ast);
+        assert.equal(eval(code),12);
+    })
 
 });

@@ -13,6 +13,7 @@
 //jshint node:true
 //jshint devel:true
 //jshint evil:true
+//jshint es3:true
 "use strict";
 
 // parser compiled on execution by jison.js
@@ -36,7 +37,9 @@ function Namespace() {
 
     this.varNames = []; // list of created variables
     this.constNames = []; // list of startwaarden that remain constant in execution
-
+    // dictionary that converts Modelleertaal identifiers (with illegal
+    //  chars [] {} in name) to javascipt identifiers
+    this.varDict = {};
 }
 
 if (!Array.prototype.indexOf) {
@@ -54,12 +57,18 @@ if (!Array.prototype.indexOf) {
   };
 }
 
+// remove javascript illegal or special char from variable names
+Namespace.prototype.mangleName= function(string) {
+    return this.varPrefix + string.replace('\{','_lA_').replace('\}','_rA_').replace('\[','_lH_').replace('\]','_rH_').replace('\|','_I_');
+};
+
 // create (or reference) variable that is on the left side of an assignment
 Namespace.prototype.createVar = function(name) {
     if (this.varNames.indexOf(name) == -1)  {
         this.varNames.push(name);
     }
-    return this.varPrefix + name;
+    this.varDict[name] = this.mangleName(name);
+    return this.varDict[name];
 };
 
 // reference a variable that is on the right side of an assignment
@@ -70,7 +79,7 @@ Namespace.prototype.referenceVar = function(name) {
     if ((this.varNames.indexOf(name) == -1) && (this.constNames.indexOf(name) == -1)) {
         throw new Error('Namespace: referenced variable unknown: ', name);
     }
-    return this.varPrefix + name;
+    return this.varDict[name];
 };
 
 Namespace.prototype.listAllVars = function() {
@@ -139,7 +148,7 @@ CodeGenerator.prototype.setNamespace = function(namespace) {
 CodeGenerator.prototype.generateVariableInitialisationCode = function() {
     var code = 'var storage = {} \n';
     for (var i = 0; i < this.namespace.varNames.length; i++) {
-        code += "storage."+this.namespace.varNames[i]+" = []; \n";
+        code += "storage."+this.namespace.varDict[this.namespace.varNames[i]]+" = []; \n";
     }
     code += "storage.rows = [];\n";
     return code;
@@ -148,9 +157,9 @@ CodeGenerator.prototype.generateVariableInitialisationCode = function() {
 CodeGenerator.prototype.generateVariableStorageCode = function() {
     var code = 'storage.rows[i] = [];\n';
     for (var i = 0; i < this.namespace.varNames.length; i++) {
-        var variable = this.namespace.varNames[i];
-        code += "storage."+variable+"[i]= "+this.namespace.varPrefix+variable+"; \n";
-        code += "storage.rows[i].push("+this.namespace.varPrefix+variable+");\n";
+        var variable = this.namespace.varDict[this.namespace.varNames[i]];
+        code += "storage."+variable+"[i]= "+variable+"; \n";
+        code += "storage.rows[i].push("+variable+");\n";
     }
     return code;
 };
@@ -209,6 +218,9 @@ CodeGenerator.prototype.parseNode = function(node) {
                     case 'sin': return "Math.sin("+this.parseNode(node.expr)+")";
                     case 'cos': return "Math.cos("+this.parseNode(node.expr)+")";
                     case 'tan': return "Math.tan("+this.parseNode(node.expr)+")";
+                    case 'arcsin': return "Math.asin("+this.parseNode(node.expr)+")";
+                    case 'arccos': return "Math.acos("+this.parseNode(node.expr)+")";
+                    case 'arctan': return "Math.atan("+this.parseNode(node.expr)+")";
                     case 'exp': return "Math.exp("+this.parseNode(node.expr)+")";
                     case 'ln':  return "Math.log("+this.parseNode(node.expr)+")";
                     case 'sqrt': return "Math.sqrt("+this.parseNode(node.expr)+")";
