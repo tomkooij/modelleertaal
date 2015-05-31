@@ -55,9 +55,12 @@
 "<="                                    return '<='
 ">"                                     return '>'
 "<"                                     return '<'
-"!"|"Niet"|"niet"                       return 'NOT'
-"Waar"|"waar"                           return 'TRUE'
-"Onwaar"|"onwaar"|"OnWaar"|"False"      return 'FALSE'
+
+// keywords are case insensitive
+"!"|[Nn][Ii][Ee][Tt]                  return 'NOT'
+[Oo][Nn][Ww][Aa][Aa][Rr]              return 'FALSE'
+[Ww][Aa][Aa][Rr]                      return 'TRUE'
+//[Ff][Aa][Ll][Ss][Ee]                  return 'FALSE'
 
 // assign value to var
 "="                                     return 'ASSIGN'
@@ -77,10 +80,10 @@
 "/"                                     return '/'
 
 // flow control
-"Als"|"als"                             return 'IF'
-"Dan"|"dan"                             return 'THEN'
-"EindAls"|"Eindals"|"eindals"           return 'ENDIF'
-"Stop"|"stop"                           return 'STOP'
+[Ee][Ii][Nn][Dd][Aa][Ll][Ss]            return 'ENDIF'
+[Aa][Ll][Ss]                            return 'IF'
+[Dd][Aa][Nn]                            return 'THEN'
+[Ss][Tt][Oo][Pp]                        return 'STOP'
 
 // identifiers
 [a-zA-Z]+([a-zA-Z0-9_])?                return 'IDENT'
