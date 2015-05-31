@@ -46,19 +46,16 @@ Results.prototype.getAllandCleanUp = function(resultObject, Nresults) {
     if (Nresults > 100) {
         // select only 100 rows for graph output (performance!)
         this.graph_rows = resultObject.rows.map( function (row_array, index) {
-            if (index == 0) {
-                console.log('graph_rows: first row!', row_array)
+            if (index === 0) {
                 return row_array.map(Number);
             }
             // skip rows to keep only 100 rows for graph output (flot perfomance)
             //  only valid for Nresults >= 100
-            if ((index % Math.floor(Nresults/100)) == 0) {
-                console.log('graph_rows row number', index);
+            if ((index % Math.floor(Nresults/100)) === 0) {
                 return row_array.map(Number);
             }
             if (index == Nresults-1) {
                 // last row!
-                console.log('graph_rows: last row!', row_array);
                 return row_array.map(Number);
             }
         });
