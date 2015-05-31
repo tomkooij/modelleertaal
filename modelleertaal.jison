@@ -86,7 +86,7 @@
 [Ss][Tt][Oo][Pp]                        return 'STOP'
 
 // identifiers
-[a-zA-Z]+([a-zA-Z0-9_])?                return 'IDENT'
+[a-zA-Z][a-zA-Z0-9_]*                return 'IDENT'
 
 <<EOF>>                                 return 'EOF'
 
