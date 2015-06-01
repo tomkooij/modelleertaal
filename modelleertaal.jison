@@ -35,6 +35,8 @@
  */
 
 %lex
+%options case-insensitive
+
 %%
 
 \s+                                     /* ignore whitespaces */
@@ -56,11 +58,9 @@
 ">"                                     return '>'
 "<"                                     return '<'
 
-// keywords are case insensitive
-"!"|[Nn][Ii][Ee][Tt]                  return 'NOT'
-[Oo][Nn][Ww][Aa][Aa][Rr]              return 'FALSE'
-[Ww][Aa][Aa][Rr]                      return 'TRUE'
-//[Ff][Aa][Ll][Ss][Ee]                  return 'FALSE'
+"!"|niet                                return 'NOT'
+onwaar                                  return 'FALSE'
+waar                                     return 'TRUE'
 
 // assign value to var
 "="                                     return 'ASSIGN'
@@ -80,10 +80,10 @@
 "/"                                     return '/'
 
 // flow control
-[Ee][Ii][Nn][Dd][Aa][Ll][Ss]            return 'ENDIF'
-[Aa][Ll][Ss]                            return 'IF'
-[Dd][Aa][Nn]                            return 'THEN'
-[Ss][Tt][Oo][Pp]                        return 'STOP'
+eindals                                 return 'ENDIF'
+als                                     return 'IF'
+dan                                     return 'THEN'
+stop                                    return 'STOP'
 
 // identifiers
 [a-zA-Z][a-zA-Z0-9_"\]""\|"{}"["]*                return 'IDENT'
