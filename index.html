@@ -118,7 +118,7 @@
 					//run!
 				    var evaluator = new evaluator_js.ModelregelsEvaluator(model, true);
 					var results = evaluator.run(N, Nresults);
-					var output_str = " DEBUG: t["+Nresults+"]= "+ results.t[Nresults-1]
+					var output_str = " DEBUG: t["+Nresults+"]= "+ results.var_t[Nresults-1]
 					$("#status").html(output_str);
 					console.log(output_str);
 

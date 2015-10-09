@@ -1,0 +1,19 @@
+<model>
+<startwaarden>
+dt=0,02
+t=0
+freq = 1,37 'Hz
+r = 0,01  'N
+x = 0,00  'm
+k = 11,9   'N/m
+m = 0,159 'kg</startwaarden>
+<modelregels>
+t:= t + dt
+Fv = -k*x
+Fd = -r*cos(2*3,14*t*freq)
+Fres = Fv + Fd
+a = Fres/m
+v := v + a*dt
+x := x + v*dt
+</modelregels>
+</model>

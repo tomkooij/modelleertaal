@@ -1,0 +1,29 @@
+<model>
+<startwaarden>
+t = 0
+dt = 0,01
+C = 10
+L= 0,40
+L0 = 0,1
+u = 0,5
+m = 0,2
+v= 0
+</startwaarden>
+<modelregels>
+t := t+dt
+u1 = sqrt(u*u+L*L)-L0
+u2 = u1
+alfa =arctan(u/L)
+Fv1 = -C*u1
+Fv2 = -C*u2
+F1x = Fv1*sin(alfa)
+F2x = Fv2*sin(alfa)
+Fr = F1x+F2x
+a = Fr/m
+dv = a*dt
+v := v +dv
+du = v*dt
+u := u +du
+
+</modelregels>
+</model>

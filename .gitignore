@@ -17,3 +17,4 @@ bundle.js
 
 # jQuery
 jQuery*
+dist/evaluator.browser.js
