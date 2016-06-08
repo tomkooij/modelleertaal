@@ -148,7 +148,7 @@ CodeGenerator.prototype.setNamespace = function(namespace) {
 CodeGenerator.prototype.generateVariableInitialisationCode = function() {
     var code = 'var storage = {} \n';
     for (var i = 0; i < this.namespace.varNames.length; i++) {
-        code += "storage."+this.namespace.varDict[this.namespace.varNames[i]]+" = []; \n";
+        code += "storage."+this.namespace.varDict[this.namespace.varNames[i]]+" = new Float32Array();\n";
     }
     code += "storage.rows = [];\n";
     return code;
