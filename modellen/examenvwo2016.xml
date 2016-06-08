@@ -1,0 +1,29 @@
+<modelleertaal>
+<startwaarden>
+   	t = 0
+dt = 10
+Ra = 5,371E6
+Ma = 5,972E24
+G = 6,6726E-11
+m_lift = 1000
+m_brandstof = 10000
+verbrandingswarmte = 30E6
+x = 0
+v = 27,8
+</startwaarden>
+<modelregels>
+rx = Ra + x 
+mtot = m_lift + m_brandstof 
+Fg = G * Ma * mtot / rx^2 
+Fmpz = mtot * 4*pi^2 *rx / (24*3600)^2 
+Fmotor = Fg - Fmpz 
+dx = v * dt 
+x = x + dx
+dW = Fmotor * dx
+dm_brandstof = dW/verbrandingswarmte
+m_brandstof= m_brandstof - dm_brandstof 
+als x > 4,0E7 Dan stop Eindals
+t = t + dt 
+</modelregels>
+
+</modelleertaal>
