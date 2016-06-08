@@ -146,19 +146,13 @@ CodeGenerator.prototype.setNamespace = function(namespace) {
 };
 
 CodeGenerator.prototype.generateVariableInitialisationCode = function() {
-    var code = 'var storage = {} \n';
-    for (var i = 0; i < this.namespace.varNames.length; i++) {
-        code += "storage."+this.namespace.varDict[this.namespace.varNames[i]]+" = new Float32Array();\n";
-    }
-    code += "storage.rows = [];\n";
-    return code;
+    return "storage.rows = [];\n";
 };
 
 CodeGenerator.prototype.generateVariableStorageCode = function() {
     var code = 'storage.rows[i] = [];\n';
     for (var i = 0; i < this.namespace.varNames.length; i++) {
         var variable = this.namespace.varDict[this.namespace.varNames[i]];
-        code += "storage."+variable+"[i]= "+variable+"; \n";
         code += "storage.rows[i].push("+variable+");\n";
     }
     return code;
@@ -301,7 +295,7 @@ ModelregelsEvaluator.prototype.run = function(N, Nresults) {
 
     // separate function run_model() inside anonymous Function()
     // to prevent bailout of the V8 optimising compiler in try {} catch
-    var model =     "function run_model(N, Nresults) { \n " +
+    var model =     "function run_model(N, Nresults, storage) { \n " +
                     startwaarden_code + "\n" +
                     this.codegenerator.generateVariableInitialisationCode() +
                     "    for (var i=0; i < Nresults; i++) { \n " +
@@ -310,13 +304,14 @@ ModelregelsEvaluator.prototype.run = function(N, Nresults) {
                     "      }  \n" +
                     this.codegenerator.generateVariableStorageCode() +
                     "    }  \n" +
-                    " return storage;} \n" +
+                    " return;} \n" +
+                 "    var results = []; \n " + 
                  "    try \n" +
                  "  { \n" +
-                 "      var storage = run_model(N, Nresults); \n" +
+                 "      run_model(N, Nresults, results); \n" +
                  "  } catch (e) \n" +
                  "  { console.log(e)} \n " +
-                 "return storage;\n";
+                 "return results;\n";
 
     if (this.debug) {
         console.log('*** generated js ***');

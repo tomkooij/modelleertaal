@@ -50,8 +50,9 @@
 			  document.getElementById('fileinput').addEventListener('change', readSingleFile, false);
 			</script>
 		</div>
+
 		<div>
-			<input id="open" type="button" value= "Open model.xml via HTTP/get">
+			<input id="open" type="button" value= "Voorbeeld model">
 			<p>
             <script>
             $(document).ready(function() {
@@ -83,12 +84,8 @@
             </script>
         </div>
 
-
-
 		<div>
 			Number of iterations = <input type="text" id="NBox" value="1000" size=5>
-			<p>
-			Store <input type="text" id="NresultsBox" value="20" size=5> iterations
 			<p>
 			<input id="run" type="button" value= "RUN!">
 			<script>
@@ -102,14 +99,10 @@
 					model.startwaarden = $("#startwaarden").val();
 					console.log('model = ', model);
 
-					// read N, Nresults from input fields
+					// read N from input field, set Nresults to 100 or N
 					var N = Number($('#NBox').val());
-					var Nresults = Number($('#NresultsBox').val());
+					var Nresults = Math.min(N, 100);
 					console.log(N, Nresults);
-					if (Nresults > N) {
-						alert('Nresults > N !');
-						throw new Error('Nresults > N');
-						}
 					if (N > 1e6) {
 						alert('N too big!');
 						throw new Error('N too big!');
@@ -118,7 +111,7 @@
 					//run!
 				    var evaluator = new evaluator_js.ModelregelsEvaluator(model, true);
 					var results = evaluator.run(N, Nresults);
-					var output_str = " DEBUG: t["+Nresults+"]= "+ results.var_t[Nresults-1]
+					var output_str = "End of run."
 					$("#status").html(output_str);
 					console.log(output_str);
 

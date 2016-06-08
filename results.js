@@ -24,18 +24,6 @@ Results.prototype.getAllandCleanUp = function(resultObject, Nresults) {
         throw new Error('Results.prototype.getAllandCleanUp(): Nresults is undefined.');
     }
 
-    var temp = [], varName;
-
-    // iterate over each variable (which are arrays [0..Nresults])
-    //  humanize each item and store
-    // UNUSED!! TO BE REMOVED!
-    for (var i =0; i < this.namespace.varNames.length; i++) {
-        varName = this.namespace.varDict[this.namespace.varNames[i]];
-        this[varName] = resultObject[varName].map( function (item) {
-            return humanize(item);
-        });
-    }
-
     // humanize all items of resultObject.row[i][j]
     //  for table output
     this.rows = resultObject.rows.map( function(arr) {
