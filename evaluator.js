@@ -145,15 +145,11 @@ CodeGenerator.prototype.setNamespace = function(namespace) {
     this.namespace = namespace; // storage for variable names
 };
 
-CodeGenerator.prototype.generateVariableInitialisationCode = function() {
-    return "storage.rows = [];\n";
-};
-
 CodeGenerator.prototype.generateVariableStorageCode = function() {
-    var code = 'storage.rows[i] = [];\n';
+    var code = 'storage[i] = [];\n';
     for (var i = 0; i < this.namespace.varNames.length; i++) {
         var variable = this.namespace.varDict[this.namespace.varNames[i]];
-        code += "storage.rows[i].push("+variable+");\n";
+        code += "storage[i].push("+variable+");\n";
     }
     return code;
 };
@@ -275,18 +271,7 @@ function ModelregelsEvaluator(model, debug) {
 
 }
 
-ModelregelsEvaluator.prototype.run = function(N, Nresults) {
-
-    if (Nresults > N) {
-        // throw error if we are in debugging state. Else fix and show warning.
-        // strict in testing, robust in production
-        if (this.debug) {
-            throw new Error('Nresults > N');
-        }
-        Nresults = N;
-        console.log('WARNING: Nresults > N. Setting N = Nresults');
-
-    }
+ModelregelsEvaluator.prototype.run = function(N) {
 
     var startwaarden_code = this.codegenerator.generateCodeFromAst(this.startwaarden_ast);
     this.namespace.moveStartWaarden(); // keep namespace clean
@@ -295,20 +280,17 @@ ModelregelsEvaluator.prototype.run = function(N, Nresults) {
 
     // separate function run_model() inside anonymous Function()
     // to prevent bailout of the V8 optimising compiler in try {} catch
-    var model =     "function run_model(N, Nresults, storage) { \n " +
+    var model =     "function run_model(N, storage) { \n " +
                     startwaarden_code + "\n" +
-                    this.codegenerator.generateVariableInitialisationCode() +
-                    "    for (var i=0; i < Nresults; i++) { \n " +
-                    "      for (var inner=0; inner <N/Nresults; inner++) {\n" +
+                    "    for (var i=0; i < N; i++) { \n " +
                     modelregels_code + "\n" +
-                    "      }  \n" +
                     this.codegenerator.generateVariableStorageCode() +
                     "    }  \n" +
                     " return;} \n" +
                  "    var results = []; \n " + 
                  "    try \n" +
                  "  { \n" +
-                 "      run_model(N, Nresults, results); \n" +
+                 "      run_model(N, results); \n" +
                  "  } catch (e) \n" +
                  "  { console.log(e)} \n " +
                  "return results;\n";
@@ -318,7 +300,6 @@ ModelregelsEvaluator.prototype.run = function(N, Nresults) {
         console.log(model);
         console.log("*** running! *** ");
         console.log("N = ", N);
-        console.log("Nresults = ", Nresults);
     }
 
     var t1 = Date.now();
@@ -326,11 +307,12 @@ ModelregelsEvaluator.prototype.run = function(N, Nresults) {
     // eval(model); // slow... in chrome >23
     //  the optimising compiler does not optimise eval() in local scope
     //  http://moduscreate.com/javascript-performance-tips-tricks/
-    var runModel = new Function('N','Nresults',model);
-    var result = runModel(N,Nresults);
+    var runModel = new Function('N', model);
+    var result = runModel(N);
 
     var t2 = Date.now();
-
+    
+    console.log("Number of iterations: ", result.length);
     console.log("Time: " + (t2 - t1) + "ms");
 
     return result;

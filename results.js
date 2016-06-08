@@ -24,36 +24,31 @@ Results.prototype.getAllandCleanUp = function(resultObject, Nresults) {
         throw new Error('Results.prototype.getAllandCleanUp(): Nresults is undefined.');
     }
 
-    // humanize all items of resultObject.row[i][j]
-    //  for table output
-    this.rows = resultObject.rows.map( function(arr) {
-        return arr.map(function (item) {
-            return humanize(item);
-        });
-    });
+    // reduce resultsObject (large array) to length == Nresults
+    var length = resultObject.length;
+    var rowinc = Math.floor(length / Nresults);
 
-    if (Nresults > 100) {
-        // select only 100 rows for graph output (performance!)
-        this.graph_rows = resultObject.rows.map( function (row_array, index) {
-            if (index === 0) {
-                return row_array.map(Number);
-            }
-            // skip rows to keep only 100 rows for graph output (flot perfomance)
-            //  only valid for Nresults >= 100
-            if ((index % Math.floor(Nresults/100)) === 0) {
-                return row_array.map(Number);
-            }
-            if (index == Nresults-1) {
-                // last row!
-                return row_array.map(Number);
-            }
-        });
-    } else {
-        // Just convert results to float
-        this.graph_rows = resultObject.rows.map( function (row_array) {
-            return row_array.map(Number);
-        });
+    function SelectRows(value, index) {
+        // select first row, last row and rows in between. Keep Nrows+1 rows.
+        if (index === 0 || index % rowinc === 0 || index == length-1) {
+            return true;
+        } else {
+            return false;
+        }
     }
+    
+    var rows = resultObject;
+
+    if (length > Nresults) {
+        rows = rows.filter(SelectRows);
+        console.log("filtered : ", rows.length);
+    }
+
+    this.rows = rows.map( function (row_array) {
+        return row_array.map(function (item) { 
+            return humanize(item);
+         });
+    });
 };
 
 exports.Results = Results;

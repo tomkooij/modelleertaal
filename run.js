@@ -8,7 +8,7 @@ var filename = 'modellen/model.xml';
 function main() {
 
     var N = 1e6; // aantal iteraties
-    var Nresults = 1000; // store every Nresults iterations
+    var Nresults = 1e2; // store every Nresults iterations
 
     var model = new evalmodule.Model();
     model.readBogusXMLFile(filename);
@@ -16,13 +16,15 @@ function main() {
 
     var evaluator = new evalmodule.ModelregelsEvaluator(model, true);
     var results = evaluator.run(N, Nresults);
-
+    console.log('DEBUG: finished running, returned!');
+        
     // Debug output
-    console.log(evaluator.namespace.varNames[0]+"["+Nresults+"]= ", results.rows[Nresults-1][0]);
-    console.log(evaluator.namespace.varNames[1]+"["+Nresults+"]= ", results.rows[Nresults-1][1]);
+    console.log(evaluator.namespace.varNames[0]+"["+Nresults+"]= ", results[Nresults-1][0]);
+    console.log(evaluator.namespace.varNames[1]+"["+Nresults+"]= ", results[Nresults-1][1]);
 
     var res = new evalmodule.Results(evaluator.namespace);
-    res.getAllandCleanUp(results, Nresults);
+    console.log('DEBUG: calling getAllandCleanUp!');
+    res.getAllandCleanUp(results, 1000);
 
     //writeCSV("output.csv", res, Nresults);
 
@@ -49,7 +51,7 @@ function bogusTable(results, Nresults) {
     var row = '';
     for (i = 0; i < Nresults; i++) {
         for (j = 0, len = varNames.length; j < len; j++) {
-            row += results.rows[i][j]+'\t';
+            row += results[i][j]+'\t';
         }
         row += '\n';
         console.log(row);
