@@ -114,7 +114,7 @@
 		}
 
 		document.getElementById('fileinput').addEventListener('change', readSingleFile, false);
-	
+
 	$(document).ready(function() {
 		$("#run").click(function() {
 			console.log('RUN! clicked.');
@@ -135,14 +135,18 @@
 			}
 
 			//run!
-							var output_str = "Run started..."
+			var output_str = "Run started..."
 			$("#status").html(output_str);
 			console.log(output_str);
-
-								var evaluator = new evaluator_js.ModelregelsEvaluator(model, true);
+			try {
+				var evaluator = new evaluator_js.ModelregelsEvaluator(model, true);
+		 	} catch(err) {
+				$("#status").html(err.message);
+				alert("Model niet in orde: \n"+err.message);
+		 	}
 			var results = evaluator.run(N, Nresults);
 
-								var output_str = "Run finished at iteration: " + results.length
+			var output_str = "Klaar na iteratie: " + results.length
 			$("#status").html(output_str);
 			console.log(output_str);
 
