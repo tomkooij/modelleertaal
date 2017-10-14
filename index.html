@@ -20,35 +20,18 @@
 	    width: 450px;
 	    height: 200px;
 	}
-
-
     </style>
     <script src="jquery-1.11.3.js"></script>
 	<script src="jquery.flot.js"></script>
 </head>
+
+
 <body>
 	<div id="werkBlad"> <!-- CSS zorg voor met werkvlak met schaduw -->
         <h2>Modelleertaal</h2>
         <div>
 			<input type="file" id="fileinput" />
-			<script type="text/javascript">
-			  function readSingleFile(evt) {
-			    var f = evt.target.files[0];
 
-			    if (f) {
-			      var r = new FileReader();
-			      r.onload = function(e) {
-				      var data = e.target.result;
-					model.parseBogusXMLString(data);
-					$("#modelregels").val(model.modelregels);
-					$("#startwaarden").val(model.startwaarden);
-			      }
-			      r.readAsText(f);
-			    }
-			  }
-
-			  document.getElementById('fileinput').addEventListener('change', readSingleFile, false);
-			</script>
 		</div>
 
 		<div>
@@ -85,107 +68,23 @@
         </div>
 
 		<div>
-			Number of iterations = <input type="text" id="NBox" value="1000" size=5>
+			<textarea id="modelregels"  rows=15 cols=40> Modelregels </textarea>
+			<textarea id="startwaarden" rows=15 cols=25> Startwaarden </textarea>
 			<p>
 			<input id="run" type="button" value= "RUN!">
-			<script>
-			$(document).ready(function() {
-				$("#run").click(function() {
-					console.log('RUN! clicked.');
+			Aantal iteraties = <input type="text" id="NBox" value="1000" size=5>
 
-					// read model from textarea
-					model = new evaluator_js.Model();
-					model.modelregels = $("#modelregels").val();
-					model.startwaarden = $("#startwaarden").val();
-					console.log('model = ', model);
-
-					// read N from input field, set Nresults to 100 or N
-					var N = Number($('#NBox').val());
-					var Nresults = Math.min(N, 100);
-					console.log(N, Nresults);
-					if (N > 1e6) {
-						alert('N too big!');
-						throw new Error('N too big!');
-					}
-
-					//run!
-	                var output_str = "Run started..."
-					$("#status").html(output_str);
-					console.log(output_str);
-
-                    var evaluator = new evaluator_js.ModelregelsEvaluator(model, true);
-					var results = evaluator.run(N, Nresults);
-			
-                    var output_str = "Run finished at iteration: " + results.length
-					$("#status").html(output_str);
-					console.log(output_str);
-
-					// clean up results
-					var res = new evaluator_js.Results(evaluator.namespace);
-					res.getAllandCleanUp(results, Nresults);
-
-					// make table
-					var dataset = res.rows;
-
-					var firstrow = $('<tr>')
-					var table = $('<table>').addClass('table');;
-
-					firstrow.append($('<th>').text('#'));
-
-            		var allVars = res.namespace.listAllVars();
-					console.log(allVars, allVars.length);
-					for (var k = 0; k < allVars.length; k++) {
-						firstrow.append($('<th>').text(allVars[k]));
-					}
-
-            		table.append(firstrow);
-
-					for (var i = 0; i < dataset.length; i++) {
-		                var row = $('<tr>');
-		                row.append($('<td>').text(i + 1));
-		                for (var j = 0; j < dataset[i].length; j++) {
-		                    row.append($('<td>').text(dataset[i][j]));}
-		                table.append(row);
-					}
-		        	$("#output").html(table);
-
-					// graph!
-					var scatter_plot = [];
-					// create data series. This should be a method of Results()
-					for (var i=0; i < Nresults; i++) {
-						// plot the first two variables (should be (t,x))
-						scatter_plot.push([parseFloat(res.rows[i][0].replace(',', '.')), parseFloat(res.rows[i][1].replace(',', '.'))]);
-					}
-					$("#graph").empty(); // nuke existing graph
-					$.plot($("#graph"), [scatter_plot],{
-							        series: {
-							            points: {
-							                radius: 1,
-							                show: true,
-							                fill: true,
-							                fillColor: "#058DC7"
-							            },
-							            color: "#058DC7"
-							        }});
-
-				});
-			});
-		 	</script>
 		</div>
 
 		<p>
-		<textarea id="modelregels"  rows=15 cols=40> Modelregels </textarea>
-		<textarea id="startwaarden" rows=15 cols=25> Startwaarden </textarea>
+
+		<div id="graph">
+		Graph goes here!
+		</div>
 	</div>
 
 	<div id="werkBlad">
 		<pre id="status">Hi, I am a statusline! my id is #status !</pre>
-	</div>
-
-	<div id="werkBlad">
-		<p id="graph">
-		Graph goes here!
-		</p>
 	</div>
 
 	<div id="werkBlad">
@@ -197,6 +96,108 @@
 		 access functions using SCRIPT_js object
 	-->
 	<script src="dist/evaluator.browser.js"></script>
+
+	<script type="text/javascript">
+		function readSingleFile(evt) {
+			var f = evt.target.files[0];
+
+			if (f) {
+				var r = new FileReader();
+				r.onload = function(e) {
+					var data = e.target.result;
+			model.parseBogusXMLString(data);
+			$("#modelregels").val(model.modelregels);
+			$("#startwaarden").val(model.startwaarden);
+				}
+				r.readAsText(f);
+			}
+		}
+
+		document.getElementById('fileinput').addEventListener('change', readSingleFile, false);
+	
+	$(document).ready(function() {
+		$("#run").click(function() {
+			console.log('RUN! clicked.');
+
+			// read model from textarea
+			model = new evaluator_js.Model();
+			model.modelregels = $("#modelregels").val();
+			model.startwaarden = $("#startwaarden").val();
+			console.log('model = ', model);
+
+			// read N from input field, set Nresults to 100 or N
+			var N = Number($('#NBox').val());
+			var Nresults = Math.min(N, 100);
+			console.log(N, Nresults);
+			if (N > 1e6) {
+				alert('N too big!');
+				throw new Error('N too big!');
+			}
+
+			//run!
+							var output_str = "Run started..."
+			$("#status").html(output_str);
+			console.log(output_str);
+
+								var evaluator = new evaluator_js.ModelregelsEvaluator(model, true);
+			var results = evaluator.run(N, Nresults);
+
+								var output_str = "Run finished at iteration: " + results.length
+			$("#status").html(output_str);
+			console.log(output_str);
+
+			// clean up results
+			var res = new evaluator_js.Results(evaluator.namespace);
+			res.getAllandCleanUp(results, Nresults);
+
+			// make table
+			var dataset = res.rows;
+
+			var firstrow = $('<tr>')
+			var table = $('<table>').addClass('table');;
+
+			firstrow.append($('<th>').text('#'));
+
+						var allVars = res.namespace.listAllVars();
+			console.log(allVars, allVars.length);
+			for (var k = 0; k < allVars.length; k++) {
+				firstrow.append($('<th>').text(allVars[k]));
+			}
+
+						table.append(firstrow);
+
+			for (var i = 0; i < dataset.length; i++) {
+								var row = $('<tr>');
+								row.append($('<td>').text(i + 1));
+								for (var j = 0; j < dataset[i].length; j++) {
+										row.append($('<td>').text(dataset[i][j]));}
+								table.append(row);
+			}
+					$("#output").html(table);
+
+			// graph!
+			var scatter_plot = [];
+			// create data series. This should be a method of Results()
+			for (var i=0; i < Nresults; i++) {
+				// plot the first two variables (should be (t,x))
+				scatter_plot.push([parseFloat(res.rows[i][0].replace(',', '.')), parseFloat(res.rows[i][1].replace(',', '.'))]);
+			}
+			$("#graph").empty(); // nuke existing graph
+			$.plot($("#graph"), [scatter_plot],{
+									series: {
+											points: {
+													radius: 1,
+													show: true,
+													fill: true,
+													fillColor: "#058DC7"
+											},
+											color: "#058DC7"
+									}});
+
+		});
+	});
+	</script>
+
 
 </body>
 </html>
