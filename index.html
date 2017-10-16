@@ -109,6 +109,8 @@
 		var results = [];			// array of results
 		var allVars = [];			// array of names of vars in results array
 
+		var previous_plot = [];		// dataset of previous plot
+
 		function readSingleFile(evt) {
 			var f = evt.target.files[0];
 
@@ -198,18 +200,19 @@
 					}
 					$("#graph").empty(); // verwijder text enzo
 					plot_graph("#graph", scatter_plot);
+					previous_plot = scatter_plot;
 			}; // do_plot
 
 			function plot_graph(placeholder, dataset) {
-				$.plot($(placeholder), [dataset], {
+				$.plot($(placeholder), [dataset, previous_plot], {
 										series: {
 												points: {
 														radius: 1,
 														show: true,
 														fill: true,
-														fillColor: "#058DC7"
+														//fillColor: "#058DC7"
 												},
-												color: "#058DC7"
+												//color: "#058DC7"
 										}
 				}); // $.plot()
 			} // plot_graph()
