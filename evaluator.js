@@ -18,7 +18,6 @@
 
 // parser compiled on execution by jison.js
 var modelmodule = require("./model.js");
-var resultsmodule = require("./results.js");
 var parser = require("./modelleertaal").parser;
 
 /*
@@ -154,6 +153,17 @@ CodeGenerator.prototype.generateVariableStorageCode = function() {
     return code;
 };
 
+CodeGenerator.prototype.generateStartWaardenStorageCode = function() {
+    var code = 'storage[0] = [];\n';
+    for (var i = 0; i < this.namespace.varNames.length; i++) {
+        var variable = this.namespace.varDict[this.namespace.varNames[i]];
+        code += "if (typeof("+variable+") == 'undefined') "+variable+"=0;\n" +
+        "storage[0].push("+variable+");\n";
+    }
+    return code;
+};
+
+
 CodeGenerator.prototype.generateCodeFromAst = function(ast) {
 
     var code = "";
@@ -282,12 +292,13 @@ ModelregelsEvaluator.prototype.run = function(N) {
     // to prevent bailout of the V8 optimising compiler in try {} catch
     var model =     "function run_model(N, storage) { \n " +
                     startwaarden_code + "\n" +
-                    "    for (var i=0; i < N; i++) { \n " +
+                    this.codegenerator.generateStartWaardenStorageCode() +
+                    "    for (var i=1; i < N; i++) { \n " +
                     modelregels_code + "\n" +
                     this.codegenerator.generateVariableStorageCode() +
                     "    }  \n" +
                     " return;} \n" +
-                 "    var results = []; \n " + 
+                 "    var results = []; \n " +
                  "    try \n" +
                  "  { \n" +
                  "      run_model(N, results); \n" +
@@ -311,7 +322,7 @@ ModelregelsEvaluator.prototype.run = function(N) {
     var result = runModel(N);
 
     var t2 = Date.now();
-    
+
     console.log("Number of iterations: ", result.length);
     console.log("Time: " + (t2 - t1) + "ms");
 
@@ -319,7 +330,6 @@ ModelregelsEvaluator.prototype.run = function(N) {
 
 };
 
-exports.Results = resultsmodule.Results; // from results.js
 exports.Model = modelmodule.Model; // from model.js
 exports.ModelregelsEvaluator = ModelregelsEvaluator;
 exports.CodeGenerator = CodeGenerator;
