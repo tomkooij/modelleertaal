@@ -74,9 +74,7 @@
 			<p>
 			<input id="run" type="button" value= "RUN!">
 			Aantal iteraties = <input type="text" id="NBox" value="100" size=5>
-			<p>
-			x: <input type="text" id="x_var" size=3>
-			y: <input type="text" id="y_var" size=3>
+
 		</div>
 
 		<p>
@@ -84,6 +82,10 @@
 		<div id="graph">
 		Graph goes here!
 		</div>
+		<p>
+		x: <input type="text" id="x_var" size=3>
+		y: <input type="text" id="y_var" size=3>
+		<input id="plot" type="button" value= "Plot!">
 	</div>
 
 	<div id="werkBlad">
@@ -101,6 +103,12 @@
 	<script src="dist/evaluator.browser.js"></script>
 
 	<script type="text/javascript">
+
+		//  global datasets
+		var Nresults = 0;			// the number of Nresults (results.length) OBSOLETE?
+		var results = [];			// array of results
+		var allVars = [];			// array of names of vars in results array
+
 		function readSingleFile(evt) {
 			var f = evt.target.files[0];
 
@@ -135,7 +143,7 @@
 				// results filering (temporarily) removed by bypassing results.js
 				if (N > 100) alert("Results filtering not implemented!");
 
-				var Nresults = Math.min(N, 100);
+				Nresults = Math.min(N, 100);
 				console.log(N, Nresults);
 				if (N > 1e6) {
 					alert('N too big!');
@@ -152,7 +160,7 @@
 					$("#status").html(err.message);
 					alert("Model niet in orde: \n"+err.message);
 			 	}
-				var results = evaluator.run(N);
+				results = evaluator.run(N);
 				console.log("Results!")
 				console.log(results)
 				console.log("EOF")
@@ -167,28 +175,30 @@
 				//res.getAllandCleanUp(results, Nresults);
 
 				// make table
-				var allVars = evaluator.namespace.listAllVars();
+				allVars = evaluator.namespace.listAllVars();
 				console.log(allVars, allVars.length);
 				//print_table("#output", res.rows, allVars)
-
-				// graph!
-				var scatter_plot = [];
-
-				// 16okt DIT MOET BETER
-				// create data series. This should be a method of Results()
-
-				// get column indices (in results array) of variables to plot
-				xvar_colidx = get_column_index($('#x_var').val(), allVars, 0);
-				yvar_colidx = get_column_index($('#y_var').val(), allVars, 1);
-				console.log('plotting: '+xvar_colidx+yvar_colidx)
-				for (var i=0; i < Nresults; i++) {
-						scatter_plot.push([results[i][xvar_colidx], results[i][yvar_colidx]]);
-				}
-				console.log(scatter_plot);
-				$("#graph").empty(); // verwijder text enzo
-				plot_graph("#graph", scatter_plot);
+				do_plot();
 
 			}); // run()
+
+			$("#plot").click(function() {
+				do_plot();
+				});
+
+			function do_plot() {
+					var scatter_plot = [];
+
+					// get column indices (in results array) of variables to plot
+					xvar_colidx = get_column_index($('#x_var').val(), allVars, 0);
+					yvar_colidx = get_column_index($('#y_var').val(), allVars, 1);
+					console.log('plotting: '+xvar_colidx+yvar_colidx)
+					for (var i=0; i < Nresults; i++) {
+							scatter_plot.push([results[i][xvar_colidx], results[i][yvar_colidx]]);
+					}
+					$("#graph").empty(); // verwijder text enzo
+					plot_graph("#graph", scatter_plot);
+			}; // do_plot
 
 			function plot_graph(placeholder, dataset) {
 				$.plot($(placeholder), [dataset], {
