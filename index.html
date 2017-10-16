@@ -55,6 +55,8 @@
 						model.parseBogusXMLString(data);
 						$("#modelregels").val(model.modelregels);
 						$("#startwaarden").val(model.startwaarden);
+						$("#x_var").val("");
+						$("#y_var").val("");
 						}
 					});
 
@@ -68,6 +70,8 @@
 							model.parseBogusXMLString(data);
 							$("#modelregels").val(model.modelregels);
 							$("#startwaarden").val(model.startwaarden);
+							$("#x_var").val("");
+							$("#y_var").val("");
                             }
                         });
                 });
@@ -179,7 +183,7 @@
 			}); // run()
 
 			$("#plot").click(function() {
-				do_plot();
+				do_plot("#graph", results, allVars);
 				$("#status").html("Status: Plot OK.")
 			});
 
@@ -267,6 +271,8 @@
 
 			function get_column_index(field_value, varslist, default_value) {
 				if (field_value) {
+					console.log("DEBUG: ")
+					console.log(varslist);
 					var idx = varslist.findIndex(x =>  x == field_value);
 					if (idx == -1) {
 						alert("Variable voor grafiekas niet gevonden: "+field_value);
