@@ -162,9 +162,6 @@
 					alert("Model niet in orde: \n"+err.message);
 			 	}
 				results = evaluator.run(N);
-				console.log("Results!")
-				console.log(results)
-				console.log("EOF")
 				var output_str = "Klaar na iteratie: " + results.length
 				Nresults = results.length;
 				$("#output").html(output_str);
@@ -193,7 +190,7 @@
 					// get column indices (in results array) of variables to plot
 					xvar_colidx = get_column_index($('#x_var').val(), allVars, 0);
 					yvar_colidx = get_column_index($('#y_var').val(), allVars, 1);
-					console.log('plotting: '+xvar_colidx+yvar_colidx)
+
 					// set column varnames in input fields
 					$('#x_var').val(allVars[xvar_colidx])
 					$('#y_var').val(allVars[yvar_colidx])
@@ -216,7 +213,6 @@
 														radius: 1,
 														show: true,
 														fill: true,
-														//fillColor: "#058DC7"
 												},
 										},
 										grid: {
@@ -265,7 +261,6 @@
 			function get_column_index(field_value, varslist, default_value) {
 				if (field_value) {
 					var idx = varslist.findIndex(x =>  x == field_value);
-					console.log('found: '+idx);
 					if (idx == -1) {
 						alert("Variable voor grafiekas niet gevonden: "+field_value);
 						return default_value;
