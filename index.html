@@ -50,6 +50,7 @@
 						$("#startwaarden").val(model.startwaarden);
 						}
 					});
+
 				// read model after button press
 				$("#open").click(function() {
                     $.ajax({
@@ -73,7 +74,9 @@
 			<p>
 			<input id="run" type="button" value= "RUN!">
 			Aantal iteraties = <input type="text" id="NBox" value="100" size=5>
-
+			<p>
+			x: <input type="text" id="x_var" size=3>
+			y: <input type="text" id="y_var" size=3>
 		</div>
 
 		<p>
@@ -173,10 +176,13 @@
 
 				// 16okt DIT MOET BETER
 				// create data series. This should be a method of Results()
-				inputvar_colidx = 0; // index of var to plot on horizontal axis
-				outcomevar_colidx = 1;  // index of var to plot on vertical axis
+
+				// get column indices (in results array) of variables to plot
+				xvar_colidx = get_column_index($('#x_var').val(), allVars, 0);
+				yvar_colidx = get_column_index($('#y_var').val(), allVars, 1);
+				console.log('plotting: '+xvar_colidx+yvar_colidx)
 				for (var i=0; i < Nresults; i++) {
-						scatter_plot.push([results[i][inputvar_colidx], results[i][outcomevar_colidx]]);
+						scatter_plot.push([results[i][xvar_colidx], results[i][yvar_colidx]]);
 				}
 				console.log(scatter_plot);
 				$("#graph").empty(); // verwijder text enzo
@@ -219,6 +225,18 @@
 				}
 				$("#output").html(table);
 			}
+
+			function get_column_index(field_value, varslist, default_value) {
+				if (field_value) {
+					var idx = varslist.findIndex(x =>  x == field_value);
+					console.log('found: '+idx);
+					if (idx == -1) {
+						alert("Variable voor grafiekas niet gevonden: "+field_value);
+						return default_value;
+					} else return idx;
+				} else return default_value;
+			}
+
 	});
 
 
