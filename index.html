@@ -204,7 +204,8 @@
 			}; // do_plot
 
 			function plot_graph(placeholder, dataset) {
-				$.plot($(placeholder), [previous_plot, dataset], {
+				$.plot($(placeholder), [previous_plot, dataset],
+						  {
 										series: {
 												points: {
 														radius: 1,
