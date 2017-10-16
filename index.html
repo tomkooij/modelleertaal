@@ -86,6 +86,7 @@
 		x: <input type="text" id="x_var" size=3>
 		y: <input type="text" id="y_var" size=3>
 		<input id="plot" type="button" value= "Plot!">
+		<p>Locatie: <span id="hoverdata"></span><span id="clickdata"></span></p>
 	</div>
 
 	<div id="werkBlad">
@@ -215,8 +216,28 @@
 														fill: true,
 														//fillColor: "#058DC7"
 												},
-										}
+										},
+										grid: {
+											hoverable: true,
+											clickable: true
+										},
 				}); // $.plot()
+
+				$(placeholder).bind("plothover", function (event, pos, item) {
+					var str = "(" + pos.x.toFixed(2) + ", " + pos.y.toFixed(2) + ")";
+					$("#hoverdata").text(str);
+				}); // $.bind("plothover")
+
+				$(placeholder).bind("plotclick", function (event, pos, item) {
+					console.log("click!");
+					console.log(item);
+					if (item) {
+						var str = " - Click: (" + pos.x.toFixed(2) + ", " +
+						   pos.y.toFixed(2) + ")";
+						$("#clickdata").text(str);
+					}
+				}); // $bind.("plotclick")
+
 			} // plot_graph()
 
 
