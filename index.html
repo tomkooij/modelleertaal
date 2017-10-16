@@ -41,7 +41,7 @@
             $(document).ready(function() {
 				// read model
 				$.ajax({
-					url : "modellen/model.xml",
+					url : "modellen/model 5.xml",
 					dataType: "text",
 					success : function (data) {
 						model = new evaluator_js.Model();
@@ -72,7 +72,7 @@
 			<textarea id="startwaarden" rows=15 cols=25> Startwaarden </textarea>
 			<p>
 			<input id="run" type="button" value= "RUN!">
-			Aantal iteraties = <input type="text" id="NBox" value="1000" size=5>
+			Aantal iteraties = <input type="text" id="NBox" value="100" size=5>
 
 		</div>
 
@@ -116,90 +116,112 @@
 		document.getElementById('fileinput').addEventListener('change', readSingleFile, false);
 
 	$(document).ready(function() {
-		$("#run").click(function() {
-			console.log('RUN! clicked.');
 
-			// read model from textarea
-			model = new evaluator_js.Model();
-			model.modelregels = $("#modelregels").val();
-			model.startwaarden = $("#startwaarden").val();
-			console.log('model = ', model);
+			$("#run").click(function() {
+				console.log('RUN! clicked.');
 
-			// read N from input field, set Nresults to 100 or N
-			var N = Number($('#NBox').val());
-			var Nresults = Math.min(N, 100);
-			console.log(N, Nresults);
-			if (N > 1e6) {
-				alert('N too big!');
-				throw new Error('N too big!');
+				// read model from textarea
+				model = new evaluator_js.Model();
+				model.modelregels = $("#modelregels").val();
+				model.startwaarden = $("#startwaarden").val();
+				console.log('model = ', model);
+
+				// read N from input field, set Nresults to 100 or N
+				var N = Number($('#NBox').val());
+
+				// results filering (temporarily) removed by bypassing results.js
+				if (N > 100) alert("Results filtering not implemented!");
+
+				var Nresults = Math.min(N, 100);
+				console.log(N, Nresults);
+				if (N > 1e6) {
+					alert('N too big!');
+					throw new Error('N too big!');
+				}
+
+				//run!
+				var output_str = "Run started..."
+				$("#status").html(output_str);
+				console.log(output_str);
+				try {
+					var evaluator = new evaluator_js.ModelregelsEvaluator(model, true);
+			 	} catch(err) {
+					$("#status").html(err.message);
+					alert("Model niet in orde: \n"+err.message);
+			 	}
+				var results = evaluator.run(N);
+				console.log("Results!")
+				console.log(results)
+				console.log("EOF")
+				var output_str = "Klaar na iteratie: " + results.length
+				Nresults = results.length;
+				$("#status").html(output_str);
+				console.log(output_str);
+
+				// clean up results
+				// results.js KAN WEG!!
+				//var res = new evaluator_js.Results(evaluator.namespace);
+				//res.getAllandCleanUp(results, Nresults);
+
+				// make table
+				var allVars = evaluator.namespace.listAllVars();
+				console.log(allVars, allVars.length);
+				//print_table("#output", res.rows, allVars)
+
+				// graph!
+				var scatter_plot = [];
+
+				// 16okt DIT MOET BETER
+				// create data series. This should be a method of Results()
+				inputvar_colidx = 0; // index of var to plot on horizontal axis
+				outcomevar_colidx = 1;  // index of var to plot on vertical axis
+				for (var i=0; i < Nresults; i++) {
+						scatter_plot.push([results[i][inputvar_colidx], results[i][outcomevar_colidx]]);
+				}
+				console.log(scatter_plot);
+				$("#graph").empty(); // verwijder text enzo
+				plot_graph("#graph", scatter_plot);
+
+			}); // run()
+
+			function plot_graph(placeholder, dataset) {
+				$.plot($(placeholder), [dataset], {
+										series: {
+												points: {
+														radius: 1,
+														show: true,
+														fill: true,
+														fillColor: "#058DC7"
+												},
+												color: "#058DC7"
+										}
+				}); // $.plot()
+			} // plot_graph()
+
+
+			function print_table(placeholder, dataset, varnames) {
+
+				var firstrow = $('<tr>')
+				var table = $('<table>').addClass('table');;
+				firstrow.append($('<th>').text('#'));
+
+				for (var k = 0; k < varnames.length; k++) {
+					firstrow.append($('<th>').text(varnames[k]));
+				}
+				table.append(firstrow);
+
+				for (var i = 0; i < dataset.length; i++) {
+									var row = $('<tr>');
+									row.append($('<td>').text(i + 1));
+									for (var j = 0; j < dataset[i].length; j++) {
+											row.append($('<td>').text(dataset[i][j]));}
+									table.append(row);
+				}
+				$("#output").html(table);
 			}
-
-			//run!
-			var output_str = "Run started..."
-			$("#status").html(output_str);
-			console.log(output_str);
-			try {
-				var evaluator = new evaluator_js.ModelregelsEvaluator(model, true);
-		 	} catch(err) {
-				$("#status").html(err.message);
-				alert("Model niet in orde: \n"+err.message);
-		 	}
-			var results = evaluator.run(N, Nresults);
-
-			var output_str = "Klaar na iteratie: " + results.length
-			$("#status").html(output_str);
-			console.log(output_str);
-
-			// clean up results
-			var res = new evaluator_js.Results(evaluator.namespace);
-			res.getAllandCleanUp(results, Nresults);
-
-			// make table
-			var dataset = res.rows;
-
-			var firstrow = $('<tr>')
-			var table = $('<table>').addClass('table');;
-
-			firstrow.append($('<th>').text('#'));
-
-						var allVars = res.namespace.listAllVars();
-			console.log(allVars, allVars.length);
-			for (var k = 0; k < allVars.length; k++) {
-				firstrow.append($('<th>').text(allVars[k]));
-			}
-
-						table.append(firstrow);
-
-			for (var i = 0; i < dataset.length; i++) {
-								var row = $('<tr>');
-								row.append($('<td>').text(i + 1));
-								for (var j = 0; j < dataset[i].length; j++) {
-										row.append($('<td>').text(dataset[i][j]));}
-								table.append(row);
-			}
-					$("#output").html(table);
-
-			// graph!
-			var scatter_plot = [];
-			// create data series. This should be a method of Results()
-			for (var i=0; i < Nresults; i++) {
-				// plot the first two variables (should be (t,x))
-				scatter_plot.push([parseFloat(res.rows[i][0].replace(',', '.')), parseFloat(res.rows[i][1].replace(',', '.'))]);
-			}
-			$("#graph").empty(); // nuke existing graph
-			$.plot($("#graph"), [scatter_plot],{
-									series: {
-											points: {
-													radius: 1,
-													show: true,
-													fill: true,
-													fillColor: "#058DC7"
-											},
-											color: "#058DC7"
-									}});
-
-		});
 	});
+
+
 	</script>
 
 
