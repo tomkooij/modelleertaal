@@ -104,7 +104,6 @@
 	<script type="text/javascript">
 
 		//  global datasets
-		var Nresults = 0;			// the number of Nresults (results.length) OBSOLETE?
 		var results = [];			// array of results
 		var allVars = [];			// array of names of vars in results array
 
@@ -138,14 +137,9 @@
 				model.startwaarden = $("#startwaarden").val();
 				console.log('model = ', model);
 
-				// read N from input field, set Nresults to 100 or N
+				// read N from input field
 				var N = Number($('#NBox').val());
 
-				// results filering (temporarily) removed by bypassing results.js
-				if (N > 100) alert("Results filtering not implemented!");
-
-				Nresults = Math.min(N, 100);
-				console.log(N, Nresults);
 				if (N > 1e6) {
 					alert('N too big!');
 					throw new Error('N too big!');
@@ -163,19 +157,14 @@
 			 	}
 				results = evaluator.run(N);
 				var output_str = "Klaar na iteratie: " + results.length
-				Nresults = results.length;
 				$("#output").html(output_str);
 				console.log(output_str);
-
-				// clean up results
-				// results.js KAN WEG!!
-				//var res = new evaluator_js.Results(evaluator.namespace);
-				//res.getAllandCleanUp(results, Nresults);
 
 				// make table
 				allVars = evaluator.namespace.listAllVars();
 				console.log(allVars, allVars.length);
 				//print_table("#output", res.rows, allVars)
+
 				do_plot();
 
 			}); // run()
@@ -195,7 +184,11 @@
 					$('#x_var').val(allVars[xvar_colidx])
 					$('#y_var').val(allVars[yvar_colidx])
 
-					for (var i=0; i < Nresults; i++) {
+					Nresults = Math.min(results.length, 100);
+					results = reduce_rows(results, Nresults);
+					console.log(results.length);
+
+					for (var i=0; i < results.length; i++) {
 							scatter_plot.push([results[i][xvar_colidx], results[i][yvar_colidx]]);
 					}
 					$("#graph").empty(); // verwijder text enzo
@@ -268,6 +261,26 @@
 				} else return default_value;
 			}
 
+			function reduce_rows(rows, Nresults) {
+					// reduce resultsObject (large array) to length == Nresults
+
+					var length = rows.length;
+			    var rowinc = Math.floor(length / Nresults);
+
+			    function select_rows(value, index) {
+			        // select first row, last row and rows in between. Keep Nrows+1 rows.
+			        if (index === 0 || index % rowinc === 0 || index == length-1) {
+			            return true;
+			        } else {
+			            return false;
+			        }
+			    }
+
+			    if (length > Nresults) {
+			        return rows.filter(select_rows);
+			    }
+			    return rows;
+			}
 	});
 
 
