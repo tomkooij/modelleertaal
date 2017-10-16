@@ -8,23 +8,19 @@ var filename = 'modellen/model.xml';
 function main() {
 
     var N = 1e6; // aantal iteraties
-    var Nresults = 1e2; // store every Nresults iterations
-
+    var Nresults = 1e2; // write Nresults
+    
     var model = new evalmodule.Model();
     model.readBogusXMLFile(filename);
     console.log(model);
 
     var evaluator = new evalmodule.ModelregelsEvaluator(model, true);
-    var results = evaluator.run(N, Nresults);
+    var results = evaluator.run(N);
     console.log('DEBUG: finished running, returned!');
-        
+
     // Debug output
     console.log(evaluator.namespace.varNames[0]+"["+Nresults+"]= ", results[Nresults-1][0]);
     console.log(evaluator.namespace.varNames[1]+"["+Nresults+"]= ", results[Nresults-1][1]);
-
-    var res = new evalmodule.Results(evaluator.namespace);
-    console.log('DEBUG: calling getAllandCleanUp!');
-    res.getAllandCleanUp(results, 1000);
 
     //writeCSV("output.csv", res, Nresults);
 
