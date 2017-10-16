@@ -9,6 +9,13 @@
 		font-family: Helvetica, Arial, sans-serif;
 		font-size: 100%;
     }
+		table {
+      border: 1px solid black;
+	  }
+		th, td {
+      border: 1px solid black;
+		  padding: 8px;
+		}
     /* schaduw rand om werkblad zodat afmetinging zichtbaar is
        handig voor debuggen */
     #werkBlad {
@@ -88,12 +95,14 @@
 	</div>
 
 	<div id="werkBlad">
-		<pre id="output">There should be output here...</pre>
+		<pre id="status">Status: Druk op RUN!</pre>
 	</div>
 
 	<div id="werkBlad">
-		<pre id="status">Hi, I am a statusline! my id is #status !</pre>
+		<pre id="datatable">There should be output here...</pre>
 	</div>
+
+
 
 	<!-- script/modules created with:
 	     browserify SCRIPT.js -d -s SCRIPT_js -o /dist/SCRIPT_browserfied.js
@@ -158,22 +167,23 @@
 				results = evaluator.run(N);
 				var output_str = "Klaar na iteratie: " + results.length
 				$("#output").html(output_str);
+				$("#status").html("Status: RUN OK.")
 				console.log(output_str);
 
-				// make table
+				// make table, plot
 				allVars = evaluator.namespace.listAllVars();
 				console.log(allVars, allVars.length);
-				//print_table("#output", res.rows, allVars)
-
-				do_plot();
+				print_table("#datatable", results, allVars)
+				do_plot("#graph", results, allVars);
 
 			}); // run()
 
 			$("#plot").click(function() {
 				do_plot();
-				});
+				$("#status").html("Status: Plot OK.")
+			});
 
-			function do_plot() {
+			function do_plot(placeholder, results, allVars) {
 					var scatter_plot = [];
 
 					// get column indices (in results array) of variables to plot
@@ -191,8 +201,8 @@
 					for (var i=0; i < results.length; i++) {
 							scatter_plot.push([results[i][xvar_colidx], results[i][yvar_colidx]]);
 					}
-					$("#graph").empty(); // verwijder text enzo
-					plot_graph("#graph", scatter_plot);
+					$(placeholder).empty(); // verwijder text enzo
+					plot_graph(placeholder, scatter_plot);
 					previous_plot = scatter_plot;
 			}; // do_plot
 
@@ -241,14 +251,18 @@
 				}
 				table.append(firstrow);
 
+				// reduce to max 500 rows to prevent browser lockup
+				Nresults = Math.min(dataset.length, 500);
+				dataset = reduce_rows(dataset, Nresults);
+
 				for (var i = 0; i < dataset.length; i++) {
 									var row = $('<tr>');
-									row.append($('<td>').text(i + 1));
+									row.append($('<td>').text(i));
 									for (var j = 0; j < dataset[i].length; j++) {
-											row.append($('<td>').text(dataset[i][j]));}
+											row.append($('<td>').text(dataset[i][j].toFixed(3)));}
 									table.append(row);
 				}
-				$("#output").html(table);
+				$(placeholder).html(table);
 			}
 
 			function get_column_index(field_value, varslist, default_value) {
