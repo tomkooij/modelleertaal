@@ -204,7 +204,9 @@
 			}; // do_plot
 
 			function plot_graph(placeholder, dataset) {
-				$.plot($(placeholder), [previous_plot, dataset],
+				$.plot($(placeholder), [
+							{data: previous_plot, color: '#d3d3d3'},
+							{data: dataset, color: 'blue'}],
 						  {
 										series: {
 												points: {
@@ -213,7 +215,6 @@
 														fill: true,
 														//fillColor: "#058DC7"
 												},
-												//color: "#058DC7"
 										}
 				}); // $.plot()
 			} // plot_graph()
