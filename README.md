@@ -1,11 +1,20 @@
-Simple compiler for *Modelleertaal*
+Simple compiler and webapp for *Modelleertaal*
 ==========================================
 
 [![travis](https://travis-ci.org/tomkooij/modelleertaal.svg?branch=master)](https://travis-ci.org/tomkooij/modelleertaal)
 [![appveyor](https://ci.appveyor.com/api/projects/status/62ndpna03e6mi37y?svg=true
 )](https://ci.appveyor.com/project/tomkooij/modelleertaal)
 
-*Modelleertaal* to javascript compiler in javascript/jison.
+*Modelleertaal* to javascript compiler in javascript/jison. A simple demo webapp is included that can run most (all?)
+of the models used in high school physics in NL.
+
+## Webapp
+
+Screenshot
+
+[Example](https://tomkooij.github.io)
+
+## About Modeleertaal
 
 *Modelleertaal* is the language used for "natuurkundig modelleren"
 (dynamical models in high school physics in NL. System dynamics, Jay W. Forrester, DYNAMO, ...)
@@ -30,8 +39,8 @@ The language is a subset of "CoachTaal" which is an imperative language derived 
    In Pascal:
      If (a = 0) AND !(b = True) then Halt(0);
 
-   Real world example (SysNat model 9):
-     'model 9 parachutesprong
+   Real world example (Examen vwo 2005-I Champignon):
+     'model parachutesprong
      'modelregels
      Fwr = k * v^2
      Fres = Fzw - Fwr
@@ -46,10 +55,8 @@ The language is a subset of "CoachTaal" which is an imperative language derived 
      als h < 350 dan k = 30 eindals
 ```
 
-This was originally based on git://github.com/zaach/zii-jsconf2010-talk.git
 
-Installation
-============
+##Installation
 
 Node.js using npm and grunt:
 
@@ -59,10 +66,17 @@ npm install
 grunt
 ```
 
-Usage
-=====
+##Usage
 
-Node.js:
+A Node.js example in in `run.js`:
 ```
 node run
 ```
+
+
+##License and credits
+
+This compiler and webapp implements the language used in Dutch High School Physics exams. 
+This language is (based on) Coach and CoachTaal. Both are trademarks of [CMA Science](http://cma-science.nl/). 
+
+This was originally based on git://github.com/zaach/zii-jsconf2010-talk.git
