@@ -74,7 +74,7 @@
 			<p>
 			<input id="run" type="button" value= "RUN!">
 			Aantal iteraties = <input type="text" id="NBox" value="100" size=5>
-
+			<span id="output"></span>
 		</div>
 
 		<p>
@@ -90,11 +90,11 @@
 	</div>
 
 	<div id="werkBlad">
-		<pre id="status">Hi, I am a statusline! my id is #status !</pre>
+		<pre id="output">There should be output here...</pre>
 	</div>
 
 	<div id="werkBlad">
-		<pre id="output">There should be output here...</pre>
+		<pre id="status">Hi, I am a statusline! my id is #status !</pre>
 	</div>
 
 	<!-- script/modules created with:
@@ -155,7 +155,7 @@
 
 				//run!
 				var output_str = "Run started..."
-				$("#status").html(output_str);
+				$("#output").html(output_str);
 				console.log(output_str);
 				try {
 					var evaluator = new evaluator_js.ModelregelsEvaluator(model, true);
@@ -169,7 +169,7 @@
 				console.log("EOF")
 				var output_str = "Klaar na iteratie: " + results.length
 				Nresults = results.length;
-				$("#status").html(output_str);
+				$("#output").html(output_str);
 				console.log(output_str);
 
 				// clean up results
@@ -229,8 +229,6 @@
 				}); // $.bind("plothover")
 
 				$(placeholder).bind("plotclick", function (event, pos, item) {
-					console.log("click!");
-					console.log(item);
 					if (item) {
 						var str = " - Click: (" + pos.x.toFixed(2) + ", " +
 						   pos.y.toFixed(2) + ")";
