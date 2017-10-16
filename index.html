@@ -79,12 +79,10 @@
 
 		<p>
 
-		<div id="graph">
-		Graph goes here!
-		</div>
+		<div id="graph">Graph goes here!</div>
 		<p>
-		x: <input type="text" id="x_var" size=3>
-		y: <input type="text" id="y_var" size=3>
+		verticaal: <input type="text" id="y_var" size=3>
+		horizontaal: <input type="text" id="x_var" size=3>
 		<input id="plot" type="button" value= "Plot!">
 		<p>Locatie: <span id="hoverdata"></span><span id="clickdata"></span></p>
 	</div>
@@ -196,6 +194,10 @@
 					xvar_colidx = get_column_index($('#x_var').val(), allVars, 0);
 					yvar_colidx = get_column_index($('#y_var').val(), allVars, 1);
 					console.log('plotting: '+xvar_colidx+yvar_colidx)
+					// set column varnames in input fields
+					$('#x_var').val(allVars[xvar_colidx])
+					$('#y_var').val(allVars[yvar_colidx])
+
 					for (var i=0; i < Nresults; i++) {
 							scatter_plot.push([results[i][xvar_colidx], results[i][yvar_colidx]]);
 					}
