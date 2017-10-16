@@ -1,8 +1,8 @@
 Simple compiler for *Modelleertaal*
 ==========================================
 
-[![Travis Status](https://travis-ci.org/tomkooij/modelleertaal.svg)]
-(https://travis-ci.org/tomkooij/modelleertaal)
+[![travis](https://travis-ci.org/tomkooij/modelleertaal.svg?branch=master)](https://travis-ci.org/tomkooij/modelleertaal)
+[![appveyor](https://ci.appveyor.com/api/projects/status/32r7s2skrgm9ubva?svg=true)](https://ci.appveyor.com/api/projects/status/32r7s2skrgm9ubva?svg=true)
 
 *Modelleertaal* to javascript compiler in javascript/jison.
 
