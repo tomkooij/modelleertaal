@@ -29,7 +29,8 @@
 	}
     </style>
     <script src="jquery-1.11.3.js"></script>
-	<script src="jquery.flot.js"></script>
+  	<script src="jquery.flot.js"></script>
+		<script src="jquery.flot.axislabels.js"></script>
 </head>
 
 
@@ -229,6 +230,16 @@
 											hoverable: true,
 											clickable: true
 										},
+										axisLabels: {
+            				show: true
+        						},
+						        xaxes: [{
+						            axisLabel: $('#x_var').val(),
+						        }],
+        						yaxes: [{
+						            position: 'left',
+						            axisLabel: $('#y_var').val(),
+        						}],
 				}); // $.plot()
 
 				$(placeholder).bind("plothover", function (event, pos, item) {
