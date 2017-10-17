@@ -305,6 +305,7 @@ success : function (data) {
 	}
 });
 $("#graph").html("Model geladen. Geen data. Druk op Run!");
+$("#output").empty()
 });
 
 // read model after button press
@@ -328,7 +329,8 @@ $("#open").click(function() {
 		$("#y_var").val("");
 									}
 							});
-$("#graph").html("Model geladen. Geen data. Druk op Run!");
+		$("#graph").html("Model geladen. Geen data. Druk op Run!");
+		$("#output").empty()
 			});
 
 
