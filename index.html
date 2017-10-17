@@ -25,7 +25,7 @@
     }
 	#graph {
 	    width: 450px;
-	    height: 200px;
+	    height: 300px;
 	}
     </style>
     <script src="jquery-1.11.3.js"></script>
@@ -39,64 +39,34 @@
         <h2>Modelleertaal</h2>
         <div>
 			<input type="file" id="fileinput" />
-
 		</div>
-
+		<p>
 		<div>
-			<input id="open" type="button" value= "Voorbeeld model">
-			<p>
-            <script>
-            $(document).ready(function() {
-				// read model
-				$.ajax({
-					url : "modellen/model 5.xml",
-					dataType: "text",
-					success : function (data) {
-						model = new evaluator_js.Model();
-						model.parseBogusXMLString(data);
-						$("#modelregels").val(model.modelregels);
-						$("#startwaarden").val(model.startwaarden);
-						$("#x_var").val("");
-						$("#y_var").val("");
-						}
-					});
-
-				// read model after button press
-				$("#open").click(function() {
-                    $.ajax({
-                        url : "modellen/model.xml",
-                        dataType: "text",
-                        success : function (data) {
-                            model = new evaluator_js.Model();
-							model.parseBogusXMLString(data);
-							$("#modelregels").val(model.modelregels);
-							$("#startwaarden").val(model.startwaarden);
-							$("#x_var").val("");
-							$("#y_var").val("");
-                            }
-                        });
-                });
-            });
-            </script>
-        </div>
-
+			<input id="open" type="button" value= "Kies model:">
+			<select id="model_keuze">
+		    <option value="0">Examen vwo 2005-I Champignon</option>
+		    <option value="1">Examen vwo 2016-I Ruimtelift</option>
+		    <option value="2">Opgave 17 Satelliet</option>
+			</select>
+	  </div>
+		<p>
 		<div>
 			<textarea id="modelregels"  rows=15 cols=40> Modelregels </textarea>
 			<textarea id="startwaarden" rows=15 cols=25> Startwaarden </textarea>
 			<p>
 			<input id="run" type="button" value= "RUN!">
-			Aantal iteraties = <input type="text" id="NBox" value="100" size=5>
+			Aantal iteraties = <input type="text" id="NBox" value="1000" size=5>
 			<span id="output"></span>
 		</div>
 
 		<p>
 
-		<div id="graph">Graph goes here!</div>
+		<div id="graph" class="graph">Druk op Run! voor een grafiek!</div>
 		<p>
 		verticaal: <input type="text" id="y_var" size=3>
 		horizontaal: <input type="text" id="x_var" size=3>
 		<input id="plot" type="button" value= "Plot!">
-		<p>Locatie: <span id="hoverdata"></span><span id="clickdata"></span></p>
+		<p>Aflezen: <span id="hoverdata"></span><span id="clickdata"></span></p>
 	</div>
 
 	<div id="werkBlad">
@@ -318,7 +288,47 @@
 	});
 
 
-	</script>
+
+$(document).ready(function() {
+// read model
+$.ajax({
+url : "modellen/examenvwo2005.xml",
+dataType: "text",
+success : function (data) {
+	model = new evaluator_js.Model();
+	model.parseBogusXMLString(data);
+	$("#modelregels").val(model.modelregels);
+	$("#startwaarden").val(model.startwaarden);
+	$("#x_var").val("");
+	$("#y_var").val("");
+	}
+});
+
+// read model after button press
+$("#open").click(function() {
+
+		// lees keuze uit drop-down en kies juiste url
+		// Dit moet beter: niet hard coded... sometime.
+		model_keuze = $("#model_keuze").val();
+		urls = ['modellen/examenvwo2005.xml',
+						'modellen/examenvwo2016.xml',
+						'modellen/satelliet.xml']
+					$.ajax({
+							url : urls[model_keuze],
+							dataType: "text",
+							success : function (data) {
+									model = new evaluator_js.Model();
+		model.parseBogusXMLString(data);
+		$("#modelregels").val(model.modelregels);
+		$("#startwaarden").val(model.startwaarden);
+		$("#x_var").val("");
+		$("#y_var").val("");
+									}
+							});
+			});
+	});
+
+</script>
 
 
 </body>
