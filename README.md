@@ -10,11 +10,11 @@ of the models used in high school physics in NL.
 
 ## Webapp
 
-![Webapp screenshot](/screenshot.png)
+[![Webapp screenshot](/screenshot.png)](https://tomkooij.github.io)
 
 [Try the webapp!](https://tomkooij.github.io)
 
-## About Modeleertaal
+## About Modelleertaal
 
 *Modelleertaal* is the language used for "natuurkundig modelleren"
 (dynamical models in high school physics in NL. System dynamics, Jay W. Forrester, DYNAMO, ...)
