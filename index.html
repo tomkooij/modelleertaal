@@ -24,7 +24,7 @@
 		box-shadow: 0 2px 10px rgba(0,0,0,0.8);
     }
 	#graph {
-	    width: 450px;
+		  width: 450px;
 	    height: 300px;
 	}
     </style>
@@ -42,7 +42,7 @@
 		</div>
 		<p>
 		<div>
-			<input id="open" type="button" value= "Kies model:">
+			<input id="open" type="button" value= "Laad model:">
 			<select id="model_keuze">
 		    <option value="0">Examen vwo 2005-I Champignon</option>
 		    <option value="1">Examen vwo 2016-I Ruimtelift</option>
@@ -61,7 +61,7 @@
 
 		<p>
 
-		<div id="graph" class="graph">Druk op Run! voor een grafiek!</div>
+		<div id="graph" class="graph">Model niet geladen!</div>
 		<p>
 		verticaal: <input type="text" id="y_var" size=3>
 		horizontaal: <input type="text" id="x_var" size=3>
@@ -70,11 +70,11 @@
 	</div>
 
 	<div id="werkBlad">
-		<pre id="status">Status: Druk op RUN!</pre>
+		<pre id="status">Status: OK</pre>
 	</div>
 
 	<div id="werkBlad">
-		<pre id="datatable">There should be output here...</pre>
+		<pre id="datatable">Hier komt een tabel...</pre>
 	</div>
 
 
@@ -136,7 +136,8 @@
 				try {
 					var evaluator = new evaluator_js.ModelregelsEvaluator(model, true);
 			 	} catch(err) {
-					$("#status").html(err.message);
+					$("#graph").html(err.message.replace(/\n/g,"<br>"));
+					$("#status").html("Status: ERROR.");
 					alert("Model niet in orde: \n"+err.message);
 			 	}
 				results = evaluator.run(N);
@@ -303,6 +304,8 @@ success : function (data) {
 	$("#y_var").val("");
 	}
 });
+$("#graph").html("Model geladen. Geen data. Druk op Run!");
+});
 
 // read model after button press
 $("#open").click(function() {
@@ -325,8 +328,11 @@ $("#open").click(function() {
 		$("#y_var").val("");
 									}
 							});
+$("#graph").html("Model geladen. Geen data. Druk op Run!");
 			});
-	});
+
+
+
 
 </script>
 
