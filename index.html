@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 	<meta charset="utf-8">
-	<title>Modelleertaal test webpagina</title>
+	<title>Modelleertaal webapp</title>
 
 	<style>
     html {
@@ -31,6 +31,8 @@
     <script src="jquery-1.11.3.js"></script>
   	<script src="jquery.flot.js"></script>
 		<script src="jquery.flot.axislabels.js"></script>
+		<script src="FileSaver.min.js"></script>
+		<script src="Blob.js"></script>
 </head>
 
 
@@ -38,7 +40,8 @@
 	<div id="werkBlad"> <!-- CSS zorg voor met werkvlak met schaduw -->
         <h2>Modelleertaal</h2>
         <div>
-			<input type="file" id="fileinput" />
+			<input type="file" id="fileinput">
+			<input id="download" type="button" value= "Download model.xml">
 		</div>
 		<p>
 		<div>
@@ -333,8 +336,17 @@ $("#open").click(function() {
 		$("#output").empty()
 			});
 
+$("#download").click(function() {
+		// requires FileSaver.js and Blob.js
+		// (Blob() not supported on most mobile browsers)
+		console.log("Download model.xml!");
+		model = new evaluator_js.Model();
+		model.modelregels = $("#modelregels").val();
+		model.startwaarden = $("#startwaarden").val();
 
-
+		var blob = new Blob([model.createBogusXMLString()], {type: "text/plain;charset=utf-8"});
+		saveAs(blob, "model.xml");
+});
 
 </script>
 

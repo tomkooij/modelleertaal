@@ -83,5 +83,15 @@ Model.prototype.parseBogusXMLString = function(xmlString) {
 
 };
 
+Model.prototype.createBogusXMLString = function() {
+
+    return '<modelleertaal>\n<startwaarden>\n' +
+            this.startwaarden +
+            '</startwaarden>\n<modelregels>\n' +
+            this.modelregels +
+            '</modelregels></modelleertaal>\n';
+};
+
+
 
 exports.Model = Model;
