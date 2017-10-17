@@ -10,7 +10,7 @@ of the models used in high school physics in NL.
 
 ## Webapp
 
-Screenshot
+![Webapp screenshot](/screenshot.png)
 
 [Try the webapp!](https://tomkooij.github.io)
 
