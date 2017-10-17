@@ -14,6 +14,8 @@ of the models used in high school physics in NL.
 
 [Try the webapp!](https://tomkooij.github.io)
 
+The webapp (HTML/Javascript) should run on Windows/MacOS/Android/iOS in any browser. It was designed for and tested on Chrome. The webap is very limited, but it should be easy to use *and* it should run all models used in Dutch High School Physics classes. If it doesn't work or isn't easy to use: Please provide feedback.
+
 ## About Modelleertaal
 
 *Modelleertaal* is the language used for "natuurkundig modelleren"
@@ -57,6 +59,24 @@ Examen vwo 2005-I Champignon:
      als h < 350 dan k = 30 eindals
 ```
 
+## About the modelleertaal compiler
+
+`evaluator.js` contains a compiler for *Modelleertaal* to javascript. Using a modern javascript compiler such as Node.js/Chrome V8 it is very fast. `run.js` contains a benchmark. Compared to other modellertaal interpreters/compilers it is orders of magnitude faster.
+
+The parser is build using [jison](https://github.com/zaach/jison). Modellertaal is compiled to javascript which is executed using `eval()`. The `eval()` has been wrapped into an anonymous function to prevent bailout of the V8 optimising compiler.
+
+Usage:
+```javascript
+model = new evaluator_js.Model();
+model.modelregels = "a = a + 1";
+model.startwaarden ="a = 1\n b=2\n";
+
+N = 1000;
+var evaluator = new evaluator_js.ModelregelsEvaluator(model);
+results = evaluator.run(N);
+```
+
+`model.js` is used to read/write models. Models are stored in `BogusXML` which has an XML-like syntax with `<` and `>` allowed.
 
 ## Installation
 
