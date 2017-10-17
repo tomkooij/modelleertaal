@@ -16,6 +16,8 @@ module.exports = function(grunt) {
           '!jquery*',
           '!Gruntfile.js',
           '!node_modules/**/*',
+          '!FileSaver*',
+          '!Blob*'
         ]
 
       },
