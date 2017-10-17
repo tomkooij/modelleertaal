@@ -46,7 +46,7 @@
 		<p>
 		<div>
 			<input id="open" type="button" value= "Laad model:">
-			<select id="model_keuze">
+			<select id="model_keuze" onchange="click_load_model()">
 		    <option value="0">Examen vwo 2005-I Champignon</option>
 		    <option value="1">Examen vwo 2016-I Ruimtelift</option>
 		    <option value="2">Opgave 17 Satelliet</option>
@@ -312,8 +312,8 @@ $("#output").empty()
 });
 
 // read model after button press
-$("#open").click(function() {
-
+$("#open").click(click_load_model);
+var click_load_model = function () {
 		// lees keuze uit drop-down en kies juiste url
 		// Dit moet beter: niet hard coded... sometime.
 		model_keuze = $("#model_keuze").val();
@@ -334,7 +334,8 @@ $("#open").click(function() {
 							});
 		$("#graph").html("Model geladen. Geen data. Druk op Run!");
 		$("#output").empty()
-			});
+			};
+
 
 $("#download").click(function() {
 		// requires FileSaver.js and Blob.js
