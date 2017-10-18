@@ -16,8 +16,8 @@ module.exports = function(grunt) {
           '!jquery*',
           '!Gruntfile.js',
           '!node_modules/**/*',
-          '!FileSaver*',
-          '!Blob*'
+          '!js/*',
+          '!scripts/*'
         ]
 
       },
@@ -44,7 +44,7 @@ module.exports = function(grunt) {
       browserify: {
  			build: {
  				files: {
- 					'dist/evaluator.browser.js': ['evaluator.js']
+ 					'scripts/evaluator.browser.js': ['evaluator.js']
  				},
  				options: {
  					browserifyOptions: {
