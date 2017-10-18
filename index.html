@@ -329,18 +329,18 @@ var click_load_model = function () {
 							dataType: "text",
 							success : function (data) {
 									model = new evaluator_js.Model();
-		model.parseBogusXMLString(data);
-		$("#modelregels").val(model.modelregels);
-		$("#startwaarden").val(model.startwaarden);
-		$('#y_var').empty();
-		$('#x_var').empty();
-		$('<option/>').val('').text('auto').appendTo('#x_var');
-		$('<option/>').val('').text('auto').appendTo('#y_var');
-									}
-							});
-		$("#graph").html("Model geladen. Geen data. Druk op Run!");
-		$("#output").empty()
-			};
+									model.parseBogusXMLString(data);
+									$("#modelregels").val(model.modelregels);
+									$("#startwaarden").val(model.startwaarden);
+									$('#y_var').empty();
+									$('#x_var').empty();
+									$('<option/>').val('').text('auto').appendTo('#x_var');
+									$('<option/>').val('').text('auto').appendTo('#y_var');
+									$("#graph").html("Model geladen. Geen data. Druk op Run!");
+									$("#output").empty();
+								} // succes();
+					}); //.ajax
+		}; // click_load_model
 
 
 $("#download").click(function() {
