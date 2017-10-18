@@ -294,25 +294,8 @@
 	});
 
 
-
 $(document).ready(function() {
-
-$.ajax({
-url : "modellen/examenvwo2005.xml",
-dataType: "text",
-success: function (data) {
-	model = new evaluator_js.Model();
-	model.parseBogusXMLString(data);
-	$("#modelregels").val(model.modelregels);
-	$("#startwaarden").val(model.startwaarden);
-	$('#y_var').empty();
-	$('#x_var').empty();
-	$('<option/>').val('').text('auto').appendTo('#x_var');
-	$('<option/>').val('').text('auto').appendTo('#y_var');
-	}
-});
-$("#graph").html("Model geladen. Geen data. Druk op Run!");
-$("#output").empty()
+	click_load_model();
 });
 
 // read model after button press
@@ -324,8 +307,9 @@ var click_load_model = function () {
 		urls = ['modellen/examenvwo2005.xml',
 						'modellen/examenvwo2016.xml',
 						'modellen/satelliet.xml']
+		url = urls[model_keuze];
 					$.ajax({
-							url : urls[model_keuze],
+							url : url,
 							dataType: "text",
 							success : function (data) {
 									model = new evaluator_js.Model();
@@ -338,7 +322,17 @@ var click_load_model = function () {
 									$('<option/>').val('').text('auto').appendTo('#y_var');
 									$("#graph").html("Model geladen. Geen data. Druk op Run!");
 									$("#output").empty();
-								} // succes();
+								}, // succes();
+								error: function (xhr, ajaxOptions, thrownError) {
+										if (xhr.status == 0) {
+											alert("Kan model "+url+" niet laden.\nBestaat het model?\nOffline? Probeer Edge of Firefox");
+										} else {
+											alert(thrownError);
+										};
+										$("#graph").html("Model niet geladen! FOUT.");
+										$("#output").empty();
+										$("#status").html("Status: ERROR.")
+		 						} // error();
 					}); //.ajax
 		}; // click_load_model
 
