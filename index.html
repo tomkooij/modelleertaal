@@ -105,6 +105,14 @@
 			model.parseBogusXMLString(data);
 			$("#modelregels").val(model.modelregels);
 			$("#startwaarden").val(model.startwaarden);
+			$('#y_var').empty();
+			$('#x_var').empty();
+			$('<option/>').val('').text('auto').appendTo('#x_var');
+			$('<option/>').val('').text('auto').appendTo('#y_var');
+			$("#graph").html("Model geladen. Geen data. Druk op Run!");
+			$("#output").empty();
+			$("#status").html("Status: Model geladen.");
+			previous_plot = [];
 				}
 				r.readAsText(f);
 			}
@@ -332,6 +340,8 @@ var click_load_model = function () {
 									$('<option/>').val('').text('auto').appendTo('#y_var');
 									$("#graph").html("Model geladen. Geen data. Druk op Run!");
 									$("#output").empty();
+									$("#status").html("Status: Model geladen.");
+									previous_plot = [];
 								}, // succes();
 								error: function (xhr, ajaxOptions, thrownError) {
 										if (xhr.status == 0) {
