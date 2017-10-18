@@ -12,7 +12,7 @@ of the models used in high school physics in NL.
 
 [Try the webapp!](https://tomkooij.github.io)
 
-The webapp (HTML/Javascript) should run on Windows/MacOS/Android/iOS in any browser. It was designed for and tested on Chrome. The webap is very limited, but it should be easy to use *and* it should run all models used in Dutch High School Physics classes. If it doesn't work or isn't easy to use: Please provide feedback.
+The webapp (HTML/Javascript) should run on Windows/MacOS/Android/iOS in any browser. It was designed for and tested on Chrome. The webapp is very limited, but it should be easy to use *and* it should run all models used in Dutch High School Physics classes. If it doesn't work or isn't easy to use: Please provide feedback.
 
 ## About Modelleertaal
 
@@ -61,7 +61,7 @@ Examen vwo 2005-I Champignon:
 
 `evaluator.js` contains a compiler for *Modelleertaal* to javascript. Using a modern javascript compiler such as Node.js/Chrome V8 it is very fast. `run.js` contains a benchmark. Compared to other modellertaal interpreters/compilers it is orders of magnitude faster.
 
-The parser is build using [jison](https://github.com/zaach/jison). Modellertaal is compiled to javascript which is executed using `eval()`. The `eval()` has been wrapped into an anonymous function to prevent bailout of the V8 optimising compiler.
+The parser is build using [jison](https://github.com/zaach/jison). Modelleertaal is compiled to javascript which is executed using `eval()`. The `eval()` has been wrapped into an anonymous function to prevent bailout of the V8 optimising compiler.
 
 Usage:
 ```javascript
@@ -86,13 +86,21 @@ npm install
 grunt
 ```
 
-## Usage
-
 A Node.js example in in `run.js`:
 ```
 node run
 ```
 
+## How to customize the webapp
+
+Only `index.html` and the folders `scripts/` and `modellen/` are needed. Optionally change the models in `modellen/` and edit
+`modellen/models.js` accordingly. Put it on a website somewhere. All code runs in the browsers.
+
+## Running the webapp offline
+
+The webapp should run offline, but browser security may interfere with loading the models. (Cross site scripting protection may
+block the ajax request). At the time of writing the webapp works offline in Edge and Firefox (47) but ajax is blocked in Chrome (61).
+To use Chrome use the `--disable-web-security` flag when starting Chrome.
 
 ## License and credits
 
