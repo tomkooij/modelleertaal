@@ -2,8 +2,6 @@ Simple compiler and webapp for *Modelleertaal*
 ==========================================
 
 [![travis](https://travis-ci.org/tomkooij/modelleertaal.svg?branch=master)](https://travis-ci.org/tomkooij/modelleertaal)
-[![appveyor](https://ci.appveyor.com/api/projects/status/62ndpna03e6mi37y?svg=true
-)](https://ci.appveyor.com/project/tomkooij/modelleertaal)
 
 *Modelleertaal* to javascript compiler in javascript/jison. A simple demo webapp is included that can run most (all?)
 of the models used in high school physics in NL.
@@ -98,8 +96,8 @@ node run
 
 ## License and credits
 
-This compiler and webapp implements the language used in Dutch High School Physics exams. 
-This language is (based on) Coach and CoachTaal. Coach is developped by [CMA Science](http://cma-science.nl/). 
+This compiler and webapp implements the language used in Dutch High School Physics exams.
+This language is (based on) Coach and CoachTaal. Coach is developped by [CMA Science](http://cma-science.nl/).
 
 This was originally based on git://github.com/zaach/zii-jsconf2010-talk.git
 
