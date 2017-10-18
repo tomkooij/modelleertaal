@@ -66,8 +66,8 @@
 
 		<div id="graph" class="graph">Model niet geladen!</div>
 		<p>
-		verticaal: <input type="text" id="y_var" size=3>
-		horizontaal: <input type="text" id="x_var" size=3>
+		verticaal: <select id="y_var"><option value=""></option></select>
+		horizontaal:  <select id="x_var"><option value=""></option></select>
 		<input id="plot" type="button" value= "Plot!">
 		<p>Aflezen: <span id="hoverdata"></span><span id="clickdata"></span></p>
 	</div>
@@ -152,6 +152,16 @@
 				// make table, plot
 				allVars = evaluator.namespace.listAllVars();
 				console.log(allVars, allVars.length);
+
+				// set varNames in drop-down select fields
+				$('#y_var').empty();
+				$('#x_var').empty();
+				$('<option/>').val('').text('auto').appendTo('#x_var');
+				$('<option/>').val('').text('auto').appendTo('#y_var');
+				for (var i=0;i<allVars.length;i++){
+					$('<option/>').val(i).text(allVars[i]).appendTo('#x_var')
+					$('<option/>').val(i).text(allVars[i]).appendTo('#y_var');
+				}
 				print_table("#datatable", results, allVars)
 				do_plot("#graph", results, allVars);
 
@@ -166,12 +176,16 @@
 					var scatter_plot = [];
 
 					// get column indices (in results array) of variables to plot
-					xvar_colidx = get_column_index($('#x_var').val(), allVars, 0);
-					yvar_colidx = get_column_index($('#y_var').val(), allVars, 1);
+					xvar_colidx = $('#x_var').val();
+					yvar_colidx = $('#y_var').val();
+
+					// if undefined -> x first column, y second column of results
+					xvar_colidx  = (xvar_colidx) ? xvar_colidx : 0;
+					yvar_colidx  = (yvar_colidx) ? yvar_colidx : 1;
 
 					// set column varnames in input fields
-					$('#x_var').val(allVars[xvar_colidx])
-					$('#y_var').val(allVars[yvar_colidx])
+					$('#x_var').val(xvar_colidx)
+					$('#y_var').val(yvar_colidx)
 
 					Nresults = Math.min(results.length, 100);
 					results = reduce_rows(results, Nresults);
@@ -208,11 +222,11 @@
             				show: true
         						},
 						        xaxes: [{
-						            axisLabel: $('#x_var').val(),
+						            axisLabel: allVars[$('#x_var').val()],
 						        }],
         						yaxes: [{
 						            position: 'left',
-						            axisLabel: $('#y_var').val(),
+						            axisLabel: allVars[$('#y_var').val()],
         						}],
 				}); // $.plot()
 
@@ -257,18 +271,6 @@
 				$(placeholder).html(table);
 			}
 
-			function get_column_index(field_value, varslist, default_value) {
-				if (field_value) {
-					console.log("DEBUG: ")
-					console.log(varslist);
-					var idx = varslist.findIndex(x =>  x == field_value);
-					if (idx == -1) {
-						alert("Variable voor grafiekas niet gevonden: "+field_value);
-						return default_value;
-					} else return idx;
-				} else return default_value;
-			}
-
 			function reduce_rows(rows, Nresults) {
 					// reduce resultsObject (large array) to length == Nresults
 
@@ -294,11 +296,11 @@
 
 
 $(document).ready(function() {
-// read model
+
 $.ajax({
 url : "modellen/examenvwo2005.xml",
 dataType: "text",
-success : function (data) {
+success: function (data) {
 	model = new evaluator_js.Model();
 	model.parseBogusXMLString(data);
 	$("#modelregels").val(model.modelregels);
@@ -350,7 +352,6 @@ $("#download").click(function() {
 });
 
 </script>
-
 
 </body>
 </html>
