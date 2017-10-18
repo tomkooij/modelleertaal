@@ -8,9 +8,9 @@ of the models used in high school physics in NL.
 
 ## Webapp
 
-[![Webapp screenshot](/screenshot.png)](https://tomkooij.github.io)
+[![Webapp screenshot](/screenshot.png)](https://tomkooij.github.io/modelleertaal)
 
-[Try the webapp!](https://tomkooij.github.io)
+[Try the webapp!](https://tomkooij.github.io/modelleertaal)
 
 The webapp (HTML/Javascript) should run on Windows/MacOS/Android/iOS in any browser. It was designed for and tested on Chrome. The webapp is very limited, but it should be easy to use *and* it should run all models used in Dutch High School Physics classes. If it doesn't work or isn't easy to use: Please provide feedback.
 
@@ -94,7 +94,7 @@ node run
 ## How to customize the webapp
 
 Only `index.html` and the folders `scripts/` and `modellen/` are needed. Optionally change the models in `modellen/` and edit
-`modellen/models.js` accordingly. Put it on a website somewhere. All code runs in the browsers.
+`modellen/models.js` accordingly. Put it on a website somewhere. All code runs in the browser.
 
 ## Running the webapp offline
 
