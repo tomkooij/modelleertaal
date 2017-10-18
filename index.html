@@ -95,30 +95,10 @@
 
 		var previous_plot = [];		// dataset of previous plot
 
-		function readSingleFile(evt) {
-			var f = evt.target.files[0];
 
-			if (f) {
-				var r = new FileReader();
-				r.onload = function(e) {
-					var data = e.target.result;
-			model.parseBogusXMLString(data);
-			$("#modelregels").val(model.modelregels);
-			$("#startwaarden").val(model.startwaarden);
-			$('#y_var').empty();
-			$('#x_var').empty();
-			$('<option/>').val('').text('auto').appendTo('#x_var');
-			$('<option/>').val('').text('auto').appendTo('#y_var');
-			$("#graph").html("Model geladen. Geen data. Druk op Run!");
-			$("#output").empty();
-			$("#status").html("Status: Model geladen.");
-			previous_plot = [];
-				}
-				r.readAsText(f);
-			}
-		}
-
-		document.getElementById('fileinput').addEventListener('change', readSingleFile, false);
+ //
+ // Model runnen
+ //
 
 	$(document).ready(function() {
 
@@ -179,6 +159,9 @@
 				$("#status").html("Status: Plot OK.")
 			});
 
+//
+// Plotten
+//
 			function do_plot(placeholder, results, allVars) {
 					var scatter_plot = [];
 
@@ -252,7 +235,9 @@
 
 			} // plot_graph()
 
-
+//
+// Table
+//
 			function print_table(placeholder, dataset, varnames) {
 
 				var firstrow = $('<tr>')
@@ -278,6 +263,9 @@
 				$(placeholder).html(table);
 			}
 
+//
+// Helpers
+//
 			function reduce_rows(rows, Nresults) {
 					// reduce resultsObject (large array) to length == Nresults
 
@@ -300,6 +288,36 @@
 			}
 	});
 
+//
+// Lees/Kies model
+//
+function Initialize_model(data) {
+		model = new evaluator_js.Model();
+		model.parseBogusXMLString(data);
+		$("#modelregels").val(model.modelregels);
+		$("#startwaarden").val(model.startwaarden);
+		$('#y_var').empty();
+		$('#x_var').empty();
+		$('<option/>').val('').text('auto').appendTo('#x_var');
+		$('<option/>').val('').text('auto').appendTo('#y_var');
+		$("#graph").html("Model geladen. Geen data. Druk op Run!");
+		$("#output").empty();
+		$("#status").html("Status: Model geladen.");
+		previous_plot = [];
+}
+
+document.getElementById('fileinput').addEventListener('change', readFile, false);
+function readFile(evt) {
+	var f = evt.target.files[0];
+
+	if (f) {
+		var r = new FileReader();
+		r.onload = function(e) {
+		Initialize_model(e.target.result);
+	}
+		r.readAsText(f);
+	}
+}
 
 $(document).ready(function() {
 	update_model_selection();
@@ -330,18 +348,7 @@ var click_load_model = function () {
 							url : url,
 							dataType: "text",
 							success : function (data) {
-									model = new evaluator_js.Model();
-									model.parseBogusXMLString(data);
-									$("#modelregels").val(model.modelregels);
-									$("#startwaarden").val(model.startwaarden);
-									$('#y_var').empty();
-									$('#x_var').empty();
-									$('<option/>').val('').text('auto').appendTo('#x_var');
-									$('<option/>').val('').text('auto').appendTo('#y_var');
-									$("#graph").html("Model geladen. Geen data. Druk op Run!");
-									$("#output").empty();
-									$("#status").html("Status: Model geladen.");
-									previous_plot = [];
+									Initialize_model(data);
 								}, // succes();
 								error: function (xhr, ajaxOptions, thrownError) {
 										if (xhr.status == 0) {
