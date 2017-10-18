@@ -28,7 +28,7 @@
 	    height: 300px;
 	}
     </style>
-    <script src="scripts/jquery-3.2.1.min.js"></script>
+	  <script src="scripts/jquery-3.2.1.min.js"></script>
   	<script src="scripts/jquery.flot.js"></script>
 		<script src="scripts/jquery.flot.axislabels.js"></script>
 		<script src="scripts/FileSaver.min.js"></script>
@@ -47,10 +47,8 @@
 		<div>
 			<input id="open" type="button" value= "Laad model:">
 			<select id="model_keuze" onchange="click_load_model()">
-		    <option value="0">Examen vwo 2005-I Champignon</option>
-		    <option value="1">Examen vwo 2016-I Ruimtelift</option>
-		    <option value="2">Opgave 17 Satelliet</option>
-			</select>
+		    <option value="0">model.js niet geladen!</option>
+		  </select>
 	  </div>
 		<p>
 		<div>
@@ -86,6 +84,7 @@
 	     browserify SCRIPT.js -d -s SCRIPT_js -o /dist/SCRIPT_browserfied.js
 		 access functions using SCRIPT_js object
 	-->
+	<script src="modellen/models.js"></script>
 	<script src="scripts/evaluator.browser.js"></script>
 
 	<script type="text/javascript">
@@ -295,19 +294,30 @@
 
 
 $(document).ready(function() {
+	update_model_selection();
 	click_load_model();
 });
 
 // read model after button press
 $("#open").click(click_load_model);
+
+var update_model_selection = function() {
+		// maak het drop-down modelkeuze menu uit model.js
+		$('#model_keuze').empty();
+		for (var i=0;i<model_index.length;i++){
+			$('<option/>').val(i).text(model_index[i].title).appendTo('#model_keuze')
+		}
+}
+
 var click_load_model = function () {
 		// lees keuze uit drop-down en kies juiste url
 		// Dit moet beter: niet hard coded... sometime.
 		model_keuze = $("#model_keuze").val();
-		urls = ['modellen/examenvwo2005.xml',
-						'modellen/examenvwo2016.xml',
-						'modellen/satelliet.xml']
-		url = urls[model_keuze];
+
+		// defined in modellen/models.js
+		url = model_index[model_keuze].url;
+		console.log(model_index[model_keuze].title);
+
 					$.ajax({
 							url : url,
 							dataType: "text",
