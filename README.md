@@ -107,6 +107,8 @@ To use Chrome use the `--disable-web-security` flag when starting Chrome.
 This compiler and webapp implements the language used in Dutch High School Physics exams.
 This language is (based on) Coach and CoachTaal. Coach is developped by [CMA Science](http://cma-science.nl/).
 
+The webapp was built using jQuery and Flot and heavily inspired by [HiSPARC jSPARC](http://github.com/HiSPARC/jSPARC/)
+
 This was originally based on git://github.com/zaach/zii-jsconf2010-talk.git
 
 ### MIT License
