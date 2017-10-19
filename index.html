@@ -140,7 +140,11 @@
 				allVars = evaluator.namespace.listAllVars();
 				console.log(allVars, allVars.length);
 
-				// set varNames in drop-down select fields
+				// save chosen variable, try to plot same graph
+				xvar_last = $('#x_var').find(":selected").text();
+				yvar_last = $('#y_var').find(":selected").text();
+
+				// (re)set varNames in drop-down select fields
 				$('#y_var').empty();
 				$('#x_var').empty();
 				$('<option/>').val('').text('auto').appendTo('#x_var');
@@ -149,6 +153,13 @@
 					$('<option/>').val(i).text(allVars[i]).appendTo('#x_var')
 					$('<option/>').val(i).text(allVars[i]).appendTo('#y_var');
 				}
+
+				// try to plot same graph: Reset axis to previous settings.
+				idx = allVars.findIndex(x => x == xvar_last);
+				if (idx != -1) $('#x_var').val(idx)
+				idx = allVars.findIndex(x => x == yvar_last);
+				if (idx != -1) $('#y_var').val(idx)
+
 				print_table("#datatable", results, allVars)
 				do_plot("#graph", results, allVars);
 
@@ -301,7 +312,8 @@
 			    }
 			    return rows;
 			}
-	});
+
+		});
 
 //
 // Lees/Kies model
