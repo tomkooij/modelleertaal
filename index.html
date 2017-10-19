@@ -38,8 +38,8 @@
 
 <body>
 	<div id="werkBlad"> <!-- CSS zorg voor met werkvlak met schaduw -->
-        <h2>Modelleertaal</h2>
-        <div>
+        <h2><a href="https://github.com/tomkooij/modelleertaal">Modelleertaal</a></h2>
+    <div>
 			<input type="file" id="fileinput">
 			<input id="download" type="button" value= "Download model.xml">
 		</div>
@@ -238,10 +238,17 @@
 //
 // Table
 //
-			function print_table(placeholder, dataset, varnames) {
+			function print_table(placeholder, dataset, varnames, limit) {
+				// truncated row from: jquery.jsparc.js
+				// http://github.com/HiSPARC/jSPARC
+
+				limit = (limit) ? limit : 20;
+				limit = Math.min(dataset.length, limit);
+
+				console.log("DEBUG print_table " + limit);
 
 				var firstrow = $('<tr>')
-				var table = $('<table>').addClass('table');;
+				var table = $('<table>').addClass('table');
 				firstrow.append($('<th>').text('#'));
 
 				for (var k = 0; k < varnames.length; k++) {
@@ -249,17 +256,25 @@
 				}
 				table.append(firstrow);
 
-				// reduce to max 500 rows to prevent browser lockup
-				Nresults = Math.min(dataset.length, 500);
-				dataset = reduce_rows(dataset, Nresults);
-
 				for (var i = 0; i < dataset.length; i++) {
 									var row = $('<tr>');
 									row.append($('<td>').text(i));
 									for (var j = 0; j < dataset[i].length; j++) {
 											row.append($('<td>').text(dataset[i][j].toFixed(3)));}
 									table.append(row);
-				}
+
+									if (limit != dataset.length && i == Math.floor(limit / 2) - 1) {
+									 var truncrow = $('<tr>');
+									 truncrow.append($('<td>')
+																	 .text('... Tabel ingekort. Klik voor meer rijen...')
+																	 .attr('colspan', dataset.length + 1)
+																	 .css({'text-align': 'left',
+																			 'cursor': 'pointer'})
+																	 .click(function() {print_table(placeholder, dataset, varnames, limit * 5);}));
+									 table.append(truncrow);
+									 i = dataset.length - 1 - Math.ceil(limit / 2);}
+								}
+
 				$(placeholder).html(table);
 			}
 
