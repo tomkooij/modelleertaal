@@ -89,6 +89,8 @@
 
 	<script type="text/javascript">
 
+		var debug = false;  // if true output debug info to console
+
 		//  global datasets
 		var results = [];			// array of results
 		var allVars = [];			// array of names of vars in results array
@@ -103,34 +105,35 @@
 	$(document).ready(function() {
 
 			$("#run").click(function() {
-				console.log('RUN! clicked.');
 
 				// read model from textarea
 				model = new evaluator_js.Model();
 				model.modelregels = $("#modelregels").val();
 				model.startwaarden = $("#startwaarden").val();
-				console.log('model = ', model);
+				if (debug)
+					console.log('model = ', model);
 
 				// read N from input field
 				var N = Number($('#NBox').val());
 
 				if (N > 1e6) {
-					alert('N too big!');
-					throw new Error('N too big!');
+					alert('N te groot!');
+					throw new Error('N te groot!');
 				}
 
 				//run!
-				var output_str = "Run started..."
-				$("#output").html(output_str);
-				console.log(output_str);
+				$("#output").html("Run started...");
+				console.log("Run started...");
+
 				try {
-					var evaluator = new evaluator_js.ModelregelsEvaluator(model, true);
+					var evaluator = new evaluator_js.ModelregelsEvaluator(model, debug);
 			 	} catch(err) {
 					$("#graph").html(err.message.replace(/\n/g,"<br>"));
 					$("#status").html("Status: ERROR.");
 					alert("Model niet in orde: \n"+err.message);
 			 	}
 				results = evaluator.run(N);
+
 				var output_str = "Klaar na iteratie: " + results.length
 				$("#output").html(output_str);
 				$("#status").html("Status: RUN OK.")
@@ -138,7 +141,8 @@
 
 				// make table, plot
 				allVars = evaluator.namespace.listAllVars();
-				console.log(allVars, allVars.length);
+				if (debug)
+					console.log(allVars, allVars.length);
 
 				// save chosen variable, try to plot same graph
 				xvar_last = $('#x_var').find(":selected").text();
@@ -190,7 +194,6 @@
 
 					Nresults = Math.min(results.length, 100);
 					results = reduce_rows(results, Nresults);
-					console.log(results.length);
 
 					for (var i=0; i < results.length; i++) {
 							scatter_plot.push([results[i][xvar_colidx], results[i][yvar_colidx]]);
@@ -255,8 +258,6 @@
 
 				limit = (limit) ? limit : 20;
 				limit = Math.min(dataset.length, limit);
-
-				console.log("DEBUG print_table " + limit);
 
 				var firstrow = $('<tr>')
 				var table = $('<table>').addClass('table');
@@ -364,12 +365,10 @@ var update_model_selection = function() {
 
 var click_load_model = function () {
 		// lees keuze uit drop-down en kies juiste url
-		// Dit moet beter: niet hard coded... sometime.
 		model_keuze = $("#model_keuze").val();
 
 		// defined in modellen/models.js
 		url = model_index[model_keuze].url;
-		console.log(model_index[model_keuze].title);
 
 					$.ajax({
 							url : url,
@@ -394,7 +393,6 @@ var click_load_model = function () {
 $("#download").click(function() {
 		// requires FileSaver.js and Blob.js
 		// (Blob() not supported on most mobile browsers)
-		console.log("Download model.xml!");
 		model = new evaluator_js.Model();
 		model.modelregels = $("#modelregels").val();
 		model.startwaarden = $("#startwaarden").val();

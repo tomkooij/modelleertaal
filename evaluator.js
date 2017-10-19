@@ -250,7 +250,7 @@ function ModelregelsEvaluator(model, debug) {
     if (typeof debug === 'undefined') {
         this.debug = false;
     } else {
-        this.debug = true;
+        this.debug = debug;
     }
 
     this.namespace = new Namespace();
