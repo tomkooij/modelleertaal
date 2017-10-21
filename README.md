@@ -14,7 +14,7 @@ of the models used in high school physics in NL.
 
 The webapp (HTML/Javascript) should run on Windows/MacOS/Android/iOS in any browser. It was designed for and tested on Chrome. The webapp is very limited, but it should be easy to use *and* it should run all models used in Dutch High School Physics classes. If it doesn't work or isn't easy to use: Please provide feedback.
 
-## About Modelleertaal
+## About *Modelleertaal*
 
 *Modelleertaal* is the language used for "natuurkundig modelleren"
 (dynamical models in high school physics in NL. System dynamics, Jay W. Forrester, DYNAMO, ...)
@@ -107,9 +107,9 @@ To use Chrome use the `--disable-web-security` flag when starting Chrome.
 This compiler and webapp implements the language used in Dutch High School Physics exams.
 This language is (based on) Coach and CoachTaal. Coach is developped by [CMA Science](http://cma-science.nl/).
 
-The webapp was built using jQuery and Flot and heavily inspired by [HiSPARC jSPARC].(http://github.com/HiSPARC/jSPARC/).
+The webapp was built using jQuery and Flot and heavily inspired by [HiSPARC jSPARC](http://github.com/HiSPARC/jSPARC/).
 
-This was originally based on git://github.com/zaach/zii-jsconf2010-talk.git
+This was originally based on Zach Carter's [jsconf 2010 jison talk](https://github.com/zaach/zii-jsconf2010-talk).
 
 ### MIT License
 
