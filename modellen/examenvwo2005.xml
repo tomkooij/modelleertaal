@@ -1,29 +1,30 @@
 <modelleertaal>
 <modelregels>
 'Examen VWO 2005-I Champignon
-Fwr = k * v^2
-Fres = Fzw - Fwr
-a = Fres/m
-dv = a * dt
-v = v + dv
-dy = v * dt
-y = y + dy
-h = h0 - y
+Fz = m * 9,81
+Fw = k * Opp * v^2
+Fr = Fz - Fw
+a = Fr/m
+v = v + a*dt
+x = x + v*dt
+als t > 13 dan
+    Opp = Opp + dOpp
+eindals
+als Opp > 42,6 dan
+    Opp = 42,6
+eindals
 t = t + dt
-als h < 400 dan k = 0.6 * (400 - h) eindals
-als h < 350 dan k = 30 eindals
 
 </modelregels>
 <startwaarden>
-k = 0.22
-m = 80
-g = 9.81
-Fzw = m * g
+m = 91
+k = 0,37
+Opp = 0,8
 v = 0
-y = 0
-h0 = 1600
+x = 0
 t = 0
-dt = 0.1
+dOpp = 1,1
+dt = 0,1
 
 </startwaarden>
 </modelleertaal>
