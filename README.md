@@ -14,7 +14,7 @@ of the models used in high school physics in NL.
 
 The webapp (HTML/Javascript) should run on Windows/MacOS/Android/iOS in any browser. It was designed for and tested on Chrome. The webapp is very limited, but it should be easy to use *and* it should run all models used in Dutch High School Physics classes. If it doesn't work or isn't easy to use: Please provide feedback.
 
-## About Modelleertaal
+## About *Modelleertaal*
 
 *Modelleertaal* is the language used for "natuurkundig modelleren"
 (dynamical models in high school physics in NL. System dynamics, Jay W. Forrester, DYNAMO, ...)
@@ -40,7 +40,7 @@ In Pascal:
 If (a = 0) AND !(b = True) then Halt(0);
 ```
 
-Examen vwo 2005-I Champignon:
+Model parachutesprong:
 ```
      'model parachutesprong
      'modelregels
@@ -57,7 +57,7 @@ Examen vwo 2005-I Champignon:
      als h < 350 dan k = 30 eindals
 ```
 
-## About the modelleertaal compiler
+## About the *modelleertaal* compiler
 
 `evaluator.js` contains a compiler for *Modelleertaal* to javascript. Using a modern javascript compiler such as Node.js/Chrome V8 it is very fast. `run.js` contains a benchmark. Compared to other modellertaal interpreters/compilers it is orders of magnitude faster.
 
@@ -107,9 +107,9 @@ To use Chrome use the `--disable-web-security` flag when starting Chrome.
 This compiler and webapp implements the language used in Dutch High School Physics exams.
 This language is (based on) Coach and CoachTaal. Coach is developped by [CMA Science](http://cma-science.nl/).
 
-The webapp was built using jQuery and Flot and heavily inspired by [HiSPARC jSPARC](http://github.com/HiSPARC/jSPARC/)
+The webapp was built using jQuery and Flot and heavily inspired by [HiSPARC jSPARC](http://github.com/HiSPARC/jSPARC/).
 
-This was originally based on git://github.com/zaach/zii-jsconf2010-talk.git
+This was originally based on [this jison example (jsconf 2010)](https://github.com/zaach/zii-jsconf2010-talk).
 
 ### MIT License
 
