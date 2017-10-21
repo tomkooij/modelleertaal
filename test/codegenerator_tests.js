@@ -105,10 +105,22 @@ describe('CodeGenertor.generateCodeFromAst() correct output of math expressions'
         assert.equal(eval(code),3.14159265359);
     })
 
-    it('Math.sin: sin(45/180*pi) = 0.707..', function() {
-        ast = parser.parse("t=sin(45/180*pi)");
+    it('Math.sin (degrees): sin(45) = 0.707..', function() {
+        ast = parser.parse("t=sin(45)");
         code = codegenerator.generateCodeFromAst(ast);
         assert.closeTo(eval(code),0.707,0.01);
+    })
+
+    it('Math.cos (degrees): cos(60) = 0.5..', function() {
+        ast = parser.parse("t=cos(60)");
+        code = codegenerator.generateCodeFromAst(ast);
+        assert.closeTo(eval(code),0.5,0.01);
+    })
+
+    it('Math.tan (degrees): tan(45) = 1.', function() {
+        ast = parser.parse("t=tan(45)");
+        code = codegenerator.generateCodeFromAst(ast);
+        assert.closeTo(eval(code),1.,0.01);
     })
 
     it('Math.asin: arcsin(0.707) = 1/4*pi', function() {
