@@ -272,7 +272,7 @@
 									var row = $('<tr>');
 									row.append($('<td>').text(i));
 									for (var j = 0; j < dataset[i].length; j++) {
-											row.append($('<td>').text(dataset[i][j].toFixed(3)));}
+											row.append($('<td>').text(dataset[i][j].toPrecision(4)));}
 									table.append(row);
 
 									if (limit != dataset.length && i == Math.floor(limit / 2) - 1) {
