@@ -71,14 +71,12 @@
 	</div>
 
 	<div id="werkBlad">
-		<pre id="status">Status: OK</pre>
-	</div>
-
-	<div id="werkBlad">
 		<pre id="datatable">Hier komt een tabel...</pre>
 	</div>
 
-
+	<div id="werkBlad">
+		<pre id="status">Status: OK</pre>
+	</div>
 
 	<!-- script/modules created with:
 	     browserify SCRIPT.js -d -s SCRIPT_js -o /dist/SCRIPT_browserfied.js
@@ -331,6 +329,7 @@ function Initialize_model(data) {
 		$("#graph").html("Model geladen. Geen data. Druk op Run!");
 		$("#output").empty();
 		$("#status").html("Status: Model geladen.");
+		$("#datatable").empty();
 		previous_plot = [];
 }
 
