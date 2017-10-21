@@ -1,0 +1,27 @@
+<modelleertaal>
+<startwaarden>
+k = 2125      'brandstofverbruik
+mb = 255000   'massa brandstof
+mr = 170000   'massa raket
+mc = 7500     'massa capsule
+g = 9,81
+c = 3000
+v = 0
+dt = 0,1
+t = 0
+</startwaarden>
+<modelregels>
+dm = k * dt
+mb = mb - dm
+als mb <= 0 dan
+    Stop
+eindals
+m = mr + mc + mb
+Fz = m * g
+Fstuw = c * k
+Fres = Fstuw - Fz
+a = Fres / m
+v = v + a * dt
+t = t + dt
+</modelregels>
+</modelleertaal>
