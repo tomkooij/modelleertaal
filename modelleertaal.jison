@@ -84,6 +84,7 @@ eindals                                 return 'ENDIF'
 als                                     return 'IF'
 dan                                     return 'THEN'
 stop                                    return 'STOP'
+anders                                  return 'ELSE'
 
 // identifiers
 [a-zA-Z][a-zA-Z0-9_"\]""\|"{}"["]*                return 'IDENT'
@@ -144,6 +145,15 @@ stmt
                 then: $4
             };
         }
+  | IF condition THEN stmt_list ELSE stmt_list ENDIF
+    { $$ = {
+              type: 'IfElse',
+              cond: $2,
+              then: $4,
+              elsestmt: $6
+          };
+      }
+
   | STOP
      {$$ = {
                  type: 'Stop',

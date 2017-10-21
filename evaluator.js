@@ -212,7 +212,10 @@ CodeGenerator.prototype.parseNode = function(node) {
         case 'Logical':
                 return "(" + this.parseNode(node.left) + node.operator + this.parseNode(node.right) + ")";
         case 'If':
-                return "if (" + this.parseNode(node.cond) + ") {" + this.generateCodeFromAst(node.then) + " }; ";
+                return "if (" + this.parseNode(node.cond) + ") {\n" + this.generateCodeFromAst(node.then) + " }\n; ";
+        case 'IfElse':
+                return "if (" + this.parseNode(node.cond) + ") {\n" + this.generateCodeFromAst(node.then) + " \n} else {\n" +
+                this.generateCodeFromAst(node.elsestmt) + " }\n; ";
         case 'Function': {
                 switch(node.func.toLowerCase()) {
                     case 'sin': return "Math.sin("+this.parseNode(node.expr)+")";

@@ -132,6 +132,16 @@ describe('CodeGenertor.generateCodeFromAst() correct flow control', function(){
         code = codegenerator.generateCodeFromAst(ast);
         assert.equal(eval(code),3);
     })
+    it('als dan anders eindals - test dan', function() {
+        ast = parser.parse("t = 0 \n als waar dan t = 3 anders t = 1 eindals");
+        code = codegenerator.generateCodeFromAst(ast);
+        assert.equal(eval(code),3);
+    })
+    it('als dan anders eindals - test anders', function() {
+        ast = parser.parse("t = 0 \n als niet waar dan t = 3 anders t = 1 eindals");
+        code = codegenerator.generateCodeFromAst(ast);
+        assert.equal(eval(code),1);
+    })
     it('Multiple statements between dan ... eindals', function() {
         ast = parser.parse("t = 0 \n als waar dan t = 3 \n a = 5 \n b = 17 \n eindals");
         code = codegenerator.generateCodeFromAst(ast);
