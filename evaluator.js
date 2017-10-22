@@ -203,6 +203,7 @@ CodeGenerator.prototype.parseNode = function(node) {
                     }
         case 'Unary':
                     switch(node.operator) {
+                        case '+':   return "(" + this.parseNode(node.right) + ")";
                         case '-':   return "(-1. * " + this.parseNode(node.right) + ")";
                         case 'NOT':  return "!("+ this.parseNode(node.right) + ")";
                         default:

@@ -278,6 +278,13 @@ expr
                   right: $2
             };
           }
+  | '+' expr
+            {$$ = {
+                  type: 'Unary',
+                  operator: '+',
+                  right: $2
+            };
+          }
   | NOT expr %prec NOT
     {$$ = {
                 type: 'Unary',

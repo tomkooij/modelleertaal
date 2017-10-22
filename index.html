@@ -39,7 +39,7 @@
 <body>
 	<div id="werkBlad"> <!-- CSS zorg voor met werkvlak met schaduw -->
         <h2><a href="https://github.com/tomkooij/modelleertaal">Modelleertaal</a></h2>
-    <div>
+		<div>
 			<input type="file" id="fileinput">
 			<input id="download" type="button" value= "Download model.xml">
 		</div>
@@ -75,7 +75,7 @@
 	</div>
 
 	<div id="werkBlad">
-		<pre id="status">Status: OK</pre>
+		<pre id="status">Status: Loading.</pre>
 	</div>
 
 	<!-- script/modules created with:
@@ -86,7 +86,7 @@
 	<script src="scripts/evaluator.browser.js"></script>
 
 	<script type="text/javascript">
-
+		var version = "v1.0 - 22okt2017"
 		var debug = false;  // if true output debug info to console
 
 		//  global datasets
@@ -347,6 +347,7 @@ function readFile(evt) {
 }
 
 $(document).ready(function() {
+	console.log("Modelleertaal - ",version);
 	update_model_selection();
 	click_load_model();
 });

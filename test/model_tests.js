@@ -11,7 +11,7 @@ describe('model.js - Read model from XML', function(){
 
     it('parseBogusXMLString parses test string', function() {
         testmodel.parseBogusXMLString(bogusModel);
-        assert.equal(testmodel.startwaarden,'\nParseMe!\n');
+        assert.equal(testmodel.startwaarden,'ParseMe!\n');
     })
 
     it('readBogusXMLFile reads and parses testmodel.xml', function() {
