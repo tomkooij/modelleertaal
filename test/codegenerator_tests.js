@@ -68,12 +68,17 @@ describe('CodeGenertor.generateCodeFromAst() correct output of math expressions'
         assert.equal(eval(code),27);
     })
 
-    it('correct functionality of unary operator: 2 + -3 + 1 == 0', function() {
+    it('correct functionality of unary - operator: 2 + -3 + 1 == 0', function() {
         ast = parser.parse("t=2 + -3 + 1");
         code = codegenerator.generateCodeFromAst(ast);
         assert.equal(eval(code),0);
     })
 
+    it('correct functionality of unary + operator: + 2 - 3 + 1 == 0', function() {
+        ast = parser.parse("t=+ 2 + -3 + 1");
+        code = codegenerator.generateCodeFromAst(ast);
+        assert.equal(eval(code),0);
+    })
 
     it('operator precedence: -3 ^ 2 = -9 ', function() {
         ast = parser.parse("t=-3^2");
