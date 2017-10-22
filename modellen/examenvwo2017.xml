@@ -1,0 +1,33 @@
+<modelleertaal>
+<startwaarden>
+// Startwaarden
+// in SI-eenheden
+Frol = 910
+klift = 5,68
+kw = 0,913
+vwind = +5
+m = 710
+g = 9,81
+Pm= 74000
+Ek = 0
+v = 0
+s = 0
+t = 0
+dt = 0,001
+</startwaarden>
+<modelregels>
+//Examen VWO 2017-I
+//Cessna
+Fz = m*g
+Flift = klift * (v - vwind)^2
+Fw_lucht = kw * (v - vwind)^2
+Fw = Fw_lucht + Frol
+Als Flift > Fz dan stop Eindals
+Pnetto = Pm - Fw*v
+Ek = Ek + Pnetto*dt
+v = sqrt(Ek / m)
+ds = v*dt
+s = s + ds
+t = t + dt
+</modelregels>
+</modelleertaal>
