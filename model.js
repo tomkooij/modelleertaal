@@ -68,10 +68,10 @@ Model.prototype.parseBogusXMLString = function(xmlString) {
 
         switch(lines[line].replace('\r','')) {
             // < and > mess things up in the browser
-            case '<modelregels>': { action = 1; lines[line] = ''; break; }
-            case '</modelregels>': { action = 0; break; }
-            case '<startwaarden>': { action = 2; lines[line] = ''; break; }
-            case '</startwaarden>': { action = 0; break; }
+            case '<modelregels>': { action = 1; continue; }
+            case '</modelregels>': { action = 0; continue; }
+            case '<startwaarden>': { action = 2; continue; }
+            case '</startwaarden>': { action = 0; continue; }
         }
         if (action==1) this.modelregels += lines[line]+'\n';
         if (action==2) this.startwaarden += lines[line]+'\n';
