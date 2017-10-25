@@ -36,7 +36,6 @@ function ModelleertaalApp(params) {
 		this.dom_nbox = "#NBox";
 		this.dom_run = "#run";
 		this.dom_plot = "#plot";
-		this.dom_open = "#open";
 		this.dom_fileinput = "#fileinput";
 		this.dom_download = "#download";
 		this.dom_clickdata = "#clickdata";
@@ -45,16 +44,10 @@ function ModelleertaalApp(params) {
 		this.dom_y_var = "#y_var";
 		this.dom_model_keuze = "#model_keuze";
 
-		this.dropdown_model_index = params.model_index;
-		this.dropdown_update();
-		this.dropdown_load_model();
-
 		this.model = new evaluator_js.Model();
 		// (re)set the app
 		this.init_app();
 
-		// fix scope for binding functions to DOM
-		// https://stackoverflow.com/questions/14535548/
 		var self = this;
 
 		$(this.dom_run).click(function() { self.run(); });
@@ -66,7 +59,6 @@ function ModelleertaalApp(params) {
 
 		$(this.dom_download).click(function () { self.download_model(); });
 		$(this.dom_fileinput).change(function (event) { self.read_file(event); });
-		$(this.dom_model_keuze).change(function() { self.dropdown_load_model(); });
 }
 
 ModelleertaalApp.prototype.print_status = function(txt) {
@@ -95,7 +87,8 @@ ModelleertaalApp.prototype.read_file = function(evt) {
 		 };
 		 r.readAsText(f);
 	 }
-}
+};
+
 
 ModelleertaalApp.prototype.download_model = function() {
 	 // requires FileSaver.js and Blob.js
@@ -107,45 +100,6 @@ ModelleertaalApp.prototype.download_model = function() {
 	 var blob = new Blob([model.createBogusXMLString()], {type: "text/plain;charset=utf-8"});
 	 FileSaver.saveAs(blob, "model.xml");
 };
-
-
-
-ModelleertaalApp.prototype.dropdown_update = function() {
-		 		// maak het drop-down modelkeuze menu uit model.js
-		 		$(this.dom_model_keuze).empty();
-		 		for (var i=0;i<model_index.length;i++){
-		 			$('<option/>').val(i).text(this.dropdown_model_index[i].title).appendTo(this.dom_model_keuze);
-		 		}
-		 };
-
-
-ModelleertaalApp.prototype.dropdown_load_model = function() {
-		 		// lees keuze uit drop-down en kies juiste url
-
-				var self = this;
-
-				model_keuze = $(this.dom_model_keuze).val();
-
-		 		url = this.dropdown_model_index[model_keuze].url;
-
-				$.ajax({
-						url : url,
-						dataType: "text",
-						success : function (data) {
-								self.read_model_from_xml(data);
-								self.init_app();
-							}, // succes();
-							error: function (xhr, ajaxOptions, thrownError) {
-									if (xhr.status === 0) {
-										alert("Kan model "+url+" niet laden.\nBestaat het model?\nOffline? Probeer Edge of =Firefox");
-									} else {
-										alert(thrownError);
-									}
-									$(self.dom_graph).html("Model niet geladen! FOUT.");
-									print_status("Status: ERROR.");
-	 						} // error();
-				}); //.ajax
-}; // dropdown _load_model
 
 
 ModelleertaalApp.prototype.run = function() {
@@ -312,7 +266,7 @@ ModelleertaalApp.prototype.set_axis_to_defaults = function() {
 ModelleertaalApp.prototype.plot_graph = function(dataset, previous_plot) {
 
 			 var self = this;
-			 
+
 			 $.plot($(this.dom_graph), [
 						 {data: previous_plot, color: '#d3d3d3'},
 						 {data: dataset, color: 'blue'}],
