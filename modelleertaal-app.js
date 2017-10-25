@@ -38,6 +38,11 @@ function ModelleertaalApp(params) {
 		this.dom_run = "#run";
 		this.dom_plot = "#plot";
 		this.dom_open = "#open";
+		this.dom_download = "#download";
+		this.dom_clickdata = "#clickdata";
+		this.dom_hoverdata = "#hoverdata";
+		this.dom_x_var = "#x_var";
+		this.dom_y_var = "#y_var";
 
 		this.previous_plot = [];
 
@@ -52,14 +57,10 @@ function ModelleertaalApp(params) {
 			self.print_status("Plot OK.");
 		});
 
-		$(this.dom_open).click(click_load_model);
+		$(this.dom_download).click(function () { self.download_model(); });
 }
 
 ModelleertaalApp.prototype.print_status = function(txt) {
-		console.log('print_status ');
-		console.log(this);
-		console.log('this.status = '+this.dom_status);
-		console.log('this.run ='+this.dom_run);
 		$(this.dom_status).html(txt);
 };
 
@@ -69,10 +70,21 @@ ModelleertaalApp.prototype.read_model = function() {
 		this.model.startwaarden = $(this.dom_startwaarden).val();
 };
 
+ModelleertaalApp.prototype.download_model = function() {
+	 // requires FileSaver.js and Blob.js
+	 // (Blob() not supported on most mobile browsers)
+	 model = new evaluator_js.Model();
+	 model.modelregels = $("#modelregels").val();
+	 model.startwaarden = $("#startwaarden").val();
+
+	 var blob = new Blob([model.createBogusXMLString()], {type: "text/plain;charset=utf-8"});
+	 FileSaver.saveAs(blob, "model.xml");
+};
+
+
 ModelleertaalApp.prototype.run = function() {
 
 	this.print_status('Run!!!');
-	console.log("DEBUG: run() called!");
 
 	this.read_model();
 
@@ -103,34 +115,50 @@ ModelleertaalApp.prototype.run = function() {
 	console.log("Klaar na iteratie: " + this.results.length);
 
 	// make table, plot
-	allVars = evaluator.namespace.listAllVars();
+	this.allVars = evaluator.namespace.varNames;
 	if (this.debug)
-		console.log(allVars, allVars.length);
+		console.log(this.allVars);
 
-	// save chosen variable, try to plot same graph
-	xvar_last = $('#x_var').find(":selected").text();
-	yvar_last = $('#y_var').find(":selected").text();
-
-	// (re)set varNames in drop-down select fields
-	$('#y_var').empty();
-	$('#x_var').empty();
-	$('<option/>').val('').text('auto').appendTo('#x_var');
-	$('<option/>').val('').text('auto').appendTo('#y_var');
-	for (var i=0;i<allVars.length;i++){
-		$('<option/>').val(i).text(allVars[i]).appendTo('#x_var');
-		$('<option/>').val(i).text(allVars[i]).appendTo('#y_var');
-	}
-
-	// try to plot same graph: Reset axis to previous settings.
-	idx = allVars.findIndex(function(s) { return s == xvar_last; } );
-	if (idx != -1) $('#x_var').val(idx);
-	idx = allVars.findIndex(function(s) { return s == yvar_last; } );
-	if (idx != -1) $('#y_var').val(idx);
+	// create the axis drop-down menu, try to keep value
+	this.save_axis();
+	this.reset_axis_dropdown();
+	this.set_axis();
 
 	this.print_table();
+
 	this.do_plot();
 
 }; // run()
+
+
+ModelleertaalApp.prototype.save_axis = function() {
+	// save chosen variable, try to plot same graph
+	this.xvar_last = $(this.dom_x_var).find(":selected").text();
+	this.yvar_last = $(this.dom_y_var).find(":selected").text();
+};
+
+
+ModelleertaalApp.prototype.reset_axis_dropdown = function() {
+
+	// (re)set varNames in drop-down select fields
+	$(this.dom_x_var).empty();
+	$(this.dom_y_var).empty();
+	$('<option/>').val('').text('auto').appendTo(this.dom_x_var);
+	$('<option/>').val('').text('auto').appendTo(this.dom_y_var);
+	for (var i=0;i<this.allVars.length;i++){
+		$('<option/>').val(i).text(this.allVars[i]).appendTo(this.dom_x_var);
+		$('<option/>').val(i).text(this.allVars[i]).appendTo(this.dom_y_var);
+	}
+};
+
+ModelleertaalApp.prototype.set_axis = function() {
+	// try to plot same graph: Reset axis to previous settings.
+	var self = this;
+	idx = this.allVars.findIndex(function(s) { return s == self.xvar_last; } );
+	if (idx != -1) $(this.dom_x_var).val(idx);
+	idx = this.allVars.findIndex(function(s) { return s == self.yvar_last; } );
+	if (idx != -1) $(this.dom_y_var).val(idx);
+};
 
 
 //
@@ -151,8 +179,8 @@ ModelleertaalApp.prototype.print_table = function(limit) {
 	var table = $('<table>').addClass('table');
 	firstrow.append($('<th>').text('#'));
 
-	for (var k = 0; k < allVars.length; k++) {
-		firstrow.append($('<th>').text(allVars[k]));
+	for (var k = 0; k < this.allVars.length; k++) {
+		firstrow.append($('<th>').text(this.allVars[k]));
 	}
 	table.append(firstrow);
 
@@ -185,17 +213,8 @@ ModelleertaalApp.prototype.do_plot = function() {
 
 				 var scatter_plot = [];
 
-				 // get column indices (in results array) of variables to plot
-				 xvar_colidx = $('#x_var').val();
-				 yvar_colidx = $('#y_var').val();
-
-				 // if undefined -> x first column, y second column of results
-				 xvar_colidx  = (xvar_colidx) ? xvar_colidx : 0;
-				 yvar_colidx  = (yvar_colidx) ? yvar_colidx : 1;
-
-				 // set column varnames in input fields
-				 $('#x_var').val(xvar_colidx);
-				 $('#y_var').val(yvar_colidx);
+				 // if set to "auto" set axis to default settings (x,t)
+				 this.set_axis_to_defaults();
 
 				 Nresults = Math.min(this.results.length, 100);
 				 this.results = reduce_rows(this.results, Nresults);
@@ -204,13 +223,29 @@ ModelleertaalApp.prototype.do_plot = function() {
 						 scatter_plot.push([this.results[i][xvar_colidx], this.results[i][yvar_colidx]]);
 				 }
 				 $(this.dom_graph).empty(); // verwijder text enzo
-				 this.plot_graph(this.dom_graph, scatter_plot, this.previous_plot);
+				 this.plot_graph(scatter_plot, this.previous_plot);
 				 this.previous_plot = scatter_plot;
 		 }; // do_plot
 
-ModelleertaalApp.prototype.plot_graph = function(placeholder, dataset, previous_plot) {
-			 console.log('plot_graph'+ placeholder);
-			 $.plot($(placeholder), [
+
+ModelleertaalApp.prototype.set_axis_to_defaults = function() {
+		 // get column indices (in results array) of variables to plot
+		 xvar_colidx = $(this.dom_x_var).val();
+		 yvar_colidx = $(this.dom_y_var).val();
+
+		 // if undefined -> x first column, y second column of results
+		 xvar_colidx  = (xvar_colidx) ? xvar_colidx : 0;
+		 yvar_colidx  = (yvar_colidx) ? yvar_colidx : 1;
+
+		 // set column varnames in input fields
+		 $(this.dom_x_var).val(xvar_colidx);
+		 $(this.dom_y_var).val(yvar_colidx);
+};
+
+
+ModelleertaalApp.prototype.plot_graph = function(dataset, previous_plot) {
+
+			 $.plot($(this.dom_graph), [
 						 {data: previous_plot, color: '#d3d3d3'},
 						 {data: dataset, color: 'blue'}],
 						 {
@@ -232,24 +267,24 @@ ModelleertaalApp.prototype.plot_graph = function(placeholder, dataset, previous_
 									 show: true
 									 },
 									 xaxes: [{
-											 axisLabel: allVars[$('#x_var').val()]
+											 axisLabel: this.allVars[$(this.dom_x_var).val()]
 									 }],
 									 yaxes: [{
 											 position: 'left',
-											 axisLabel: allVars[$('#y_var').val()]
+											 axisLabel: this.allVars[$(this.dom_y_var).val()]
 									 }]
 			 }); // $.plot()
 
-			 $(placeholder).bind("plothover", function (event, pos, item) {
+			 $(this.dom_graph).bind("plothover", function (event, pos, item) {
 				 var str = "(" + pos.x.toFixed(2) + ", " + pos.y.toFixed(2) + ")";
-				 $("#hoverdata").text(str);
+				 $(this.dom_hoverdata).text(str);
 			 }); // $.bind("plothover")
 
-			 $(placeholder).bind("plotclick", function (event, pos, item) {
+			 $(this.dom_graph).bind("plotclick", function (event, pos, item) {
 				 if (item) {
 					 var str = " - Click: (" + pos.x.toFixed(2) + ", " +
 							pos.y.toFixed(2) + ")";
-					 $("#clickdata").text(str);
+					 $(this.dom_clickdata).text(str);
 				 }
 			 }); // $bind.("plotclick")
 
@@ -258,50 +293,50 @@ ModelleertaalApp.prototype.plot_graph = function(placeholder, dataset, previous_
 
 
 
-		 //
-		 // Helpers
-		 //
-		 			function reduce_rows(rows, Nresults) {
-		 					// reduce resultsObject (large array) to length == Nresults
+//
+// Helpers
+//
+function reduce_rows(rows, Nresults) {
+		// reduce resultsObject (large array) to length == Nresults
 
-		 					var length = rows.length;
-		 			    var rowinc = Math.floor(length / Nresults);
+		var length = rows.length;
+    var rowinc = Math.floor(length / Nresults);
 
-		 			    function select_rows(value, index) {
-		 			        // select first row, last row and rows in between. Keep Nrows+1 rows.
-		 			        if (index === 0 || index % rowinc === 0 || index == length-1) {
-		 			            return true;
-		 			        } else {
-		 			            return false;
-		 			        }
-		 			    }
+    function select_rows(value, index) {
+        // select first row, last row and rows in between. Keep Nrows+1 rows.
+        if (index === 0 || index % rowinc === 0 || index == length-1) {
+            return true;
+        } else {
+            return false;
+        }
+    }
 
-		 			    if (length > Nresults) {
-		 			        return rows.filter(select_rows);
-		 			    }
-		 			    return rows;
-		 			}
+    if (length > Nresults) {
+        return rows.filter(select_rows);
+    }
+    return rows;
+}
 
 
 
-		 //
-		 // Lees/Kies model
-		 //
-		 function Initialize_model(data) {
-		 		model = new evaluator_js.Model();
-		 		model.parseBogusXMLString(data);
-		 		$("#modelregels").val(model.modelregels);
-		 		$("#startwaarden").val(model.startwaarden);
-		 		$('#y_var').empty();
-		 		$('#x_var').empty();
-		 		$('<option/>').val('').text('auto').appendTo('#x_var');
-		 		$('<option/>').val('').text('auto').appendTo('#y_var');
-		 		$("#graph").html("Model geladen. Geen data. Druk op Run!");
-		 		$("#output").empty();
-		 		$("#status").html("Status: Model geladen.");
-		 		$("#datatable").empty();
-		 		previous_plot = [];
-		 }
+ //
+ // Lees/Kies model
+ //
+ function Initialize_model(data) {
+ 		model = new evaluator_js.Model();
+ 		model.parseBogusXMLString(data);
+ 		$("#modelregels").val(model.modelregels);
+ 		$("#startwaarden").val(model.startwaarden);
+ 		$('#y_var').empty();
+ 		$('#x_var').empty();
+ 		$('<option/>').val('').text('auto').appendTo('#x_var');
+ 		$('<option/>').val('').text('auto').appendTo('#y_var');
+ 		$("#graph").html("Model geladen. Geen data. Druk op Run!");
+ 		$("#output").empty();
+ 		$("#status").html("Status: Model geladen.");
+ 		$("#datatable").empty();
+ 		previous_plot = [];
+ }
 
 		 document.getElementById('fileinput').addEventListener('change', readFile, false);
 		 function readFile(evt) {
@@ -358,16 +393,7 @@ ModelleertaalApp.prototype.plot_graph = function(placeholder, dataset, previous_
 		 		}; // click_load_model
 
 
-		 $("#download").click(function() {
-		 		// requires FileSaver.js and Blob.js
-		 		// (Blob() not supported on most mobile browsers)
-		 		model = new evaluator_js.Model();
-		 		model.modelregels = $("#modelregels").val();
-		 		model.startwaarden = $("#startwaarden").val();
 
-		 		var blob = new Blob([model.createBogusXMLString()], {type: "text/plain;charset=utf-8"});
-		 		FileSaver.saveAs(blob, "model.xml");
-		 });
 
 
 
