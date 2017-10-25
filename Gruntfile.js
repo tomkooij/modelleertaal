@@ -42,17 +42,18 @@ module.exports = function(grunt) {
       //   browserify SCRIPT.js -d -s SCRIPT_js -o /dist/SCRIPT_browserfied.js
 
       browserify: {
- 			build: {
+ 			 build: {
  				files: {
- 					'scripts/evaluator.browser.js': ['evaluator.js']
+ 					'scripts/modelleertaal-app.browser.js': ['modelleertaal-app.js']
  				},
  				options: {
  					browserifyOptions: {
- 						standalone: 'evaluator_js',
-                         debug: true
- 					}
- 				}
- 			}
+ 						standalone: 'modelleertaalapp_js',
+            //transform: ['browserify-shim'],
+          },
+        }
+ 			},
+
  		},
 
     });

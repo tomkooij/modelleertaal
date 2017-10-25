@@ -7,8 +7,8 @@
   "scripts": {
     "test": "grunt test"
   },
-  "main": "evaluator.js",
-  "devDependencies": {
+   "main": "evaluator.js",
+   "devDependencies": {
     "chai": "^2.3.0",
     "grunt": "^0.4.5",
     "grunt-browserify": "^3.8.0",
@@ -17,7 +17,7 @@
     "grunt-mocha-test": "^0.12.7",
     "jison": "^0.4.15",
     "mocha": "^2.2.5",
-    "node-xml-lite": "0.0.3"
-    }
-
+    "file-saver": "^1.3.3",
+    "blob": "^0.0.4"
+  }
 }
