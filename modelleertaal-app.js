@@ -26,7 +26,6 @@ var version = "v2.0.dev0 - 25okt2017";
 function ModelleertaalApp(params) {
 
 		this.debug = params.debug || false;
-
 		console.log('Modelleertaal App. Debug = '+ this.debug);
 
 		this.dom_modelregels = "#modelregels";
@@ -38,13 +37,21 @@ function ModelleertaalApp(params) {
 		this.dom_run = "#run";
 		this.dom_plot = "#plot";
 		this.dom_open = "#open";
+		this.dom_fileinput = "#fileinput";
 		this.dom_download = "#download";
 		this.dom_clickdata = "#clickdata";
 		this.dom_hoverdata = "#hoverdata";
 		this.dom_x_var = "#x_var";
 		this.dom_y_var = "#y_var";
+		this.dom_model_keuze = "#model_keuze";
 
-		this.previous_plot = [];
+		this.dropdown_model_index = params.model_index;
+		this.dropdown_update();
+		this.dropdown_load_model();
+
+		this.model = new evaluator_js.Model();
+		// (re)set the app
+		this.init_app();
 
 		// fix scope for binding functions to DOM
 		// https://stackoverflow.com/questions/14535548/
@@ -58,17 +65,37 @@ function ModelleertaalApp(params) {
 		});
 
 		$(this.dom_download).click(function () { self.download_model(); });
+		$(this.dom_fileinput).change(function (event) { self.read_file(event); });
+		$(this.dom_model_keuze).change(function() { self.dropdown_load_model(); });
 }
 
 ModelleertaalApp.prototype.print_status = function(txt) {
 		$(this.dom_status).html(txt);
 };
 
+
 ModelleertaalApp.prototype.read_model = function() {
 		this.model = new evaluator_js.Model();
 		this.model.modelregels = $(this.dom_modelregels).val();
 		this.model.startwaarden = $(this.dom_startwaarden).val();
 };
+
+
+ModelleertaalApp.prototype.read_file = function(evt) {
+		var self = this;
+	 var f = evt.target.files[0];
+	 console.log('read_file: '+f);
+
+	 if (f) {
+		 var r = new FileReader();
+		 r.onload = function(e) {
+			 console.log(e.target.result);
+			 self.read_model_from_xml(e.target.result);
+		   self.init_app();
+		 };
+		 r.readAsText(f);
+	 }
+}
 
 ModelleertaalApp.prototype.download_model = function() {
 	 // requires FileSaver.js and Blob.js
@@ -80,6 +107,45 @@ ModelleertaalApp.prototype.download_model = function() {
 	 var blob = new Blob([model.createBogusXMLString()], {type: "text/plain;charset=utf-8"});
 	 FileSaver.saveAs(blob, "model.xml");
 };
+
+
+
+ModelleertaalApp.prototype.dropdown_update = function() {
+		 		// maak het drop-down modelkeuze menu uit model.js
+		 		$(this.dom_model_keuze).empty();
+		 		for (var i=0;i<model_index.length;i++){
+		 			$('<option/>').val(i).text(this.dropdown_model_index[i].title).appendTo(this.dom_model_keuze);
+		 		}
+		 };
+
+
+ModelleertaalApp.prototype.dropdown_load_model = function() {
+		 		// lees keuze uit drop-down en kies juiste url
+
+				var self = this;
+
+				model_keuze = $(this.dom_model_keuze).val();
+
+		 		url = this.dropdown_model_index[model_keuze].url;
+
+				$.ajax({
+						url : url,
+						dataType: "text",
+						success : function (data) {
+								self.read_model_from_xml(data);
+								self.init_app();
+							}, // succes();
+							error: function (xhr, ajaxOptions, thrownError) {
+									if (xhr.status === 0) {
+										alert("Kan model "+url+" niet laden.\nBestaat het model?\nOffline? Probeer Edge of =Firefox");
+									} else {
+										alert(thrownError);
+									}
+									$(self.dom_graph).html("Model niet geladen! FOUT.");
+									print_status("Status: ERROR.");
+	 						} // error();
+				}); //.ajax
+}; // dropdown _load_model
 
 
 ModelleertaalApp.prototype.run = function() {
@@ -245,6 +311,8 @@ ModelleertaalApp.prototype.set_axis_to_defaults = function() {
 
 ModelleertaalApp.prototype.plot_graph = function(dataset, previous_plot) {
 
+			 var self = this;
+			 
 			 $.plot($(this.dom_graph), [
 						 {data: previous_plot, color: '#d3d3d3'},
 						 {data: dataset, color: 'blue'}],
@@ -277,20 +345,18 @@ ModelleertaalApp.prototype.plot_graph = function(dataset, previous_plot) {
 
 			 $(this.dom_graph).bind("plothover", function (event, pos, item) {
 				 var str = "(" + pos.x.toFixed(2) + ", " + pos.y.toFixed(2) + ")";
-				 $(this.dom_hoverdata).text(str);
+				 $(self.dom_hoverdata).text(str);
 			 }); // $.bind("plothover")
 
 			 $(this.dom_graph).bind("plotclick", function (event, pos, item) {
 				 if (item) {
 					 var str = " - Click: (" + pos.x.toFixed(2) + ", " +
 							pos.y.toFixed(2) + ")";
-					 $(this.dom_clickdata).text(str);
+					 $(self.dom_clickdata).text(str);
 				 }
 			 }); // $bind.("plotclick")
 
 		 }; // plot_graph()
-
-
 
 
 //
@@ -317,81 +383,26 @@ function reduce_rows(rows, Nresults) {
     return rows;
 }
 
-
+ModelleertaalApp.prototype.read_model_from_xml = function(XMLString) {
+	this.model = new evaluator_js.Model();
+	this.model.parseBogusXMLString(XMLString);
+};
 
  //
- // Lees/Kies model
+ // Reset
  //
- function Initialize_model(data) {
- 		model = new evaluator_js.Model();
- 		model.parseBogusXMLString(data);
- 		$("#modelregels").val(model.modelregels);
- 		$("#startwaarden").val(model.startwaarden);
- 		$('#y_var').empty();
- 		$('#x_var').empty();
- 		$('<option/>').val('').text('auto').appendTo('#x_var');
- 		$('<option/>').val('').text('auto').appendTo('#y_var');
- 		$("#graph").html("Model geladen. Geen data. Druk op Run!");
- 		$("#output").empty();
- 		$("#status").html("Status: Model geladen.");
- 		$("#datatable").empty();
- 		previous_plot = [];
- }
-
-		 document.getElementById('fileinput').addEventListener('change', readFile, false);
-		 function readFile(evt) {
-		 	var f = evt.target.files[0];
-
-		 	if (f) {
-		 		var r = new FileReader();
-		 		r.onload = function(e) {
-		 		Initialize_model(e.target.result);
-		 	  };
-		 		r.readAsText(f);
-		 	}
-		 }
-
-		 $(document).ready(function() {
-		 	console.log("Modelleertaal - ",version);
-		 	update_model_selection();
-		 	click_load_model();
-		 });
-
-
-		 var update_model_selection = function() {
-		 		// maak het drop-down modelkeuze menu uit model.js
-		 		$('#model_keuze').empty();
-		 		for (var i=0;i<model_index.length;i++){
-		 			$('<option/>').val(i).text(model_index[i].title).appendTo('#model_keuze');
-		 		}
-		 };
-
-		 var click_load_model = function () {
-		 		// lees keuze uit drop-down en kies juiste url
-		 		model_keuze = $("#model_keuze").val();
-
-		 		// defined in modellen/models.js
-		 		url = model_index[model_keuze].url;
-
-		 					$.ajax({
-		 							url : url,
-		 							dataType: "text",
-		 							success : function (data) {
-		 									Initialize_model(data);
-		 								}, // succes();
-		 								error: function (xhr, ajaxOptions, thrownError) {
-		 										if (xhr.status === 0) {
-		 											alert("Kan model "+url+" niet laden.\nBestaat het model?\nOffline? Probeer Edge of =Firefox");
-		 										} else {
-		 											alert(thrownError);
-		 										}
-		 										$("#graph").html("Model niet geladen! FOUT.");
-		 										$("#output").empty();
-		 										$("#status").html("Status: ERROR.");
-		 		 						} // error();
-		 					}); //.ajax
-		 		}; // click_load_model
-
+ModelleertaalApp.prototype.init_app = function() {
+ 		$(this.dom_modelregels).val(this.model.modelregels);
+ 		$(this.dom_startwaarden).val(this.model.startwaarden);
+ 		$(this.dom_y_var).empty();
+ 		$(this.dom_x_var).empty();
+ 		$('<option/>').val('').text('auto').appendTo(this.dom_x_var);
+ 		$('<option/>').val('').text('auto').appendTo(this.dom_y_var);
+ 		$(this.dom_graph).html("Model geladen. Geen data. Druk op Run!");
+ 		this.print_status("Status: Model geladen.");
+ 		$(this.dom_datatable).empty();
+ 		this.previous_plot = [];
+};
 
 
 

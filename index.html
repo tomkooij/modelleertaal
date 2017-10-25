@@ -39,15 +39,13 @@
         <h2><a href="https://github.com/tomkooij/modelleertaal">Modelleertaal</a></h2>
 		<div>
 
-			<div><input id="test" type="button" value= "TEST!"></div>
-
 			<input type="file" id="fileinput">
 			<input id="download" type="button" value= "Download model.xml">
 		</div>
 		<p>
 		<div>
 			<input id="open" type="button" value= "Laad model:">
-			<select id="model_keuze" onchange="click_load_model()">
+			<select id="model_keuze">
 		    <option value="0">model.js niet geladen!</option>
 		  </select>
 	  </div>
@@ -88,9 +86,8 @@
 	<script src="scripts/modelleertaal-app.browser.js"></script>
 	<script type="text/javascript">
 
+m = new modelleertaalapp_js.ModelleertaalApp({debug: true, model_index: model_index});
 
-m = new modelleertaalapp_js.ModelleertaalApp({debussg: true, someotherthing: false, dom : {a : 1, b: 2}});
-$("#test").click(function () { console.log(this); console.log("Click TEST!"); m.print_status("FOO!"); m.run();});
 
 </script>
 
