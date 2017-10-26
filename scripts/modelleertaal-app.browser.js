@@ -512,7 +512,9 @@ function ModelleertaalApp(params) {
   if ((this.CodeMirror) && (typeof(CodeMirror) == 'function')) {
     if (this.debug)
       console.log("CodeMirror enabled.");
-    var codemirror_options = { lineNumbers: true };
+    var codemirror_options = {
+      lineNumbers: true,
+      mode: "modelleertaal" };
     this.modelregels_editor = CodeMirror.fromTextArea($(this.dom_modelregels)[0], codemirror_options);
     this.startwaarden_editor = CodeMirror.fromTextArea($(this.dom_startwaarden)[0], codemirror_options);
     this.CodeMirrorActive = true;
@@ -556,6 +558,7 @@ ModelleertaalApp.prototype.print_status = function(status, error) {
 
 
 ModelleertaalApp.prototype.read_model = function() {
+  // read model from textarea/CodeMirror
   this.model = new evaluator_js.Model();
   if (this.CodeMirrorActive) {
     this.model.modelregels = this.modelregels_editor.getValue();
@@ -700,7 +703,7 @@ ModelleertaalApp.prototype.print_table = function(limit) {
 
   var dataset = self.results;
 
-  limit = (limit) ? limit : 20;
+  limit = (limit) ? limit : 10;
   limit = Math.min(dataset.length, limit);
 
   var firstrow = $('<tr>');
@@ -751,10 +754,10 @@ ModelleertaalApp.prototype.do_plot = function() {
   this.set_axis_to_defaults();
 
   Nresults = Math.min(this.results.length, 100);
-  this.results = reduce_rows(this.results, Nresults);
+  var results = reduce_rows(this.results, Nresults);
 
-  for (var i = 0; i < this.results.length; i++) {
-    scatter_plot.push([this.results[i][xvar_colidx], this.results[i][yvar_colidx]]);
+  for (var i = 0; i < results.length; i++) {
+    scatter_plot.push([results[i][xvar_colidx], results[i][yvar_colidx]]);
   }
   $(this.dom_graph).empty(); // verwijder text enzo
   this.plot_graph(scatter_plot, this.previous_plot);
@@ -782,7 +785,7 @@ ModelleertaalApp.prototype.plot_graph = function(dataset, previous_plot) {
   var self = this;
 
   $(this.dom_graph).css("font-family", "sans-serif");
-  
+
   $.plot($(this.dom_graph), [{
       data: previous_plot,
       color: '#d3d3d3'
