@@ -51,7 +51,10 @@ function ModelleertaalApp(params) {
   var self = this;
 
   $(this.dom_run).click(function() {
-    self.run();
+    if (self.run()) {
+			self.print_table();
+			self.do_plot();
+		}
   });
 
   $(this.dom_plot).click(function() {
@@ -164,11 +167,9 @@ ModelleertaalApp.prototype.run = function() {
   this.reset_axis_dropdown();
   this.set_axis();
 
-  this.print_table();
+	return true;
+};
 
-  this.do_plot();
-
-}; // run()
 
 
 ModelleertaalApp.prototype.save_axis = function() {
