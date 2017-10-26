@@ -21,6 +21,22 @@ var modelmodule = require("./model.js");
 var parser = require("./modelleertaal").parser;
 
 /*
+ * Patch the parser to inject line numbers into AST nodes
+ * https://stackoverflow.com/a/10424328/4965175
+ */
+// store the current performAction function
+parser._performAction = parser.performAction;
+// override performAction
+parser.performAction = function anonymous(yytext,yyleng,yylineno,yy,yystate,$$,_$) {
+    // invoke the original performAction
+    var ret = parser._performAction.call(this, yytext, yyleng, yylineno, yy, yystate, $$, _$);
+    // Add linenumber to each AST node
+    this.$.lineNo = yylineno;
+    return ret;
+};
+
+
+/*
  Class namespace
 
  Variables are created in this.varNames = {} (a list of variable names)
@@ -72,11 +88,13 @@ Namespace.prototype.createVar = function(name) {
 
 // reference a variable that is on the right side of an assignment
 // It should already exist if on the right side
-Namespace.prototype.referenceVar = function(name) {
+Namespace.prototype.referenceVar = function(node) {
+
+    var name = node.name;
 
     // it should exist (but perhaps in "startwaarden" (constNames))
     if ((this.varNames.indexOf(name) == -1) && (this.constNames.indexOf(name) == -1)) {
-        throw new EvalError('Namespace: referenced variable unknown: '+ name);
+        throw new EvalError('Namespace: referenced variable unknown: '+ name + ' Line: '+node.lineNo);
     }
     return this.varDict[name];
 };
@@ -193,7 +211,7 @@ CodeGenerator.prototype.parseNode = function(node) {
         case 'Assignment':
                 return this.namespace.createVar(node.left) + ' = (' + this.parseNode(node.right) + ');\n';
         case 'Variable':
-                return this.namespace.referenceVar(node.name);
+                return this.namespace.referenceVar(node);
         case 'Binary': {
                     if (node.operator == '^')
                         return "(Math.pow("+this.parseNode(node.left)+","+this.parseNode(node.right)+"))";
@@ -229,7 +247,7 @@ CodeGenerator.prototype.parseNode = function(node) {
                     case 'ln':  return "Math.log("+this.parseNode(node.expr)+")";
                     case 'sqrt': return "Math.sqrt("+this.parseNode(node.expr)+")";
                     default:
-                        throw new SyntaxError("Unknown function:" + JSON.stringify(node.func));
+                        throw new SyntaxError("Unknown function:" + JSON.stringify(node.func) + " Line: "+node.lineNo);
                     }
                 break;
                 }
