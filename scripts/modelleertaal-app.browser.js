@@ -176,7 +176,7 @@ CodeGenerator.prototype.generateStartWaardenStorageCode = function() {
     var code = 'storage[0] = [];\n';
     for (var i = 0; i < this.namespace.varNames.length; i++) {
         var variable = this.namespace.varDict[this.namespace.varNames[i]];
-        code += "if (typeof("+variable+") == 'undefined') "+variable+"=0;\n" +
+        code += "if (typeof("+variable+") == 'undefined') "+variable+"=NaN;\n" +
         "storage[0].push("+variable+");\n";
     }
     return code;
@@ -699,6 +699,12 @@ ModelleertaalApp.prototype.print_table = function(limit) {
   // truncated row from: jquery.jsparc.js
   // http://github.com/HiSPARC/jSPARC
 
+  function fix(x) {
+    if (isNaN(x)) return "X";
+    if (x < 0.0001) return 0;
+    return x;
+  }
+
   var self = this;
 
   var dataset = self.results;
@@ -719,7 +725,7 @@ ModelleertaalApp.prototype.print_table = function(limit) {
     var row = $('<tr>');
     row.append($('<td>').text(i));
     for (var j = 0; j < dataset[i].length; j++) {
-      row.append($('<td>').text(dataset[i][j].toPrecision(4)));
+      row.append($('<td>').text(fix(dataset[i][j].toPrecision(4))));
     }
     table.append(row);
 
