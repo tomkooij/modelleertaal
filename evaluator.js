@@ -31,7 +31,7 @@ parser.performAction = function anonymous(yytext,yyleng,yylineno,yy,yystate,$$,_
     // invoke the original performAction
     var ret = parser._performAction.call(this, yytext, yyleng, yylineno, yy, yystate, $$, _$);
     // Add linenumber to each AST node
-    this.$.lineNo = yylineno;
+    this.$.lineNo = yylineno + 1;
     return ret;
 };
 
