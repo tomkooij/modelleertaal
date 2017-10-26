@@ -11,11 +11,12 @@
 			font-size: 100%;
 		}
 
-		table.#datatable {
+		table {
 			border: 1px solid black;
 		}
 
-		table.#datatable th, td {
+		th, td {
+			text-align: center;
 			border: 1px solid black;
 			padding: 5px;
 		}
@@ -24,11 +25,16 @@
 			border: none;
 		}
 
-		table.app th, td {
+		table.app th {
 			border: none;
 			padding: 5px;
 		}
 
+		table.app td {
+			text-align: left;
+			border: none;
+			padding: 5px;
+		}
 
 
 		/* schaduw rand om werkblad zodat afmetinging zichtbaar is
@@ -98,16 +104,10 @@
 						</tr>
 				  </table>
 				</div>
-
-
-				<p>
-
-		<!--			<div id="graph" class="graph">Model niet geladen!</div> -->
-
 	</div>
 
 	<div id="werkBlad">
-		<pre id="datatable">Hier komt een tabel...</pre>
+		<div id="datatable">Hier komt een tabel...</div>
 	</div>
 
 	<script src="modellen/models.js"></script>
