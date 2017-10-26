@@ -11,15 +11,24 @@
 			font-size: 100%;
 		}
 
-		table {
+		table.datatable {
 			border: 1px solid black;
 		}
 
-		th,
-		td {
+		table.datatable th, td {
 			border: 1px solid black;
 			padding: 5px;
 		}
+
+		table.app {
+			border: none;
+		}
+
+		table.app th, td {
+			border: none;
+		}
+
+
 
 		/* schaduw rand om werkblad zodat afmetinging zichtbaar is
        handig voor debuggen */
@@ -34,6 +43,10 @@
 			width: 450px;
 			height: 300px;
 		}
+
+	  .CodeMirror { height: auto; border: 1px solid #ddd; }
+	  .CodeMirror pre { padding-left: 7px; line-height: 1.25; }
+
 	</style>
 	<script src="scripts/jquery-3.2.1.min.js"></script>
 	<script src="scripts/jquery.flot.js"></script>
@@ -59,7 +72,7 @@
 			</div>
 			<p>
 				<div>
-					<table>
+					<table class="app">
 						<tr>
 						<td colspan=3><input id="run" type="button" value="RUN!"> Aantal iteraties = <input type="text" id="NBox" value="1000" size=5>
 						<span id="status"></span>
@@ -75,8 +88,8 @@
 									Aflezen: <span id="hoverdata"></span><span id="clickdata"></span>-->
 
 							</td>
-							<td width=300px><textarea id="modelregels">Foo!</textarea></td>
-							<td width=200px align="top"><textarea id="startwaarden">Bar!</textarea></td>
+							<td style="vertical-align:top" width=300px><textarea id="modelregels">Foo!</textarea></td>
+							<td style="vertical-align:top" width=200px align="top"><textarea id="startwaarden">Bar!</textarea></td>
 						</tr>
 				  </table>
 				</div>
@@ -102,11 +115,10 @@
 			debug: true
 		});
 
-		//var modelregels_editor = CodeMirror.fromTextArea($('#modelregels')[0], {
-  		//lineNumbers: true});
-		//var startwaarden_editor = CodeMirror.fromTextArea($('#startwaarden')[0], {
-  		//lineNumbers: true});
-		//use editor.setValue to set text.
+		var modelregels_editor = CodeMirror.fromTextArea($('#modelregels')[0], {
+			lineNumbers: true});
+		var startwaarden_editor = CodeMirror.fromTextArea($('#startwaarden')[0], {
+  		lineNumbers: true});
 
 		$(document).ready(function() {
 			console.log("Start!");

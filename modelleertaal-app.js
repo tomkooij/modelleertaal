@@ -70,8 +70,9 @@ function ModelleertaalApp(params) {
   });
 }
 
-ModelleertaalApp.prototype.print_status = function(txt) {
-  $(this.dom_status).html(txt);
+ModelleertaalApp.prototype.print_status = function(status, error) {
+  $(this.dom_status).html(status);
+  if (typeof error != "undefined") $(this.dom_graph).html(error);
 };
 
 
@@ -137,7 +138,7 @@ ModelleertaalApp.prototype.run = function() {
   try {
     evaluator = new evaluator_js.ModelregelsEvaluator(this.model, this.debug);
   } catch (err) {
-    this.print_status(err.message.replace(/\n/g, "<br>"));
+    this.print_status("Model niet in orde.", err.message.replace(/\n/g, "<br>"));
     alert("Model niet in orde: \n" + err.message);
 		return false;
   }
@@ -150,7 +151,7 @@ ModelleertaalApp.prototype.run = function() {
 		} else {
 			alert("Model niet in orde:\n" + err.message);
 		}
-		this.print_status(err.message.replace(/\n/g, "<br>"));
+		this.print_status("Fout in  model.", err.message.replace(/\n/g, "<br>"));
 		return false;
 	}
 
@@ -363,8 +364,7 @@ ModelleertaalApp.prototype.init_app = function() {
   $(this.dom_x_var).empty();
   $('<option/>').val('').text('auto').appendTo(this.dom_x_var);
   $('<option/>').val('').text('auto').appendTo(this.dom_y_var);
-  $(this.dom_graph).html("Model geladen. Geen data. Druk op Run!");
-  this.print_status("Status: Model geladen.");
+  this.print_status("Status: Model geladen.", "Model geladen. Geen data. Druk op Run!");
   $(this.dom_datatable).empty();
   this.previous_plot = [];
 };
