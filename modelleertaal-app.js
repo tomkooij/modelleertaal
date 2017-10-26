@@ -52,7 +52,9 @@ function ModelleertaalApp(params) {
   if ((this.CodeMirror) && (typeof(CodeMirror) == 'function')) {
     if (this.debug)
       console.log("CodeMirror enabled.");
-    var codemirror_options = { lineNumbers: true };
+    var codemirror_options = {
+      lineNumbers: true,
+      mode: "modelleertaal" };
     this.modelregels_editor = CodeMirror.fromTextArea($(this.dom_modelregels)[0], codemirror_options);
     this.startwaarden_editor = CodeMirror.fromTextArea($(this.dom_startwaarden)[0], codemirror_options);
     this.CodeMirrorActive = true;
