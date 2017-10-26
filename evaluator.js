@@ -76,7 +76,7 @@ Namespace.prototype.referenceVar = function(name) {
 
     // it should exist (but perhaps in "startwaarden" (constNames))
     if ((this.varNames.indexOf(name) == -1) && (this.constNames.indexOf(name) == -1)) {
-        throw new Error('Namespace: referenced variable unknown: ', name);
+        throw new EvalError('Namespace: referenced variable unknown: '+ name);
     }
     return this.varDict[name];
 };
@@ -207,7 +207,7 @@ CodeGenerator.prototype.parseNode = function(node) {
                         case '-':   return "(-1. * " + this.parseNode(node.right) + ")";
                         case 'NOT':  return "!("+ this.parseNode(node.right) + ")";
                         default:
-                            throw new Error("Unknown unary:" + JSON.stringify(node));
+                            throw new SyntaxError("Unknown unary:" + JSON.stringify(node));
                     }
         /* falls through */
         case 'Logical':
@@ -229,7 +229,7 @@ CodeGenerator.prototype.parseNode = function(node) {
                     case 'ln':  return "Math.log("+this.parseNode(node.expr)+")";
                     case 'sqrt': return "Math.sqrt("+this.parseNode(node.expr)+")";
                     default:
-                        throw new Error("Unkown function:" + JSON.stringify(node));
+                        throw new SyntaxError("Unknown function:" + JSON.stringify(node.func));
                     }
                 break;
                 }
@@ -242,7 +242,7 @@ CodeGenerator.prototype.parseNode = function(node) {
         case 'Stop':
                 return 'throw \'StopIteration\'';
         default:
-            throw new Error("Unable to parseNode() :" + JSON.stringify(node));
+            throw new SyntaxError("Unable to parseNode() :" + JSON.stringify(node));
     } /* switch (node.type) */
 
 
