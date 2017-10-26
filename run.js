@@ -9,7 +9,7 @@ function main() {
 
     var N = 1e6; // aantal iteraties
     var Nresults = 1e2; // write Nresults
-    
+
     var model = new evalmodule.Model();
     model.readBogusXMLFile(filename);
     console.log(model);

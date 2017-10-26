@@ -7,7 +7,7 @@
 
 	<style>
 		html {
-			font-family: Helvetica, Arial, sans-serif;
+		  font-family: Helvetica, arial, sans-serif;
 			font-size: 100%;
 		}
 
@@ -15,18 +15,34 @@
 			border: 1px solid black;
 		}
 
-		th,
-		td {
+		th, td {
+			text-align: center;
 			border: 1px solid black;
 			padding: 5px;
 		}
+
+		table.app {
+			border: none;
+		}
+
+		table.app th {
+			border: none;
+			padding: 5px;
+		}
+
+		table.app td {
+			text-align: left;
+			border: none;
+			padding: 5px;
+		}
+
 
 		/* schaduw rand om werkblad zodat afmetinging zichtbaar is
        handig voor debuggen */
 
 		#werkBlad {
 			padding: 1em;
-			margin: 1em auto;
+			margin: .5em auto;
 			box-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
 		}
 
@@ -34,6 +50,10 @@
 			width: 450px;
 			height: 300px;
 		}
+
+	  .CodeMirror { height: auto; border: 1px solid #ddd; }
+	  .CodeMirror pre { padding-left: 7px; line-height: 1.25; }
+
 	</style>
 	<script src="scripts/jquery-3.2.1.min.js"></script>
 	<script src="scripts/jquery.flot.js"></script>
@@ -57,34 +77,43 @@
 	    <option value="0">model.js niet geladen!</option>
 	  </select>
 			</div>
+	</div>
+	<div id="werkBlad">
 			<p>
 				<div>
-					<textarea id="modelregels" rows=15 cols=40> Modelregels </textarea>
-					<textarea id="startwaarden" rows=15 cols=25> Startwaarden </textarea>
-					<p>
-						<input id="run" type="button" value="RUN!"> Aantal iteraties = <input type="text" id="NBox" value="1000" size=5>
-						<span id="status"></span>
+					<table class="app">
+						<tr>
+						  <td><input id="run" type="button" value="RUN!"> Aantal iteraties = <input type="text" id="NBox" value="1000" size=5>
+						      <span id="status"></span>
+					    </td>
+							<td>Modelregels:</td>
+							<td>Startwaarden:</td>
+					 </tr>
+  					<tr>
+
+							<td rowspan = "2" class="graphbox"><div id="graph" class="graph" ></div>
+								<p>
+								verticaal: <select id="y_var"><option value=""></option></select> horizontaal: <select id="x_var"><option value=""></option></select>
+									<input id="plot" type="button" value="Plot!">
+								<p>
+									Aflezen: <span id="hoverdata"></span><span id="clickdata"></span>
+
+							</td>
+							<td style="vertical-align:top" width=300px><textarea id="modelregels">Foo!</textarea></td>
+							<td style="vertical-align:top" width=200px align="top"><textarea id="startwaarden">Bar!</textarea></td>
+						</tr>
+				  </table>
 				</div>
-
-				<p>
-
-					<div id="graph" class="graph">Model niet geladen!</div>
-					<p>
-						verticaal: <select id="y_var"><option value=""></option></select> horizontaal: <select id="x_var"><option value=""></option></select>
-						<input id="plot" type="button" value="Plot!">
-						<p>Aflezen: <span id="hoverdata"></span><span id="clickdata"></span></p>
 	</div>
 
 	<div id="werkBlad">
-		<pre id="datatable">Hier komt een tabel...</pre>
-	</div>
-
-	<div id="werkBlad">
-		<pre id="old_status">Deprecated REMOVE ME!.</pre>
+		<div id="datatable">Hier komt een tabel...</div>
 	</div>
 
 	<script src="modellen/models.js"></script>
 	<script src="scripts/modelleertaal-app.browser.js"></script>
+	<link rel="stylesheet" href="scripts/codemirror.css">
+	<script src="scripts/codemirror.js"></script>
 
 	<script type="text/javascript">
 		m = new modelleertaalapp_js.ModelleertaalApp({
@@ -96,6 +125,8 @@
 			dropdown_update();
 			dropdown_load_model();
 			$("#model_keuze").change(dropdown_load_model);
+			console.log(m.model.modelregels);
+			//modelregels_editor.setValue('Foo!\nbar!'); //m.model.modelregels);
 		});
 
 		dropdown_update = function() {

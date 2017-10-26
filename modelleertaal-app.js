@@ -28,6 +28,9 @@ function ModelleertaalApp(params) {
   this.debug = params.debug || false;
   console.log('Modelleertaal App. Debug = ' + this.debug);
 
+  this.CodeMirror = params.CodeMirror || true;
+  this.CodeMirrorActive = false;
+
   this.dom_modelregels = "#modelregels";
   this.dom_startwaarden = "#startwaarden";
   this.dom_status = "#status";
@@ -44,7 +47,22 @@ function ModelleertaalApp(params) {
   this.dom_y_var = "#y_var";
   this.dom_model_keuze = "#model_keuze";
 
-  this.model = new evaluator_js.Model();
+  this.read_model();
+
+  if ((this.CodeMirror) && (typeof(CodeMirror) == 'function')) {
+    if (this.debug)
+      console.log("CodeMirror enabled.");
+    var codemirror_options = { lineNumbers: true };
+    this.modelregels_editor = CodeMirror.fromTextArea($(this.dom_modelregels)[0], codemirror_options);
+    this.startwaarden_editor = CodeMirror.fromTextArea($(this.dom_startwaarden)[0], codemirror_options);
+    this.CodeMirrorActive = true;
+  } else {
+    this.CodeMirror = false;
+    this.CodeMirrorActive = false;
+    if (this.debug)
+      console.log("CodeMirror disabled.");
+  }
+
   // (re)set the app
   this.init_app();
 
@@ -70,15 +88,22 @@ function ModelleertaalApp(params) {
   });
 }
 
-ModelleertaalApp.prototype.print_status = function(txt) {
-  $(this.dom_status).html(txt);
+
+ModelleertaalApp.prototype.print_status = function(status, error) {
+  $(this.dom_status).html(status);
+  if (typeof error != "undefined") $(this.dom_graph).html(error).css("font-family", "monospace");
 };
 
 
 ModelleertaalApp.prototype.read_model = function() {
   this.model = new evaluator_js.Model();
-  this.model.modelregels = $(this.dom_modelregels).val();
-  this.model.startwaarden = $(this.dom_startwaarden).val();
+  if (this.CodeMirrorActive) {
+    this.model.modelregels = this.modelregels_editor.getValue();
+    this.model.startwaarden = this.startwaarden_editor.getValue();
+  } else {
+    this.model.modelregels = $(this.dom_modelregels).val();
+    this.model.startwaarden = $(this.dom_startwaarden).val();
+  }
 };
 
 
@@ -102,11 +127,9 @@ ModelleertaalApp.prototype.read_file = function(evt) {
 ModelleertaalApp.prototype.download_model = function() {
   // requires FileSaver.js and Blob.js
   // (Blob() not supported on most mobile browsers)
-  model = new evaluator_js.Model();
-  model.modelregels = $("#modelregels").val();
-  model.startwaarden = $("#startwaarden").val();
+  this.read_model();
 
-  var blob = new Blob([model.createBogusXMLString()], {
+  var blob = new Blob([this.model.createBogusXMLString()], {
     type: "text/plain;charset=utf-8"
   });
   FileSaver.saveAs(blob, "model.xml");
@@ -137,7 +160,7 @@ ModelleertaalApp.prototype.run = function() {
   try {
     evaluator = new evaluator_js.ModelregelsEvaluator(this.model, this.debug);
   } catch (err) {
-    this.print_status(err.message.replace(/\n/g, "<br>"));
+    this.print_status("Model niet in orde.", err.message.replace(/\n/g, "<br>"));
     alert("Model niet in orde: \n" + err.message);
 		return false;
   }
@@ -150,7 +173,7 @@ ModelleertaalApp.prototype.run = function() {
 		} else {
 			alert("Model niet in orde:\n" + err.message);
 		}
-		this.print_status(err.message.replace(/\n/g, "<br>"));
+		this.print_status("Fout in  model.", err.message.replace(/\n/g, "<br>"));
 		return false;
 	}
 
@@ -298,6 +321,8 @@ ModelleertaalApp.prototype.plot_graph = function(dataset, previous_plot) {
 
   var self = this;
 
+  $(this.dom_graph).css("font-family", "sans-serif");
+  
   $.plot($(this.dom_graph), [{
       data: previous_plot,
       color: '#d3d3d3'
@@ -357,14 +382,18 @@ ModelleertaalApp.prototype.read_model_from_xml = function(XMLString) {
 // Reset
 //
 ModelleertaalApp.prototype.init_app = function() {
-  $(this.dom_modelregels).val(this.model.modelregels);
-  $(this.dom_startwaarden).val(this.model.startwaarden);
+  if (this.CodeMirrorActive) {
+    this.modelregels_editor.setValue(this.model.modelregels);
+    this.startwaarden_editor.setValue(this.model.startwaarden);
+  } else {
+    $(this.dom_modelregels).val(this.model.modelregels);
+    $(this.dom_startwaarden).val(this.model.startwaarden);
+  }
   $(this.dom_y_var).empty();
   $(this.dom_x_var).empty();
   $('<option/>').val('').text('auto').appendTo(this.dom_x_var);
   $('<option/>').val('').text('auto').appendTo(this.dom_y_var);
-  $(this.dom_graph).html("Model geladen. Geen data. Druk op Run!");
-  this.print_status("Status: Model geladen.");
+  this.print_status("Status: Model geladen.", "Model geladen. Geen data. Druk op Run!");
   $(this.dom_datatable).empty();
   this.previous_plot = [];
 };
