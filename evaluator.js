@@ -175,7 +175,7 @@ CodeGenerator.prototype.generateStartWaardenStorageCode = function() {
     var code = 'storage[0] = [];\n';
     for (var i = 0; i < this.namespace.varNames.length; i++) {
         var variable = this.namespace.varDict[this.namespace.varNames[i]];
-        code += "if (typeof("+variable+") == 'undefined') "+variable+"=0;\n" +
+        code += "if (typeof("+variable+") == 'undefined') "+variable+"=NaN;\n" +
         "storage[0].push("+variable+");\n";
     }
     return code;
