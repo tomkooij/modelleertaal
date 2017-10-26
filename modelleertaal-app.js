@@ -136,8 +136,20 @@ ModelleertaalApp.prototype.run = function() {
   } catch (err) {
     this.print_status(err.message.replace(/\n/g, "<br>"));
     alert("Model niet in orde: \n" + err.message);
+		return false;
   }
-  this.results = evaluator.run(N);
+
+	try {
+		this.results = evaluator.run(N);
+	} catch (err) {
+		if (err instanceof EvalError) {
+			alert("Model niet in orde:\nVariable niet gedefineerd in startwaarden?\n" + err.message);
+		} else {
+			alert("Model niet in orde:\n" + err.message);
+		}
+		this.print_status(err.message.replace(/\n/g, "<br>"));
+		return false;
+	}
 
   this.print_status("Klaar na iteratie: " + this.results.length);
   console.log("Klaar na iteratie: " + this.results.length);
