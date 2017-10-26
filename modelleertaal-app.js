@@ -91,7 +91,7 @@ function ModelleertaalApp(params) {
 
 ModelleertaalApp.prototype.print_status = function(status, error) {
   $(this.dom_status).html(status);
-  if (typeof error != "undefined") $(this.dom_graph).html(error);
+  if (typeof error != "undefined") $(this.dom_graph).html(error).css("font-family", "monospace");
 };
 
 
@@ -127,11 +127,9 @@ ModelleertaalApp.prototype.read_file = function(evt) {
 ModelleertaalApp.prototype.download_model = function() {
   // requires FileSaver.js and Blob.js
   // (Blob() not supported on most mobile browsers)
-  model = new evaluator_js.Model();
-  model.modelregels = $("#modelregels").val();
-  model.startwaarden = $("#startwaarden").val();
+  this.read_model();
 
-  var blob = new Blob([model.createBogusXMLString()], {
+  var blob = new Blob([this.model.createBogusXMLString()], {
     type: "text/plain;charset=utf-8"
   });
   FileSaver.saveAs(blob, "model.xml");
@@ -323,6 +321,8 @@ ModelleertaalApp.prototype.plot_graph = function(dataset, previous_plot) {
 
   var self = this;
 
+  $(this.dom_graph).css("font-family", "sans-serif");
+  
   $.plot($(this.dom_graph), [{
       data: previous_plot,
       color: '#d3d3d3'
