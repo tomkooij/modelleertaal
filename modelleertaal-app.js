@@ -28,6 +28,9 @@ function ModelleertaalApp(params) {
   this.debug = params.debug || false;
   console.log('Modelleertaal App. Debug = ' + this.debug);
 
+  this.CodeMirror = params.CodeMirror || true;
+  this.CodeMirrorActive = false;
+
   this.dom_modelregels = "#modelregels";
   this.dom_startwaarden = "#startwaarden";
   this.dom_status = "#status";
@@ -44,7 +47,22 @@ function ModelleertaalApp(params) {
   this.dom_y_var = "#y_var";
   this.dom_model_keuze = "#model_keuze";
 
-  this.model = new evaluator_js.Model();
+  this.read_model();
+
+  if ((this.CodeMirror) && (typeof(CodeMirror) == 'function')) {
+    if (this.debug)
+      console.log("CodeMirror enabled.");
+    var codemirror_options = { lineNumbers: true };
+    this.modelregels_editor = CodeMirror.fromTextArea($(this.dom_modelregels)[0], codemirror_options);
+    this.startwaarden_editor = CodeMirror.fromTextArea($(this.dom_startwaarden)[0], codemirror_options);
+    this.CodeMirrorActive = true;
+  } else {
+    this.CodeMirror = false;
+    this.CodeMirrorActive = false;
+    if (this.debug)
+      console.log("CodeMirror disabled.");
+  }
+
   // (re)set the app
   this.init_app();
 
@@ -70,6 +88,7 @@ function ModelleertaalApp(params) {
   });
 }
 
+
 ModelleertaalApp.prototype.print_status = function(status, error) {
   $(this.dom_status).html(status);
   if (typeof error != "undefined") $(this.dom_graph).html(error);
@@ -78,8 +97,13 @@ ModelleertaalApp.prototype.print_status = function(status, error) {
 
 ModelleertaalApp.prototype.read_model = function() {
   this.model = new evaluator_js.Model();
-  this.model.modelregels = $(this.dom_modelregels).val();
-  this.model.startwaarden = $(this.dom_startwaarden).val();
+  if (this.CodeMirrorActive) {
+    this.model.modelregels = this.modelregels_editor.getValue();
+    this.model.startwaarden = this.startwaarden_editor.getValue();
+  } else {
+    this.model.modelregels = $(this.dom_modelregels).val();
+    this.model.startwaarden = $(this.dom_startwaarden).val();
+  }
 };
 
 
@@ -358,8 +382,13 @@ ModelleertaalApp.prototype.read_model_from_xml = function(XMLString) {
 // Reset
 //
 ModelleertaalApp.prototype.init_app = function() {
-  $(this.dom_modelregels).val(this.model.modelregels);
-  $(this.dom_startwaarden).val(this.model.startwaarden);
+  if (this.CodeMirrorActive) {
+    this.modelregels_editor.setValue(this.model.modelregels);
+    this.startwaarden_editor.setValue(this.model.startwaarden);
+  } else {
+    $(this.dom_modelregels).val(this.model.modelregels);
+    $(this.dom_startwaarden).val(this.model.startwaarden);
+  }
   $(this.dom_y_var).empty();
   $(this.dom_x_var).empty();
   $('<option/>').val('').text('auto').appendTo(this.dom_x_var);
