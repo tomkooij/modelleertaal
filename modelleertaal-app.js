@@ -239,6 +239,12 @@ ModelleertaalApp.prototype.print_table = function(limit) {
   // truncated row from: jquery.jsparc.js
   // http://github.com/HiSPARC/jSPARC
 
+  function fix(x) {
+    if (isNaN(x)) return "X";
+    if (x < 0.0001) return 0;
+    return x;
+  }
+
   var self = this;
 
   var dataset = self.results;
@@ -259,7 +265,7 @@ ModelleertaalApp.prototype.print_table = function(limit) {
     var row = $('<tr>');
     row.append($('<td>').text(i));
     for (var j = 0; j < dataset[i].length; j++) {
-      row.append($('<td>').text(dataset[i][j].toPrecision(4)));
+      row.append($('<td>').text(fix(dataset[i][j].toPrecision(4))));
     }
     table.append(row);
 
