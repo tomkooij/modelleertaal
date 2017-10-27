@@ -2,6 +2,7 @@
 <startwaarden>
 // Startwaarden
 // in SI-eenheden
+t = 0  // niet in examen!
 dt = 0,01
 x = 0
 y = 2,5
