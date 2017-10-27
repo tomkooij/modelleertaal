@@ -172,12 +172,11 @@ CodeGenerator.prototype.generateVariableStorageCode = function() {
     return code;
 };
 
-CodeGenerator.prototype.generateStartWaardenStorageCode = function() {
-    var code = 'storage[0] = [];\n';
+CodeGenerator.prototype.generateVariableInitCode = function() {
+    var code = '//initialize all variables to NaN\n';
     for (var i = 0; i < this.namespace.varNames.length; i++) {
         var variable = this.namespace.varDict[this.namespace.varNames[i]];
-        code += "if (typeof("+variable+") == 'undefined') "+variable+"=NaN;\n" +
-        "storage[0].push("+variable+");\n";
+        code += variable+"=NaN;\n";
     }
     return code;
 };
@@ -210,7 +209,11 @@ CodeGenerator.prototype.parseNode = function(node) {
     switch(node.type) {
 
         case 'Assignment':
-                return this.namespace.createVar(node.left) + ' = (' + this.parseNode(node.right) + ');\n';
+                /* evaluate the right side first, to make sure 'x=x+dx' with
+                x undefined fails in code generation. */
+                var node_right = this.parseNode(node.right);
+                return  this.namespace.createVar(node.left)+ ' = (' +
+                              node_right + ');\n';
         case 'Variable':
                 return this.namespace.referenceVar(node);
         case 'Binary': {
@@ -314,9 +317,11 @@ ModelregelsEvaluator.prototype.run = function(N) {
     // separate function run_model() inside anonymous Function()
     // to prevent bailout of the V8 optimising compiler in try {} catch
     var model =     "function run_model(N, storage) { \n " +
+                    this.codegenerator.generateVariableInitCode() +
                     startwaarden_code + "\n" +
-                    this.codegenerator.generateStartWaardenStorageCode() +
-                    "    for (var i=1; i < N; i++) { \n " +
+                    "var i=0;\n" +
+                    this.codegenerator.generateVariableStorageCode() +
+                    "    for (i=1; i < N; i++) { \n " +
                     modelregels_code + "\n" +
                     this.codegenerator.generateVariableStorageCode() +
                     "    }  \n" +
