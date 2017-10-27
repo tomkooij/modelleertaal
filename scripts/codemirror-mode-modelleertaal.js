@@ -62,7 +62,7 @@ CodeMirror.defineMode("modelleertaal", function() {
     }
     stream.eatWhile(/[\w\$_]/);
     var cur = stream.current();
-    if (keywords.propertyIsEnumerable(cur)) return "keyword";
+    if (keywords.propertyIsEnumerable(cur.toLowerCase())) return "keyword";
     if (atoms.propertyIsEnumerable(cur)) return "atom";
     return "variable";
   }
