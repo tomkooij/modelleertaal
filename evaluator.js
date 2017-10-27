@@ -208,7 +208,11 @@ CodeGenerator.prototype.parseNode = function(node) {
     switch(node.type) {
 
         case 'Assignment':
-                return this.namespace.createVar(node.left) + ' = (' + this.parseNode(node.right) + ');\n';
+                /* evaluate the right side first, to make sure 'x=x+dx' with
+                x undefined fails in code generation. */
+                var node_right = this.parseNode(node.right);
+                return  this.namespace.createVar(node.left)+ ' = (' +
+                              node_right + ');\n';
         case 'Variable':
                 return this.namespace.referenceVar(node);
         case 'Binary': {
