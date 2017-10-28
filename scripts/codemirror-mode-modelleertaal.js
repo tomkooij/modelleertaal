@@ -43,7 +43,7 @@ CodeMirror.defineMode("modelleertaal", function() {
       return null;
     }
     if (/\d/.test(ch)) {
-      stream.eatWhile(/[\w\.]/);
+      stream.eatWhile(/[\w\.\,]/);
       return "number";
     }
     if (ch == "/") {
