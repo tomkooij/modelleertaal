@@ -79,7 +79,7 @@ function ModelleertaalApp(params) {
 
   $(this.dom_plot).click(function() {
     self.do_plot();
-    self.print_status("Plot OK.");
+    //self.print_status("Plot OK.");
   });
 
   $(this.dom_download).click(function() {
