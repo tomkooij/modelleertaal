@@ -305,6 +305,18 @@ ModelleertaalApp.prototype.do_plot = function() {
   for (var i = 0; i < results.length; i++) {
     scatter_plot.push([results[i][xvar_colidx], results[i][yvar_colidx]]);
   }
+
+  /* Output PGFPlot coordinates to console.log
+  // used to make high-quality plots in LaTeX.
+  // this should not be in production code, but it is :-)
+  this.print_csv = true;
+  if (this.print_csv) {
+      var csv = scatter_plot.map(function(d){
+          return "("+d.join(',')+")";
+      }).join('\n');
+      console.log(csv);
+  }
+  */
   $(this.dom_graph).empty(); // verwijder text enzo
   this.plot_graph(scatter_plot, this.previous_plot);
   this.previous_plot = scatter_plot;
