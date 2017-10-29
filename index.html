@@ -107,6 +107,10 @@
 	</div>
 
 	<div id="werkBlad">
+		<div id="development">Development: <input id="pgfplot" type="button" value="Create PGFPlot!"></div>
+	</div>
+
+	<div id="werkBlad">
 		<div id="datatable">Hier komt een tabel...</div>
 	</div>
 
@@ -126,8 +130,11 @@
 			dropdown_update();
 			dropdown_load_model();
 			$("#model_keuze").change(dropdown_load_model);
-			console.log(m.model.modelregels);
-			//modelregels_editor.setValue('Foo!\nbar!'); //m.model.modelregels);
+
+			$("#pgfplot").click(function () {
+					m.download_pgfplot();
+			});
+
 		});
 
 		dropdown_update = function() {
@@ -164,6 +171,9 @@
 				} // error();
 			}); //.ajax
 		}; // dropdown _load_model
+
+
+
 	</script>
 
 </body>

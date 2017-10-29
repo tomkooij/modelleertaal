@@ -139,6 +139,18 @@ ModelleertaalApp.prototype.download_model = function() {
 };
 
 
+ModelleertaalApp.prototype.download_pgfplot = function() {
+  // requires FileSaver.js and Blob.js
+  // (Blob() not supported on most mobile browsers)
+  this.do_plot();
+  var blob = new Blob([this.create_pgfplot()], {
+    type: "text/plain;charset=utf-8"
+  });
+  FileSaver.saveAs(blob, "pgfplot.tex");
+};
+
+
+
 ModelleertaalApp.prototype.run = function() {
 
   this.print_status('Run!!!');
@@ -294,7 +306,7 @@ ModelleertaalApp.prototype.print_table = function(limit) {
 //
 ModelleertaalApp.prototype.do_plot = function() {
 
-  var scatter_plot = [];
+  this.scatter_plot = [];
 
   // if set to "auto" set axis to default settings (x,t)
   this.set_axis_to_defaults();
@@ -303,23 +315,12 @@ ModelleertaalApp.prototype.do_plot = function() {
   var results = reduce_rows(this.results, Nresults);
 
   for (var i = 0; i < results.length; i++) {
-    scatter_plot.push([results[i][xvar_colidx], results[i][yvar_colidx]]);
+    this.scatter_plot.push([results[i][xvar_colidx], results[i][yvar_colidx]]);
   }
 
-  /* Output PGFPlot coordinates to console.log
-  // used to make high-quality plots in LaTeX.
-  // this should not be in production code, but it is :-)
-  this.print_csv = true;
-  if (this.print_csv) {
-      var csv = scatter_plot.map(function(d){
-          return "("+d.join(',')+")";
-      }).join('\n');
-      console.log(csv);
-  }
-  */
   $(this.dom_graph).empty(); // verwijder text enzo
-  this.plot_graph(scatter_plot, this.previous_plot);
-  this.previous_plot = scatter_plot;
+  this.plot_graph(this.scatter_plot, this.previous_plot);
+  this.previous_plot = this.scatter_plot;
 }; // do_plot
 
 
@@ -418,6 +419,111 @@ ModelleertaalApp.prototype.init_app = function() {
   $(this.dom_datatable).empty();
   this.previous_plot = [];
 };
+
+
+//
+// PGFPlot
+//
+ModelleertaalApp.prototype.create_pgfplot_header = function() {
+		// try to create a PGFPlot that fits the 10x10cm grid.
+		// set x,y axis scales and min max values accordingly
+		// This only works for graphs starting at (0,0)
+
+		// https://stackoverflow.com/a/31643591/4965175
+		function arrayMax(array) {
+      return array.reduce(function(a, b) {
+        return Math.max(a, b);
+      });
+		}
+
+		function arrayMin(array) {
+      return array.reduce(function(a, b) {
+        return Math.min(a, b);
+      });
+		}
+
+		function round_to_scale(max_val) {
+			// round to next 10, 20, 50, 100, 200, 500, ...
+
+			var exp_10 = Math.floor(Math.log(max_val)/Math.log(10));
+			var power_of_ten = Math.pow(10, exp_10);
+
+			if (max_val / (2 * power_of_ten) < 1) return 2*power_of_ten;
+			if (max_val / (5 * power_of_ten) < 1) return 5*power_of_ten;
+			return 10*power_of_ten;
+		}
+
+		function get_units_by_variable_name(var_name) {
+			var units = {"x": "\\meter", "y": "\\meter", "h": "\\meter",
+								"s": "\\meter", "t": "\\second",
+							 "v": "\\meter\\per\\second",
+							 "a": "\\meter\\per\\second",
+						   "Fres": "\\Newton", "Fr": "\\Newton", "Fw": "\\Newton"};
+			return (units[var_name]) ? units[var_name] : "unknown";
+		}
+
+		this.save_axis(); // get axis from drop-down
+		x_var = this.xvar_last;
+		y_var = this.yvar_last;
+		x_unit = get_units_by_variable_name(x_var);
+		y_unit = get_units_by_variable_name(y_var);
+
+		// and back to columns again ...
+		var x = []; var y = [];
+		for(var i = 0; i < this.scatter_plot.length; i++){
+		    x.push(this.scatter_plot[i][0]); y.push(this.scatter_plot[i][1]);
+		}
+
+		// This only works for 10x10 grid with x_min, y_min = (0,0)
+		x_min = arrayMin(x);
+		x_max = round_to_scale(arrayMax(x));
+		y_min = arrayMin(y);
+		y_max = round_to_scale(arrayMax(y));
+		x_scale = x_max / 10;   // adjust to 10 cm x 10 cm grid
+		y_scale = y_max / 10;
+
+		return "%x and y scale set to 10cmx10cm grid. Adjust to fit!\n" +
+		 "% x = ["+x_min+" .. "+arrayMax(x)+"]\n"+
+		 "% y = ["+y_min+" .. "+arrayMax(y)+"]\n"+
+		 "% this only works for graphs starting a (0,0)\n"+
+		 "\\begin{axis}[x=1cm\/"+x_scale+", y=1cm\/"+y_scale+",\n"+
+		 "enlargelimits=false, tick align=outside,\n "+
+		 "xlabel={$"+x_var+"$ [\\si{"+x_unit+"}]},\n"+
+		 "ylabel={$"+y_var+"$ [\\si{"+y_unit+"}]},\n"+
+		 "% xtick={0, 1, 2, ..., 10},\n"+
+		 "% ytick={0, 2, 4, ..., 20},\n"+
+		 "xmin="+x_min+", xmax="+x_max+", ymin="+y_min+", ymax="+y_max+"]\n";
+	};
+
+
+ModelleertaalApp.prototype.create_pgfplot = function() {
+		// Output PGFPlots plot
+		this.set_axis_to_defaults();
+
+		var coordinates = this.scatter_plot.map(function(d){
+						return "("+d.join(',')+")";
+				}).join('\n');
+
+		PGFPlot_TeX = "% Use \\input{} to wrap this inside suitable LaTeX doc:\n";
+		PGFPlot_TeX += "\\begin{tikzpicture}\n" +
+			 "% draw 10x10cm millimeter paper.\n" +
+			 "\\def\\width{10}\n" +
+	     "\\def\\height{10}\n" +
+	     "\\draw[step=1mm, line width=0.2mm, black!20!white] (0,0) grid (\\width,\\height);\n"+
+	     "\\draw[step=5mm, line width=0.2mm, black!40!white] (0,0) grid (\\width,\\height);\n"+
+	     "\\draw[step=1cm, line width=0.2mm, black!60!white] (0,0) grid (\\width,\\height);\n";
+		PGFPlot_TeX += "%\n%\n%\n";
+
+		PGFPlot_TeX += this.create_pgfplot_header();
+
+		PGFPlot_TeX += "\\addplot[no marks, black, very thick]\n";
+		PGFPlot_TeX += "coordinates {\n";
+		PGFPlot_TeX += coordinates;
+		PGFPlot_TeX += "\n};\n";
+		PGFPlot_TeX += "\\end{axis}\n";
+		PGFPlot_TeX += "\\end{tikzpicture}\n";
+		return PGFPlot_TeX;
+	};
 
 
 //

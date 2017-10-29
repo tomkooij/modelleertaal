@@ -1,0 +1,18 @@
+% Plot a graph using TikZ/PGFPlots
+%
+% pgfplot.tex is created by the PGFPlot output of the ModelleertaalApp.
+%
+\documentclass{article}
+\usepackage{tikz}
+
+\usepackage{pgfplots}
+\usepackage[detect-none, list-final-separator={ en }, per-mode=symbol,
+            retain-explicit-plus, output-decimal-marker={,},
+            exponent-product={\cdot}, range-phrase={ tot }]{siunitx}
+\usepackage[font={small,sf},labelfont={bf},labelsep=endash]{caption}
+
+\begin{document}
+
+\input{pgfplot.tex}
+
+\end{document}
