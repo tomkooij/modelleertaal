@@ -142,13 +142,13 @@ ModelleertaalApp.prototype.download_model = function() {
 ModelleertaalApp.prototype.download_pgfplot = function() {
   // requires FileSaver.js and Blob.js
   // (Blob() not supported on most mobile browsers)
-  this.do_plot();
+  if (this.do_plot() == false) return;
+
   var blob = new Blob([this.create_pgfplot()], {
     type: "text/plain;charset=utf-8"
   });
   FileSaver.saveAs(blob, "pgfplot.tex");
 };
-
 
 
 ModelleertaalApp.prototype.run = function() {
@@ -306,6 +306,10 @@ ModelleertaalApp.prototype.print_table = function(limit) {
 //
 ModelleertaalApp.prototype.do_plot = function() {
 
+  if (this.results.length === 0) {
+    alert('Geen resultaten. Druk eerst op Run!');
+    return false;
+  }
   this.scatter_plot = [];
 
   // if set to "auto" set axis to default settings (x,t)
@@ -417,6 +421,8 @@ ModelleertaalApp.prototype.init_app = function() {
   $('<option/>').val('').text('auto').appendTo(this.dom_y_var);
   this.print_status("Status: Model geladen.", "Model geladen. Geen data. Druk op Run!");
   $(this.dom_datatable).empty();
+  this.results = [];
+  this.scatter_plot = [];
   this.previous_plot = [];
 };
 
@@ -498,6 +504,12 @@ ModelleertaalApp.prototype.create_pgfplot_header = function() {
 
 ModelleertaalApp.prototype.create_pgfplot = function() {
 		// Output PGFPlots plot
+
+    if (this.results.length === 0) {
+      alert('Geen resultaten. Druk eerst op Run!');
+      return false;
+    }
+
     this.scatter_plot = [];
 
     this.set_axis_to_defaults();
