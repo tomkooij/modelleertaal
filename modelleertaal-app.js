@@ -498,7 +498,15 @@ ModelleertaalApp.prototype.create_pgfplot_header = function() {
 
 ModelleertaalApp.prototype.create_pgfplot = function() {
 		// Output PGFPlots plot
-		this.set_axis_to_defaults();
+    this.scatter_plot = [];
+
+    this.set_axis_to_defaults();
+
+    var results = reduce_rows(this.results, 1000); // plot 1000 points max
+
+    for (var i = 0; i < results.length; i++) {
+      this.scatter_plot.push([results[i][xvar_colidx], results[i][yvar_colidx]]);
+    }
 
 		var coordinates = this.scatter_plot.map(function(d){
 						return "("+d.join(',')+")";
