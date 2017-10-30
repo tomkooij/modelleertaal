@@ -65,18 +65,14 @@
 	<div id="werkBlad">
 		<!-- CSS zorg voor met werkvlak met schaduw -->
 		<h2><a href="https://github.com/tomkooij/modelleertaal">Modelleertaal</a></h2>
-		<div>
-
-			<input type="file" id="fileinput">
-			<input id="download" type="button" value="Download model.xml">
-		</div>
 		<p>
-			<div>
+		<div>
 				Kies model:
 				<select id="model_keuze">
 	    <option value="0">model.js niet geladen!</option>
 	  </select>
-			</div>
+		of: <input type="file" id="fileinput">
+	  </div>
 	</div>
 	<div id="werkBlad">
 			<p>
@@ -107,7 +103,14 @@
 	</div>
 
 	<div id="werkBlad">
-		<div id="development">Development: <input id="pgfplot" type="button" value="Create PGFPlot!"></div>
+		<div id="hacks">WIP:
+			<input id="download_pgf" type="button" value="Download PGFPlot:">
+			<input type="text" id="pgf_filename" value="pgfplot.tex" size=15>
+			<input id="download_tsv" type="button" value="Download TSV:">
+			<input type="text" id="tsv_filename" value="model_data.tsv" size=15>
+			<input id="download_xml" type="button" value="Download Modelregels:">
+			<input type="text" id="xml_filename" value="model.xml" size=15>
+		</div>
 	</div>
 
 	<div id="werkBlad">

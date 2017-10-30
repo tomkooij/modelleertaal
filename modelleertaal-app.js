@@ -40,7 +40,12 @@ function ModelleertaalApp(params) {
   this.dom_run = "#run";
   this.dom_plot = "#plot";
   this.dom_fileinput = "#fileinput";
-  this.dom_download = "#download";
+  this.dom_download_xml = "#download_xml";
+  this.dom_download_xml_fn = "#xml_filename";
+  this.dom_download_pgf = "#download_pgf";
+  this.dom_download_pgf_fn = "#pgf_filename";
+  this.dom_download_tsv = "#download_tsv";
+  this.dom_download_tsv_fn = "#tsv_filename";
   this.dom_clickdata = "#clickdata";
   this.dom_hoverdata = "#hoverdata";
   this.dom_x_var = "#x_var";
@@ -82,9 +87,16 @@ function ModelleertaalApp(params) {
     //self.print_status("Plot OK.");
   });
 
-  $(this.dom_download).click(function() {
+  $(this.dom_download_xml).click(function() {
     self.download_model();
   });
+  $(this.dom_download_pgf).click(function() {
+    self.download_pgfplot();
+  });
+  $(this.dom_download_tsv).click(function() {
+    self.download_tsv();
+  });
+
   $(this.dom_fileinput).change(function(event) {
     self.read_file(event);
   });
@@ -130,24 +142,43 @@ ModelleertaalApp.prototype.read_file = function(evt) {
 ModelleertaalApp.prototype.download_model = function() {
   // requires FileSaver.js and Blob.js
   // (Blob() not supported on most mobile browsers)
+
+  var filename = $(this.dom_download_xml_fn).val();
+
   this.read_model();
 
   var blob = new Blob([this.model.createBogusXMLString()], {
     type: "text/plain;charset=utf-8"
   });
-  FileSaver.saveAs(blob, "model.xml");
+  FileSaver.saveAs(blob, filename);
 };
 
 
 ModelleertaalApp.prototype.download_pgfplot = function() {
   // requires FileSaver.js and Blob.js
   // (Blob() not supported on most mobile browsers)
-  if (this.do_plot() == false) return;
+
+  if (this.do_plot() === false) return;
+
+  var filename = $(this.dom_download_pgf_fn).val();
 
   var blob = new Blob([this.create_pgfplot()], {
     type: "text/plain;charset=utf-8"
   });
-  FileSaver.saveAs(blob, "pgfplot.tex");
+  FileSaver.saveAs(blob, filename);
+};
+
+
+ModelleertaalApp.prototype.download_tsv = function() {
+  // requires FileSaver.js and Blob.js
+  // (Blob() not supported on most mobile browsers)
+  console.log('download tsv');
+  var filename = $(this.dom_download_tsv_fn).val();
+
+  var blob = new Blob([this.create_tsv()], {
+    type: "text/plain;charset=utf-8"
+  });
+  FileSaver.saveAs(blob, filename);
 };
 
 
@@ -426,6 +457,23 @@ ModelleertaalApp.prototype.init_app = function() {
   this.previous_plot = [];
 };
 
+
+//
+// TSV -- use TSV instead of CSV to prevent , . decimal problems in Excel.
+//
+ModelleertaalApp.prototype.create_tsv = function() {
+    var tsv = '';
+
+    tsv += this.allVars.join('\t'); //header row
+    tsv += "\n";
+
+    tsv += this.results.map(function(d){
+        return d.join('\t');
+    }).join('\n');
+
+    // replace . with , for NL Excel (should be an option)
+    return tsv.replace(/\./g,",");
+};
 
 //
 // PGFPlot
