@@ -140,47 +140,44 @@ ModelleertaalApp.prototype.read_file = function(evt) {
 
 
 ModelleertaalApp.prototype.download_model = function() {
-  // requires FileSaver.js and Blob.js
-  // (Blob() not supported on most mobile browsers)
+  // download model in "BogusXML" format
+  //  just a text file with XML like tags...
 
   var filename = $(this.dom_download_xml_fn).val();
-
   this.read_model();
-
-  var blob = new Blob([this.model.createBogusXMLString()], {
-    type: "text/plain;charset=utf-8"
-  });
-  FileSaver.saveAs(blob, filename);
+  this.save_string(this.model.createBogusXMLString(), filename);
 };
 
 
 ModelleertaalApp.prototype.download_pgfplot = function() {
-  // requires FileSaver.js and Blob.js
-  // (Blob() not supported on most mobile browsers)
+  // save the plot in TikZ/PGFPlot format
 
   if (this.do_plot() === false) return;
 
   var filename = $(this.dom_download_pgf_fn).val();
-
-  var blob = new Blob([this.create_pgfplot()], {
-    type: "text/plain;charset=utf-8"
-  });
-  FileSaver.saveAs(blob, filename);
+  this.save_string(this.create_pgfplot(), filename);
 };
 
 
 ModelleertaalApp.prototype.download_tsv = function() {
+  // download the results in TSV format.
+
+  var filename = $(this.dom_download_tsv_fn).val();
+  this.save_string(this.create_tsv(), filename);
+};
+
+
+ModelleertaalApp.prototype.save_string = function(data, filename) {
   // requires FileSaver.js and Blob.js
   // (Blob() not supported on most mobile browsers)
-  console.log('download tsv');
-  var filename = $(this.dom_download_tsv_fn).val();
 
-  var blob = new Blob([this.create_tsv()], {
+  // mime text/plain expects CRLF \r\n instead of \n
+  // this should work on both Windows and Mac/Linux
+  var blob = new Blob([data.replace(/([^\r])\n/g, "$1\r\n")], {
     type: "text/plain;charset=utf-8"
   });
   FileSaver.saveAs(blob, filename);
 };
-
 
 ModelleertaalApp.prototype.run = function() {
 
