@@ -284,7 +284,7 @@ ModelleertaalApp.prototype.print_table = function(limit) {
 
   function fix(x) {
     if (isNaN(x)) return "X";
-    if (x < 0.0001) return 0;
+    if (Math.abs(x) < 0.0001) return 0;
     return x;
   }
 
