@@ -13,9 +13,7 @@ var FileSaver = require('file-saver');
 //<script src="scripts/jquery.flot.axislabels.js"></script>
 
 
-//jshint node:true
 //jshint devel:true
-//jshint evil:true
 //jshint es3:true
 //jshint loopfunc: true
 
