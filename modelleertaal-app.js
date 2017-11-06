@@ -273,45 +273,53 @@ ModelleertaalApp.prototype.set_axis = function() {
 //
 // Table
 //
-ModelleertaalApp.prototype.print_table = function(limit) {
-  // truncated row from: jquery.jsparc.js
-  // http://github.com/HiSPARC/jSPARC
-
-  function fix(x) {
-    if (isNaN(x)) return "X";
-    if (Math.abs(x) < 0.0001) return 0;
-    return x;
-  }
-
-  var self = this;
-
-  var dataset = self.results;
-
-  limit = (limit) ? limit : 10;
-  limit = Math.min(dataset.length, limit);
-
+ModelleertaalApp.prototype.table_header = function() {
   var firstrow = $('<tr>');
-  var table = $('<table>').addClass('table');
   firstrow.append($('<th>').text('#'));
 
   for (var k = 0; k < this.allVars.length; k++) {
     firstrow.append($('<th>').text(this.allVars[k]));
   }
-  table.append(firstrow);
+  return firstrow;
+};
 
-  for (var i = 0; i < dataset.length; i++) {
-    var row = $('<tr>');
-    row.append($('<td>').text(i));
-    for (var j = 0; j < dataset[i].length; j++) {
-      row.append($('<td>').text(fix(dataset[i][j].toPrecision(4))));
+
+ModelleertaalApp.prototype.table_row = function(rowIndex) {
+
+    function fix(x) {
+      if (isNaN(x)) return "X";
+        if (Math.abs(x) < 0.0001) return 0;
+      return x;
     }
-    table.append(row);
 
-    if (limit != dataset.length && i == Math.floor(limit / 2) - 1) {
+    var row = $('<tr>');
+    row.append($('<td>').text(rowIndex));
+    for (var j = 0; j < this.results[rowIndex].length; j++) {
+      row.append($('<td>').text(fix(this.results[rowIndex][j].toPrecision(4))));
+    }
+    return row;
+};
+
+ModelleertaalApp.prototype.print_table = function(limit) {
+  // truncated row from: jquery.jsparc.js
+  // http://github.com/HiSPARC/jSPARC
+
+  var self = this;
+
+  limit = (limit) ? limit : 10;
+  limit = Math.min(this.results.length, limit);
+
+  var table = $('<table>').addClass('table');
+  table.append(this.table_header());
+
+  for (var i = 0; i < this.results.length; i++) {
+    table.append(this.table_row(i));
+
+    if (limit != this.results.length && i == Math.floor(limit / 2) - 1) {
       var truncrow = $('<tr>');
       truncrow.append($('<td>')
         .text('... Tabel ingekort. Klik voor meer rijen ...')
-        .attr('colspan', dataset.length + 1)
+        .attr('colspan', this.results.length + 1)
         .css({
           'text-align': 'left',
           'cursor': 'pointer'
@@ -320,7 +328,7 @@ ModelleertaalApp.prototype.print_table = function(limit) {
           self.print_table(limit * 5);
         }));
       table.append(truncrow);
-      i = dataset.length - 1 - Math.ceil(limit / 2);
+      i = this.results.length - 1 - Math.ceil(limit / 2);
     }
   }
 
@@ -342,7 +350,7 @@ ModelleertaalApp.prototype.do_plot = function() {
   this.set_axis_to_defaults();
 
   Nresults = Math.min(this.results.length, 100);
-  var results = reduce_rows(this.results, Nresults);
+  var results = this.reduce_rows(this.results, Nresults);
 
   for (var i = 0; i < results.length; i++) {
     this.scatter_plot.push([results[i][xvar_colidx], results[i][yvar_colidx]]);
@@ -417,9 +425,13 @@ ModelleertaalApp.prototype.plot_graph = function(dataset, previous_plot) {
 
   $(this.dom_graph).bind("plotclick", function(event, pos, item) {
     if (item) {
-      var str = " - Click: (" + pos.x.toFixed(2) + ", " +
-        pos.y.toFixed(2) + ")";
-      $(self.dom_clickdata).text(str);
+      //var str = " - Click: (" + pos.x.toFixed(2) + ", " +
+       //  pos.y.toFixed(2) + ")";
+     var table = $('<table>').addClass('table');
+     table.append(self.table_header());
+     table.append(self.table_row(self.get_result_rowIndex(item.dataIndex)));
+     $(self.dom_clickdata).html(table);
+
     }
   }); // $bind.("plotclick")
 
@@ -592,7 +604,7 @@ ModelleertaalApp.prototype.create_pgfplot = function() {
 //
 // Helpers
 //
-function reduce_rows(rows, Nresults) {
+ModelleertaalApp.prototype.reduce_rows = function(rows, Nresults) {
   // reduce resultsObject (large array) to length == Nresults
 
   var length = rows.length;
@@ -608,10 +620,25 @@ function reduce_rows(rows, Nresults) {
   }
 
   if (length > Nresults) {
+    this.rowinc = rowinc;
     return rows.filter(select_rows);
   }
+  this.rowinc = 1;
   return rows;
-}
+};
+
+
+ModelleertaalApp.prototype.get_result_rowIndex = function(rowIndex_plot) {
+  // map row index from this.scatter_plot (reduced number of rows)
+  // back to this.results
+
+  rowIndex = this.rowinc * rowIndex_plot;
+  if (rowIndex < this.results.length) {
+    return rowIndex;
+  } else {
+    return this.results.length - 1;
+  }
+};
 
 
 exports.ModelleertaalApp = ModelleertaalApp;
