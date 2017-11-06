@@ -20,10 +20,10 @@ CodeMirror.defineMode("modelleertaal", function() {
     for (var i = 0; i < words.length; ++i) obj[words[i]] = true;
     return obj;
   }
-  var keywords = words("als dan anders eindals stop niet");
-  var atoms = {"null": true};
+  var keywords = words("als dan anders eindals stop");
+  var atoms = words("waar onwaar niet");
 
-  var isOperatorChar = /[+\-*&%=<>|\/]/;
+  var isOperatorChar = /[+\-*&%=<>!|\/]/;
 
   function tokenBase(stream, state) {
     var ch = stream.next();
@@ -43,7 +43,7 @@ CodeMirror.defineMode("modelleertaal", function() {
       return null;
     }
     if (/\d/.test(ch)) {
-      stream.eatWhile(/[\w\.]/);
+      stream.eatWhile(/[\w\.\,]/);
       return "number";
     }
     if (ch == "/") {
@@ -63,7 +63,7 @@ CodeMirror.defineMode("modelleertaal", function() {
     stream.eatWhile(/[\w\$_]/);
     var cur = stream.current();
     if (keywords.propertyIsEnumerable(cur.toLowerCase())) return "keyword";
-    if (atoms.propertyIsEnumerable(cur)) return "atom";
+    if (atoms.propertyIsEnumerable(cur.toLowerCase())) return "atom";
     return "variable";
   }
 
