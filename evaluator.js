@@ -20,6 +20,15 @@
 var modelmodule = require("./model.js");
 var parser = require("./modelleertaal").parser;
 
+
+// patch parser.patch to inject AST name
+var ast_name = 'global';
+parser._parse = parser.parse;
+parser.parse = function(code, ast) {
+  ast_name = ast;
+  return parser._parse(code);
+};
+
 /*
  * Patch the parser to inject line numbers into AST nodes
  * https://stackoverflow.com/a/10424328/4965175
@@ -32,6 +41,7 @@ parser.performAction = function anonymous(yytext,yyleng,yylineno,yy,yystate,$$,_
     var ret = parser._performAction.call(this, yytext, yyleng, yylineno, yy, yystate, $$, _$);
     // Add linenumber to each AST node
     this.$.lineNo = yylineno + 1;
+    this.$.astName = ast_name; // global set in patched parser.parse()
     return ret;
 };
 
@@ -293,8 +303,8 @@ function ModelregelsEvaluator(model, debug) {
         console.log(this.model.modelregels);
     }
 
-    this.startwaarden_ast = parser.parse(this.model.startwaarden);
-    this.modelregels_ast = parser.parse(this.model.modelregels);
+    this.startwaarden_ast = parser.parse(this.model.startwaarden, 'startwaarden');
+    this.modelregels_ast = parser.parse(this.model.modelregels, 'modelregels');
 
     if (this.debug) {
         console.log('*** AST startwaarden ***');
