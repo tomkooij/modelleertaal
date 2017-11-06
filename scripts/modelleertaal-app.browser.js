@@ -453,9 +453,9 @@ Model.prototype.createBogusXMLString = function() {
 
     return '<modelleertaal>\n<startwaarden>\n' +
             this.startwaarden +
-            '</startwaarden>\n<modelregels>\n' +
+            '\n</startwaarden>\n<modelregels>\n' +
             this.modelregels +
-            '</modelregels>\n</modelleertaal>\n';
+            '\n</modelregels>\n</modelleertaal>\n';
 };
 
 
@@ -478,9 +478,7 @@ var FileSaver = require('file-saver');
 //<script src="scripts/jquery.flot.axislabels.js"></script>
 
 
-//jshint node:true
 //jshint devel:true
-//jshint evil:true
 //jshint es3:true
 //jshint loopfunc: true
 
@@ -505,7 +503,12 @@ function ModelleertaalApp(params) {
   this.dom_run = "#run";
   this.dom_plot = "#plot";
   this.dom_fileinput = "#fileinput";
-  this.dom_download = "#download";
+  this.dom_download_xml = "#download_xml";
+  this.dom_download_xml_fn = "#xml_filename";
+  this.dom_download_pgf = "#download_pgf";
+  this.dom_download_pgf_fn = "#pgf_filename";
+  this.dom_download_tsv = "#download_tsv";
+  this.dom_download_tsv_fn = "#tsv_filename";
   this.dom_clickdata = "#clickdata";
   this.dom_hoverdata = "#hoverdata";
   this.dom_x_var = "#x_var";
@@ -533,6 +536,8 @@ function ModelleertaalApp(params) {
   // (re)set the app
   this.init_app();
 
+  this.max_rows_in_plot = 100;
+
   var self = this;
 
   $(this.dom_run).click(function() {
@@ -544,12 +549,19 @@ function ModelleertaalApp(params) {
 
   $(this.dom_plot).click(function() {
     self.do_plot();
-    self.print_status("Plot OK.");
+    //self.print_status("Plot OK.");
   });
 
-  $(this.dom_download).click(function() {
+  $(this.dom_download_xml).click(function() {
     self.download_model();
   });
+  $(this.dom_download_pgf).click(function() {
+    self.download_pgfplot();
+  });
+  $(this.dom_download_tsv).click(function() {
+    self.download_tsv();
+  });
+
   $(this.dom_fileinput).change(function(event) {
     self.read_file(event);
   });
@@ -593,16 +605,44 @@ ModelleertaalApp.prototype.read_file = function(evt) {
 
 
 ModelleertaalApp.prototype.download_model = function() {
-  // requires FileSaver.js and Blob.js
-  // (Blob() not supported on most mobile browsers)
-  this.read_model();
+  // download model in "BogusXML" format
+  //  just a text file with XML like tags...
 
-  var blob = new Blob([this.model.createBogusXMLString()], {
-    type: "text/plain;charset=utf-8"
-  });
-  FileSaver.saveAs(blob, "model.xml");
+  var filename = $(this.dom_download_xml_fn).val();
+  this.read_model();
+  this.save_string(this.model.createBogusXMLString(), filename);
 };
 
+
+ModelleertaalApp.prototype.download_pgfplot = function() {
+  // save the plot in TikZ/PGFPlot format
+
+  if (this.do_plot() === false) return;
+
+  var filename = $(this.dom_download_pgf_fn).val();
+  this.save_string(this.create_pgfplot(), filename);
+};
+
+
+ModelleertaalApp.prototype.download_tsv = function() {
+  // download the results in TSV format.
+
+  var filename = $(this.dom_download_tsv_fn).val();
+  this.save_string(this.create_tsv(), filename);
+};
+
+
+ModelleertaalApp.prototype.save_string = function(data, filename) {
+  // requires FileSaver.js and Blob.js
+  // (Blob() not supported on most mobile browsers)
+
+  // mime text/plain expects CRLF \r\n instead of \n
+  // this should work on both Windows and Mac/Linux
+  var blob = new Blob([data.replace(/([^\r])\n/g, "$1\r\n")], {
+    type: "text/plain;charset=utf-8"
+  });
+  FileSaver.saveAs(blob, filename);
+};
 
 ModelleertaalApp.prototype.run = function() {
 
@@ -700,45 +740,53 @@ ModelleertaalApp.prototype.set_axis = function() {
 //
 // Table
 //
-ModelleertaalApp.prototype.print_table = function(limit) {
-  // truncated row from: jquery.jsparc.js
-  // http://github.com/HiSPARC/jSPARC
-
-  function fix(x) {
-    if (isNaN(x)) return "X";
-    if (x < 0.0001) return 0;
-    return x;
-  }
-
-  var self = this;
-
-  var dataset = self.results;
-
-  limit = (limit) ? limit : 10;
-  limit = Math.min(dataset.length, limit);
-
+ModelleertaalApp.prototype.table_header = function() {
   var firstrow = $('<tr>');
-  var table = $('<table>').addClass('table');
   firstrow.append($('<th>').text('#'));
 
   for (var k = 0; k < this.allVars.length; k++) {
     firstrow.append($('<th>').text(this.allVars[k]));
   }
-  table.append(firstrow);
+  return firstrow;
+};
 
-  for (var i = 0; i < dataset.length; i++) {
-    var row = $('<tr>');
-    row.append($('<td>').text(i));
-    for (var j = 0; j < dataset[i].length; j++) {
-      row.append($('<td>').text(fix(dataset[i][j].toPrecision(4))));
+
+ModelleertaalApp.prototype.table_row = function(rowIndex) {
+
+    function fix(x) {
+      if (isNaN(x)) return "X";
+        if (Math.abs(x) < 0.0001) return 0;
+      return x;
     }
-    table.append(row);
 
-    if (limit != dataset.length && i == Math.floor(limit / 2) - 1) {
+    var row = $('<tr>');
+    row.append($('<td>').text(rowIndex));
+    for (var j = 0; j < this.results[rowIndex].length; j++) {
+      row.append($('<td>').text(fix(this.results[rowIndex][j].toPrecision(4))));
+    }
+    return row;
+};
+
+ModelleertaalApp.prototype.print_table = function(limit) {
+  // truncated row from: jquery.jsparc.js
+  // http://github.com/HiSPARC/jSPARC
+
+  var self = this;
+
+  limit = (limit) ? limit : 10;
+  limit = Math.min(this.results.length, limit);
+
+  var table = $('<table>').addClass('table');
+  table.append(this.table_header());
+
+  for (var i = 0; i < this.results.length; i++) {
+    table.append(this.table_row(i));
+
+    if (limit != this.results.length && i == Math.floor(limit / 2) - 1) {
       var truncrow = $('<tr>');
       truncrow.append($('<td>')
         .text('... Tabel ingekort. Klik voor meer rijen ...')
-        .attr('colspan', dataset.length + 1)
+        .attr('colspan', this.results.length + 1)
         .css({
           'text-align': 'left',
           'cursor': 'pointer'
@@ -747,7 +795,7 @@ ModelleertaalApp.prototype.print_table = function(limit) {
           self.print_table(limit * 5);
         }));
       table.append(truncrow);
-      i = dataset.length - 1 - Math.ceil(limit / 2);
+      i = this.results.length - 1 - Math.ceil(limit / 2);
     }
   }
 
@@ -759,20 +807,24 @@ ModelleertaalApp.prototype.print_table = function(limit) {
 //
 ModelleertaalApp.prototype.do_plot = function() {
 
-  var scatter_plot = [];
+  if (this.results.length === 0) {
+    alert('Geen resultaten. Druk eerst op Run!');
+    return false;
+  }
+  this.scatter_plot = [];
 
   // if set to "auto" set axis to default settings (x,t)
   this.set_axis_to_defaults();
 
-  Nresults = Math.min(this.results.length, 100);
-  var results = reduce_rows(this.results, Nresults);
+  var results = this.reduce_rows(this.results, this.max_rows_in_plot);
 
   for (var i = 0; i < results.length; i++) {
-    scatter_plot.push([results[i][xvar_colidx], results[i][yvar_colidx]]);
+    this.scatter_plot.push([results[i][xvar_colidx], results[i][yvar_colidx]]);
   }
+
   $(this.dom_graph).empty(); // verwijder text enzo
-  this.plot_graph(scatter_plot, this.previous_plot);
-  this.previous_plot = scatter_plot;
+  this.plot_graph(this.scatter_plot, this.previous_plot);
+  this.previous_plot = this.scatter_plot;
 }; // do_plot
 
 
@@ -838,19 +890,26 @@ ModelleertaalApp.prototype.plot_graph = function(dataset, previous_plot) {
   }); // $.bind("plothover")
 
   $(this.dom_graph).bind("plotclick", function(event, pos, item) {
-    if (item) {
-      var str = " - Click: (" + pos.x.toFixed(2) + ", " +
-        pos.y.toFixed(2) + ")";
-      $(self.dom_clickdata).text(str);
+    if (item.seriesIndex == 1) {
+     // clicked on currect graph
+     var table = $('<table>').addClass('table');
+     table.append(self.table_header());
+     table.append(self.table_row(self.get_result_rowIndex(item.dataIndex)));
+     $(self.dom_clickdata).html(table);
     }
   }); // $bind.("plotclick")
 
 }; // plot_graph()
 
+ModelleertaalApp.prototype.set_max_rows_in_plot = function(max_rows) {
+  this.max_rows_in_plot = max_rows;
+};
+
 ModelleertaalApp.prototype.read_model_from_xml = function(XMLString) {
   this.model = new evaluator_js.Model();
   this.model.parseBogusXMLString(XMLString);
 };
+
 
 //
 // Reset
@@ -869,14 +928,152 @@ ModelleertaalApp.prototype.init_app = function() {
   $('<option/>').val('').text('auto').appendTo(this.dom_y_var);
   this.print_status("Status: Model geladen.", "Model geladen. Geen data. Druk op Run!");
   $(this.dom_datatable).empty();
+  this.results = [];
+  this.scatter_plot = [];
   this.previous_plot = [];
 };
 
 
 //
+// TSV -- use TSV instead of CSV to prevent , . decimal problems in Excel.
+//
+ModelleertaalApp.prototype.create_tsv = function() {
+    var tsv = '';
+
+    tsv += this.allVars.join('\t'); //header row
+    tsv += "\n";
+
+    tsv += this.results.map(function(d){
+        return d.join('\t');
+    }).join('\n');
+
+    // replace . with , for NL Excel (should be an option)
+    return tsv.replace(/\./g,",");
+};
+
+//
+// PGFPlot
+//
+ModelleertaalApp.prototype.create_pgfplot_header = function() {
+		// try to create a PGFPlot that fits the 10x10cm grid.
+		// set x,y axis scales and min max values accordingly
+		// This only works for graphs starting at (0,0)
+
+		// https://stackoverflow.com/a/31643591/4965175
+		function arrayMax(array) {
+      return array.reduce(function(a, b) {
+        return Math.max(a, b);
+      });
+		}
+
+		function arrayMin(array) {
+      return array.reduce(function(a, b) {
+        return Math.min(a, b);
+      });
+		}
+
+		function round_to_scale(max_val) {
+			// round to next 10, 20, 50, 100, 200, 500, ...
+
+			var exp_10 = Math.floor(Math.log(max_val)/Math.log(10));
+			var power_of_ten = Math.pow(10, exp_10);
+
+			if (max_val / (2 * power_of_ten) < 1) return 2*power_of_ten;
+			if (max_val / (5 * power_of_ten) < 1) return 5*power_of_ten;
+			return 10*power_of_ten;
+		}
+
+		function get_units_by_variable_name(var_name) {
+			var units = {"x": "\\meter", "y": "\\meter", "h": "\\meter",
+								"s": "\\meter", "t": "\\second",
+							 "v": "\\meter\\per\\second",
+							 "a": "\\meter\\per\\second",
+						   "Fres": "\\Newton", "Fr": "\\Newton", "Fw": "\\Newton"};
+			return (units[var_name]) ? units[var_name] : "unknown";
+		}
+
+		this.save_axis(); // get axis from drop-down
+		x_var = this.xvar_last;
+		y_var = this.yvar_last;
+		x_unit = get_units_by_variable_name(x_var);
+		y_unit = get_units_by_variable_name(y_var);
+
+		// and back to columns again ...
+		var x = []; var y = [];
+		for(var i = 0; i < this.scatter_plot.length; i++){
+		    x.push(this.scatter_plot[i][0]); y.push(this.scatter_plot[i][1]);
+		}
+
+		// This only works for 10x10 grid with x_min, y_min = (0,0)
+		x_min = arrayMin(x);
+		x_max = round_to_scale(arrayMax(x));
+		y_min = arrayMin(y);
+		y_max = round_to_scale(arrayMax(y));
+		x_scale = x_max / 10;   // adjust to 10 cm x 10 cm grid
+		y_scale = y_max / 10;
+
+		return "%x and y scale set to 10cmx10cm grid. Adjust to fit!\n" +
+		 "% x = ["+x_min+" .. "+arrayMax(x)+"]\n"+
+		 "% y = ["+y_min+" .. "+arrayMax(y)+"]\n"+
+		 "% this only works for graphs starting a (0,0)\n"+
+		 "\\begin{axis}[x=1cm\/"+x_scale+", y=1cm\/"+y_scale+",\n"+
+		 "enlargelimits=false, tick align=outside,\n "+
+		 "xlabel={$"+x_var+"$ [\\si{"+x_unit+"}]},\n"+
+		 "ylabel={$"+y_var+"$ [\\si{"+y_unit+"}]},\n"+
+		 "% xtick={0, 1, 2, ..., 10},\n"+
+		 "% ytick={0, 2, 4, ..., 20},\n"+
+		 "xmin="+x_min+", xmax="+x_max+", ymin="+y_min+", ymax="+y_max+"]\n";
+	};
+
+
+ModelleertaalApp.prototype.create_pgfplot = function() {
+		// Output PGFPlots plot
+
+    if (this.results.length === 0) {
+      alert('Geen resultaten. Druk eerst op Run!');
+      return false;
+    }
+
+    this.scatter_plot = [];
+
+    this.set_axis_to_defaults();
+
+    var results = this.reduce_rows(this.results, this.max_rows_in_plot);
+
+    for (var i = 0; i < results.length; i++) {
+      this.scatter_plot.push([results[i][xvar_colidx], results[i][yvar_colidx]]);
+    }
+
+		var coordinates = this.scatter_plot.map(function(d){
+						return "("+d.join(',')+")";
+				}).join('\n');
+
+		PGFPlot_TeX = "% Use \\input{} to wrap this inside suitable LaTeX doc:\n";
+		PGFPlot_TeX += "\\begin{tikzpicture}\n" +
+			 "% draw 10x10cm millimeter paper.\n" +
+			 "\\def\\width{10}\n" +
+	     "\\def\\height{10}\n" +
+	     "\\draw[step=1mm, line width=0.2mm, black!20!white] (0,0) grid (\\width,\\height);\n"+
+	     "\\draw[step=5mm, line width=0.2mm, black!40!white] (0,0) grid (\\width,\\height);\n"+
+	     "\\draw[step=1cm, line width=0.2mm, black!60!white] (0,0) grid (\\width,\\height);\n";
+		PGFPlot_TeX += "%\n%\n%\n";
+
+		PGFPlot_TeX += this.create_pgfplot_header();
+
+		PGFPlot_TeX += "\\addplot[no marks, black, very thick]\n";
+		PGFPlot_TeX += "coordinates {\n";
+		PGFPlot_TeX += coordinates;
+		PGFPlot_TeX += "\n};\n";
+		PGFPlot_TeX += "\\end{axis}\n";
+		PGFPlot_TeX += "\\end{tikzpicture}\n";
+		return PGFPlot_TeX;
+	};
+
+
+//
 // Helpers
 //
-function reduce_rows(rows, Nresults) {
+ModelleertaalApp.prototype.reduce_rows = function(rows, Nresults) {
   // reduce resultsObject (large array) to length == Nresults
 
   var length = rows.length;
@@ -892,10 +1089,25 @@ function reduce_rows(rows, Nresults) {
   }
 
   if (length > Nresults) {
+    this.rowinc = rowinc;
     return rows.filter(select_rows);
   }
+  this.rowinc = 1;
   return rows;
-}
+};
+
+
+ModelleertaalApp.prototype.get_result_rowIndex = function(rowIndex_plot) {
+  // map row index from this.scatter_plot (reduced number of rows)
+  // back to this.results
+
+  rowIndex = this.rowinc * rowIndex_plot;
+  if (rowIndex < this.results.length) {
+    return rowIndex;
+  } else {
+    return this.results.length - 1;
+  }
+};
 
 
 exports.ModelleertaalApp = ModelleertaalApp;
