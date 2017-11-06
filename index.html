@@ -107,13 +107,16 @@
 	</div>
 
 	<div id="werkBlad">
-		<div id="hacks">WIP:
+		<div id="hack_toggle">Klik voor meer opties...</div>
+		<div id="hacks">
+			<input id="set_max_rows" type="button" value="Reduceer aantal punten in plot tot maximaal: ">
+			<input type="text" id="max_rows" value="100" size=5><br>
+			<input id="download_xml" type="button" value="Download Modelregels:">
+			<input type="text" id="xml_filename" value="model.xml" size=15><br>
 			<input id="download_pgf" type="button" value="Download PGFPlot:">
-			<input type="text" id="pgf_filename" value="pgfplot.tex" size=15>
+			<input type="text" id="pgf_filename" value="pgfplot.tex" size=15><br>
 			<input id="download_tsv" type="button" value="Download TSV:">
 			<input type="text" id="tsv_filename" value="model_data.tsv" size=15>
-			<input id="download_xml" type="button" value="Download Modelregels:">
-			<input type="text" id="xml_filename" value="model.xml" size=15>
 		</div>
 	</div>
 
@@ -138,10 +141,20 @@
 			dropdown_load_model();
 			$("#model_keuze").change(dropdown_load_model);
 
+			$("#hacks").hide();
+			$("#hack_toggle").css({
+				 'cursor': 'pointer'
+			}).click(function() {
+					$("#hack_toggle").hide();
+					$("#hacks").show();
+			});
 			$("#pgfplot").click(function () {
 					m.download_pgfplot();
 			});
-
+			$("#set_max_rows").click(function () {
+					m.set_max_rows_in_plot($("#max_rows").val());
+					console.log("set to: "+m.max_rows_in_plot);
+			});
 		});
 
 		dropdown_update = function() {

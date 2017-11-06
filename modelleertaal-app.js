@@ -71,6 +71,8 @@ function ModelleertaalApp(params) {
   // (re)set the app
   this.init_app();
 
+  this.max_rows_in_plot = 100;
+
   var self = this;
 
   $(this.dom_run).click(function() {
@@ -349,8 +351,7 @@ ModelleertaalApp.prototype.do_plot = function() {
   // if set to "auto" set axis to default settings (x,t)
   this.set_axis_to_defaults();
 
-  Nresults = Math.min(this.results.length, 100);
-  var results = this.reduce_rows(this.results, Nresults);
+  var results = this.reduce_rows(this.results, this.max_rows_in_plot);
 
   for (var i = 0; i < results.length; i++) {
     this.scatter_plot.push([results[i][xvar_colidx], results[i][yvar_colidx]]);
@@ -424,23 +425,26 @@ ModelleertaalApp.prototype.plot_graph = function(dataset, previous_plot) {
   }); // $.bind("plothover")
 
   $(this.dom_graph).bind("plotclick", function(event, pos, item) {
-    if (item) {
-      //var str = " - Click: (" + pos.x.toFixed(2) + ", " +
-       //  pos.y.toFixed(2) + ")";
+    if (item.seriesIndex == 1) {
+     // clicked on currect graph
      var table = $('<table>').addClass('table');
      table.append(self.table_header());
      table.append(self.table_row(self.get_result_rowIndex(item.dataIndex)));
      $(self.dom_clickdata).html(table);
-
     }
   }); // $bind.("plotclick")
 
 }; // plot_graph()
 
+ModelleertaalApp.prototype.set_max_rows_in_plot = function(max_rows) {
+  this.max_rows_in_plot = max_rows;
+};
+
 ModelleertaalApp.prototype.read_model_from_xml = function(XMLString) {
   this.model = new evaluator_js.Model();
   this.model.parseBogusXMLString(XMLString);
 };
+
 
 //
 // Reset
@@ -569,7 +573,7 @@ ModelleertaalApp.prototype.create_pgfplot = function() {
 
     this.set_axis_to_defaults();
 
-    var results = reduce_rows(this.results, 1000); // plot 1000 points max
+    var results = this.reduce_rows(this.results, this.max_rows_in_plot);
 
     for (var i = 0; i < results.length; i++) {
       this.scatter_plot.push([results[i][xvar_colidx], results[i][yvar_colidx]]);
