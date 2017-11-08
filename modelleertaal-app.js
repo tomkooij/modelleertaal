@@ -205,6 +205,7 @@ ModelleertaalApp.prototype.run = function() {
   } catch (err) {
     this.print_status("Model niet in orde.", err.message.replace(/\n/g, "<br>"));
     alert("Model niet in orde: \n" + err.message);
+    this.highlight_error(err.parser_line, err.parser_name);
 		return false;
   }
 
@@ -216,8 +217,9 @@ ModelleertaalApp.prototype.run = function() {
 		} else {
 			alert("Model niet in orde:\n" + err.message);
 		}
-		this.print_status("Fout in  model.", err.message.replace(/\n/g, "<br>"));
-		return false;
+    this.print_status("Fout in  model.", err.message.replace(/\n/g, "<br>"));
+    this.highlight_error(err.parser_line, err.parser_name);
+    return false;
 	}
 
   this.print_status("Klaar na iteratie: " + this.results.length);
@@ -642,6 +644,14 @@ ModelleertaalApp.prototype.get_result_rowIndex = function(rowIndex_plot) {
   } else {
     return this.results.length - 1;
   }
+};
+
+
+ModelleertaalApp.prototype.highlight_error = function(line, editor_name) {
+  // WIP
+  // implement actual highlighting of erroneous line here...
+
+  alert('Will highlight:\n'+editor_name+' line: '+line);
 };
 
 
