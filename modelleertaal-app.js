@@ -651,7 +651,8 @@ ModelleertaalApp.prototype.highlight_error = function(line, editor_name) {
   // WIP
   // implement actual highlighting of erroneous line here...
 
-  alert('Will highlight:\n'+editor_name+' line: '+line);
+  //alert('Will highlight:\n'+editor_name+' line: '+line);
+  return true;
 };
 
 
