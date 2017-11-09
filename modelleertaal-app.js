@@ -205,7 +205,7 @@ ModelleertaalApp.prototype.run = function() {
   } catch (err) {
     this.print_status("Model niet in orde.", err.message.replace(/\n/g, "<br>"));
     alert("Model niet in orde: \n" + err.message);
-    this.highlight_error(err.parser_line, err.parser_name);
+    this.highlight_error(err.parser_line, err.parser_name, err.message);
 		return false;
   }
 
@@ -218,7 +218,7 @@ ModelleertaalApp.prototype.run = function() {
 			alert("Model niet in orde:\n" + err.message);
 		}
     this.print_status("Fout in  model.", err.message.replace(/\n/g, "<br>"));
-    this.highlight_error(err.parser_line, err.parser_name);
+    this.highlight_error(err.parser_line, err.parser_name, err.message);
     return false;
 	}
 
@@ -647,11 +647,19 @@ ModelleertaalApp.prototype.get_result_rowIndex = function(rowIndex_plot) {
 };
 
 
-ModelleertaalApp.prototype.highlight_error = function(line, editor_name) {
+ModelleertaalApp.prototype.highlight_error = function(line, editor_name, error_msg) {
   // WIP
   // implement actual highlighting of erroneous line here...
 
-  alert('Will highlight:\n'+editor_name+' line: '+line);
+  var txt = "<div><span style='background-color:red'>" + error_msg.replace(/\n/g, "<br>") + "</span></div>";
+  var widget_div = $(txt);
+  console.log(widget_div);
+  var widget = this.modelregels_editor.addLineWidget(line-1, widget_div[0]);
+  console.log(widget);
+  var self = this;
+  setTimeout(function() {
+      self.modelregels_editor.removeLineWidget(widget);
+    }, 10000);
 };
 
 

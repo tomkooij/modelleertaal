@@ -103,6 +103,7 @@
 	</div>
 
 	<div id="werkBlad">
+		<div id="widget"></div>
 		<div id="clickdata"></div>
 	</div>
 
@@ -155,6 +156,17 @@
 					m.set_max_rows_in_plot($("#max_rows").val());
 					console.log("set to: "+m.max_rows_in_plot);
 			});
+
+			var widget_div = $("</div><div>");
+			var widget_text = $("<span>Foo!!!</span>");
+			widget_div.append(widget_text);
+			console.log(widget_div);
+		 //var $widget = $("<div><div style='background-color:red'>YOOOO!!!</div></div>");
+		  var widget = m.modelregels_editor.addLineWidget(1, widget_div[0]);
+			console.log(widget);
+			setTimeout(function() {
+ 					m.modelregels_editor.removeLineWidget(w);
+				}, 5000);
 		});
 
 		dropdown_update = function() {
