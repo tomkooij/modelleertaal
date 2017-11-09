@@ -104,7 +104,7 @@ Namespace.prototype.referenceVar = function(node) {
 
     // it should exist (but perhaps in "startwaarden" (constNames))
     if ((this.varNames.indexOf(name) == -1) && (this.constNames.indexOf(name) == -1)) {
-        var err = new EvalError('Namespace: referenced variable unknown: '+ name + ' Line: '+node.lineNo+" ("+node.astName+")" );
+        var err = new EvalError('Variabele niet gedefineerd: '+ name + ' Line: '+node.lineNo+" ("+node.astName+")" );
         throw_custom_error(err, node.astName, node.lineNo);
     }
     return this.varDict[name];
@@ -381,10 +381,9 @@ ModelregelsEvaluator.prototype.run = function(N) {
 
 function throw_custom_error(err, ast_name, line_number) {
     // insert line number etc in Error:
-    var error = new Error(err);
-    error.parser_name = ast_name;
-    error.parser_line = line_number;
-    throw error;
+    err.parser_name = ast_name;
+    err.parser_line = line_number;
+    throw err;
 }
 
 exports.Model = modelmodule.Model; // from model.js
