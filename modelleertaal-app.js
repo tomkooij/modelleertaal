@@ -648,11 +648,24 @@ ModelleertaalApp.prototype.get_result_rowIndex = function(rowIndex_plot) {
 
 
 ModelleertaalApp.prototype.highlight_error = function(line, editor_name) {
-  // WIP
-  // implement actual highlighting of erroneous line here...
 
-  //alert('Will highlight:\n'+editor_name+' line: '+line);
-  return true;
+  if (!this.CodeMirrorActive) return false;
+
+  var self_editor;
+
+  if (editor_name === 'modelregels') {
+     self_editor = this.modelregels_editor;
+   } else if (editor_name === 'startwaarden') {
+     self_editor = this.startwaarden_editor;
+   } else {
+     console.log('highlight_error: no such editor: '+editor_name);
+     return false;
+   }
+
+  self_editor.addLineClass(line-1, 'background', 'CodeMirror-matchingtag');
+  setTimeout(function() {
+      self_editor.removeLineClass(line-1, 'background', 'CodeMirror-matchingtag');
+    }, 7000);
 };
 
 
