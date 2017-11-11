@@ -205,6 +205,7 @@ ModelleertaalApp.prototype.run = function() {
   } catch (err) {
     this.print_status("Model niet in orde.", err.message.replace(/\n/g, "<br>"));
     alert("Model niet in orde: \n" + err.message);
+    this.highlight_error(err.parser_line, err.parser_name);
 		return false;
   }
 
@@ -216,8 +217,9 @@ ModelleertaalApp.prototype.run = function() {
 		} else {
 			alert("Model niet in orde:\n" + err.message);
 		}
-		this.print_status("Fout in  model.", err.message.replace(/\n/g, "<br>"));
-		return false;
+    this.print_status("Fout in  model.", err.message.replace(/\n/g, "<br>"));
+    this.highlight_error(err.parser_line, err.parser_name);
+    return false;
 	}
 
   this.print_status("Klaar na iteratie: " + this.results.length);
@@ -642,6 +644,28 @@ ModelleertaalApp.prototype.get_result_rowIndex = function(rowIndex_plot) {
   } else {
     return this.results.length - 1;
   }
+};
+
+
+ModelleertaalApp.prototype.highlight_error = function(line, editor_name) {
+
+  if (!this.CodeMirrorActive) return false;
+
+  var self_editor;
+
+  if (editor_name === 'modelregels') {
+     self_editor = this.modelregels_editor;
+   } else if (editor_name === 'startwaarden') {
+     self_editor = this.startwaarden_editor;
+   } else {
+     console.log('highlight_error: no such editor: '+editor_name);
+     return false;
+   }
+
+  self_editor.addLineClass(line-1, 'background', 'CodeMirror-matchingtag');
+  setTimeout(function() {
+      self_editor.removeLineClass(line-1, 'background', 'CodeMirror-matchingtag');
+    }, 7000);
 };
 
 

@@ -20,6 +20,15 @@
 var modelmodule = require("./model.js");
 var parser = require("./modelleertaal").parser;
 
+
+// patch parser.patch to inject AST name
+var ast_name = 'global';
+parser._parse = parser.parse;
+parser.parse = function(code, ast) {
+  ast_name = ast;
+  return parser._parse(code);
+};
+
 /*
  * Patch the parser to inject line numbers into AST nodes
  * https://stackoverflow.com/a/10424328/4965175
@@ -32,6 +41,7 @@ parser.performAction = function anonymous(yytext,yyleng,yylineno,yy,yystate,$$,_
     var ret = parser._performAction.call(this, yytext, yyleng, yylineno, yy, yystate, $$, _$);
     // Add linenumber to each AST node
     this.$.lineNo = yylineno + 1;
+    this.$.astName = ast_name; // global set in patched parser.parse()
     return ret;
 };
 
@@ -94,7 +104,8 @@ Namespace.prototype.referenceVar = function(node) {
 
     // it should exist (but perhaps in "startwaarden" (constNames))
     if ((this.varNames.indexOf(name) == -1) && (this.constNames.indexOf(name) == -1)) {
-        throw new EvalError('Namespace: referenced variable unknown: '+ name + ' Line: '+node.lineNo);
+        var err = new EvalError('Variabele niet gedefineerd: '+ name + ' Line: '+node.lineNo+" ("+node.astName+")" );
+        throw_custom_error(err, node.astName, node.lineNo);
     }
     return this.varDict[name];
 };
@@ -227,8 +238,9 @@ CodeGenerator.prototype.parseNode = function(node) {
                         case '+':   return "(" + this.parseNode(node.right) + ")";
                         case '-':   return "(-1. * " + this.parseNode(node.right) + ")";
                         case 'NOT':  return "!("+ this.parseNode(node.right) + ")";
-                        default:
-                            throw new SyntaxError("Unknown unary:" + JSON.stringify(node));
+                        default: {
+                            var err = new SyntaxError("Unknown unary:" + JSON.stringify(node));
+                            throw_custom_error(err, node.astName, node.lineNo);}
                     }
         /* falls through */
         case 'Logical':
@@ -250,7 +262,8 @@ CodeGenerator.prototype.parseNode = function(node) {
                     case 'ln':  return "Math.log("+this.parseNode(node.expr)+")";
                     case 'sqrt': return "Math.sqrt("+this.parseNode(node.expr)+")";
                     default:
-                        throw new SyntaxError("Unknown function:" + JSON.stringify(node.func) + " Line: "+node.lineNo);
+                        var err1 = new SyntaxError("Unknown function:" + JSON.stringify(node.func) + " Line: "+node.lineNo+" ("+node.astName+")");
+                        throw_custom_error(err1, node.astName, node.lineNo);
                     }
                 break;
                 }
@@ -263,7 +276,8 @@ CodeGenerator.prototype.parseNode = function(node) {
         case 'Stop':
                 return 'throw \'StopIteration\'';
         default:
-            throw new SyntaxError("Unable to parseNode() :" + JSON.stringify(node));
+            var err2 = new SyntaxError("Unable to parseNode() :" + JSON.stringify(node));
+            throw_custom_error(err2, node.astName, node.lineNo);
     } /* switch (node.type) */
 
 
@@ -293,8 +307,16 @@ function ModelregelsEvaluator(model, debug) {
         console.log(this.model.modelregels);
     }
 
-    this.startwaarden_ast = parser.parse(this.model.startwaarden);
-    this.modelregels_ast = parser.parse(this.model.modelregels);
+    try {
+      this.startwaarden_ast = parser.parse(this.model.startwaarden, 'startwaarden');
+    } catch(err) {
+      throw_custom_error(err, 'startwaarden', err.hash.line+1);
+    }
+    try {
+      this.modelregels_ast = parser.parse(this.model.modelregels, 'modelregels');
+    } catch(err) {
+      throw_custom_error(err, 'modelregels', err.hash.line+1);
+    }
 
     if (this.debug) {
         console.log('*** AST startwaarden ***');
@@ -356,6 +378,13 @@ ModelregelsEvaluator.prototype.run = function(N) {
     return result;
 
 };
+
+function throw_custom_error(err, ast_name, line_number) {
+    // insert line number etc in Error:
+    err.parser_name = ast_name;
+    err.parser_line = line_number;
+    throw err;
+}
 
 exports.Model = modelmodule.Model; // from model.js
 exports.ModelregelsEvaluator = ModelregelsEvaluator;
