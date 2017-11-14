@@ -12,7 +12,9 @@ of the models used in high school physics in NL.
 
 [Try the webapp!](https://tomkooij.github.io/modelleertaal)
 
-The webapp (HTML/Javascript) should run on Windows/MacOS/Android/iOS in any browser. It was designed for and tested on Chrome. The webapp is very limited, but it should be easy to use *and* it should run all models used in Dutch High School Physics classes. If it doesn't work or isn't easy to use: Please provide feedback.
+The webapp (HTML/Javascript) should run on Windows/MacOS/Android/iOS in any browser. It was designed for and tested on Chrome.
+The webapp is very limited, but it should be easy to use *and* it should run all models used in Dutch High School Physics classes.
+If it doesn't work or isn't easy to use: Please provide feedback.
 
 ## About *Modelleertaal*
 
@@ -78,7 +80,8 @@ results = evaluator.run(N);
 
 ## Installation
 
-Node.js using npm and grunt:
+To use the `master` branch (development version) of the webapp and/or compiler you will need to build it. This requires Node.js,
+npm and grunt:
 
 ```
 npm install -g grunt-cli
@@ -86,15 +89,15 @@ npm install
 grunt
 ```
 
-A Node.js example in in `run.js`:
-```
-node run
-```
+To just run the webapp in a browser or in a website you need the browserified file `scripts/modelleertaal-app.browser.js`
+which is not included in the `master branch`. Either clone the `gh-pages` branch or download a zip or tarball from the
+[release page](https://github.com/tomkooij/modelleertaal/releases).
 
 ## How to customize the webapp
 
-Only `index.html` and the folders `scripts/` and `modellen/` are needed. Optionally change the models in `modellen/` and edit
-`modellen/models.js` accordingly. Put it on a website somewhere. All code runs in the browser.
+Only `index.html` and the folders `scripts/` and `modellen/` are needed. See the previous paragraph on how to obtain or build
+`scripts/modelleertaal-app.browser.js` which is not included in the `master` branch. Optionally change the models in `modellen/`
+and edit `modellen/models.js` accordingly. Put it on a website somewhere. All code runs in the browser.
 
 ## Running the webapp offline
 
