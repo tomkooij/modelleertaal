@@ -261,6 +261,8 @@ CodeGenerator.prototype.parseNode = function(node) {
                     case 'exp': return "Math.exp("+this.parseNode(node.expr)+")";
                     case 'ln':  return "Math.log("+this.parseNode(node.expr)+")";
                     case 'sqrt': return "Math.sqrt("+this.parseNode(node.expr)+")";
+                    case 'sign': return "Math.sign("+this.parseNode(node.expr)+")";
+                    case 'teken': return "Math.sign("+this.parseNode(node.expr)+")";
                     default:
                         var err1 = new SyntaxError("Unknown function:" + JSON.stringify(node.func) + " Line: "+node.lineNo+" ("+node.astName+")");
                         throw_custom_error(err1, node.astName, node.lineNo);

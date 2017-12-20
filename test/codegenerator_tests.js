@@ -139,7 +139,16 @@ describe('CodeGenertor.generateCodeFromAst() correct output of math expressions'
         code = codegenerator.generateCodeFromAst(ast);
         assert.closeTo(eval(code),6.67e-11,0.01);
     })
-
+    it('sign operator: sign(-8) == -1', function() {
+        ast = parser.parse("x = sign(-8)");
+        code = codegenerator.generateCodeFromAst(ast);
+        assert.closeTo(eval(code),-1,0.01);
+    })
+    it('SysNat teken() operator: teken(v)*Fwr', function() {
+        ast = parser.parse("x = teken(-8)");
+        code = codegenerator.generateCodeFromAst(ast);
+        assert.closeTo(eval(code),-1,0.01);
+    })
 });
 
 describe('CodeGenertor.generateCodeFromAst() correct flow control', function(){
