@@ -10,4 +10,5 @@ var model_index = [
     {url:'modellen/examenvwo2016-2.xml', title: 'Examen vwo 2016-II Jupiter Fly-by'},
     {url:'modellen/examenvwo2017.xml', title: 'Examen vwo 2017-I Cessna'},
     {url:'modellen/examenvwo2017-2.xml', title: 'Examen vwo 2017-II X-stream'},
+    {url:'modellen/examenvwo2018.xml', title: 'Examen vwo 2018-I Uitrijden van een auto'},
 ];
