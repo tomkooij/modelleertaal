@@ -7,3 +7,15 @@ node_js:
 before_install: npm install -g grunt-cli
 install: npm install
 before_script: grunt build
+
+before_deploy:
+  # only ignore installed npm modules. Keep build.
+  - echo "node_modules" >.gitignore
+
+deploy:
+  provider: pages
+  skip_cleanup: true
+  github_token: $GITHUB_TOKEN
+  on:
+    branch: master
+    node_js: "7"
