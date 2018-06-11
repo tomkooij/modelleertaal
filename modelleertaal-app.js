@@ -184,15 +184,18 @@ ModelleertaalApp.prototype.save_string = function(data, filename) {
 
 ModelleertaalApp.prototype.run = function() {
   this.setup_run();
-  if (!this.do_run(true)) this.has_run = false;
+  this.new_run = true;
+  if (!this.do_run()) this.has_run = false;
   this.after_run();
   this.has_run = true;
   return true;
 };
 
 ModelleertaalApp.prototype.step = function() {
-  this.N = 3;
-  if (!this.do_run(false)) this.has_run = false;
+  this.N = 2;
+  this.break_at_line = 3;
+  this.new_run = false;
+  if (!this.do_run()) this.has_run = false;
   this.after_run();
   this.has_run = true;
   return true;
@@ -231,15 +234,10 @@ ModelleertaalApp.prototype.setup_run = function() {
 
 ModelleertaalApp.prototype.do_run = function(new_run) {
 
-  if (typeof new_run === 'undefined') {
-      this.new_run = true;
-  } else {
-      this.new_run = new_run;
-  }
   console.log('new run? ', new_run, this.new_run);
 
 	try {
-		this.results = this.evaluator.run(this.N, this.new_run);
+		this.results = this.evaluator.run(this.N, this.new_run, this.break_at_line);
 	} catch (err) {
 		if (err instanceof EvalError) {
 			alert("Model niet in orde:\nVariable niet gedefineerd in startwaarden?\n" + err.message);

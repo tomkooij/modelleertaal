@@ -203,13 +203,13 @@ CodeGenerator.prototype.generateVariableInitCode_second_run = function() {
 };
 
 
-CodeGenerator.prototype.generateCodeFromAst = function(ast) {
+CodeGenerator.prototype.generateCodeFromAst = function(ast, break_at_line) {
 
     var code = "";
     for (var i = 0; i < ast.length; i++) {
         //console.log("AST item = ",ast[i])
         code += this.parseNode(ast[i]);
-
+        if (i == break_at_line) code += '/*breakpoint*/ bailout=true;\nbreak;\n';
     }
     return code;
 };
@@ -343,7 +343,7 @@ function ModelregelsEvaluator(model, debug) {
 
 }
 
-ModelregelsEvaluator.prototype.run = function(N, new_run) {
+ModelregelsEvaluator.prototype.run = function(N, new_run, break_at_line) {
     // run an extra N lines
 
     if (typeof new_run === 'undefined') {
@@ -351,7 +351,8 @@ ModelregelsEvaluator.prototype.run = function(N, new_run) {
     } else {
         this.new_run = new_run;
     }
-    console.log('DEBUG ModelregelsEvaluator.run!!!', this.new_run);
+
+    console.log('DEBUG ModelregelsEvaluator.run!!!', this.new_run, break_at_line);
 
     var start = 0;
     var end = 0;
@@ -378,6 +379,8 @@ ModelregelsEvaluator.prototype.run = function(N, new_run) {
 
       start = this.result.length;
       end = start + N;
+
+      this.modelregels_code = this.codegenerator.generateCodeFromAst(this.modelregels_ast, break_at_line);
     }
 
     // separate function run_model() inside anonymous Function()
