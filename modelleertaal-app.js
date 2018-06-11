@@ -214,18 +214,26 @@ ModelleertaalApp.prototype.continue = function() {
 };
 
 ModelleertaalApp.prototype.trace = function() {
+
   if (this.has_run) {
     this.new_run = false;
   } else {
     this.new_run = true;
     this.setup_run();
   }
+
   this.N = 1;
-  if (this.tracing == false) {
+
+  if ((this.tracing == false) | (this.tracing == undefined)) {
+    console.log('new trace!')
     this.tracing = true;
-    this.break_at_line == 0
+    this.break_at_line = 0;
   } else {
-    this.break_at_line += 1
+    if (this.break_at_line == undefined) {
+      this.break_at_line = 0;
+    } else {
+      this.break_at_line += 1;
+    }
     console.log('**continue trace at', this.break_at_line);
   }
   console.log('***** tracing: ', this.tracing);
@@ -272,6 +280,9 @@ ModelleertaalApp.prototype.setup_run = function() {
 };
 
 ModelleertaalApp.prototype.do_run = function() {
+
+  // if we are not tracing, disable breakpoint generation.
+  if (!this.tracing) this.break_at_line = undefined;
 
 	try {
 		var succes = this.evaluator.run(this.N, this.new_run, this.break_at_line);
