@@ -31,7 +31,7 @@ function ModelleertaalApp(params) {
 
   this.dom_modelregels = "#modelregels";
   this.dom_startwaarden = "#startwaarden";
-  this.dom_status = "#status";
+  this.dom_status = "#status_bar";
   this.dom_datatable = "#datatable";
   this.dom_graph = "#graph";
   this.dom_nbox = "#NBox";
@@ -203,6 +203,7 @@ ModelleertaalApp.prototype.run = function() {
 ModelleertaalApp.prototype.continue_run = function() {
   if (this.has_run) {
     this.new_run = false;
+    this.tracing = false;
   } else {
     this.new_run = true;
     this.setup_run();
@@ -252,6 +253,7 @@ ModelleertaalApp.prototype.trace = function() {
 ModelleertaalApp.prototype.setup_run = function() {
 
   // reset the breakpoint pointer:
+  this.tracing = false;
   this.break_at_line = 0;
 
   this.read_model();
@@ -293,19 +295,21 @@ ModelleertaalApp.prototype.do_run = function() {
 		} else {
 			alert("Model niet in orde:\n" + err.message);
 		}
-    this.print_status("Fout in  model.", err.message.replace(/\n/g, "<br>"));
+    this.print_status("Fout in model.", err.message.replace(/\n/g, "<br>"));
     this.highlight_error(err.parser_line, err.parser_name);
     return false;
 	}
+  console.log('do_run. Run finished! succes = ', succes);
   if (succes) {
     this.break_at_line = 0;
-    console.log('einde van de row', this.break_at_line);
-    this.tracing = false;
-  } else {
-     console.log('midden in een trace', this.break_at_line);
+    this.print_status("Klaar na "+this.results.length+" iteraties.");
+    console.log("Klaar na ... iteraties: ", this.results.length);    this.tracing = false;
   }
-  this.print_status("Klaar na iteratie: " + this.results.length-1);
-  console.log("Klaar na iteratie: " + this.results.length-1);
+
+  if (this.tracing) {
+    this.print_status("Debugger in iteratie "+this.results.length);
+    console.log("Debugger in iteratie: ", this.results.length);
+  }
 
   // make table, plot
   this.allVars = this.evaluator.namespace.varNames;
