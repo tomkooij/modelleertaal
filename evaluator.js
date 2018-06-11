@@ -191,6 +191,17 @@ CodeGenerator.prototype.generateVariableInitCode = function() {
     return code;
 };
 
+CodeGenerator.prototype.generateVariableInitCode_second_run = function() {
+    var code = '//initialize all variables to previous values\n';
+    code += 'var last_row = storage[storage.length - 1];';
+
+    for (var i = 0; i < this.namespace.varNames.length; i++) {
+        var variable = this.namespace.varDict[this.namespace.varNames[i]];
+        code += variable+"=last_row["+i+"];\n";
+    }
+    return code;
+};
+
 
 CodeGenerator.prototype.generateCodeFromAst = function(ast) {
 
@@ -294,6 +305,8 @@ function ModelregelsEvaluator(model, debug) {
         this.debug = debug;
     }
 
+    this.debug_ast = false; // hack FIXME
+
     this.namespace = new Namespace();
     this.codegenerator = new CodeGenerator(this.namespace);
 
@@ -320,7 +333,7 @@ function ModelregelsEvaluator(model, debug) {
       throw_custom_error(err, 'modelregels', err.hash.line+1);
     }
 
-    if (this.debug) {
+    if (this.debug_ast) {
         console.log('*** AST startwaarden ***');
         console.log(JSON.stringify(this.startwaarden_ast, undefined, 4));
         console.log('*** AST modelregels ***');
@@ -330,36 +343,72 @@ function ModelregelsEvaluator(model, debug) {
 
 }
 
-ModelregelsEvaluator.prototype.run = function(N) {
+ModelregelsEvaluator.prototype.run = function(N, new_run) {
+    // run an extra N lines
 
-    var startwaarden_code = this.codegenerator.generateCodeFromAst(this.startwaarden_ast);
-    this.namespace.moveStartWaarden(); // keep namespace clean
-    var modelregels_code = this.codegenerator.generateCodeFromAst(this.modelregels_ast);
-    this.namespace.sortVarNames(); // sort variable names for better output
+    if (typeof new_run === 'undefined') {
+        this.new_run = true;
+    } else {
+        this.new_run = new_run;
+    }
+    console.log('DEBUG ModelregelsEvaluator.run!!!', this.new_run);
+
+    var start = 0;
+    var end = 0;
+
+    if (this.new_run) {
+      // first run of model!
+      start = 1;
+      end = N;
+
+      this.result = [];
+      this.startwaarden_code = this.codegenerator.generateCodeFromAst(this.startwaarden_ast);
+      this.namespace.moveStartWaarden(); // keep namespace clean
+      this.modelregels_code = this.codegenerator.generateCodeFromAst(this.modelregels_ast);
+      this.namespace.sortVarNames(); // sort variable names for better output
+
+      if (this.debug) {
+          console.log("evaluator.run *** first run ***");
+      }
+
+    } else {
+      // check this.result properties FIXME
+      console.log("evaluator.run *** second run ***");
+
+      start = this.result.length;
+      end = start + N;
+    }
 
     // separate function run_model() inside anonymous Function()
     // to prevent bailout of the V8 optimising compiler in try {} catch
-    var model =     "function run_model(N, storage) { \n " +
-                    this.codegenerator.generateVariableInitCode() +
-                    startwaarden_code + "\n" +
+    this.model =     "function run_model(storage) { \n ";
+
+    if (this.new_run) {
+      this.model += ""+
+                   this.codegenerator.generateVariableInitCode() +
+                   this.startwaarden_code + "\n" +
                     "var i=0;\n" +
-                    this.codegenerator.generateVariableStorageCode() +
-                    "    for (i=1; i < N; i++) { \n " +
-                    modelregels_code + "\n" +
+                    this.codegenerator.generateVariableStorageCode();
+    } else {
+      this.model += ""+
+                    this.codegenerator.generateVariableInitCode_second_run();
+    }
+    this.model +=
+                    "    for (i="+start+"; i < "+end+"; i++) { \n " +
+                    this.modelregels_code + "\n" +
                     this.codegenerator.generateVariableStorageCode() +
                     "    }  \n" +
                     " return;} \n" +
-                 "    var results = []; \n " +
                  "    try \n" +
                  "  { \n" +
-                 "      run_model(N, results); \n" +
+                 "      run_model(results); \n" +
                  "  } catch (e) \n" +
                  "  { console.log(e)} \n " +
                  "return results;\n";
 
     if (this.debug) {
         console.log('*** generated js ***');
-        console.log(model);
+        console.log(this.model);
         console.log("*** running! *** ");
         console.log("N = ", N);
     }
@@ -369,15 +418,16 @@ ModelregelsEvaluator.prototype.run = function(N) {
     // eval(model); // slow... in chrome >23
     //  the optimising compiler does not optimise eval() in local scope
     //  http://moduscreate.com/javascript-performance-tips-tricks/
-    var runModel = new Function('N', model);
-    var result = runModel(N);
+    console.log('before run: ', this.result);
+    var runModel = new Function('results', this.model);
+    this.result = runModel(this.result);
 
     var t2 = Date.now();
 
-    console.log("Number of iterations: ", result.length);
+    console.log("Number of iterations: ", this.result.length);
     console.log("Time: " + (t2 - t1) + "ms");
-
-    return result;
+    console.log("*********DEBUG results: ", this.result);
+    return this.result;  // FIXME
 
 };
 

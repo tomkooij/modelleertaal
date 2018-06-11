@@ -70,16 +70,19 @@ function ModelleertaalApp(params) {
 
   // (re)set the app
   this.init_app();
+  this.has_run = false;
+  this.N = 0;
 
   this.max_rows_in_plot = 100;
 
   var self = this;
 
   $(this.dom_run).click(function() {
-    if (self.run()) {
-			self.print_table();
-			self.do_plot();
-		}
+    self.run();
+  });
+
+  $("#step").click(function() {
+    self.step();
   });
 
   $(this.dom_plot).click(function() {
@@ -180,8 +183,25 @@ ModelleertaalApp.prototype.save_string = function(data, filename) {
 };
 
 ModelleertaalApp.prototype.run = function() {
+  this.setup_run();
+  if (!this.do_run(true)) this.has_run = false;
+  this.after_run();
+  this.has_run = true;
+  return true;
+};
 
-  this.print_status('Run!!!');
+ModelleertaalApp.prototype.step = function() {
+  this.N = 1;
+  if (!this.do_run(false)) this.has_run = false;
+  this.after_run();
+  this.has_run = true;
+  return true;
+};
+
+
+
+ModelleertaalApp.prototype.setup_run = function() {
+
 
   this.read_model();
 
@@ -189,9 +209,9 @@ ModelleertaalApp.prototype.run = function() {
     console.log('model = ', this.model);
 
   // read N from input field
-  var N = Number($(this.dom_nbox).val());
+  this.N = Number($(this.dom_nbox).val());
 
-  if (N > 1e6) {
+  if (this.N > 1e6) {
     alert('N te groot!');
     throw new Error('N te groot!');
   }
@@ -199,18 +219,27 @@ ModelleertaalApp.prototype.run = function() {
   this.print_status("Run started...");
   console.log("Run started...");
 
-  var evaluator;
   try {
-    evaluator = new evaluator_js.ModelregelsEvaluator(this.model, this.debug);
+    this.evaluator = new evaluator_js.ModelregelsEvaluator(this.model, this.debug);
   } catch (err) {
     this.print_status("Model niet in orde.", err.message.replace(/\n/g, "<br>"));
     alert("Model niet in orde: \n" + err.message);
     this.highlight_error(err.parser_line, err.parser_name);
 		return false;
   }
+};
+
+ModelleertaalApp.prototype.do_run = function(new_run) {
+
+  if (typeof new_run === 'undefined') {
+      this.new_run = true;
+  } else {
+      this.new_run = new_run;
+  }
+  console.log('new run? ', new_run, this.new_run);
 
 	try {
-		this.results = evaluator.run(N);
+		this.results = this.evaluator.run(this.N, this.new_run);
 	} catch (err) {
 		if (err instanceof EvalError) {
 			alert("Model niet in orde:\nVariable niet gedefineerd in startwaarden?\n" + err.message);
@@ -226,16 +255,21 @@ ModelleertaalApp.prototype.run = function() {
   console.log("Klaar na iteratie: " + this.results.length);
 
   // make table, plot
-  this.allVars = evaluator.namespace.varNames;
+  this.allVars = this.evaluator.namespace.varNames;
   if (this.debug)
     console.log(this.allVars);
+};
+
+ModelleertaalApp.prototype.after_run = function() {
 
   // create the axis drop-down menu, try to keep value
   this.save_axis();
   this.reset_axis_dropdown();
   this.set_axis();
 
-	return true;
+  this.print_table();
+  this.do_plot();
+
 };
 
 
