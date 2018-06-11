@@ -86,7 +86,7 @@ function ModelleertaalApp(params) {
 
   $(this.dom_continue).click(function() {
     self.N = Number($(self.dom_nbox_continue).val());
-    self.continue();
+    self.continue_run();
   });
 
   $(this.dom_trace).click(function() {
@@ -200,7 +200,7 @@ ModelleertaalApp.prototype.run = function() {
   return true;
 };
 
-ModelleertaalApp.prototype.continue = function() {
+ModelleertaalApp.prototype.continue_run = function() {
   if (this.has_run) {
     this.new_run = false;
   } else {
@@ -224,20 +224,18 @@ ModelleertaalApp.prototype.trace = function() {
 
   this.N = 1;
 
-  if ((this.tracing == false) | (this.tracing == undefined)) {
-    console.log('new trace!')
+  if ((this.tracing === false) | (this.tracing === undefined)) {
+    console.log('* stating new trace!');
     this.tracing = true;
     this.break_at_line = 0;
   } else {
-    if (this.break_at_line == undefined) {
+    if (this.break_at_line === undefined) {
       this.break_at_line = 0;
     } else {
       this.break_at_line += 1;
     }
-    console.log('**continue trace at', this.break_at_line);
+    console.log('* continue trace at', this.break_at_line);
   }
-  console.log('***** tracing: ', this.tracing);
-  console.log('**** break at line: ', this.break_at_line);
 
   if ((this.break_at_line > 0) & (this.results.length > 1)) {
     // continue to trace a row: remove partial results
@@ -284,8 +282,10 @@ ModelleertaalApp.prototype.do_run = function() {
   // if we are not tracing, disable breakpoint generation.
   if (!this.tracing) this.break_at_line = undefined;
 
+  var succes;
+
 	try {
-		var succes = this.evaluator.run(this.N, this.new_run, this.break_at_line);
+	  succes = this.evaluator.run(this.N, this.new_run, this.break_at_line);
     this.results = this.evaluator.result;
   } catch (err) {
 		if (err instanceof EvalError) {
@@ -304,8 +304,8 @@ ModelleertaalApp.prototype.do_run = function() {
   } else {
      console.log('midden in een trace', this.break_at_line);
   }
-  this.print_status("Klaar na iteratie: " + this.results.length);
-  console.log("Klaar na iteratie: " + this.results.length);
+  this.print_status("Klaar na iteratie: " + this.results.length-1);
+  console.log("Klaar na iteratie: " + this.results.length-1);
 
   // make table, plot
   this.allVars = this.evaluator.namespace.varNames;
@@ -447,6 +447,7 @@ ModelleertaalApp.prototype.do_plot = function() {
   }
 
   $(this.dom_graph).empty(); // verwijder text enzo
+  $(this.dom_clickdata).empty();
   this.plot_graph(this.scatter_plot, this.previous_plot);
   this.previous_plot = this.scatter_plot;
 }; // do_plot

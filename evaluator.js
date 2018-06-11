@@ -436,11 +436,8 @@ ModelregelsEvaluator.prototype.run = function(N, new_run, break_at_line) {
 
     console.log("Number of iterations: ", this.result.length);
     console.log("Time: " + (t2 - t1) + "ms");
-    console.log("*********DEBUG results: ", this.result);
 
-    // just fail if row already executed.
-    console.log("now at:", this.modelregels_ast.length, break_at_line)
-
+    // just fail if full row already executed.
     if (break_at_line >= this.modelregels_ast.length - 1) return true;
     return false;
 };

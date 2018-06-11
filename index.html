@@ -77,13 +77,17 @@
 	<div id="werkBlad">
 			<p>
 				<div>
+					<input id="run" type="button" value="RUN!">
+					Aantal iteraties = <input type="text" id="NBox" value="1000" size=5>.
+					<input id="continue" type="button" value="Voeg toe:">
+					<input type="text" id="NBoxContinue" value="10" size=3>
+					iteraties. Debugger:
+					<input id="trace" type="button" value="Volgende regel">
+				<div>
+				<div>
 					<table class="app">
 						<tr>
-						  <td><input id="run" type="button" value="RUN!"> Aantal iteraties = <input type="text" id="NBox" value="100" size=5>
-
-					    <input id="continue" type="button" value="Continue">
-								<input type="text" id="NBoxContinue" value="10" size=5>
-								 <input id="trace" type="button" value="Trace">
+						  <td>
 								<span id="status"></span>
 							</td>
 							<td>Modelregels:</td>
@@ -112,6 +116,10 @@
 	</div>
 
 	<div id="werkBlad">
+		<div id="datatable">Hier komt een tabel...</div>
+	</div>
+
+	<div id="werkBlad">
 		<div id="hack_toggle">Klik voor meer opties...</div>
 		<div id="hacks">
 			<input id="set_max_rows" type="button" value="Reduceer aantal punten in plot tot maximaal: ">
@@ -123,10 +131,6 @@
 			<input id="download_tsv" type="button" value="Download TSV:">
 			<input type="text" id="tsv_filename" value="model_data.tsv" size=15>
 		</div>
-	</div>
-
-	<div id="werkBlad">
-		<div id="datatable">Hier komt een tabel...</div>
 	</div>
 
 	<script src="modellen/models.js"></script>
