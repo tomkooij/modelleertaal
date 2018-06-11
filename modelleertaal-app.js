@@ -35,7 +35,9 @@ function ModelleertaalApp(params) {
   this.dom_datatable = "#datatable";
   this.dom_graph = "#graph";
   this.dom_nbox = "#NBox";
+  this.dom_stepbox = "#StepBox";
   this.dom_run = "#run";
+  this.dom_step = "#step";
   this.dom_plot = "#plot";
   this.dom_fileinput = "#fileinput";
   this.dom_download_xml = "#download_xml";
@@ -78,10 +80,13 @@ function ModelleertaalApp(params) {
   var self = this;
 
   $(this.dom_run).click(function() {
+    // read N from input field
+    self.N = Number($(self.dom_nbox).val());
     self.run();
   });
 
-  $("#step").click(function() {
+  $(this.dom_step).click(function() {
+    self.N = Number($(self.dom_stepbox).val());
     self.step();
   });
 
@@ -192,27 +197,23 @@ ModelleertaalApp.prototype.run = function() {
 };
 
 ModelleertaalApp.prototype.step = function() {
-  this.N = 2;
-  this.break_at_line = 3;
-  this.new_run = false;
+  if (this.has_run) {
+    this.new_run = false;
+  } else {
+    this.new_run = true;
+  }
   if (!this.do_run()) this.has_run = false;
   this.after_run();
   this.has_run = true;
   return true;
 };
 
-
-
 ModelleertaalApp.prototype.setup_run = function() {
-
 
   this.read_model();
 
   if (this.debug)
     console.log('model = ', this.model);
-
-  // read N from input field
-  this.N = Number($(this.dom_nbox).val());
 
   if (this.N > 1e6) {
     alert('N te groot!');
