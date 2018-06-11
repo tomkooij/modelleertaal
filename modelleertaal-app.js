@@ -191,7 +191,7 @@ ModelleertaalApp.prototype.run = function() {
 };
 
 ModelleertaalApp.prototype.step = function() {
-  this.N = 1;
+  this.N = 3;
   if (!this.do_run(false)) this.has_run = false;
   this.after_run();
   this.has_run = true;

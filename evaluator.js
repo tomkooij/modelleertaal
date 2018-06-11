@@ -287,7 +287,7 @@ CodeGenerator.prototype.parseNode = function(node) {
         case 'False':
                 return 'false';
         case 'Stop':
-                return 'throw \'StopIteration\'';
+                return 'bailout=true;\nbreak;';
         default:
             var err2 = new SyntaxError("Unable to parseNode() :" + JSON.stringify(node));
             throw_custom_error(err2, node.astName, node.lineNo);
@@ -364,6 +364,7 @@ ModelregelsEvaluator.prototype.run = function(N, new_run) {
       this.result = [];
       this.startwaarden_code = this.codegenerator.generateCodeFromAst(this.startwaarden_ast);
       this.namespace.moveStartWaarden(); // keep namespace clean
+
       this.modelregels_code = this.codegenerator.generateCodeFromAst(this.modelregels_ast);
       this.namespace.sortVarNames(); // sort variable names for better output
 
@@ -381,30 +382,35 @@ ModelregelsEvaluator.prototype.run = function(N, new_run) {
 
     // separate function run_model() inside anonymous Function()
     // to prevent bailout of the V8 optimising compiler in try {} catch
-    this.model =     "function run_model(storage) { \n ";
+    this.model = "function run_model(storage) { \n ";
 
     if (this.new_run) {
-      this.model += ""+
-                   this.codegenerator.generateVariableInitCode() +
-                   this.startwaarden_code + "\n" +
-                    "var i=0;\n" +
-                    this.codegenerator.generateVariableStorageCode();
+        this.model += ""+
+                 this.codegenerator.generateVariableInitCode() +
+                 this.startwaarden_code + "\n" +
+                  "var i=0;\n" +
+                  this.codegenerator.generateVariableStorageCode();
     } else {
-      this.model += ""+
-                    this.codegenerator.generateVariableInitCode_second_run();
+        this.model += ""+
+                  this.codegenerator.generateVariableInitCode_second_run();
     }
+
     this.model +=
-                    "    for (i="+start+"; i < "+end+"; i++) { \n " +
-                    this.modelregels_code + "\n" +
-                    this.codegenerator.generateVariableStorageCode() +
-                    "    }  \n" +
-                    " return;} \n" +
-                 "    try \n" +
-                 "  { \n" +
-                 "      run_model(results); \n" +
-                 "  } catch (e) \n" +
-                 "  { console.log(e)} \n " +
-                 "return results;\n";
+                  "    var bailout = false;\n"+
+                  "    for (i="+start+"; i < "+end+"; i++) { \n " +
+                  this.modelregels_code + "\n" +
+                  this.codegenerator.generateVariableStorageCode() +
+                  "      }\n" +
+                  " if (bailout) {" +
+                  this.codegenerator.generateVariableStorageCode() +
+                  " }\n" +
+                  " return;} \n" +
+                  "    try \n" +
+                  "  { \n" +
+                  "      run_model(results); \n" +
+                  "  } catch (e) \n" +
+                  "  { console.log(e)} \n " +
+                  "return results;\n";
 
     if (this.debug) {
         console.log('*** generated js ***');
@@ -418,7 +424,8 @@ ModelregelsEvaluator.prototype.run = function(N, new_run) {
     // eval(model); // slow... in chrome >23
     //  the optimising compiler does not optimise eval() in local scope
     //  http://moduscreate.com/javascript-performance-tips-tricks/
-    console.log('before run: ', this.result);
+
+
     var runModel = new Function('results', this.model);
     this.result = runModel(this.result);
 
