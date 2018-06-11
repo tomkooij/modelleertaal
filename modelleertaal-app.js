@@ -35,9 +35,10 @@ function ModelleertaalApp(params) {
   this.dom_datatable = "#datatable";
   this.dom_graph = "#graph";
   this.dom_nbox = "#NBox";
-  this.dom_stepbox = "#StepBox";
+  this.dom_nbox_continue = "#NBoxContinue";
   this.dom_run = "#run";
-  this.dom_step = "#step";
+  this.dom_continue = "#continue";
+  this.dom_trace = "#trace";
   this.dom_plot = "#plot";
   this.dom_fileinput = "#fileinput";
   this.dom_download_xml = "#download_xml";
@@ -72,8 +73,6 @@ function ModelleertaalApp(params) {
 
   // (re)set the app
   this.init_app();
-  this.has_run = false;
-  this.N = 0;
 
   this.max_rows_in_plot = 100;
 
@@ -85,10 +84,15 @@ function ModelleertaalApp(params) {
     self.run();
   });
 
-  $(this.dom_step).click(function() {
-    self.N = Number($(self.dom_stepbox).val());
-    self.step();
+  $(this.dom_continue).click(function() {
+    self.N = Number($(self.dom_nbox_continue).val());
+    self.continue();
   });
+
+  $(this.dom_trace).click(function() {
+    self.trace();
+  });
+
 
   $(this.dom_plot).click(function() {
     self.do_plot();
@@ -196,11 +200,12 @@ ModelleertaalApp.prototype.run = function() {
   return true;
 };
 
-ModelleertaalApp.prototype.step = function() {
+ModelleertaalApp.prototype.continue = function() {
   if (this.has_run) {
     this.new_run = false;
   } else {
     this.new_run = true;
+    this.setup_run();
   }
   if (!this.do_run()) this.has_run = false;
   this.after_run();
@@ -208,7 +213,40 @@ ModelleertaalApp.prototype.step = function() {
   return true;
 };
 
+ModelleertaalApp.prototype.trace = function() {
+  if (this.has_run) {
+    this.new_run = false;
+  } else {
+    this.new_run = true;
+    this.setup_run();
+  }
+  this.N = 1;
+  if (this.tracing == false) {
+    this.tracing = true;
+    this.break_at_line == 0
+  } else {
+    this.break_at_line += 1
+    console.log('**continue trace at', this.break_at_line);
+  }
+  console.log('***** tracing: ', this.tracing);
+  console.log('**** break at line: ', this.break_at_line);
+
+  if ((this.break_at_line > 0) & (this.results.length > 1)) {
+    // continue to trace a row: remove partial results
+    this.results.pop();
+  }
+
+  this.do_run();
+
+  this.after_run();
+  this.has_run = true;
+  return true;
+};
+
 ModelleertaalApp.prototype.setup_run = function() {
+
+  // reset the breakpoint pointer:
+  this.break_at_line = 0;
 
   this.read_model();
 
@@ -233,13 +271,12 @@ ModelleertaalApp.prototype.setup_run = function() {
   }
 };
 
-ModelleertaalApp.prototype.do_run = function(new_run) {
-
-  console.log('new run? ', new_run, this.new_run);
+ModelleertaalApp.prototype.do_run = function() {
 
 	try {
-		this.results = this.evaluator.run(this.N, this.new_run, this.break_at_line);
-	} catch (err) {
+		var succes = this.evaluator.run(this.N, this.new_run, this.break_at_line);
+    this.results = this.evaluator.result;
+  } catch (err) {
 		if (err instanceof EvalError) {
 			alert("Model niet in orde:\nVariable niet gedefineerd in startwaarden?\n" + err.message);
 		} else {
@@ -249,7 +286,13 @@ ModelleertaalApp.prototype.do_run = function(new_run) {
     this.highlight_error(err.parser_line, err.parser_name);
     return false;
 	}
-
+  if (succes) {
+    this.break_at_line = 0;
+    console.log('einde van de row', this.break_at_line);
+    this.tracing = false;
+  } else {
+     console.log('midden in een trace', this.break_at_line);
+  }
   this.print_status("Klaar na iteratie: " + this.results.length);
   console.log("Klaar na iteratie: " + this.results.length);
 
@@ -501,6 +544,9 @@ ModelleertaalApp.prototype.init_app = function() {
   this.results = [];
   this.scatter_plot = [];
   this.previous_plot = [];
+  this.has_run = false;
+  this.tracing = false;
+
 };
 
 
