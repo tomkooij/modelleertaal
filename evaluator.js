@@ -307,6 +307,11 @@ function ModelregelsEvaluator(model, debug) {
 
     this.debug_ast = false; // hack FIXME
 
+    // state of evaluator (set and read by modelleertaal app)
+    this.tracing = false;
+    this.new_run = false;
+    this.breakpoint_at_line = undefined; // only used when tracing
+
     this.namespace = new Namespace();
     this.codegenerator = new CodeGenerator(this.namespace);
 
@@ -343,16 +348,37 @@ function ModelregelsEvaluator(model, debug) {
 
 }
 
-ModelregelsEvaluator.prototype.run = function(N, new_run, break_at_line) {
-    // run an extra N lines
+ModelregelsEvaluator.prototype.set_state = function(N, new_run, tracing) {
+    // state of evaluator (set by modelleertaal app)
 
-    if (typeof new_run === 'undefined') {
-        this.new_run = true;
+    // FIXME: replace by: enable_trace() or similar.
+    this.N = N;
+    this.tracing = tracing;
+    this.new_run = new_run;
+
+    if (this.tracing) {
+      this.N = 1;
+      if (this.breakpoint_at_line === undefined) {
+        this.breakpoint_at_line = 0; // start trach
+      }
     } else {
-        this.new_run = new_run;
+      this.breakpoint_at_line = undefined;
     }
+    console.log('set_state finished: ', this.N, this.new_run, this.tracing, this.breakpoint_at_line);
+};
 
-    console.log('DEBUG ModelregelsEvaluator.run!!!', this.new_run, break_at_line);
+ModelregelsEvaluator.prototype.get_state = function() {
+    // state of evaluator (set by modelleertaal app)
+    return {'tracing': this.tracing,
+            'breakpoint_at_line': this.breakpoint_at_line
+          };
+};
+
+ModelregelsEvaluator.prototype.run = function() {
+
+    if (!this.tracing) this.breakpoint_at_line = undefined;
+
+    console.log('DEBUG ModelregelsEvaluator.run!!!', this.new_run, this.tracing, this.breakpoint_at_line);
 
     var start = 0;
     var end = 0;
@@ -360,7 +386,7 @@ ModelregelsEvaluator.prototype.run = function(N, new_run, break_at_line) {
     if (this.new_run) {
       // first run of model!
       start = 1;
-      end = N;
+      end = this.N;
 
       this.result = [];
       this.startwaarden_code = this.codegenerator.generateCodeFromAst(this.startwaarden_ast);
@@ -377,10 +403,22 @@ ModelregelsEvaluator.prototype.run = function(N, new_run, break_at_line) {
       // check this.result properties FIXME
       console.log("evaluator.run *** second run ***");
 
-      start = this.result.length;
-      end = start + N;
+      if (this.tracing) {
+          console.log("tracing...", this.breakpoint_at_line);
+          if (this.breakpoint_at_line > 0) {
+            if (this.result.length === undefined) {
+              console.log('foobar?');
+            } else {
+              // continue to trace a row: remove partial results
+              console.log('pop: ', this.result.length);
+              this.result.pop();
+            }
+          }
+      this.modelregels_code = this.codegenerator.generateCodeFromAst(this.modelregels_ast, this.breakpoint_at_line);
+      }
 
-      this.modelregels_code = this.codegenerator.generateCodeFromAst(this.modelregels_ast, break_at_line);
+      start = this.result.length;
+      end = start + this.N;
     }
 
     // separate function run_model() inside anonymous Function()
@@ -419,7 +457,7 @@ ModelregelsEvaluator.prototype.run = function(N, new_run, break_at_line) {
         console.log('*** generated js ***');
         console.log(this.model);
         console.log("*** running! *** ");
-        console.log("N = ", N);
+        console.log("N = ", this.N);
     }
 
     var t1 = Date.now();
@@ -437,12 +475,20 @@ ModelregelsEvaluator.prototype.run = function(N, new_run, break_at_line) {
     console.log("Number of iterations: ", this.result.length);
     console.log("Time: " + (t2 - t1) + "ms");
 
-    // return success if not debugging.
-    if (break_at_line === undefined) return true;
-
     // just fail if full row already executed.
-    if (break_at_line >= this.modelregels_ast.length - 1) return true;
-    return false;
+    if (this.tracing)
+      {
+        this.breakpoint_at_line += 1;
+
+        if (this.breakpoint_at_line > this.modelregels_ast.length - 1)  {
+          console.log('end of row. Trace finished!');
+          this.tracing = false;
+          this.breakpoint_at_line = undefined;
+      }
+    }
+    console.log("Debug:", this.result);
+    console.log("Done evaluator.run: (tracing, breakpoint_at) ", this.tracing, this.breakpoint_at_line);
+
 };
 
 function throw_custom_error(err, ast_name, line_number) {

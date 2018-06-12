@@ -192,6 +192,7 @@ ModelleertaalApp.prototype.save_string = function(data, filename) {
 };
 
 ModelleertaalApp.prototype.run = function() {
+
   this.setup_run();
   this.new_run = true;
   if (!this.do_run()) this.has_run = false;
@@ -223,26 +224,7 @@ ModelleertaalApp.prototype.trace = function() {
     this.setup_run();
   }
 
-  this.N = 1;
-
-  if ((this.tracing === false) | (this.tracing === undefined)) {
-    console.log('* stating new trace!');
-    this.tracing = true;
-    this.break_at_line = 0;
-  } else {
-    if (this.break_at_line === undefined) {
-      this.break_at_line = 0;
-    } else {
-      this.break_at_line += 1;
-    }
-    console.log('* continue trace at', this.break_at_line);
-  }
-
-  if ((this.break_at_line > 0) & (this.results.length > 1)) {
-    // continue to trace a row: remove partial results
-    this.results.pop();
-  }
-
+  this.tracing = true;
   this.do_run();
 
   this.after_run();
@@ -254,7 +236,6 @@ ModelleertaalApp.prototype.setup_run = function() {
 
   // reset the breakpoint pointer:
   this.tracing = false;
-  this.break_at_line = 0;
 
   this.read_model();
 
@@ -281,13 +262,12 @@ ModelleertaalApp.prototype.setup_run = function() {
 
 ModelleertaalApp.prototype.do_run = function() {
 
-  // if we are not tracing, disable breakpoint generation.
-  if (!this.tracing) this.break_at_line = undefined;
-
-  var succes;
+  var run_result;
 
 	try {
-	  succes = this.evaluator.run(this.N, this.new_run, this.break_at_line);
+    this.evaluator.set_state(this.N, this.new_run, this.tracing);
+	  this.evaluator.run();
+    run_result = this.evaluator.get_state();
     this.results = this.evaluator.result;
   } catch (err) {
 		if (err instanceof EvalError) {
@@ -299,14 +279,12 @@ ModelleertaalApp.prototype.do_run = function() {
     this.highlight_error(err.parser_line, err.parser_name);
     return false;
 	}
-  console.log('do_run. Run finished! succes = ', succes);
-  if (succes) {
-    this.break_at_line = 0;
+  console.log('do_run. Run finished! run_result = ', run_result);
+
+  if (!run_result.tracing) {
     this.print_status("Klaar na "+this.results.length+" iteraties.");
     console.log("Klaar na ... iteraties: ", this.results.length);    this.tracing = false;
-  }
-
-  if (this.tracing) {
+  } else {
     this.print_status("Debugger in iteratie "+this.results.length);
     console.log("Debugger in iteratie: ", this.results.length);
   }
