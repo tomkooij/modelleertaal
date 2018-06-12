@@ -191,19 +191,28 @@ CodeGenerator.prototype.generateVariableInitCode = function() {
     return code;
 };
 
+CodeGenerator.prototype.generateVariableInitCode_second_run = function() {
+    var code = '//initialize all variables to previous values\n';
+    code += 'var last_row = storage[storage.length - 1];';
 
-CodeGenerator.prototype.generateCodeFromAst = function(ast) {
-
-    var code = "";
-    for (var i = 0; i < ast.length; i++) {
-        //console.log("AST item = ",ast[i])
-        code += this.parseNode(ast[i]);
-
+    for (var i = 0; i < this.namespace.varNames.length; i++) {
+        var variable = this.namespace.varDict[this.namespace.varNames[i]];
+        code += variable+"=last_row["+i+"];\n";
     }
     return code;
 };
 
 
+CodeGenerator.prototype.generateCodeFromAst = function(ast, break_at_line) {
+
+    var code = "";
+    for (var i = 0; i < ast.length; i++) {
+        //console.log("AST item = ",ast[i])
+        code += this.parseNode(ast[i]);
+        if (i == break_at_line) code += '/*breakpoint*/ bailout=true;\nbreak;\n';
+    }
+    return code;
+};
 
 
 CodeGenerator.prototype.parseNode = function(node) {
@@ -276,7 +285,7 @@ CodeGenerator.prototype.parseNode = function(node) {
         case 'False':
                 return 'false';
         case 'Stop':
-                return 'throw \'StopIteration\'';
+                return 'bailout=true;\nbreak;';
         default:
             var err2 = new SyntaxError("Unable to parseNode() :" + JSON.stringify(node));
             throw_custom_error(err2, node.astName, node.lineNo);
@@ -293,6 +302,13 @@ function ModelregelsEvaluator(model, debug) {
     } else {
         this.debug = debug;
     }
+
+    this.debug_ast = false; // hack FIXME
+
+    // state of evaluator (set and read by modelleertaal app)
+    this.tracing = false;
+    this.new_run = false;
+    this.breakpoint_at_line = undefined; // only used when tracing
 
     this.namespace = new Namespace();
     this.codegenerator = new CodeGenerator(this.namespace);
@@ -320,7 +336,7 @@ function ModelregelsEvaluator(model, debug) {
       throw_custom_error(err, 'modelregels', err.hash.line+1);
     }
 
-    if (this.debug) {
+    if (this.debug_ast) {
         console.log('*** AST startwaarden ***');
         console.log(JSON.stringify(this.startwaarden_ast, undefined, 4));
         console.log('*** AST modelregels ***');
@@ -330,38 +346,110 @@ function ModelregelsEvaluator(model, debug) {
 
 }
 
-ModelregelsEvaluator.prototype.run = function(N) {
+ModelregelsEvaluator.prototype.set_state = function(N, new_run, tracing) {
+    // state of evaluator (set by modelleertaal app)
 
-    var startwaarden_code = this.codegenerator.generateCodeFromAst(this.startwaarden_ast);
-    this.namespace.moveStartWaarden(); // keep namespace clean
-    var modelregels_code = this.codegenerator.generateCodeFromAst(this.modelregels_ast);
-    this.namespace.sortVarNames(); // sort variable names for better output
+    // FIXME: replace by: enable_trace() or similar.
+    this.N = N;
+    this.tracing = tracing;
+    this.new_run = new_run;
+
+    if (this.tracing) {
+      this.N = 1;
+      if (this.breakpoint_at_line === undefined) {
+        this.breakpoint_at_line = 0; // start trach
+      }
+    } else {
+      this.breakpoint_at_line = undefined;
+    }
+};
+
+ModelregelsEvaluator.prototype.get_state = function() {
+    // state of evaluator (set by modelleertaal app)
+    return {'tracing': this.tracing,
+            'breakpoint_at_line': this.breakpoint_at_line,
+            'lineno': this.breakpoint_ast_lineno
+          };
+};
+
+ModelregelsEvaluator.prototype.run = function() {
+
+    if (!this.tracing) this.breakpoint_at_line = undefined;
+
+    var start = 0;
+    var end = 0;
+
+    if (this.new_run) {
+      // first run of model!
+      start = 1;
+      end = this.N;
+
+      this.result = [];
+      this.startwaarden_code = this.codegenerator.generateCodeFromAst(this.startwaarden_ast);
+      this.namespace.moveStartWaarden(); // keep namespace clean
+
+      this.modelregels_code = this.codegenerator.generateCodeFromAst(this.modelregels_ast);
+      this.namespace.sortVarNames(); // sort variable names for better output
+
+      if (this.debug) {
+          console.log("evaluator.run *** first run ***");
+      }
+
+    } else {
+      // check this.result properties FIXME
+      console.log("evaluator.run *** second run ***");
+
+      if (this.tracing) {
+          console.log("tracing...", this.breakpoint_at_line);
+          if ((this.breakpoint_at_line > 0) & (this.result.length > 1)) {
+              // continue to trace a row: remove partial results.
+              // do not remove first line (startwaarden)
+              this.result.pop();
+          }
+      this.modelregels_code = this.codegenerator.generateCodeFromAst(this.modelregels_ast, this.breakpoint_at_line);
+      }
+
+      start = this.result.length;
+      end = start + this.N;
+    }
 
     // separate function run_model() inside anonymous Function()
     // to prevent bailout of the V8 optimising compiler in try {} catch
-    var model =     "function run_model(N, storage) { \n " +
-                    this.codegenerator.generateVariableInitCode() +
-                    startwaarden_code + "\n" +
-                    "var i=0;\n" +
-                    this.codegenerator.generateVariableStorageCode() +
-                    "    for (i=1; i < N; i++) { \n " +
-                    modelregels_code + "\n" +
-                    this.codegenerator.generateVariableStorageCode() +
-                    "    }  \n" +
-                    " return;} \n" +
-                 "    var results = []; \n " +
-                 "    try \n" +
-                 "  { \n" +
-                 "      run_model(N, results); \n" +
-                 "  } catch (e) \n" +
-                 "  { console.log(e)} \n " +
-                 "return results;\n";
+    this.model = "function run_model(storage) { \n ";
+
+    if (this.new_run) {
+        this.model += ""+
+                 this.codegenerator.generateVariableInitCode() +
+                 this.startwaarden_code + "\n" +
+                  "var i=0;\n" +
+                  this.codegenerator.generateVariableStorageCode();
+    } else {
+        this.model += ""+
+                  this.codegenerator.generateVariableInitCode_second_run();
+    }
+
+    this.model +=
+                  "    var bailout = false;\n"+
+                  "    for (i="+start+"; i < "+end+"; i++) { \n " +
+                  this.modelregels_code + "\n" +
+                  this.codegenerator.generateVariableStorageCode() +
+                  "      }\n" +
+                  " if (bailout) {" +
+                  this.codegenerator.generateVariableStorageCode() +
+                  " }\n" +
+                  " return;} \n" +
+                  "    try \n" +
+                  "  { \n" +
+                  "      run_model(results); \n" +
+                  "  } catch (e) \n" +
+                  "  { console.log(e)} \n " +
+                  "return results;\n";
 
     if (this.debug) {
         console.log('*** generated js ***');
-        console.log(model);
+        console.log(this.model);
         console.log("*** running! *** ");
-        console.log("N = ", N);
+        console.log("N = ", this.N);
     }
 
     var t1 = Date.now();
@@ -369,16 +457,28 @@ ModelregelsEvaluator.prototype.run = function(N) {
     // eval(model); // slow... in chrome >23
     //  the optimising compiler does not optimise eval() in local scope
     //  http://moduscreate.com/javascript-performance-tips-tricks/
-    var runModel = new Function('N', model);
-    var result = runModel(N);
+
+
+    var runModel = new Function('results', this.model);
+    this.result = runModel(this.result);
 
     var t2 = Date.now();
 
-    console.log("Number of iterations: ", result.length);
+    console.log("Number of iterations: ", this.result.length);
     console.log("Time: " + (t2 - t1) + "ms");
 
-    return result;
+    // just fail if full row already executed.
+    if (this.tracing)
+      {
+        this.breakpoint_ast_lineno = this.modelregels_ast[this.breakpoint_at_line].lineNo;
+        this.breakpoint_at_line += 1;
 
+        if (this.breakpoint_at_line > this.modelregels_ast.length - 1)  {
+          console.log('end of row. Trace finished!');
+          this.tracing = false;
+          this.breakpoint_at_line = undefined;
+      }
+    }
 };
 
 function throw_custom_error(err, ast_name, line_number) {

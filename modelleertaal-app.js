@@ -31,11 +31,14 @@ function ModelleertaalApp(params) {
 
   this.dom_modelregels = "#modelregels";
   this.dom_startwaarden = "#startwaarden";
-  this.dom_status = "#status";
+  this.dom_status = "#status_bar";
   this.dom_datatable = "#datatable";
   this.dom_graph = "#graph";
   this.dom_nbox = "#NBox";
+  this.dom_nbox_continue = "#NBoxContinue";
   this.dom_run = "#run";
+  this.dom_continue = "#continue";
+  this.dom_trace = "#trace";
   this.dom_plot = "#plot";
   this.dom_fileinput = "#fileinput";
   this.dom_download_xml = "#download_xml";
@@ -76,11 +79,20 @@ function ModelleertaalApp(params) {
   var self = this;
 
   $(this.dom_run).click(function() {
-    if (self.run()) {
-			self.print_table();
-			self.do_plot();
-		}
+    // read N from input field
+    self.N = Number($(self.dom_nbox).val());
+    self.run();
   });
+
+  $(this.dom_continue).click(function() {
+    self.N = Number($(self.dom_nbox_continue).val());
+    self.continue_run();
+  });
+
+  $(this.dom_trace).click(function() {
+    self.trace();
+  });
+
 
   $(this.dom_plot).click(function() {
     self.do_plot();
@@ -181,17 +193,57 @@ ModelleertaalApp.prototype.save_string = function(data, filename) {
 
 ModelleertaalApp.prototype.run = function() {
 
-  this.print_status('Run!!!');
+  this.setup_run();
+  this.new_run = true;
+  if (!this.do_run()) this.has_run = false;
+  this.after_run();
+  this.has_run = true;
+  return true;
+};
+
+ModelleertaalApp.prototype.continue_run = function() {
+  if (this.has_run) {
+    this.new_run = false;
+    this.tracing = false;
+  } else {
+    this.new_run = true;
+    this.setup_run();
+  }
+  if (!this.do_run()) this.has_run = false;
+  this.after_run();
+  this.has_run = true;
+  return true;
+};
+
+ModelleertaalApp.prototype.trace = function() {
+
+  if (this.has_run) {
+    this.new_run = false;
+  } else {
+    this.new_run = true;
+    this.setup_run();
+  }
+
+  this.tracing = true;
+  this.do_run();
+
+  this.after_run();
+  this.has_run = true;
+  return true;
+};
+
+ModelleertaalApp.prototype.setup_run = function() {
+
+  // reset the breakpoint pointer:
+  this.tracing = false;
+  this.remove_highlight_trace();
 
   this.read_model();
 
   if (this.debug)
     console.log('model = ', this.model);
 
-  // read N from input field
-  var N = Number($(this.dom_nbox).val());
-
-  if (N > 1e6) {
+  if (this.N > 1e6) {
     alert('N te groot!');
     throw new Error('N te groot!');
   }
@@ -199,43 +251,63 @@ ModelleertaalApp.prototype.run = function() {
   this.print_status("Run started...");
   console.log("Run started...");
 
-  var evaluator;
   try {
-    evaluator = new evaluator_js.ModelregelsEvaluator(this.model, this.debug);
+    this.evaluator = new evaluator_js.ModelregelsEvaluator(this.model, this.debug);
   } catch (err) {
     this.print_status("Model niet in orde.", err.message.replace(/\n/g, "<br>"));
     alert("Model niet in orde: \n" + err.message);
     this.highlight_error(err.parser_line, err.parser_name);
 		return false;
   }
+};
+
+ModelleertaalApp.prototype.do_run = function() {
+
+  var run_result;
 
 	try {
-		this.results = evaluator.run(N);
-	} catch (err) {
+    this.evaluator.set_state(this.N, this.new_run, this.tracing);
+	  this.evaluator.run();
+    run_result = this.evaluator.get_state();
+    this.results = this.evaluator.result;
+  } catch (err) {
 		if (err instanceof EvalError) {
 			alert("Model niet in orde:\nVariable niet gedefineerd in startwaarden?\n" + err.message);
 		} else {
 			alert("Model niet in orde:\n" + err.message);
 		}
-    this.print_status("Fout in  model.", err.message.replace(/\n/g, "<br>"));
+    this.print_status("Fout in model.", err.message.replace(/\n/g, "<br>"));
     this.highlight_error(err.parser_line, err.parser_name);
     return false;
 	}
 
-  this.print_status("Klaar na iteratie: " + this.results.length);
-  console.log("Klaar na iteratie: " + this.results.length);
+  if (!run_result.tracing) {
+    this.print_status("Klaar na "+this.results.length+" iteraties.");
+    console.log("Klaar na ... iteraties: ", this.results.length);    this.tracing = false;
+    this.remove_highlight_trace();
+  } else {
+    this.print_status("Debugger in iteratie "+this.results.length);
+    console.log("Debugger in iteratie: ", this.results.length);
+    console.log("At line number: ", run_result.lineno);
+    this.highlight_trace(run_result.lineno+1);
+  }
 
   // make table, plot
-  this.allVars = evaluator.namespace.varNames;
+  this.allVars = this.evaluator.namespace.varNames;
   if (this.debug)
     console.log(this.allVars);
+};
+
+ModelleertaalApp.prototype.after_run = function() {
 
   // create the axis drop-down menu, try to keep value
   this.save_axis();
   this.reset_axis_dropdown();
   this.set_axis();
 
-	return true;
+  this.print_table();
+  this.do_plot();
+
 };
 
 
@@ -360,6 +432,7 @@ ModelleertaalApp.prototype.do_plot = function() {
   }
 
   $(this.dom_graph).empty(); // verwijder text enzo
+  $(this.dom_clickdata).empty();
   this.plot_graph(this.scatter_plot, this.previous_plot);
   this.previous_plot = this.scatter_plot;
 }; // do_plot
@@ -468,6 +541,9 @@ ModelleertaalApp.prototype.init_app = function() {
   this.results = [];
   this.scatter_plot = [];
   this.previous_plot = [];
+  this.has_run = false;
+  this.tracing = false;
+
 };
 
 
@@ -666,6 +742,34 @@ ModelleertaalApp.prototype.highlight_error = function(line, editor_name) {
   setTimeout(function() {
       self_editor.removeLineClass(line-1, 'background', 'CodeMirror-matchingtag');
     }, 7000);
+};
+
+
+ModelleertaalApp.prototype.remove_highlight_trace = function(line) {
+
+  if (!this.CodeMirrorActive) return false;
+  var self_editor = this.modelregels_editor;
+
+  if (this.at_line !== undefined)
+      // remove current highlighted line
+      self_editor.removeLineClass(this.at_line, 'background', 'CodeMirror-activeline-background');
+};
+
+
+ModelleertaalApp.prototype.highlight_trace = function(line) {
+
+  if (!this.CodeMirrorActive) return false;
+  var self_editor = this.modelregels_editor;
+
+  if (this.at_line !== undefined)
+      // remove current highlighted line
+      self_editor.removeLineClass(this.at_line, 'background', 'CodeMirror-activeline-background');
+
+  this.at_line = line-1;
+  self_editor.addLineClass(this.at_line, 'background', 'CodeMirror-activeline-background');
+/*  setTimeout(function() {
+      self_editor.removeLineClass(line-1, 'background', 'CodeMirror-matchingtag');
+    }, 7000); */
 };
 
 

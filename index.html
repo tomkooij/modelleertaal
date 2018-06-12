@@ -77,11 +77,19 @@
 	<div id="werkBlad">
 			<p>
 				<div>
+					<input id="run" type="button" value="RUN!">
+					Aantal iteraties = <input type="text" id="NBox" value="1000" size=5>.
+					<input id="continue" type="button" value="Voeg toe:">
+					<input type="text" id="NBoxContinue" value="10" size=3>
+					iteraties. Debugger:
+					<input id="trace" type="button" value="Volgende regel">
+				<div>
+				<div>
 					<table class="app">
 						<tr>
-						  <td><input id="run" type="button" value="RUN!"> Aantal iteraties = <input type="text" id="NBox" value="1000" size=5>
-						      <span id="status"></span>
-					    </td>
+						  <td>
+								Status: <span id="status_bar"></span>
+							</td>
 							<td>Modelregels:</td>
 							<td>Startwaarden:</td>
 					 </tr>
@@ -95,7 +103,11 @@
 									Aflezen: <span id="hoverdata"></span>
 
 							</td>
-							<td style="vertical-align:top" width=300px><textarea id="modelregels" rows=15 cols=30>//Modelregels:</textarea></td>
+							<td style="vertical-align:top" width=300px><textarea id="modelregels" rows=15 cols=30>//Modelregels:</textarea>
+								<p>
+								<div id="widget"></div>
+								<div id="clickdata"></div>
+							</td>
 							<td style="vertical-align:top" width=200px align="top"><textarea id="startwaarden" rows=15 cols=20>//Startwaarden:</textarea></td>
 						</tr>
 				  </table>
@@ -103,8 +115,7 @@
 	</div>
 
 	<div id="werkBlad">
-		<div id="widget"></div>
-		<div id="clickdata"></div>
+		<div id="datatable">Hier komt een tabel...</div>
 	</div>
 
 	<div id="werkBlad">
@@ -119,10 +130,6 @@
 			<input id="download_tsv" type="button" value="Download TSV:">
 			<input type="text" id="tsv_filename" value="model_data.tsv" size=15>
 		</div>
-	</div>
-
-	<div id="werkBlad">
-		<div id="datatable">Hier komt een tabel...</div>
 	</div>
 
 	<script src="modellen/models.js"></script>
@@ -194,7 +201,6 @@
 				} // error();
 			}); //.ajax
 		}; // dropdown _load_model
-
 
 
 	</script>
