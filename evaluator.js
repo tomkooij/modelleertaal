@@ -215,8 +215,6 @@ CodeGenerator.prototype.generateCodeFromAst = function(ast, break_at_line) {
 };
 
 
-
-
 CodeGenerator.prototype.parseNode = function(node) {
     /* parseNode is a recursive function that parses an item
         of the JSON AST. Calls itself to traverse through nodes.
@@ -370,7 +368,8 @@ ModelregelsEvaluator.prototype.set_state = function(N, new_run, tracing) {
 ModelregelsEvaluator.prototype.get_state = function() {
     // state of evaluator (set by modelleertaal app)
     return {'tracing': this.tracing,
-            'breakpoint_at_line': this.breakpoint_at_line
+            'breakpoint_at_line': this.breakpoint_at_line,
+            'lineno': this.breakpoint_ast_lineno
           };
 };
 
@@ -478,6 +477,7 @@ ModelregelsEvaluator.prototype.run = function() {
     // just fail if full row already executed.
     if (this.tracing)
       {
+        this.breakpoint_ast_lineno = this.modelregels_ast[this.breakpoint_at_line].lineNo;
         this.breakpoint_at_line += 1;
 
         if (this.breakpoint_at_line > this.modelregels_ast.length - 1)  {

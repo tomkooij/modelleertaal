@@ -236,6 +236,7 @@ ModelleertaalApp.prototype.setup_run = function() {
 
   // reset the breakpoint pointer:
   this.tracing = false;
+  this.remove_highlight_trace();
 
   this.read_model();
 
@@ -284,9 +285,12 @@ ModelleertaalApp.prototype.do_run = function() {
   if (!run_result.tracing) {
     this.print_status("Klaar na "+this.results.length+" iteraties.");
     console.log("Klaar na ... iteraties: ", this.results.length);    this.tracing = false;
+    this.remove_highlight_trace();
   } else {
     this.print_status("Debugger in iteratie "+this.results.length);
     console.log("Debugger in iteratie: ", this.results.length);
+    console.log("At line number: ", run_result.lineno);
+    this.highlight_trace(run_result.lineno+1);
   }
 
   // make table, plot
@@ -739,6 +743,34 @@ ModelleertaalApp.prototype.highlight_error = function(line, editor_name) {
   setTimeout(function() {
       self_editor.removeLineClass(line-1, 'background', 'CodeMirror-matchingtag');
     }, 7000);
+};
+
+
+ModelleertaalApp.prototype.remove_highlight_trace = function(line) {
+
+  if (!this.CodeMirrorActive) return false;
+  var self_editor = this.modelregels_editor;
+
+  if (this.at_line !== undefined)
+      // remove current highlighted line
+      self_editor.removeLineClass(this.at_line, 'background', 'CodeMirror-matchingtag');
+};
+
+
+ModelleertaalApp.prototype.highlight_trace = function(line) {
+
+  if (!this.CodeMirrorActive) return false;
+  var self_editor = this.modelregels_editor;
+
+  if (this.at_line !== undefined)
+      // remove current highlighted line
+      self_editor.removeLineClass(this.at_line, 'background', 'CodeMirror-matchingtag');
+
+  this.at_line = line-1;
+  self_editor.addLineClass(this.at_line, 'background', 'CodeMirror-matchingtag');
+/*  setTimeout(function() {
+      self_editor.removeLineClass(line-1, 'background', 'CodeMirror-matchingtag');
+    }, 7000); */
 };
 
 
