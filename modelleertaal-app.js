@@ -753,7 +753,7 @@ ModelleertaalApp.prototype.remove_highlight_trace = function(line) {
 
   if (this.at_line !== undefined)
       // remove current highlighted line
-      self_editor.removeLineClass(this.at_line, 'background', 'CodeMirror-matchingtag');
+      self_editor.removeLineClass(this.at_line, 'background', 'CodeMirror-activeline-background');
 };
 
 
@@ -764,10 +764,10 @@ ModelleertaalApp.prototype.highlight_trace = function(line) {
 
   if (this.at_line !== undefined)
       // remove current highlighted line
-      self_editor.removeLineClass(this.at_line, 'background', 'CodeMirror-matchingtag');
+      self_editor.removeLineClass(this.at_line, 'background', 'CodeMirror-activeline-background');
 
   this.at_line = line-1;
-  self_editor.addLineClass(this.at_line, 'background', 'CodeMirror-matchingtag');
+  self_editor.addLineClass(this.at_line, 'background', 'CodeMirror-activeline-background');
 /*  setTimeout(function() {
       self_editor.removeLineClass(line-1, 'background', 'CodeMirror-matchingtag');
     }, 7000); */

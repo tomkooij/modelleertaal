@@ -404,14 +404,11 @@ ModelregelsEvaluator.prototype.run = function() {
 
       if (this.tracing) {
           console.log("tracing...", this.breakpoint_at_line);
-          if (this.breakpoint_at_line > 0) {
-            if (this.result.length === undefined) {
-              console.log('foobar?');
-            } else {
-              // continue to trace a row: remove partial results
+          if ((this.breakpoint_at_line > 0) & (this.result.length > 1)) {
+              // continue to trace a row: remove partial results.
+              // do not remove first line (startwaarden)
               console.log('pop: ', this.result.length);
               this.result.pop();
-            }
           }
       this.modelregels_code = this.codegenerator.generateCodeFromAst(this.modelregels_ast, this.breakpoint_at_line);
       }
