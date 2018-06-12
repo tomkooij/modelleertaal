@@ -280,7 +280,6 @@ ModelleertaalApp.prototype.do_run = function() {
     this.highlight_error(err.parser_line, err.parser_name);
     return false;
 	}
-  console.log('do_run. Run finished! run_result = ', run_result);
 
   if (!run_result.tracing) {
     this.print_status("Klaar na "+this.results.length+" iteraties.");

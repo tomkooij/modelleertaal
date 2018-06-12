@@ -362,7 +362,6 @@ ModelregelsEvaluator.prototype.set_state = function(N, new_run, tracing) {
     } else {
       this.breakpoint_at_line = undefined;
     }
-    console.log('set_state finished: ', this.N, this.new_run, this.tracing, this.breakpoint_at_line);
 };
 
 ModelregelsEvaluator.prototype.get_state = function() {
@@ -376,8 +375,6 @@ ModelregelsEvaluator.prototype.get_state = function() {
 ModelregelsEvaluator.prototype.run = function() {
 
     if (!this.tracing) this.breakpoint_at_line = undefined;
-
-    console.log('DEBUG ModelregelsEvaluator.run!!!', this.new_run, this.tracing, this.breakpoint_at_line);
 
     var start = 0;
     var end = 0;
@@ -407,7 +404,6 @@ ModelregelsEvaluator.prototype.run = function() {
           if ((this.breakpoint_at_line > 0) & (this.result.length > 1)) {
               // continue to trace a row: remove partial results.
               // do not remove first line (startwaarden)
-              console.log('pop: ', this.result.length);
               this.result.pop();
           }
       this.modelregels_code = this.codegenerator.generateCodeFromAst(this.modelregels_ast, this.breakpoint_at_line);
@@ -483,9 +479,6 @@ ModelregelsEvaluator.prototype.run = function() {
           this.breakpoint_at_line = undefined;
       }
     }
-    console.log("Debug:", this.result);
-    console.log("Done evaluator.run: (tracing, breakpoint_at) ", this.tracing, this.breakpoint_at_line);
-
 };
 
 function throw_custom_error(err, ast_name, line_number) {
