@@ -145,8 +145,32 @@
 
 		$(document).ready(function() {
 			console.log("Start!");
+
+			// listen to URL  index.html#model=model_naam&N=100 type URL
+		  // https://stackoverflow.com/a/44169739/4965175
+			var hash = window.location.hash.substr(1);
+			var url_params = hash.split('&').reduce(function (result, item) {
+				var parts = item.split('=');
+				result[parts[0]] = parts[1];
+				return result;
+				}, {});
+			console.log("params passed in URL", url_params);
+
 			dropdown_update();
-			dropdown_load_model();
+			var model_preselected = url_params.model || false;
+			if (model_preselected) {
+				// try to load model passed with model=... parameter
+				var model_url = 'modellen/'+model_preselected+'.xml';
+				load_model_xml_from_url(model_url);
+				var reverse_dropdown_val = model_index.findIndex(function (element) {
+					return element.url==model_url;
+				});
+				// set dropdown to selected model
+				$("#model_keuze").val(reverse_dropdown_val);
+			} else {
+				// lees keuze uit drop-down en kies juiste url
+				dropdown_load_model();
+			};
 			$("#model_keuze").change(dropdown_load_model);
 
 			$("#hacks").hide();
@@ -176,13 +200,16 @@
 		};
 
 		dropdown_load_model = function() {
-			// lees keuze uit drop-down en kies juiste url
 
-			model_keuze = $("#model_keuze").val();
+			var model_keuze = $("#model_keuze").val();
 
 			// uit model.js
 			url = model_index[model_keuze].url;
 
+			load_model_xml_from_url(url);
+		};
+
+		load_model_xml_from_url = function(url) {
 			$.ajax({
 				url: url,
 				dataType: "text",
@@ -200,7 +227,7 @@
 					print_status("Status: ERROR.");
 				} // error();
 			}); //.ajax
-		}; // dropdown _load_model
+		};
 
 
 	</script>
