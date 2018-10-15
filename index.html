@@ -156,6 +156,11 @@
 				}, {});
 			console.log("params passed in URL", url_params);
 
+			var N_preset = url_params.N || false;
+			if (N_preset) {
+				$("#NBox").val(N_preset);
+			}
+
 			dropdown_update();
 			var model_preselected = url_params.model || false;
 			if (model_preselected) {
