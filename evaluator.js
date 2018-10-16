@@ -350,7 +350,7 @@ ModelregelsEvaluator.prototype.set_state = function(N, new_run, tracing) {
     // state of evaluator (set by modelleertaal app)
 
     // FIXME: replace by: enable_trace() or similar.
-    this.N = N;
+    this.N = N + 1;  // first iteration is "start values only". Start at 1
     this.tracing = tracing;
     this.new_run = new_run;
 

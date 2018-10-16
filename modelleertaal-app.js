@@ -281,14 +281,13 @@ ModelleertaalApp.prototype.do_run = function() {
     return false;
 	}
 
+  var N_iterations = this.results.length-1;
   if (!run_result.tracing) {
-    this.print_status("Klaar na "+this.results.length+" iteraties.");
-    console.log("Klaar na ... iteraties: ", this.results.length);    this.tracing = false;
+    this.print_status("Klaar na "+N_iterations+" iteraties.");
+       this.tracing = false;
     this.remove_highlight_trace();
   } else {
-    this.print_status("Debugger in iteratie "+this.results.length);
-    console.log("Debugger in iteratie: ", this.results.length);
-    console.log("At line number: ", run_result.lineno);
+    this.print_status("Debugger in iteratie "+ N_iterations);
     this.highlight_trace(run_result.lineno+1);
   }
 
