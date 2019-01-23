@@ -1,0 +1,29 @@
+﻿<modelleertaal>
+<startwaarden>
+S = 1368
+σ = 5,67E-8
+a = 0,37
+ε = 0,95
+R = 6,371E6
+Caarde = 2.0E21
+E = 0
+t = 0
+dt = 5000
+
+
+</startwaarden>
+<modelregels>
+'Broeikasmodel
+'SLO Handreiking modelleren
+Pin = pi*R^2*(1-a)*S
+Puit := 4*pi*R^2*σ*(1-(ε/2))*T^4
+Ptot = Pin - Puit
+E = E + Ptot*dt
+T = E/Caarde
+Temperatuur_Celsius = T-273,15
+t_jaar = t/3,15E7
+t = t + dt
+
+
+</modelregels>
+</modelleertaal>
