@@ -87,7 +87,7 @@ stop                                    return 'STOP'
 anders                                  return 'ELSE'
 
 // identifiers
-[a-zA-Z][a-zA-Z0-9_"\]""\|"{}"["]*                return 'IDENT'
+[a-zA-Z\x7f-\uffff][a-zA-Z\x7f-\uffff0-9_"\]""\|"{}"["]*                return 'IDENT'
 
 <<EOF>>                                 return 'EOF'
 
