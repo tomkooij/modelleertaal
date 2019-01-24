@@ -50,6 +50,7 @@
 ")"                                     return ')'
 
 "pi"                                    return 'PI'
+"π"                                     return 'PI'
 
 // logical
 "=="                                    return '=='
