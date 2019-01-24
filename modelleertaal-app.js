@@ -329,6 +329,15 @@ ModelleertaalApp.prototype.reset_axis_dropdown = function() {
     $('<option/>').val(i).text(this.allVars[i]).appendTo(this.dom_x_var);
     $('<option/>').val(i).text(this.allVars[i]).appendTo(this.dom_y_var);
   }
+  var self = this;
+  $(this.dom_x_var).change(function(){
+    // the plotted variables change. Erase previous results.
+    self.previous_plot = [];
+  });
+  $(this.dom_y_var).change(function(){
+    // the plotted variables change. Erase previous results.
+    self.previous_plot = [];
+  });
 };
 
 ModelleertaalApp.prototype.set_axis = function() {
