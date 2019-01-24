@@ -110,12 +110,6 @@ describe('CodeGenertor.generateCodeFromAst() correct output of math expressions'
         assert.equal(eval(code),3.14159265359);
     })
 
-    it('unicode π = 3.1415...', function() {
-        ast = parser.parse("t = π");
-        code = codegenerator.generateCodeFromAst(ast);
-        assert.equal(eval(code),3.14159265359);
-    })
-
     it('Math.sin (degrees): sin(45) = 0.707..', function() {
         ast = parser.parse("t=sin(45)");
         code = codegenerator.generateCodeFromAst(ast);
