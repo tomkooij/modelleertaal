@@ -13,9 +13,20 @@ before_deploy:
   - echo "node_modules" >.gitignore
 
 deploy:
-  provider: pages
-  skip_cleanup: true
-  github_token: $GITHUB_TOKEN
-  on:
-    branch: master
-    node_js: "7"
+  - provider: pages
+    skip_cleanup: true
+    github_token: $GITHUB_TOKEN
+    on:
+      branch: master
+      node_js: "7"
+  - provider: releases
+    file:
+      - index.html
+      - scripts/*
+      - modelllen/*
+    skip_cleanup: true
+    github_token: $GITHUB_TOKEN
+    on:
+      branch: master
+      node_js: "7"
+      tags: true
