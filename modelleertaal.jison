@@ -49,7 +49,7 @@
 "("                                     return '('
 ")"                                     return ')'
 
-"pi"                                    return 'PI'
+"pi"|"π"                                return 'PI'
 
 // logical
 "=="                                    return '=='
