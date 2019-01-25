@@ -11,5 +11,4 @@ var model_index = [
     {url:'modellen/examenvwo2017.xml', title: 'Examen vwo 2017-I Cessna'},
     {url:'modellen/examenvwo2017-2.xml', title: 'Examen vwo 2017-II X-stream'},
     {url:'modellen/examenvwo2018.xml', title: 'Examen vwo 2018-I Uitrijden van een auto'},
-    {url:'modellen/broeikas.xml', title: '---Leiden 24 januari 2019---'},
 ];
