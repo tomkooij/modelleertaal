@@ -540,6 +540,7 @@ ModelleertaalApp.prototype.init_app = function() {
     $(this.dom_modelregels).val(this.model.modelregels);
     $(this.dom_startwaarden).val(this.model.startwaarden);
   }
+  if (this.model.N) $(this.dom_nbox).val(this.model.N);
   $(this.dom_y_var).empty();
   $(this.dom_x_var).empty();
   $('<option/>').val('').text('auto').appendTo(this.dom_x_var);

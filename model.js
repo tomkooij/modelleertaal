@@ -56,6 +56,7 @@ Model.prototype.readBogusXMLFile = function(filename) {
 Model.prototype.parseBogusXMLString = function(xmlString) {
 
     var action = 0; // 0 = do nothing, 1 = modelregels, 2 = startwaarden
+    var equationRe = /([A-Za-z])[ ]*\=[ ]*(\d*)/g;  // Match N = 1000
 
     this.startwaarden = '';
     this.modelregels = '';
@@ -65,7 +66,15 @@ Model.prototype.parseBogusXMLString = function(xmlString) {
     for(var line = 1; line < lines.length; line++) {
 
         //console.log(action, lines[line]);
-
+        // try to extra N = ... from model
+        if (action === 0) {
+          var matches = equationRe.exec(lines[line]);
+          if (matches !== null) {
+            if (matches[1] == 'N')
+              this.N = parseInt(matches[2], 10);
+              console.log('Found N = '+this.N+' in model.xml');
+          }
+        }
         switch(lines[line].replace('\r','')) {
             // < and > mess things up in the browser
             case '<modelregels>': { action = 1; continue; }

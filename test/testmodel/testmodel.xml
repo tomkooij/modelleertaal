@@ -1,4 +1,7 @@
 <modelleertaal>
+N = 1000
+x = 2
+n=2
 <startwaarden>
 /* startwaarden */
     Fmotor = 500 'N

@@ -19,4 +19,8 @@ describe('model.js - Read model from XML', function(){
         assert.notEqual(testmodel.startwaarden,'');
     })
 
+    it('parseBogusXMLString parses N = ... line', function() {
+        testmodel.parseBogusXMLString(bogusModel);
+        assert.equal(testmodel.N, 1000);
+    })
 });

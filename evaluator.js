@@ -286,6 +286,11 @@ CodeGenerator.prototype.parseNode = function(node) {
                 return 'false';
         case 'Stop':
                 return 'bailout=true;\nbreak;';
+        case 'Blank': {
+                var err_blank = new SyntaxError("Vul iets in in plaats van de puntjes ...");
+                throw_custom_error(err_blank, node.astName, node.lineNo);
+                break;
+                }
         default:
             var err2 = new SyntaxError("Unable to parseNode() :" + JSON.stringify(node));
             throw_custom_error(err2, node.astName, node.lineNo);

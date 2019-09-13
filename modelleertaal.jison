@@ -90,6 +90,9 @@ anders                                  return 'ELSE'
 // identifiers
 [a-zA-Z\x7f-\uffff][a-zA-Z\x7f-\uffff0-9_"\]""\|"{}"["]*                return 'IDENT'
 
+// blank item, to be filled in by user. Throw custom error on this
+"..."                                   return 'BLANK'
+
 <<EOF>>                                 return 'EOF'
 
 /lex
@@ -313,6 +316,11 @@ expr
           };
        }
 
+  | BLANK
+      {$$ = {
+              type: 'Blank',
+          };
+       }
   | TRUE /* There must be a better way... */
       {$$ = {
                 type: 'True',
