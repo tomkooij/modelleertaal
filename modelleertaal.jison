@@ -92,6 +92,7 @@ anders                                  return 'ELSE'
 
 // blank item, to be filled in by user. Throw custom error on this
 "..."                                   return 'BLANK'
+"…"                                     return 'BLANK'
 
 <<EOF>>                                 return 'EOF'
 
