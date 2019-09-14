@@ -97,7 +97,11 @@ function ModelleertaalApp(params) {
 
 
   $(this.dom_plot).click(function() {
-    self.do_plot();
+    if (self.results.length === 0) {
+        alert('Geen resultaten. Druk eerst op Run!');
+    } else {
+        self.do_plot();
+    }
     //self.print_status("Plot OK.");
   });
 
@@ -427,7 +431,8 @@ ModelleertaalApp.prototype.print_table = function(limit) {
 ModelleertaalApp.prototype.do_plot = function() {
 
   if (this.results.length === 0) {
-    alert('Geen resultaten. Druk eerst op Run!');
+    //alert('Geen resultaten. Druk eerst op Run!');
+    console.log('No results! cannot plot');
     return false;
   }
   this.scatter_plot = [];
