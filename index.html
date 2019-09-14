@@ -69,9 +69,10 @@
 		<div>
 				Kies model:
 				<select id="model_keuze">
-	    <option value="0">model.js niet geladen!</option>
-	  </select>
-		of: <input type="file" id="fileinput">
+	            <option value="0">model.js niet geladen!</option>
+	            </select>
+		        <a id="permalink" href="foobar">(link)</a>
+                of: <input type="file" id="fileinput">
 	  </div>
 	</div>
 	<div id="werkBlad">
@@ -210,8 +211,12 @@
 
 			// uit model.js
 			url = model_index[model_keuze].url;
-
-			load_model_xml_from_url(url);
+            var myRe = /\/([^.]+)/g;
+            var permalink = 'https://www.tomkooij.nl/modelleertaal/index.html?model='+myRe.exec(url)[1];
+            console.log('permalink = ',permalink);
+			$("#permalink").attr('href', permalink);
+            load_model_xml_from_url(url);
+            console.log($("#permalink").val());
 		};
 
 		load_model_xml_from_url = function(url) {
