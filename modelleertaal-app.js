@@ -18,9 +18,10 @@ var FileSaver = require('file-saver');
 //jshint loopfunc: true
 
 /* version history
-v4.4 (13sep19) Add read N=1000 from XML. Add error msg for ... "Vul hier iets in"
+v4.4.0 (13sep19) Add read N=1000 from XML. Add error msg for ... "Vul hier iets in"
+v4.4.1 (15sep19) Accept ... and unicode symbol '...' as BLANK (Vul hier in error)
 */
-var version = "v4.4 - 13sep2019";
+var version = "v4.4.1 - 15sep2019";
 
 
 function ModelleertaalApp(params) {
