@@ -131,214 +131,213 @@ Do not edit below this line: Change config above!
             </div>
     </div>
     <div id="werkBlad">
-        <p>
-            <div>
-                <input id="run" type="button" value="RUN!">
-                Aantal iteraties = <input type="text" id="NBox" value="1000" size=5>.
-                <span id="continue_dialog">
-									<input id="continue" type="button" value="Voeg toe:">
-              		<input type="text" id="NBoxContinue" value="10" size=3>
-                	iteraties.
-							  </span>
-								<span id="debugger_dialog">
-									Debugger:
-                	<input id="trace" type="button" value="Volgende regel">
-								</span>
-								<div>
-                    <div>
-                        <table class="app">
-                            <tr>
-                                <td>
-                                    Status: <span id="status_bar"></span>
-                                </td>
-                                <td>Modelregels:</td>
-                                <td>Startwaarden:</td>
-                            </tr>
-                            <tr>
+        <div>
+            <input id="run" type="button" value="RUN!">
+            Aantal iteraties = <input type="text" id="NBox" value="1000" size=5>.
+            <span id="continue_dialog">
+							<input id="continue" type="button" value="Voeg toe:">
+          		<input type="text" id="NBoxContinue" value="10" size=3>
+            	iteraties.
+					  </span>
+						<span id="debugger_dialog">
+							Debugger:
+            	<input id="trace" type="button" value="Volgende regel">
+						</span>
+						<div>
+                <table class="app">
+                    <tr>
+                        <td>
+                            Status: <span id="status_bar"></span>
+                        </td>
+                        <td>Modelregels:</td>
+                        <td>Startwaarden:</td>
+                    </tr>
+                    <tr>
 
-                                <td rowspan="2" class="graphbox">
-                                    <div id="graph" class="graph"></div>
-                                    <p>
-                                        verticaal: <select id="y_var">
-                                            <option value=""></option>
-                                        </select> horizontaal: <select id="x_var">
-                                            <option value=""></option>
-                                        </select>
-                                        <input id="plot" type="button" value="Plot!">
-                                        <p>
-                                            Coördinaat:<span id="hoverdata"></span><br>
-																						Klik op een punt om waarden af te lezen:
+                        <td rowspan="2" class="graphbox">
+                            <div id="graph" class="graph"></div>
+                            <p>
+                                verticaal: <select id="y_var">
+                                    <option value=""></option>
+                                </select> horizontaal: <select id="x_var">
+                                    <option value=""></option>
+                                </select>
+                                <input id="plot" type="button" value="Plot!">
+                                <p>
+                                    Coördinaat:<span id="hoverdata"></span><br>
+																		Klik op een punt om waarden af te lezen:
 
-                                </td>
-                                <td style="vertical-align:top" width=300px><textarea id="modelregels" rows=15 cols=30>//Modelregels:</textarea>
-                                    <p>
-                                        <div id="widget"></div>
-                                        <div id="clickdata"></div>
-                                </td>
-                                <td style="vertical-align:top" width=200px align="top"><textarea id="startwaarden" rows=15 cols=20>//Startwaarden:</textarea></td>
-                            </tr>
-                        </table>
-                    </div>
-                </div>
+                        </td>
+                        <td style="vertical-align:top" width=300px><textarea id="modelregels" rows=15 cols=30>//Modelregels:</textarea>
+                            <p>
+                                <div id="widget"></div>
+                                <div id="clickdata"></div>
+                        </td>
+                        <td style="vertical-align:top" width=200px align="top"><textarea id="startwaarden" rows=15 cols=20>//Startwaarden:</textarea></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
 
-                <div id="werkBlad">
-                    <div id="datatable">Hier komt een tabel...</div>
-                </div>
+    <div id="werkBlad">
+        <div id="datatable">Hier komt een tabel...</div>
+    </div>
 
-                <div id="werkBlad">
-                    <div id="hack_toggle">Klik voor meer opties...</div>
-                    <div id="hacks">
-                        <input id="set_max_rows" type="button" value="Reduceer aantal punten in plot tot maximaal: ">
-                        <input type="text" id="max_rows" value="100" size=5><br>
-                        <input id="download_xml" type="button" value="Download Modelregels:">
-                        <input type="text" id="xml_filename" value="model.xml" size=15><br>
-                        <input id="download_pgf" type="button" value="Download PGFPlot:">
-                        <input type="text" id="pgf_filename" value="pgfplot.tex" size=15><br>
-                        <input id="download_tsv" type="button" value="Download TSV:">
-                        <input type="text" id="tsv_filename" value="model_data.tsv" size=15><br>
-                    </div>
-                </div>
+    <div id="werkBlad">
+        <div id="hack_toggle">Klik voor meer opties...</div>
+        <div id="hacks">
+            <input id="set_max_rows" type="button" value="Reduceer aantal punten in plot tot maximaal: ">
+            <input type="text" id="max_rows" value="100" size=5><br>
+            <input id="download_xml" type="button" value="Download Modelregels:">
+            <input type="text" id="xml_filename" value="model.xml" size=15><br>
+            <input id="download_pgf" type="button" value="Download PGFPlot:">
+            <input type="text" id="pgf_filename" value="pgfplot.tex" size=15><br>
+            <input id="download_tsv" type="button" value="Download TSV:">
+            <input type="text" id="tsv_filename" value="model_data.tsv" size=15><br>
+        </div>
+    </div>
 
-								<div id="werkBlad">
-                    <div>
-				                <input id="toggle_profiel" type="button" value="Toggle profiel: Meer/minder knoppen">
-                    </div>
-                </div>
+		<div id="werkBlad">
+        <div>
+            <input id="toggle_profiel" type="button" value="Toggle profiel: Meer/minder knoppen">
+        </div>
+    </div>
 
-                <script src="modellen/models.js"></script>
-                <script src="scripts/modelleertaal-app.browser.js"></script>
-                <link rel="stylesheet" href="scripts/codemirror.css">
-                <script src="scripts/codemirror.js"></script>
-                <script src="scripts/codemirror-mode-modelleertaal.js"></script>
+    <script src="modellen/models.js"></script>
+    <script src="scripts/modelleertaal-app.browser.js"></script>
+    <link rel="stylesheet" href="scripts/codemirror.css">
+    <script src="scripts/codemirror.js"></script>
+    <script src="scripts/codemirror-mode-modelleertaal.js"></script>
 
-                <script type="text/javascript">
-                    m = new modelleertaalapp_js.ModelleertaalApp({
-                        debug: true
-                    });
+    <script type="text/javascript">
+        m = new modelleertaalapp_js.ModelleertaalApp({
+            debug: true
+        });
 
-                    $(document).ready(function () {
-                        console.log("Start!");
+        $(document).ready(function () {
+            console.log("Start!");
 
-												// customize titel
-												$('#title').html(title);
-												$('#title').attr('href', title_link);
+						// customize titel
+						$('#title').html(title);
+						$('#title').attr('href', title_link);
 
-												// Laadt het profiel (defintie in script bovenaan deze pagina)
-												activeer_profiel(profiellen[actieve_profiel]);
+						// Laadt het profiel (defintie in script bovenaan deze pagina)
+						activeer_profiel(profiellen[actieve_profiel]);
 
-                        // listen to URL index.html#model=model_naam&N=100 type URL
-                        // https://stackoverflow.com/a/44169739/4965175
-                        var hash = window.location.hash.substr(1);
-                        var url_params = hash.split('&').reduce(function (result, item) {
-                            var parts = item.split('=');
-                            result[parts[0]] = parts[1];
-                            return result;
-                        }, {});
-                        console.log("params passed in URL", url_params);
+            // listen to URL index.html#model=model_naam&N=100 type URL
+            // https://stackoverflow.com/a/44169739/4965175
+            var hash = window.location.hash.substr(1);
+            var url_params = hash.split('&').reduce(function (result, item) {
+                var parts = item.split('=');
+                result[parts[0]] = parts[1];
+                return result;
+            }, {});
+            console.log("params passed in URL", url_params);
 
-                        var N_preset = url_params.N || N_default || false;
-                        if (N_preset) {
-                            $("#NBox").val(N_preset);
-                        }
+            var N_preset = url_params.N || N_default || false;
+            if (N_preset) {
+                $("#NBox").val(N_preset);
+            }
 
-                        dropdown_update();
-                        var model_preselected = url_params.model || false;
-                        if (model_preselected) {
-                            // try to load model passed with model=... parameter
-                            var model_url = 'modellen/' + model_preselected + '.xml';
-                            load_model_xml_from_url(model_url);
-                            var reverse_dropdown_val = model_index.findIndex(function (element) {
-                                return element.url == model_url;
-                            });
-                            // set dropdown to selected model
-                            $("#model_keuze").val(reverse_dropdown_val);
-                        } else {
-                            // lees keuze uit drop-down en kies juiste url
-                            dropdown_load_model();
-                        };
-                        $("#model_keuze").change(dropdown_load_model);
+            dropdown_update();
+            var model_preselected = url_params.model || false;
+            if (model_preselected) {
+                // try to load model passed with model=... parameter
+                var model_url = 'modellen/' + model_preselected + '.xml';
+                load_model_xml_from_url(model_url);
+                var reverse_dropdown_val = model_index.findIndex(function (element) {
+                    return element.url == model_url;
+                });
+                // set dropdown to selected model
+                $("#model_keuze").val(reverse_dropdown_val);
+            } else {
+                // lees keuze uit drop-down en kies juiste url
+                dropdown_load_model();
+            };
+            $("#model_keuze").change(dropdown_load_model);
 
-                        $("#hacks").hide();
-                        $("#hack_toggle").css({
-                            'cursor': 'pointer'
-                        }).click(function () {
-                            $("#hack_toggle").hide();
-                            $("#hacks").show();
-                        });
-                        $("#pgfplot").click(function () {
-                            m.download_pgfplot();
-                        });
-                        $("#set_max_rows").click(function () {
-                            m.set_max_rows_in_plot($("#max_rows").val());
-                            console.log("set to: " + m.max_rows_in_plot);
-                        });
-												$("#toggle_profiel").click(function () {
-														actieve_profiel += 1;
-														if (actieve_profiel > profiellen.length - 1) actieve_profiel = 0;
-														console.log('actieve_profiel', actieve_profiel);
-														activeer_profiel(profiellen[actieve_profiel]);
-												});
+            $("#hacks").hide();
+            $("#hack_toggle").css({
+                'cursor': 'pointer'
+            }).click(function () {
+                $("#hack_toggle").hide();
+                $("#hacks").show();
+            });
+            $("#pgfplot").click(function () {
+                m.download_pgfplot();
+            });
+            $("#set_max_rows").click(function () {
+                m.set_max_rows_in_plot($("#max_rows").val());
+                console.log("set to: " + m.max_rows_in_plot);
+            });
+						$("#toggle_profiel").click(function () {
+								actieve_profiel += 1;
+								if (actieve_profiel > profiellen.length - 1) actieve_profiel = 0;
+								console.log('actieve_profiel', actieve_profiel);
+								activeer_profiel(profiellen[actieve_profiel]);
+						});
 
-                    });
+        });
 
 
-										activeer_profiel = function (profiel) {
-											  // zet knoppen/divs/span (id) aan/uit enz.
- 												console.log('Activeer profiel: ', profiel);
-												profiel.forEach(function (item) {
-														switch (item.action) {
-															case 'hide': {
-																$(item.id).hide();
-																break;
-															}
-															case 'show': {
-																$(item.id).show();
-																break;
-															}
-														}
-												});
-										}
-                    dropdown_update = function () {
-                        // maak het drop-down modelkeuze menu uit model.js
-                        $("#model_keuze").empty();
-                        for (var i = 0; i < model_index.length; i++) {
-                            $('<option/>').val(i).text(model_index[i].title).appendTo("#model_keuze");
-                        }
-                    };
+				activeer_profiel = function (profiel) {
+					  // zet knoppen/divs/span (id) aan/uit enz.
+							console.log('Activeer profiel: ', profiel);
+						profiel.forEach(function (item) {
+								switch (item.action) {
+									case 'hide': {
+										$(item.id).hide();
+										break;
+									}
+									case 'show': {
+										$(item.id).show();
+										break;
+									}
+								}
+						});
+				}
+        dropdown_update = function () {
+            // maak het drop-down modelkeuze menu uit model.js
+            $("#model_keuze").empty();
+            for (var i = 0; i < model_index.length; i++) {
+                $('<option/>').val(i).text(model_index[i].title).appendTo("#model_keuze");
+            }
+        };
 
-                    dropdown_load_model = function () {
+        dropdown_load_model = function () {
 
-                        var model_keuze = $("#model_keuze").val();
+            var model_keuze = $("#model_keuze").val();
 
-                        // uit model.js
-                        url = model_index[model_keuze].url;
-                        var myRe = /\/([^.]+)/g;
-                        var permalink = base_url + '/index.html?model=' + myRe.exec(url)[1];
-                        $("#permalink").attr('href', permalink);
-                        load_model_xml_from_url(url);
-                        console.log($("#permalink").val());
-                    };
+            // uit model.js
+            url = model_index[model_keuze].url;
+            var myRe = /\/([^.]+)/g;
+            var permalink = base_url + '/index.html?model=' + myRe.exec(url)[1];
+            $("#permalink").attr('href', permalink);
+            load_model_xml_from_url(url);
+            console.log($("#permalink").val());
+        };
 
-                    load_model_xml_from_url = function (url) {
-                        $.ajax({
-                            url: url,
-                            dataType: "text",
-                            success: function (data) {
-                                m.read_model_from_xml(data);
-                                m.init_app();
-                            }, // succes();
-                            error: function (xhr, ajaxOptions, thrownError) {
-                                if (xhr.status === 0) {
-                                    alert("Kan model " + url + " niet laden.\nBestaat het model?\nOffline? Probeer Edge of =Firefox");
-                                } else {
-                                    alert(thrownError);
-                                }
-                                $("#graph").html("Model niet geladen! FOUT.");
-                                print_status("Status: ERROR.");
-                            } // error();
-                        }); //.ajax
-                    };
-                </script>
+        load_model_xml_from_url = function (url) {
+            $.ajax({
+                url: url,
+                dataType: "text",
+                success: function (data) {
+                    m.read_model_from_xml(data);
+                    m.init_app();
+                }, // succes();
+                error: function (xhr, ajaxOptions, thrownError) {
+                    if (xhr.status === 0) {
+                        alert("Kan model " + url + " niet laden.\nBestaat het model?\nOffline? Zet CORS protection uit");
+                    } else {
+                        alert(thrownError);
+                    }
+                    $("#graph").html("Model niet geladen! FOUT.");
+                    print_status("Status: ERROR.");
+                } // error();
+            }); //.ajax
+        };
+    </script>
 
 </body>
 
