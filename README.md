@@ -16,6 +16,19 @@ The webapp (HTML/Javascript) should run on Windows/MacOS/Android/iOS in any brow
 The webapp is very limited, but it should be easy to use *and* it should run all models used in Dutch High School Physics classes.
 If it doesn't work or isn't easy to use: Please provide feedback.
 
+## Using the webapp in your own website
+
+(please do!)
+
+Only `index.html` and the folders `scripts/` and `modellen/` are needed to run the webapp in a browser or in a website. However
+you need the browserified file `scripts/modelleertaal-app.browser.js`which is not included in the `master` branch.
+You can build it yourself (see below) or download a zip or tarball from the [release page](https://github.com/tomkooij/modelleertaal/releases).
+
+Optionally change the models in `modellen/` and edit `modellen/models.js` accordingly. Put it on a website somewhere. 
+All code runs in the browser, so a server is not needed.
+
+The webapp can be easily customized (button/options turned off and on) but documentation is lacking. See `index.html`.
+
 ## About *Modelleertaal*
 
 *Modelleertaal* is the language used for "natuurkundig modelleren"
@@ -78,7 +91,7 @@ results = evaluator.run(N);
 
 `model.js` is used to read/write models. Models are stored in `BogusXML` which has an XML-like syntax with `<` and `>` allowed.
 
-## Installation
+## Installation for development
 
 To use the `master` branch (development version) of the webapp and/or compiler you will need to build it. This requires Node.js,
 npm and grunt:
@@ -89,21 +102,11 @@ npm install
 grunt
 ```
 
-To just run the webapp in a browser or in a website you need the browserified file `scripts/modelleertaal-app.browser.js`
-which is not included in the `master branch`. Either clone the `gh-pages` branch or download a zip or tarball from the
-[release page](https://github.com/tomkooij/modelleertaal/releases).
-
-## How to customize the webapp
-
-Only `index.html` and the folders `scripts/` and `modellen/` are needed. See the previous paragraph on how to obtain or build
-`scripts/modelleertaal-app.browser.js` which is not included in the `master` branch. Optionally change the models in `modellen/`
-and edit `modellen/models.js` accordingly. Put it on a website somewhere. All code runs in the browser.
-
 ## Running the webapp offline
 
 The webapp should run offline, but browser security may interfere with loading the models. (Cross site scripting protection may
-block the ajax request). At the time of writing the webapp works offline in Edge and Firefox (47) but ajax is blocked in Chrome (61).
-To use Chrome use the `--disable-web-security` flag when starting Chrome.
+block the ajax request). At the time of writing CORS protection blocks the webapp on Chrome, Firefox and Edge. Either install a
+browser extension that disables CORS protection or use a local webserver (`python -m http.server`)
 
 ## License and credits
 
