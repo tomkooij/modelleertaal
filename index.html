@@ -1,6 +1,54 @@
 <!DOCTYPE html>
 <html lang="en">
 
+
+
+<script>
+	//
+	// WebApp configuration / customisation
+	//
+  var N_default = 1000;		// default waarde voor N (aantal iteraties)
+	var base_url = 'https://www.tomkooij.nl/modelleertaal';
+
+	// titelbalk bovenaan
+	var title = 'Modelleertaal';
+	var title_link = 'https://www.github.com/tomkooij/modelleertaal';
+
+  // definitie van het "profiel", welke knoppen staan aan enz.
+  var full_webapp = [
+							{id: "#model_keuze", action: "show"},
+							{id: "#permalink", action: "show"},
+							{id: "#open_file_dialog", action: "show"},
+							// model blok
+							{id: "#continue_dialog", action: "show"},
+							{id: "#debugger_dialog", action: "show"},
+							// tabel output
+						];
+
+  var leerling_versie = [
+							// Uitgekleede webapp met zo min mogelijk afleiding
+							// bovenste blok
+							{id: "#model_keuze", action: "show"},
+							{id: "#permalink", action: "hide"},
+							{id: "#open_file_dialog", action: "hide"},
+							// model blok
+							{id: "#continue_dialog", action: "hide"},
+							{id: "#debugger_dialog", action: "hide"},
+							// tabel output
+						];
+
+	var profiellen = [full_webapp, leerling_versie];
+	var actieve_profiel = 0;
+
+</script>
+
+<!--
+
+Note to self:
+Do not edit below this line: Change config above!
+
+-->
+
 <head>
     <meta charset="utf-8">
     <title>Modelleertaal webapp</title>
@@ -71,7 +119,7 @@
 <body>
     <div id="werkBlad">
         <!-- CSS zorg voor met werkvlak met schaduw -->
-        <h2><a href="https://github.com/tomkooij/modelleertaal">Modelleertaal</a></h2>
+        <h2><a id="title" href="https://github.com/tomkooij/modelleertaal">Modelleertaal</a></h2>
         <p>
             <div>
                 Kies model:
@@ -79,7 +127,7 @@
                     <option value="0">model.js niet geladen!</option>
                 </select>
                 <a id="permalink" href="foobar">(link)</a>
-                of: <input type="file" id="fileinput">
+                <span id="open_file_dialog">of: <input type="file" id="fileinput"></span>
             </div>
     </div>
     <div id="werkBlad">
@@ -87,11 +135,16 @@
             <div>
                 <input id="run" type="button" value="RUN!">
                 Aantal iteraties = <input type="text" id="NBox" value="1000" size=5>.
-                <input id="continue" type="button" value="Voeg toe:">
-                <input type="text" id="NBoxContinue" value="10" size=3>
-                iteraties. Debugger:
-                <input id="trace" type="button" value="Volgende regel">
-                <div>
+                <span id="continue_dialog">
+									<input id="continue" type="button" value="Voeg toe:">
+              		<input type="text" id="NBoxContinue" value="10" size=3>
+                	iteraties.
+							  </span>
+								<span id="debugger_dialog">
+									Debugger:
+                	<input id="trace" type="button" value="Volgende regel">
+								</span>
+								<div>
                     <div>
                         <table class="app">
                             <tr>
@@ -141,7 +194,13 @@
                         <input id="download_pgf" type="button" value="Download PGFPlot:">
                         <input type="text" id="pgf_filename" value="pgfplot.tex" size=15><br>
                         <input id="download_tsv" type="button" value="Download TSV:">
-                        <input type="text" id="tsv_filename" value="model_data.tsv" size=15>
+                        <input type="text" id="tsv_filename" value="model_data.tsv" size=15><br>
+                    </div>
+                </div>
+
+								<div id="werkBlad">
+                    <div>
+				                <input id="toggle_profiel" type="button" value="Toggle profiel: Meer/minder knoppen">
                     </div>
                 </div>
 
@@ -159,7 +218,14 @@
                     $(document).ready(function () {
                         console.log("Start!");
 
-                        // listen to URL  index.html#model=model_naam&N=100 type URL
+												// customize titel
+												$('#title').html(title);
+												$('#title').attr('href', title_link);
+
+												// Laadt het profiel (defintie in script bovenaan deze pagina)
+												activeer_profiel(profiellen[actieve_profiel]);
+
+                        // listen to URL index.html#model=model_naam&N=100 type URL
                         // https://stackoverflow.com/a/44169739/4965175
                         var hash = window.location.hash.substr(1);
                         var url_params = hash.split('&').reduce(function (result, item) {
@@ -169,7 +235,7 @@
                         }, {});
                         console.log("params passed in URL", url_params);
 
-                        var N_preset = url_params.N || false;
+                        var N_preset = url_params.N || N_default || false;
                         if (N_preset) {
                             $("#NBox").val(N_preset);
                         }
@@ -205,10 +271,32 @@
                             m.set_max_rows_in_plot($("#max_rows").val());
                             console.log("set to: " + m.max_rows_in_plot);
                         });
+												$("#toggle_profiel").click(function () {
+														actieve_profiel += 1;
+														if (actieve_profiel > profiellen.length - 1) actieve_profiel = 0;
+														console.log('actieve_profiel', actieve_profiel);
+														activeer_profiel(profiellen[actieve_profiel]);
+												});
+
                     });
 
 
-
+										activeer_profiel = function (profiel) {
+											  // zet knoppen/divs/span (id) aan/uit enz.
+ 												console.log('Activeer profiel: ', profiel);
+												profiel.forEach(function (item) {
+														switch (item.action) {
+															case 'hide': {
+																$(item.id).hide();
+																break;
+															}
+															case 'show': {
+																$(item.id).show();
+																break;
+															}
+														}
+												});
+										}
                     dropdown_update = function () {
                         // maak het drop-down modelkeuze menu uit model.js
                         $("#model_keuze").empty();
@@ -224,8 +312,7 @@
                         // uit model.js
                         url = model_index[model_keuze].url;
                         var myRe = /\/([^.]+)/g;
-                        var permalink = 'https://www.tomkooij.nl/modelleertaal/index.html?model=' + myRe.exec(url)[1];
-                        console.log('permalink = ', permalink);
+                        var permalink = base_url + '/index.html?model=' + myRe.exec(url)[1];
                         $("#permalink").attr('href', permalink);
                         load_model_xml_from_url(url);
                         console.log($("#permalink").val());
