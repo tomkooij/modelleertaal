@@ -87,12 +87,12 @@ dan                                     return 'THEN'
 stop                                    return 'STOP'
 anders                                  return 'ELSE'
 
-// identifiers
-[a-zA-Z\x7f-\uffff][a-zA-Z\x7f-\uffff0-9_"\]""\|"{}"["]*                return 'IDENT'
-
 // blank item, to be filled in by user. Throw custom error on this
 "..."                                   return 'BLANK'
 "…"                                     return 'BLANK'
+
+// identifiers
+[a-zA-Z\x7f-\uffff][a-zA-Z\x7f-\uffff0-9_"\]""\|"{}"["]*                return 'IDENT'
 
 <<EOF>>                                 return 'EOF'
 
