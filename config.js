@@ -5,7 +5,7 @@
 var config_js_loaded = true;
 
 
-var N_default = 1337;		// default waarde voor N (aantal iteraties)
+var N_default = 500;		// default waarde voor N (aantal iteraties)
 var base_url = 'https://www.tomkooij.nl/modelleertaal';
 
 // titelbalk bovenaan
