@@ -1,53 +1,54 @@
 <!DOCTYPE html>
 <html lang="en">
 
+<script src="config.js"></script>
+<!--
 
+Note to self:
+Do not edit below this line: Change config.js above!
 
+-->
 <script>
 	//
 	// WebApp configuration / customisation
 	//
-  var N_default = 1000;		// default waarde voor N (aantal iteraties)
-	var base_url = 'https://www.tomkooij.nl/modelleertaal';
 
-	// titelbalk bovenaan
-	var title = 'Modelleertaal';
-	var title_link = 'https://www.github.com/tomkooij/modelleertaal';
+  if (typeof config_js_loaded === 'undefined') {
+    console.log('config.js not loaded: Using default configuration profiles.');
+    var N_default = 1000;		// default waarde voor N (aantal iteraties)
+  	var base_url = 'https://www.tomkooij.nl/modelleertaal';
 
-  // definitie van het "profiel", welke knoppen staan aan enz.
-  var full_webapp = [
-							{id: "#model_keuze", action: "show"},
-							{id: "#permalink", action: "show"},
-							{id: "#open_file_dialog", action: "show"},
-							// model blok
-							{id: "#continue_dialog", action: "show"},
-							{id: "#debugger_dialog", action: "show"},
-							// tabel output
-						];
+  	// titelbalk bovenaan
+  	var title = 'Modelleertaal';
+  	var title_link = 'https://www.github.com/tomkooij/modelleertaal';
 
-  var leerling_versie = [
-							// Uitgekleede webapp met zo min mogelijk afleiding
-							// bovenste blok
-							{id: "#model_keuze", action: "show"},
-							{id: "#permalink", action: "hide"},
-							{id: "#open_file_dialog", action: "hide"},
-							// model blok
-							{id: "#continue_dialog", action: "hide"},
-							{id: "#debugger_dialog", action: "hide"},
-							// tabel output
-						];
+    // definitie van het "profiel", welke knoppen staan aan enz.
+    var full_webapp = [
+  							{id: "#model_keuze", action: "show"},
+  							{id: "#permalink", action: "show"},
+  							{id: "#open_file_dialog", action: "show"},
+  							// model blok
+  							{id: "#continue_dialog", action: "show"},
+  							{id: "#debugger_dialog", action: "show"},
+  							// tabel output
+  						];
 
-	var profiellen = [full_webapp, leerling_versie];
-	var actieve_profiel = 0;
+    var leerling_versie = [
+  							// Uitgekleede webapp met zo min mogelijk afleiding
+  							// bovenste blok
+  							{id: "#model_keuze", action: "show"},
+  							{id: "#permalink", action: "hide"},
+  							{id: "#open_file_dialog", action: "hide"},
+  							// model blok
+  							{id: "#continue_dialog", action: "hide"},
+  							{id: "#debugger_dialog", action: "hide"},
+  							// tabel output
+  						];
 
+  	var profiellen = [full_webapp, leerling_versie];
+  	var actieve_profiel = 0;
+};
 </script>
-
-<!--
-
-Note to self:
-Do not edit below this line: Change config above!
-
--->
 
 <head>
     <meta charset="utf-8">
@@ -204,6 +205,8 @@ Do not edit below this line: Change config above!
         </div>
     </div>
 
+    <!-- jQuery is included in head section -->
+    <!-- config.js included at the top of this file -->
     <script src="modellen/models.js"></script>
     <script src="scripts/modelleertaal-app.browser.js"></script>
     <link rel="stylesheet" href="scripts/codemirror.css">
