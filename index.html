@@ -9,45 +9,74 @@ Do not edit below this line: Change config.js above!
 
 -->
 <script>
-	//
-	// WebApp configuration / customisation
-	//
+    //
+    // WebApp configuration / customisation
+    //
 
-  if (typeof config_js_loaded === 'undefined') {
-    console.log('config.js not loaded: Using default configuration profiles.');
-    var N_default = 1000;		// default waarde voor N (aantal iteraties)
-  	var base_url = 'https://www.tomkooij.nl/modelleertaal';
+    if (typeof config_js_loaded === 'undefined') {
+        console.log('config.js not loaded: Using default configuration profiles.');
+        var N_default = 1000; // default waarde voor N (aantal iteraties)
+        var base_url = 'https://www.tomkooij.nl/modelleertaal';
 
-  	// titelbalk bovenaan
-  	var title = 'Modelleertaal';
-  	var title_link = 'https://www.github.com/tomkooij/modelleertaal';
+        // titelbalk bovenaan
+        var title = 'Modelleertaal';
+        var title_link = 'https://www.github.com/tomkooij/modelleertaal';
 
-    // definitie van het "profiel", welke knoppen staan aan enz.
-    var full_webapp = [
-  							{id: "#model_keuze", action: "show"},
-  							{id: "#permalink", action: "show"},
-  							{id: "#open_file_dialog", action: "show"},
-  							// model blok
-  							{id: "#continue_dialog", action: "show"},
-  							{id: "#debugger_dialog", action: "show"},
-  							// tabel output
-  						];
+        // definitie van het "profiel", welke knoppen staan aan enz.
+        var full_webapp = [{
+                id: "#model_keuze",
+                action: "show"
+            },
+            {
+                id: "#permalink",
+                action: "show"
+            },
+            {
+                id: "#open_file_dialog",
+                action: "show"
+            },
+            // model blok
+            {
+                id: "#continue_dialog",
+                action: "show"
+            },
+            {
+                id: "#debugger_dialog",
+                action: "show"
+            },
+            // tabel output
+        ];
 
-    var leerling_versie = [
-  							// Uitgekleede webapp met zo min mogelijk afleiding
-  							// bovenste blok
-  							{id: "#model_keuze", action: "show"},
-  							{id: "#permalink", action: "hide"},
-  							{id: "#open_file_dialog", action: "hide"},
-  							// model blok
-  							{id: "#continue_dialog", action: "hide"},
-  							{id: "#debugger_dialog", action: "hide"},
-  							// tabel output
-  						];
+        var leerling_versie = [
+            // Uitgekleede webapp met zo min mogelijk afleiding
+            // bovenste blok
+            {
+                id: "#model_keuze",
+                action: "show"
+            },
+            {
+                id: "#permalink",
+                action: "hide"
+            },
+            {
+                id: "#open_file_dialog",
+                action: "hide"
+            },
+            // model blok
+            {
+                id: "#continue_dialog",
+                action: "hide"
+            },
+            {
+                id: "#debugger_dialog",
+                action: "hide"
+            },
+            // tabel output
+        ];
 
-  	var profiellen = [full_webapp, leerling_versie];
-  	var actieve_profiel = 0;
-};
+        var profiellen = [full_webapp, leerling_versie];
+        var actieve_profiel = 0;
+    };
 </script>
 
 <head>
@@ -136,15 +165,15 @@ Do not edit below this line: Change config.js above!
             <input id="run" type="button" value="RUN!">
             Aantal iteraties = <input type="text" id="NBox" value="1000" size=5>.
             <span id="continue_dialog">
-							<input id="continue" type="button" value="Voeg toe:">
-          		<input type="text" id="NBoxContinue" value="10" size=3>
-            	iteraties.
-					  </span>
-						<span id="debugger_dialog">
-							Debugger:
-            	<input id="trace" type="button" value="Volgende regel">
-						</span>
-						<div>
+                <input id="continue" type="button" value="Voeg toe:">
+                <input type="text" id="NBoxContinue" value="10" size=3>
+                iteraties.
+            </span>
+            <span id="debugger_dialog">
+                Debugger:
+                <input id="trace" type="button" value="Volgende regel">
+            </span>
+            <div>
                 <table class="app">
                     <tr>
                         <td>
@@ -166,7 +195,7 @@ Do not edit below this line: Change config.js above!
                                 <input id="plot" type="button" value="Plot!">
                                 <p>
                                     Coördinaat:<span id="hoverdata"></span><br>
-																		Klik op een punt om waarden af te lezen:
+                                    Klik op een punt om waarden af te lezen:
 
                         </td>
                         <td style="vertical-align:top" width=300px><textarea id="modelregels" rows=15 cols=30>//Modelregels:</textarea>
@@ -199,7 +228,7 @@ Do not edit below this line: Change config.js above!
         </div>
     </div>
 
-		<div id="werkBlad">
+    <div id="werkBlad">
         <div>
             <input id="toggle_profiel" type="button" value="Toggle profiel: Meer/minder knoppen">
         </div>
@@ -218,20 +247,20 @@ Do not edit below this line: Change config.js above!
             debug: true
         });
 
-        $(document).ready(function () {
+        $(document).ready(function() {
             console.log("Start!");
 
-						// customize titel
-						$('#title').html(title);
-						$('#title').attr('href', title_link);
+            // customize titel
+            $('#title').html(title);
+            $('#title').attr('href', title_link);
 
-						// Laadt het profiel (defintie in script bovenaan deze pagina)
-						activeer_profiel(profiellen[actieve_profiel]);
+            // Laadt het profiel (defintie in script bovenaan deze pagina)
+            activeer_profiel(profiellen[actieve_profiel]);
 
             // listen to URL index.html#model=model_naam&N=100 type URL
             // https://stackoverflow.com/a/44169739/4965175
             var hash = window.location.hash.substr(1);
-            var url_params = hash.split('&').reduce(function (result, item) {
+            var url_params = hash.split('&').reduce(function(result, item) {
                 var parts = item.split('=');
                 result[parts[0]] = parts[1];
                 return result;
@@ -249,7 +278,7 @@ Do not edit below this line: Change config.js above!
                 // try to load model passed with model=... parameter
                 var model_url = 'modellen/' + model_preselected + '.xml';
                 load_model_xml_from_url(model_url);
-                var reverse_dropdown_val = model_index.findIndex(function (element) {
+                var reverse_dropdown_val = model_index.findIndex(function(element) {
                     return element.url == model_url;
                 });
                 // set dropdown to selected model
@@ -263,44 +292,44 @@ Do not edit below this line: Change config.js above!
             $("#hacks").hide();
             $("#hack_toggle").css({
                 'cursor': 'pointer'
-            }).click(function () {
+            }).click(function() {
                 $("#hack_toggle").hide();
                 $("#hacks").show();
             });
-            $("#pgfplot").click(function () {
+            $("#pgfplot").click(function() {
                 m.download_pgfplot();
             });
-            $("#set_max_rows").click(function () {
+            $("#set_max_rows").click(function() {
                 m.set_max_rows_in_plot($("#max_rows").val());
                 console.log("set to: " + m.max_rows_in_plot);
             });
-						$("#toggle_profiel").click(function () {
-								actieve_profiel += 1;
-								if (actieve_profiel > profiellen.length - 1) actieve_profiel = 0;
-								console.log('actieve_profiel', actieve_profiel);
-								activeer_profiel(profiellen[actieve_profiel]);
-						});
+            $("#toggle_profiel").click(function() {
+                actieve_profiel += 1;
+                if (actieve_profiel > profiellen.length - 1) actieve_profiel = 0;
+                console.log('actieve_profiel', actieve_profiel);
+                activeer_profiel(profiellen[actieve_profiel]);
+            });
 
         });
 
 
-				activeer_profiel = function (profiel) {
-					  // zet knoppen/divs/span (id) aan/uit enz.
-							console.log('Activeer profiel: ', profiel);
-						profiel.forEach(function (item) {
-								switch (item.action) {
-									case 'hide': {
-										$(item.id).hide();
-										break;
-									}
-									case 'show': {
-										$(item.id).show();
-										break;
-									}
-								}
-						});
-				}
-        dropdown_update = function () {
+        activeer_profiel = function(profiel) {
+            // zet knoppen/divs/span (id) aan/uit enz.
+            console.log('Activeer profiel: ', profiel);
+            profiel.forEach(function(item) {
+                switch (item.action) {
+                    case 'hide': {
+                        $(item.id).hide();
+                        break;
+                    }
+                    case 'show': {
+                        $(item.id).show();
+                        break;
+                    }
+                }
+            });
+        }
+        dropdown_update = function() {
             // maak het drop-down modelkeuze menu uit model.js
             $("#model_keuze").empty();
             for (var i = 0; i < model_index.length; i++) {
@@ -308,7 +337,7 @@ Do not edit below this line: Change config.js above!
             }
         };
 
-        dropdown_load_model = function () {
+        dropdown_load_model = function() {
 
             var model_keuze = $("#model_keuze").val();
 
@@ -321,15 +350,15 @@ Do not edit below this line: Change config.js above!
             console.log($("#permalink").val());
         };
 
-        load_model_xml_from_url = function (url) {
+        load_model_xml_from_url = function(url) {
             $.ajax({
                 url: url,
                 dataType: "text",
-                success: function (data) {
+                success: function(data) {
                     m.read_model_from_xml(data);
                     m.init_app();
                 }, // succes();
-                error: function (xhr, ajaxOptions, thrownError) {
+                error: function(xhr, ajaxOptions, thrownError) {
                     if (xhr.status === 0) {
                         alert("Kan model " + url + " niet laden.\nBestaat het model?\nOffline? Zet CORS protection uit");
                     } else {
