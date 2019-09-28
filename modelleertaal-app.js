@@ -20,14 +20,16 @@ var FileSaver = require('file-saver');
 /* version history
 v4.4.0 (13sep19) Add read N=1000 from XML. Add error msg for ... "Vul hier iets in"
 v4.4.1 (15sep19) Accept ... and unicode symbol '...' as BLANK (Vul hier in error)
+v4.5 (28sep19) Bugfix: fix double alert 'cannot read property of undefined' on parse error
+     accepteer unicode squared/cubed F=k*v²
 */
-var version = "v4.4.1 - 15sep2019";
+var version = "v4.5 - 28sep2019";
 
 
 function ModelleertaalApp(params) {
 
   this.debug = params.debug || false;
-  console.log('Modelleertaal App. Debug = ' + this.debug);
+  console.log('Modelleertaal App. ' + version + '. Debug = ' + this.debug);
 
   this.CodeMirror = params.CodeMirror || true;
   this.CodeMirrorActive = false;
