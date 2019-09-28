@@ -200,12 +200,15 @@ ModelleertaalApp.prototype.save_string = function(data, filename) {
 
 ModelleertaalApp.prototype.run = function() {
 
-  this.setup_run();
-  this.new_run = true;
-  if (!this.do_run()) this.has_run = false;
-  this.after_run();
-  this.has_run = true;
-  return true;
+  if (this.setup_run()) {
+    this.new_run = true;
+    if (!this.do_run()) this.has_run = false;
+    this.after_run();
+    this.has_run = true;
+    return true;
+  } else {
+    return false;
+  }
 };
 
 ModelleertaalApp.prototype.continue_run = function() {
@@ -266,6 +269,7 @@ ModelleertaalApp.prototype.setup_run = function() {
     this.highlight_error(err.parser_line, err.parser_name);
 		return false;
   }
+  return true;
 };
 
 ModelleertaalApp.prototype.do_run = function() {
@@ -306,14 +310,15 @@ ModelleertaalApp.prototype.do_run = function() {
 
 ModelleertaalApp.prototype.after_run = function() {
 
-  // create the axis drop-down menu, try to keep value
-  this.save_axis();
-  this.reset_axis_dropdown();
-  this.set_axis();
+  if (this.allVars !== undefined) {
+    // create the axis drop-down menu, try to keep value
+    this.save_axis();
+    this.reset_axis_dropdown();
+    this.set_axis();
 
-  this.print_table();
-  this.do_plot();
-
+    this.print_table();
+    this.do_plot();
+  }
 };
 
 
@@ -332,6 +337,7 @@ ModelleertaalApp.prototype.reset_axis_dropdown = function() {
   $(this.dom_y_var).empty();
   $('<option/>').val('').text('auto').appendTo(this.dom_x_var);
   $('<option/>').val('').text('auto').appendTo(this.dom_y_var);
+
   for (var i = 0; i < this.allVars.length; i++) {
     $('<option/>').val(i).text(this.allVars[i]).appendTo(this.dom_x_var);
     $('<option/>').val(i).text(this.allVars[i]).appendTo(this.dom_y_var);
