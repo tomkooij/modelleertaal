@@ -74,6 +74,8 @@ waar                                     return 'TRUE'
 
 
 // math
+"²"                                     return 'SQUARED'
+"³"                                     return 'CUBED'
 "^"                                     return '^'
 "+"                                     return '+'
 "-"                                     return '-'
@@ -91,8 +93,8 @@ anders                                  return 'ELSE'
 "..."                                   return 'BLANK'
 "…"                                     return 'BLANK'
 
-// identifiers
-[a-zA-Z\x7f-\uffff][a-zA-Z\x7f-\uffff0-9_"\]""\|"{}"["]*                return 'IDENT'
+// identifiers (\u00b2 and \u00b3 squared, cubed skipped)
+[a-zA-Z\x7f-\uffff][a-zA-Z\x7f-\u00b1\u00b4-\uffff0-9_"\]""\|"{}"["]*                return 'IDENT'
 
 <<EOF>>                                 return 'EOF'
 
@@ -106,7 +108,7 @@ anders                                  return 'ELSE'
 /* operator associations and precedence */
 %left '+' '-'
 %left '*' '/'
-%left '^'
+%left '^' 'SQUARED' 'CUBED'
 %right NOT
 %right UMINUS
 
@@ -234,7 +236,28 @@ expr
                   right: $3
           };
       }
-
+  | expr 'SQUARED'
+       {$$ = {
+                  type: 'Binary',
+                  operator: '^',
+                  left: $1,
+                  right: {
+                          type: 'Number',
+                          value: "2"
+                      },
+            };
+          }
+  | expr 'CUBED'
+       {$$ = {
+                  type: 'Binary',
+                  operator: '^',
+                  left: $1,
+                  right: {
+                          type: 'Number',
+                          value: "3"
+                      },
+            };
+          }
  | expr '^' expr
       {$$ = {
                  type: 'Binary',

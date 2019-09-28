@@ -68,6 +68,12 @@ describe('CodeGenertor.generateCodeFromAst() correct output of math expressions'
         assert.equal(eval(code),27);
     })
 
+    it('operator precedence (unicode squared): 3² * 3 = 27', function() {
+        ast = parser.parse("t=3²*3");
+        code = codegenerator.generateCodeFromAst(ast);
+        assert.equal(eval(code),27);
+    })
+
     it('correct functionality of unary - operator: 2 + -3 + 1 == 0', function() {
         ast = parser.parse("t=2 + -3 + 1");
         code = codegenerator.generateCodeFromAst(ast);
@@ -94,6 +100,18 @@ describe('CodeGenertor.generateCodeFromAst() correct output of math expressions'
 
     it('operator precedence: -(3+2) ^ 2 = -25', function() {
         ast = parser.parse("t=-(3+2) ^ 2");
+        code = codegenerator.generateCodeFromAst(ast);
+        assert.equal(eval(code),-25);
+    })
+
+    it('operator precedence (unicode squared): -(3+2)² = -25', function() {
+        ast = parser.parse("t=-(3+2)²");
+        code = codegenerator.generateCodeFromAst(ast);
+        assert.equal(eval(code),-25);
+    })
+
+    it('operator precedence (unicode cubed): -(3+2)³ = -125', function() {
+        ast = parser.parse("t=-(3+2)²");
         code = codegenerator.generateCodeFromAst(ast);
         assert.equal(eval(code),-25);
     })
