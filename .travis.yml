@@ -1,8 +1,7 @@
 language: node_js
 node_js:
-  #- "0.10"
-  - "6"
-  - "7"
+  - "6"   # test backwards compatibility
+  - node  # latest stable
 
 before_install: npm install -g grunt-cli
 install: npm install
@@ -20,7 +19,7 @@ deploy:
     github_token: $GITHUB_TOKEN
     on:
       branch: master
-      node_js: "7"
+      node_js: node
   - provider: releases
     file:
       - modelleertaal-$TRAVIS_TAG.zip
@@ -28,5 +27,5 @@ deploy:
     api_key: $GITHUB_TOKEN
     on:
       branch: master
-      node_js: "7"
+      node_js: node
       tags: true
