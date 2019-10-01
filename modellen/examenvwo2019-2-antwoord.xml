@@ -14,7 +14,8 @@ y = 19
 vx = v * cos(hoek)
 vy = v * sin(hoek)
 cw = 0,18
-A = ...
+A = pi*0,10^2 
+
 </startwaarden>
 <modelregels>
 'Examen vwo 2019-II
@@ -32,7 +33,7 @@ x = x + vx * dt
 
 'beweging in de y-richting
 Fwy = Fw * (vy/v)
-Fy = ... - Fwy
+Fy = -Fz - Fwy
 ay = Fy / m
 vy = vy + ay * dt
 y = y + vy * dt
@@ -40,5 +41,6 @@ y = y + vy * dt
 t = t + dt
 
 'stopconditie
+als y < 0 dan stop eindals
 </modelregels>
 </modelleertaal>
