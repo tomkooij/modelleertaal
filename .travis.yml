@@ -9,7 +9,7 @@ before_script: grunt build
 
 before_deploy:
   # create zipfile for release
-  - zip modelleertaal-$TRAVIS_TAG.zip index.html scripts/* modellen/*
+  - zip modelleertaal-$TRAVIS_TAG.zip index.html config.js scripts/* modellen/*
   # create folder to deploy to gh-pages
   - mkdir _build
   - cp -R scripts _build/
