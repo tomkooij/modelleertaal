@@ -8,15 +8,21 @@ install: npm install
 before_script: grunt build
 
 before_deploy:
-  # only ignore installed npm modules. Keep build.
-  - echo "node_modules" >.gitignore
   # create zipfile for release
   - zip modelleertaal-$TRAVIS_TAG.zip index.html scripts/* modellen/*
+  # create folder to deploy to gh-pages
+  - mkdir _build
+  - cp -R scripts _build/
+  - cp -R modellen _build/
+  - cp index.html _build/
+  - cp config.js _build/
+  - touch _build/.nojekyll
 
 deploy:
   - provider: pages
     skip_cleanup: true
     github_token: $GITHUB_TOKEN
+    local_dir: _build
     on:
       branch: master
       node_js: node
