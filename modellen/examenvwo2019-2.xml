@@ -1,0 +1,43 @@
+﻿<modelleertaal>
+<startwaarden>
+t = 0
+dt = 0,1
+g = 9,81
+m = 106
+Fz = m*g
+ρ = 1,28
+v = 1640
+hoek = 33 'in graden
+x = 0
+y = 19
+vx = v * sin(hoek)
+vy = v * sin(hoek)
+cw = 0,18
+A = ...
+</startwaarden>
+<modelregels>
+'Examen vwo 2019-II
+
+'luchtwrijving:
+v = sqrt(vx^2 + vy^2)
+Fw = 1/2 * ρ * A * cw * v^2 
+
+'beweging in de x-richting
+Fwx = Fw * (vx/v)
+Fx = -Fwx
+ax = Fx / m
+vx = vx + ax * dt
+x = x + vx * dt
+
+'beweging in de y-richting
+Fwy = Fw * (vy/v)
+Fy = ... - Fwy
+ay = Fy / m
+vy = vy + ay * dt
+y = y + vy * dt
+
+t = t + dt
+
+'stopconditie
+</modelregels>
+</modelleertaal>
