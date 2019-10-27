@@ -194,10 +194,10 @@ Namespace.prototype.sortVarNames = function () {
       // try to plot y,x diagram
       nameList = ['x', 'y', 't', 's', 'h', 'v', 'vx', 'vy'];
     } else if (this.varNames.includes('h') & this.varNames.includes('x')) {
-      // try to plot y,x diagram
+      // try to plot h,x diagram
       nameList = ['x', 'h', 't', 's', 'y', 'v', 'vx', 'vy'];
     } else {
-      // try to plot t,x diagram
+      // try to plot s,t or x,t diagram
       nameList = ['t', 's', 'x', 'y', 'h', 'v', 'vx', 'vy'];
     }
     var nextVariableIndex = 0 ; // place to swap next "special"variable with

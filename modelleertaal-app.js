@@ -22,6 +22,7 @@ v4.4.0 (13sep19) Add read N=1000 from XML. Add error msg for ... "Vul hier iets 
 v4.4.1 (15sep19) Accept ... and unicode symbol '...' as BLANK (Vul hier in error)
 v4.5 (28sep19) Bugfix: fix double alert 'cannot read property of undefined' on parse error
      accepteer unicode squared/cubed F=k*v²
+v4.6DEV (WIP) Allow boolean variables in output
 */
 var version = "v4.5 - 28sep2019";
 
@@ -387,14 +388,26 @@ ModelleertaalApp.prototype.table_row = function(rowIndex) {
 
     function fix(x) {
       if (isNaN(x)) return "X";
-        if (Math.abs(x) < 0.0001) return 0;
+      if (Math.abs(x) < 0.0001) return 0;
       return x;
     }
 
     var row = $('<tr>');
     row.append($('<td>').text(rowIndex));
+
+    var res;
     for (var j = 0; j < this.results[rowIndex].length; j++) {
-      row.append($('<td>').text(fix(this.results[rowIndex][j].toPrecision(4))));
+      res = this.results[rowIndex][j];
+      if (typeof(res) === 'number') {
+          res = fix(res.toPrecision(4));
+      } else {  // -- boolean
+          if (res) {
+            res = 'Waar';
+          } else {
+            res = 'Onwaar';
+          }
+      }
+      row.append($('<td>').text(res));
     }
     return row;
 };
