@@ -344,7 +344,7 @@ Do not edit below this line: Change config.js above!
             // uit model.js
             url = model_index[model_keuze].url;
             var myRe = /\/([^.]+)/g;
-            var permalink = base_url + '/index.html?model=' + myRe.exec(url)[1];
+            var permalink = base_url + '/index.html#model=' + myRe.exec(url)[1];
             $("#permalink").attr('href', permalink);
             load_model_xml_from_url(url);
             console.log($("#permalink").val());
