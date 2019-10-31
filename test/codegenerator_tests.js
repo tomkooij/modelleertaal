@@ -220,6 +220,26 @@ describe('CodeGenertor.generateCodeFromAst() correct flow control', function(){
         code = codegenerator.generateCodeFromAst(ast);
         assert.equal(eval(code), 3);
     })
+    it('Correct functionality of && || en of in als dan statement', function() {
+        ast = parser.parse("t = 0 of 1");
+        code = codegenerator.generateCodeFromAst(ast);
+        assert.equal(eval(code),true);
+        ast = parser.parse("t = 1 en 1");
+        code = codegenerator.generateCodeFromAst(ast);
+        assert.equal(eval(code),true);
+        ast = parser.parse("t = 0 of 1 en 1");
+        code = codegenerator.generateCodeFromAst(ast);
+        assert.equal(eval(code),true);
+        ast = parser.parse("t = 1 en 0");
+        code = codegenerator.generateCodeFromAst(ast);
+        assert.equal(eval(code),false);
+        ast = parser.parse("t = 0 of 1 of waar");
+        code = codegenerator.generateCodeFromAst(ast);
+        assert.equal(eval(code),true);
+        ast = parser.parse("t = 1 en waar");
+        code = codegenerator.generateCodeFromAst(ast);
+        assert.equal(eval(code),true);
+    })
 });
 
 describe('Namespace varDict correct handling / translation / mangling of variable names', function(){

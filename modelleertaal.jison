@@ -58,6 +58,12 @@
 "<="                                    return '<='
 ">"                                     return '>'
 "<"                                     return '<'
+of                                      return '||'
+"||"                                    return '||'
+en                                      return '&&'
+"&&"                                    return '&&'
+
+
 
 "!"|niet                                return 'NOT'
 onwaar                                  return 'FALSE'
@@ -109,6 +115,7 @@ anders                                  return 'ELSE'
 %left '+' '-'
 %left '*' '/'
 %left '^' 'SQUARED' 'CUBED'
+%left '||' '&&'
 %right NOT
 %right UMINUS
 
@@ -232,6 +239,22 @@ expr
       {$$ = {
                   type: 'Logical',
                   operator: '<=',
+                  left: $1,
+                  right: $3
+          };
+      }
+  | expr '||' expr
+      {$$ = {
+                  type: 'Logical',
+                  operator: '||',
+                  left: $1,
+                  right: $3
+          };
+      }
+  | expr '&&' expr
+      {$$ = {
+                  type: 'Logical',
+                  operator: '&&',
                   left: $1,
                   right: $3
           };
