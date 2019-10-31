@@ -347,14 +347,14 @@ expr
        }
   | TRUE /* There must be a better way... */
       {$$ = {
-                type: 'True',
-                value: $1
+                type: 'Boolean',
+                value: 'true'
             };
          }
   | FALSE
       {$$ = {
-                type: 'False',
-                value: $1
+                type: 'Boolean',
+                value: 'false'
             };
          }
 

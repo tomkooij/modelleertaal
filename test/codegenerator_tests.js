@@ -23,6 +23,12 @@ describe('CodeGenertor.generateCodeFromAst() generate javascript from parsed AST
         assert.include(code,'Math.pow')
     })
 
+    it('CodeGenerator generates booleans', function() {
+        ast = parser.parse("t=waar");
+        code = codegenerator.generateCodeFromAst(ast);
+        assert.include(code,'true');
+    })
+
     it('CodeGenerator generates sin/cos/tan math functions', function() {
         ast = parser.parse("x=1\nt=sin(x)+cos(x)+tan(x)");
         code = codegenerator.generateCodeFromAst(ast);

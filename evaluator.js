@@ -339,10 +339,8 @@ CodeGenerator.prototype.parseNode = function(node) {
                 }
         case 'Number':
                 return parseFloat(node.value.replace(',','.'));
-        case 'True':
-                return 'true';
-        case 'False':
-                return 'false';
+        case 'Boolean':
+                return node.value;
         case 'Stop':
                 return 'bailout=true;\nbreak;';
         case 'Blank': {
