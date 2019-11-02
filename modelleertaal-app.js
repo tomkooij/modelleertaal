@@ -102,10 +102,12 @@ function ModelleertaalApp(params) {
 
   $(this.dom_plot).click(function() {
     if (self.results.length === 0) {
-        alert('Geen resultaten. Druk eerst op Run!');
-    } else {
-        self.do_plot();
+        console.log('Plot clicked. No results --> Run first');
+        self.N = Number($(self.dom_nbox).val());
+        self.run();
     }
+    self.do_plot();
+
     //self.print_status("Plot OK.");
   });
 
