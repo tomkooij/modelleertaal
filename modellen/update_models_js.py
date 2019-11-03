@@ -79,7 +79,7 @@ def read_models_js(models_js=MODELS_JS):
     return modellen, bestanden_in_models_js
 
 
-def add_new_files_to_index(bestanden_in_folder, bestanden_in_models_js, modellen):
+def add_new_files_to_index(bestanden_in_models_js, bestanden_in_folder, modellen):
     """add new files to models.js, rename files with spaces"""
 
     for fn in bestanden_in_folder:
@@ -116,7 +116,7 @@ def main():
     bestanden_in_folder = glob.glob("*.xml")
 
     remove_missing_files_from_index(bestanden_in_models_js, bestanden_in_folder, modellen)
-    add_new_files_to_index(bestanden_in_folder, bestanden_in_models_js, modellen)
+    add_new_files_to_index(bestanden_in_models_js, bestanden_in_folder, modellen)
     write_models_js(modellen)
 
 
