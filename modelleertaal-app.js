@@ -670,7 +670,7 @@ ModelleertaalApp.prototype.create_pgfplot_header = function() {
 		 "% y = ["+y_min+" .. "+arrayMax(y)+"]\n"+
 		 "% this only works for graphs starting at (0,0)\n"+
 		 "\\begin{axis}[x=1cm\/"+x_scale+", y=1cm\/"+y_scale+",\n"+
-     "%axis lines*=center,"+
+     "axis y line=left, axis x line=middle,\n"+
 		 "enlargelimits=false, tick align=outside,\n "+
 		 "xlabel={$"+x_var+"$ [\\si{"+x_unit+"}]},\n"+
 		 "ylabel={$"+y_var+"$ [\\si{"+y_unit+"}]},\n"+
