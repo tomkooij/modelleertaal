@@ -247,6 +247,14 @@ Do not edit below this line: Change config.js above!
             debug: true
         });
 
+        // split window.location.href in two parts
+        var base_url = window.location.origin;
+        var rel_url = window.location.href.split(base_url)[1];
+        rel_url = rel_url.split('#')[0]; // discard '#model=foobar.xml?N=100 part.
+        if (!rel_url.endsWith('/')) rel_url += '/';
+        console.log('base_url: ', base_url);
+        console.log('rel_url:' , rel_url);
+
         $(document).ready(function() {
             console.log("Start!");
 
@@ -271,6 +279,8 @@ Do not edit below this line: Change config.js above!
             if (N_preset) {
                 $("#NBox").val(N_preset);
             }
+
+
 
             dropdown_update();
             var model_preselected = url_params.model || false;
@@ -329,6 +339,7 @@ Do not edit below this line: Change config.js above!
                 }
             });
         }
+
         dropdown_update = function() {
             // maak het drop-down modelkeuze menu uit model.js
             $("#model_keuze").empty();
@@ -344,10 +355,21 @@ Do not edit below this line: Change config.js above!
             // uit model.js
             url = model_index[model_keuze].url;
             var myRe = /\/([^.]+)/g;
-            var permalink = base_url + '/index.html#model=' + myRe.exec(url)[1];
+
+            var rel_link = rel_url + 'index.html#model=' + myRe.exec(url)[1];
+            var permalink = base_url + rel_link;
+
+            // verander de URL onder de knop "link"
             $("#permalink").attr('href', permalink);
+
+            // verander de URL in de browser (history)
+            if (history.replaceState) {
+                window.history.replaceState("", "Modelleertaal webapp", rel_link);
+            } else {
+                document.location.href = rel_link;
+            }
+
             load_model_xml_from_url(url);
-            console.log($("#permalink").val());
         };
 
         load_model_xml_from_url = function(url) {
