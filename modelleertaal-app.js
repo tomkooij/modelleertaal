@@ -41,7 +41,7 @@ function ModelleertaalApp(params) {
   if (this.debug) {
     console.log('base_url: ', base_url);
     console.log('rel_url:' , rel_url);
-  };
+  }
 
   this.CodeMirror = params.CodeMirror || true;
   this.CodeMirrorActive = false;
@@ -92,7 +92,7 @@ function ModelleertaalApp(params) {
   // (re)set the app
   this.init_app();
   this.load_model();
-  
+
   this.max_rows_in_plot = 100;
 
   var self = this;
@@ -175,8 +175,8 @@ ModelleertaalApp.prototype.load_model = function() {
     } else {
         // lees keuze uit drop-down en kies juiste url
         this.dropdown_load_model();
-    };
-}
+    }
+};
 
 
 
