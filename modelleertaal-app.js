@@ -32,6 +32,17 @@ function ModelleertaalApp(params) {
   this.debug = params.debug || false;
   console.log('Modelleertaal App. ' + version + '. Debug = ' + this.debug);
 
+  this.model_index = params.model_index || false;
+  console.log('Model_index: ', this.model_index);
+
+  this.base_url = params.base_url || '';
+  this.rel_url = params.rel_url || 'index.html';
+
+  if (this.debug) {
+    console.log('base_url: ', base_url);
+    console.log('rel_url:' , rel_url);
+  };
+
   this.CodeMirror = params.CodeMirror || true;
   this.CodeMirrorActive = false;
 
@@ -58,6 +69,7 @@ function ModelleertaalApp(params) {
   this.dom_x_var = "#x_var";
   this.dom_y_var = "#y_var";
   this.dom_model_keuze = "#model_keuze";
+  this.dom_permalink = "#permaklink";
 
   this.read_model();
 
@@ -79,7 +91,8 @@ function ModelleertaalApp(params) {
 
   // (re)set the app
   this.init_app();
-
+  this.load_model();
+  
   this.max_rows_in_plot = 100;
 
   var self = this;
@@ -99,7 +112,6 @@ function ModelleertaalApp(params) {
     self.trace();
   });
 
-
   $(this.dom_plot).click(function() {
     if (self.results.length === 0) {
         console.log('Plot clicked. No results --> Run first');
@@ -109,6 +121,10 @@ function ModelleertaalApp(params) {
     self.do_plot();
 
     //self.print_status("Plot OK.");
+  });
+
+  $(this.dom_model_keuze).change(function () {
+    self.dropdown_load_model();
   });
 
   $(this.dom_download_xml).click(function() {
@@ -124,13 +140,109 @@ function ModelleertaalApp(params) {
   $(this.dom_fileinput).change(function(event) {
     self.read_file(event);
   });
+
 }
+
+ModelleertaalApp.prototype.load_model = function() {
+    // called from $(document).ready();
+
+    // listen to URL index.html#model=model_naam&N=100 type URL
+    // https://stackoverflow.com/a/44169739/4965175
+    var hash = window.location.hash.substr(1);
+    var url_params = hash.split('&').reduce(function(result, item) {
+        var parts = item.split('=');
+        result[parts[0]] = parts[1];
+        return result;
+    }, {});
+    console.log("params passed in URL", url_params);
+
+    var N_preset = url_params.N || N_default || false;
+    if (N_preset) {
+        $("#NBox").val(N_preset);
+    }
+
+    this.dropdown_update();
+    var model_preselected = url_params.model || false;
+    if (model_preselected) {
+        // try to load model passed with model=... parameter
+        var model_url = 'modellen/' + model_preselected + '.xml';
+        this.load_model_xml_from_url(model_url);
+        var reverse_dropdown_val = model_index.findIndex(function(element) {
+            return element.url == model_url;
+        });
+        // set dropdown to selected model
+        $(this.dom_model_keuze).val(reverse_dropdown_val);
+    } else {
+        // lees keuze uit drop-down en kies juiste url
+        this.dropdown_load_model();
+    };
+}
+
+
 
 
 ModelleertaalApp.prototype.print_status = function(status, error) {
   $(this.dom_status).html(status);
   if (typeof error != "undefined") $(this.dom_graph).html(error).css("font-family", "monospace");
 };
+
+
+ModelleertaalApp.prototype.load_model_xml_from_url = function(url) {
+    var self = this;
+    $.ajax({
+        url: url,
+        dataType: "text",
+        success: function(data) {
+            self.read_model_from_xml(data);
+            self.init_app();
+        }, // succes();
+        error: function(xhr, ajaxOptions, thrownError) {
+            if (xhr.status === 0) {
+                alert("Kan model " + url + " niet laden.\nBestaat het model?\nOffline? Zet CORS protection uit");
+            } else {
+                alert(thrownError);
+            }
+            $(self.dom_graph).html("Model niet geladen! FOUT.");
+            self.print_status("Status: ERROR.");
+        } // error();
+    }); //.ajax
+};
+
+
+ModelleertaalApp.prototype.dropdown_update = function() {
+    // maak het drop-down modelkeuze menu uit model.js
+    $(this.dom_model_keuze).empty();
+    for (var i = 0; i < this.model_index.length; i++) {
+        $('<option/>').val(i).text(this.model_index[i].title).appendTo(this.dom_model_keuze);
+    }
+};
+
+
+ModelleertaalApp.prototype.dropdown_load_model = function() {
+
+    //var model_keuze = $("#model_keuze").val();
+    var model_keuze = $(this.dom_model_keuze).val();
+
+    url = this.model_index[model_keuze].url;
+    var myRe = /\/([^.]+)/g;
+
+    var rel_link = this.rel_url + 'index.html#model=' + myRe.exec(url)[1];
+    var permalink = this.base_url + rel_link;
+
+    // verander de URL onder de knop "link"
+    $(this.dom_permalink).attr('href', permalink);
+
+    // verander de URL in de browser (history)
+    if (history.replaceState) {
+        window.history.replaceState("", "Modelleertaal webapp", rel_link);
+    } else {
+        document.location.href = rel_link;
+    }
+
+    this.load_model_xml_from_url(url);
+};
+
+
 
 
 ModelleertaalApp.prototype.read_model = function() {

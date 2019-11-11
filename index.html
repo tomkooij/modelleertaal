@@ -154,7 +154,7 @@ Do not edit below this line: Change config.js above!
             <div>
                 Kies model:
                 <select id="model_keuze">
-                    <option value="0">model.js niet geladen!</option>
+                    <option value="0">models.js niet geladen!</option>
                 </select>
                 <a id="permalink" href="foobar">(link)</a>
                 <span id="open_file_dialog">of: <input type="file" id="fileinput"></span>
@@ -243,17 +243,20 @@ Do not edit below this line: Change config.js above!
     <script src="scripts/codemirror-mode-modelleertaal.js"></script>
 
     <script type="text/javascript">
-        m = new modelleertaalapp_js.ModelleertaalApp({
-            debug: true
-        });
 
+        // FIXME hack below :-(
         // split window.location.href in two parts
         var base_url = window.location.origin;
         var rel_url = window.location.href.split(base_url)[1];
-        rel_url = rel_url.split('#')[0]; // discard '#model=foobar.xml?N=100 part.
-        if (!rel_url.endsWith('/')) rel_url += '/';
-        console.log('base_url: ', base_url);
-        console.log('rel_url:' , rel_url);
+        rel_url = rel_url.split('index.html')[0]; // discard index.html#model= part.
+        if (!rel_url.endsWith('/')) this.rel_url += '/';
+
+        m = new modelleertaalapp_js.ModelleertaalApp({
+            debug: true,
+            model_index: model_index,
+            base_url: base_url,
+            rel_url: rel_url,
+        });
 
         $(document).ready(function() {
             console.log("Start!");
@@ -264,40 +267,6 @@ Do not edit below this line: Change config.js above!
 
             // Laadt het profiel (defintie in script bovenaan deze pagina)
             activeer_profiel(profiellen[actieve_profiel]);
-
-            // listen to URL index.html#model=model_naam&N=100 type URL
-            // https://stackoverflow.com/a/44169739/4965175
-            var hash = window.location.hash.substr(1);
-            var url_params = hash.split('&').reduce(function(result, item) {
-                var parts = item.split('=');
-                result[parts[0]] = parts[1];
-                return result;
-            }, {});
-            console.log("params passed in URL", url_params);
-
-            var N_preset = url_params.N || N_default || false;
-            if (N_preset) {
-                $("#NBox").val(N_preset);
-            }
-
-
-
-            dropdown_update();
-            var model_preselected = url_params.model || false;
-            if (model_preselected) {
-                // try to load model passed with model=... parameter
-                var model_url = 'modellen/' + model_preselected + '.xml';
-                load_model_xml_from_url(model_url);
-                var reverse_dropdown_val = model_index.findIndex(function(element) {
-                    return element.url == model_url;
-                });
-                // set dropdown to selected model
-                $("#model_keuze").val(reverse_dropdown_val);
-            } else {
-                // lees keuze uit drop-down en kies juiste url
-                dropdown_load_model();
-            };
-            $("#model_keuze").change(dropdown_load_model);
 
             $("#hacks").hide();
             $("#hack_toggle").css({
@@ -322,7 +291,6 @@ Do not edit below this line: Change config.js above!
 
         });
 
-
         activeer_profiel = function(profiel) {
             // zet knoppen/divs/span (id) aan/uit enz.
             console.log('Activeer profiel: ', profiel);
@@ -340,57 +308,6 @@ Do not edit below this line: Change config.js above!
             });
         }
 
-        dropdown_update = function() {
-            // maak het drop-down modelkeuze menu uit model.js
-            $("#model_keuze").empty();
-            for (var i = 0; i < model_index.length; i++) {
-                $('<option/>').val(i).text(model_index[i].title).appendTo("#model_keuze");
-            }
-        };
-
-        dropdown_load_model = function() {
-
-            var model_keuze = $("#model_keuze").val();
-
-            // uit model.js
-            url = model_index[model_keuze].url;
-            var myRe = /\/([^.]+)/g;
-
-            var rel_link = rel_url + 'index.html#model=' + myRe.exec(url)[1];
-            var permalink = base_url + rel_link;
-
-            // verander de URL onder de knop "link"
-            $("#permalink").attr('href', permalink);
-
-            // verander de URL in de browser (history)
-            if (history.replaceState) {
-                window.history.replaceState("", "Modelleertaal webapp", rel_link);
-            } else {
-                document.location.href = rel_link;
-            }
-
-            load_model_xml_from_url(url);
-        };
-
-        load_model_xml_from_url = function(url) {
-            $.ajax({
-                url: url,
-                dataType: "text",
-                success: function(data) {
-                    m.read_model_from_xml(data);
-                    m.init_app();
-                }, // succes();
-                error: function(xhr, ajaxOptions, thrownError) {
-                    if (xhr.status === 0) {
-                        alert("Kan model " + url + " niet laden.\nBestaat het model?\nOffline? Zet CORS protection uit");
-                    } else {
-                        alert(thrownError);
-                    }
-                    $("#graph").html("Model niet geladen! FOUT.");
-                    print_status("Status: ERROR.");
-                } // error();
-            }); //.ajax
-        };
     </script>
 
 </body>
