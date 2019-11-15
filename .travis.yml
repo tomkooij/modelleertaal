@@ -11,13 +11,12 @@ before_deploy:
   # create zipfile for release
   - zip modelleertaal-$TRAVIS_TAG.zip index.html config.js scripts/* modellen/*
   # create folder to deploy to gh-pages
-  - mkdir _build
-  - cp index.html _build/
-  - cp config.js _build/
-  - cp -R scripts _build/
-  - cp -R modellen _build/
-  - cp index.html _build/
-  - cp config.js _build/
+  - git worktree add _build gh-pages  # fetch current gh-pages
+  - mkdir -p _build/dev
+  - if [[ "$TRAVIS_TAG" ]]; then echo "Deploying release"; export BUILD_DIR=_build/; else echo "Deploying dev branch"; export BUILD_DIR=_build/dev; fi
+  - cp index.html config.js $BUILD_DIR
+  - cp -R scripts $BUILD_DIR
+  - cp -R modellen $BUILD_DIR
   - touch _build/.nojekyll
 
 deploy:
