@@ -28,6 +28,15 @@ deploy:
     on:
       branch: master
       node_js: node
+  - provider: pages
+    skip_cleanup: true
+    github_token: $GITHUB_TOKEN
+    local_dir: _build
+    verbose: true
+    on:
+      branch: master
+      node_js: node
+      tags: true
   - provider: releases
     file:
       - modelleertaal-$TRAVIS_TAG.zip
