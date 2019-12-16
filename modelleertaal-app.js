@@ -689,7 +689,7 @@ ModelleertaalApp.prototype.plot_graph = function(dataset, previous_plot) {
   var axes = plot_object.getAxes();
   var axis = axes.yaxis;
   var box = axis.box;
-  $("<div class='axisTarget' style='position:absolute; left:" + box.left + "px; top:" + box.top + "px; width:" + box.width +  "px; height:" + box.height + "px'></div>")
+  $("<div id='plot_yaxis' class='axisTarget' style='position:absolute; left:" + box.left + "px; top:" + box.top + "px; width:" + box.width +  "px; height:" + box.height + "px'></div>")
 				.data("axis.direction", axis.direction)
 				.data("axis.n", axis.n)
 				.css({ backgroundColor: "#f00", opacity: 0, cursor: "pointer" })
@@ -704,6 +704,9 @@ ModelleertaalApp.prototype.plot_graph = function(dataset, previous_plot) {
           self.do_plot();
         });
 
+  $("#plot_yaxis").hover(function() {
+        $(this).css('cursor','pointer').attr('title', 'Klik op de as om de schaal te wijzigen (autoscale aan/uit).');
+    });
 }; // plot_graph()
 
 ModelleertaalApp.prototype.set_max_rows_in_plot = function(max_rows) {
