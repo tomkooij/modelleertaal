@@ -37,6 +37,7 @@ var version = "v5.0 dev - BETA";
 function ModelleertaalApp(params) {
 
   this.debug = params.debug || false;
+  this.version = version;
   console.log('Modelleertaal App. ' + version + '. Debug = ' + this.debug);
 
   this.model_index = params.model_index || false;

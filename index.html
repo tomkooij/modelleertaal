@@ -270,6 +270,11 @@ Do not edit below this line: Change config.js above!
             console.log("Start!");
 
             // customize titel
+            if (m.version) {
+              if (m.version.includes("dev")) {
+                title += " "+m.version;
+              }
+            }
             $('#title').html(title);
             $('#title').attr('href', title_link);
 
