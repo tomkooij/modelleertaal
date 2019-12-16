@@ -22,9 +22,16 @@ v4.4.0 (13sep19) Add read N=1000 from XML. Add error msg for ... "Vul hier iets 
 v4.4.1 (15sep19) Accept ... and unicode symbol '...' as BLANK (Vul hier in error)
 v4.5 (28sep19) Bugfix: fix double alert 'cannot read property of undefined' on parse error
      accepteer unicode squared/cubed F=k*v²
-v4.6DEV (WIP) Allow boolean variables in output
+v5.0DEV (WIP)
+    Fix: boolean variablen in output (tabel)
+    Fix: "BLANK" geeft nu ook "vul iets in bij de puntjes" als de regel alleen "..." bevat
+    ENH: Klik op y-as for autoscale aan/uit (plot y-as vanaf nul)
+    ENH: (app) layout, bestanden menu
+    ENH: (app) update_modeljs.py script
+    ENH: PGFPlots: verbeterde plots
+    ENH: 'EN' en 'OF' logische operatoren
 */
-var version = "v4.5 - 28sep2019";
+var version = "v5.0 dev - BETA";
 
 
 function ModelleertaalApp(params) {

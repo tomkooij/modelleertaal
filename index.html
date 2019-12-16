@@ -33,7 +33,7 @@ Do not edit below this line: Change config.js above!
             },
             {
                 id: "#open_file_dialog",
-                action: "show"
+                action: "hide"
             },
             // model blok
             {
@@ -156,8 +156,16 @@ Do not edit below this line: Change config.js above!
                 <select id="model_keuze">
                     <option value="0">models.js niet geladen!</option>
                 </select>
-                <a id="permalink" href="foobar">(link)</a>
-                <span id="open_file_dialog">of: <input type="file" id="fileinput"></span>
+                of:
+                <input id="enable_open_file_dialog" type="button" value="Bestanden...">
+                <p>
+                <span id="open_file_dialog">
+                    Bestanden van/naar computer:
+                    <input id="fileinput" type="file" style="width:0px">
+                    <button id="stupid_hack" onclick="fileinput.click()">Open bestand</button>
+                    <input id="download_xml" type="button" value="Sla op (download) als:">
+                    <input type="text" id="xml_filename" value="model.xml" size=15><br>
+                </span>
             </div>
     </div>
     <div id="werkBlad">
@@ -287,6 +295,9 @@ Do not edit below this line: Change config.js above!
                 if (actieve_profiel > profiellen.length - 1) actieve_profiel = 0;
                 console.log('actieve_profiel', actieve_profiel);
                 activeer_profiel(profiellen[actieve_profiel]);
+            });
+            $("#enable_open_file_dialog").click(function() {
+                $("#open_file_dialog").show();
             });
 
         });

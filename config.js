@@ -35,5 +35,5 @@ var leerling_versie = [
             // tabel output
           ];
 
-var profiellen = [full_webapp, leerling_versie];
+var profiellen = [leerling_versie, full_webapp];
 var actieve_profiel = 0;   // het profiel dat als eerste geladen wordt. Telt vanaf 0.
