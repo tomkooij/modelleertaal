@@ -167,13 +167,18 @@ stmt
               elsestmt: $6
           };
       }
-
   | STOP
      {$$ = {
                  type: 'Stop',
                  value: $1
             };
-        }
+      }
+  | BLANK
+    {$$ = {
+                type: 'Blank',
+                value: $1
+           };
+      }
   ;
 
 condition
