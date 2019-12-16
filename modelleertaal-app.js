@@ -46,6 +46,8 @@ function ModelleertaalApp(params) {
   this.CodeMirror = params.CodeMirror || true;
   this.CodeMirrorActive = false;
 
+  this.yaxis_autoscale = true;
+
   this.dom_modelregels = "#modelregels";
   this.dom_startwaarden = "#startwaarden";
   this.dom_status = "#status_bar";
@@ -623,14 +625,16 @@ ModelleertaalApp.prototype.plot_graph = function(dataset, previous_plot) {
 	    return min;
   }
 
-  if ($("#axis_min_checkbox:checked").length > 0) {
-    plot_yaxis_min = find_dataset_min_below_zero(dataset);
+  if (self.yaxis_autoscale) {
+    plot_yaxis_min = undefined;  // use autoscale for y-axis
   } else {
-    plot_yaxis_min = undefined;
+    // plot the y-axis from min(0, minimum of dataset)
+    plot_yaxis_min = find_dataset_min_below_zero(dataset);
   }
+
   $(this.dom_graph).css("font-family", "sans-serif");
 
-  $.plot($(this.dom_graph), [{
+  var plot_object = $.plot($(this.dom_graph), [{
       data: previous_plot,
       color: '#d3d3d3'
     },
@@ -680,6 +684,25 @@ ModelleertaalApp.prototype.plot_graph = function(dataset, previous_plot) {
      $(self.dom_clickdata).html(table);
     }
   }); // $bind.("plotclick")
+
+  // create clickable y-axis that toggles autoscale
+  var axes = plot_object.getAxes();
+  var axis = axes.yaxis;
+  var box = axis.box;
+  $("<div class='axisTarget' style='position:absolute; left:" + box.left + "px; top:" + box.top + "px; width:" + box.width +  "px; height:" + box.height + "px'></div>")
+				.data("axis.direction", axis.direction)
+				.data("axis.n", axis.n)
+				.css({ backgroundColor: "#f00", opacity: 0, cursor: "pointer" })
+				.appendTo(plot_object.getPlaceholder())
+				.hover(
+					function () { $(this).css({ opacity: 0.10 }); },
+					function () { $(this).css({ opacity: 0 }); }
+				)
+				.click(function () {
+          // toglle autoscale on/off and replot!
+          self.yaxis_autoscale = !self.yaxis_autoscale;
+          self.do_plot();
+        });
 
 }; // plot_graph()
 
