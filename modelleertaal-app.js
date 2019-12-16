@@ -607,7 +607,27 @@ ModelleertaalApp.prototype.set_axis_to_defaults = function() {
 ModelleertaalApp.prototype.plot_graph = function(dataset, previous_plot) {
 
   var self = this;
+  var plot_yaxis_min;
 
+  function find_dataset_min_below_zero(d) {
+      var min = 0;
+      var len = d.length;
+      var val;
+
+  	  for ( var i = 0; i < len; i++ ) {
+          val = d[i][1];
+          if ( val < min ) {
+  			       min = val;
+  	          }
+	    }
+	    return min;
+  }
+
+  if ($("#axis_min_checkbox:checked").length > 0) {
+    plot_yaxis_min = find_dataset_min_below_zero(dataset);
+  } else {
+    plot_yaxis_min = undefined;
+  }
   $(this.dom_graph).css("font-family", "sans-serif");
 
   $.plot($(this.dom_graph), [{
@@ -641,6 +661,7 @@ ModelleertaalApp.prototype.plot_graph = function(dataset, previous_plot) {
     }],
     yaxes: [{
       position: 'left',
+      min: plot_yaxis_min,
       axisLabel: this.allVars[$(this.dom_y_var).val()]
     }]
   }); // $.plot()
