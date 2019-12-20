@@ -115,6 +115,16 @@ Do not edit below this line: Change config.js above!
             padding: 5px;
         }
 
+        table.plot_dialog {
+            border: none;
+        }
+
+        table.plot_dialog td {
+            vertical-align: top;
+            text-align: left;
+            padding: 0px;
+        }
+
 
         /* schaduw rand om werkblad zodat afmetinging zichtbaar is
        handig voor debuggen */
@@ -195,12 +205,29 @@ Do not edit below this line: Change config.js above!
                         <td rowspan="2" class="graphbox">
                             <div id="graph" class="graph"></div>
                             <p>
-                                verticaal: <select id="y_var">
-                                    <option value=""></option>
-                                </select> horizontaal: <select id="x_var">
-                                    <option value=""></option>
-                                </select>
-                                <input id="plot" type="button" value="Plot!">
+                            <table class="plot_dialog">
+                              <tr>
+                                <td> verticaal: </td>
+                                <td id="select_graph">
+                                    <select id="y_var">
+                                      <option value=""></option>
+                                    </select>
+                                </td>
+                                <td> horizontaal:
+                                    <select id="x_var">
+                                      <option value=""></option>
+                                    </select>
+                                    </span id="legend">
+                                    <input id="plot" type="button" value="Plot!">
+                                </td>
+                              </tr>
+                              <tr>
+                                <td colspan="3">
+                                    <span id="multiplot"></span>
+                                </td>
+                              </tr>
+                            </table>
+
                                 <p>
                                     Coördinaat:<span id="hoverdata"></span><br>
                                     Klik op een punt om waarden af te lezen:
@@ -227,8 +254,6 @@ Do not edit below this line: Change config.js above!
         <div id="hacks">
             <input id="set_max_rows" type="button" value="Reduceer aantal punten in plot tot maximaal: ">
             <input type="text" id="max_rows" value="100" size=5><br>
-            <input id="download_xml" type="button" value="Download Modelregels:">
-            <input type="text" id="xml_filename" value="model.xml" size=15><br>
             <input id="download_pgf" type="button" value="Download PGFPlot:">
             <input type="text" id="pgf_filename" value="pgfplot.tex" size=15><br>
             <input id="download_tsv" type="button" value="Download TSV:">

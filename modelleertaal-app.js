@@ -14,7 +14,7 @@ var FileSaver = require('file-saver');
 
 
 //jshint devel:true
-//jshint es3:true
+//jshint es5:true
 //jshint loopfunc: true
 
 /* version history
@@ -22,16 +22,17 @@ v4.4.0 (13sep19) Add read N=1000 from XML. Add error msg for ... "Vul hier iets 
 v4.4.1 (15sep19) Accept ... and unicode symbol '...' as BLANK (Vul hier in error)
 v4.5 (28sep19) Bugfix: fix double alert 'cannot read property of undefined' on parse error
      accepteer unicode squared/cubed F=k*v²
-v5.0DEV (WIP)
-    Fix: boolean variablen in output (tabel)
-    Fix: "BLANK" geeft nu ook "vul iets in bij de puntjes" als de regel alleen "..." bevat
+v5.0 dev (WIP)
+    ENH: Meerdere plots tegelijkertijd in een grafiek
     ENH: Klik op y-as for autoscale aan/uit (plot y-as vanaf nul)
     ENH: (app) layout, bestanden menu
     ENH: (app) update_modeljs.py script
     ENH: PGFPlots: verbeterde plots
     ENH: 'EN' en 'OF' logische operatoren
+    Fix: boolean variablen in output (tabel)
+    Fix: "BLANK" geeft nu ook "vul iets in bij de puntjes" als de regel alleen "..." bevat
 */
-var version = "v5.0 dev - BETA";
+var version = "v5.0 dev";
 
 
 function ModelleertaalApp(params) {
@@ -78,6 +79,7 @@ function ModelleertaalApp(params) {
   this.dom_hoverdata = "#hoverdata";
   this.dom_x_var = "#x_var";
   this.dom_y_var = "#y_var";
+  this.dom_select_graph = "#select_graph";
   this.dom_model_keuze = "#model_keuze";
   this.dom_permalink = "#permaklink";
 
@@ -149,6 +151,14 @@ function ModelleertaalApp(params) {
 
   $(this.dom_fileinput).change(function(event) {
     self.read_file(event);
+  });
+
+  this.multiplot = false;
+  $("#multiplot").css({
+      'cursor': 'pointer'
+  }).click(function() {
+      self.multiplot = !self.multiplot;
+      self.set_graph_menu();
   });
 
 }
@@ -459,6 +469,10 @@ ModelleertaalApp.prototype.save_axis = function() {
 
 ModelleertaalApp.prototype.reset_axis_dropdown = function() {
 
+  if (!this.results_available()) {
+    return;
+  }
+
   // (re)set varNames in drop-down select fields
   $(this.dom_x_var).empty();
   $(this.dom_y_var).empty();
@@ -576,37 +590,147 @@ ModelleertaalApp.prototype.print_table = function(limit) {
 //
 ModelleertaalApp.prototype.do_plot = function() {
 
-  if (this.results.length === 0) {
+  if (!this.results_available()) {
     //alert('Geen resultaten. Druk eerst op Run!');
-    console.log('No results! cannot plot');
+    console.error('No results! cannot plot');
     return false;
   }
-  this.scatter_plot = [];
+
+  if (this.multiplot) {
+    this.do_multi_plot();
+    return;
+  }
 
   // if set to "auto" set axis to default settings (x,t)
   this.set_axis_to_defaults();
+  // show "meerdere grafieken button"
+  this.toggle_plot_mode();
 
   var results = this.reduce_rows(this.results, this.max_rows_in_plot);
 
+  var current_plot = {
+      data: [],
+      color: 'blue'
+    };
+  var previous_plot = {
+      data: this.previous_plot,
+      color: '#d3d3d3'
+  };
+
   for (var i = 0; i < results.length; i++) {
-    this.scatter_plot.push([results[i][xvar_colidx], results[i][yvar_colidx]]);
+    current_plot.data.push([results[i][xvar_colidx], results[i][yvar_colidx]]);
   }
+  // FIXME: left over from (very!) old code...
+  this.scatter_plot = current_plot.data;
+
+  var dataset = [];
+  dataset.push(previous_plot);
+  dataset.push(current_plot);
 
   $(this.dom_graph).empty(); // verwijder text enzo
   $(this.dom_clickdata).empty();
-  this.plot_graph(this.scatter_plot, this.previous_plot);
+  this.plot_graph(dataset);
   this.previous_plot = this.scatter_plot;
 }; // do_plot
 
 
+ModelleertaalApp.prototype.results_available = function() {
+  if (this.results.length === 0) {
+    return false;
+  }
+  return true;
+}; // results_available
+
+
+ModelleertaalApp.prototype.toggle_plot_mode = function() {
+
+  var msg = "";
+  if (this.multiplot) {
+     msg = 'Terug naar enkele grafiek';
+  } else {
+     msg = 'Plot meerdere grafieken';
+  }
+
+  if (!this.results_available()) {
+    msg = 'dit wordt een leeg vakje';
+  }
+  $("#multiplot").html(msg);
+
+}; // set_plot.mode
+
+ModelleertaalApp.prototype.set_graph_menu = function() {
+  var self = this;
+
+  if (this.multiplot) {
+    // build multi variable checkboxes for y-var
+    $(this.dom_select_graph).empty();
+
+    for (var i = 0; i < this.allVars.length; i++) {
+      var checked_y = (i == yvar_colidx) ? true : false;
+      var checked_x = (i == xvar_colidx) ? true : false;
+      $(this.dom_select_graph).append($("<input>").attr("type", "checkbox")
+            .attr("checked", checked_y).attr("idx_yvar", i)
+            .attr("id", "id_" + this.allVars[i]));
+      $(this.dom_select_graph).append($("<label>").text(this.allVars[i]));
+      $(this.dom_select_graph).append($('<br>'));
+    }
+    $(this.dom_select_graph).find("input:checkbox").click(function () {
+      // toglle autoscale on/off and replot!
+      self.do_plot();
+    });
+  } else {
+    // reset single dropdown menu for y-var.
+    $(this.dom_select_graph).empty();
+    $(this.dom_select_graph).append($("<select>").attr("id", "y_var"));
+    this.reset_axis_dropdown();
+    this.set_axis();
+    this.do_plot();
+  }
+  this.toggle_plot_mode();
+
+}; // create_graph_checkboxes
+
+
+ModelleertaalApp.prototype.do_multi_plot = function() {
+
+  // FIXME cache this!!!
+  var results = this.reduce_rows(this.results, this.max_rows_in_plot);
+  var dataset = [];
+
+  // x-var
+  xvar_colidx = parseInt($(this.dom_x_var).val());
+  xvar_colidx = (!isNaN(xvar_colidx)) ? xvar_colidx : 0;
+  $(this.dom_x_var).val(xvar_colidx);
+
+  // y-vars
+  $("#select_graph").find("input:checked").each(function () {
+    var ycol_idx = $(this).attr("idx_yvar");
+    ycol_idx = parseInt(ycol_idx);
+    if (isNaN(ycol_idx)) return ;
+    var plot = {
+        data: []
+      };
+    for (var i = 0; i < results.length; i++) {
+      // FIXME xvar_colidx scope!!!!
+      plot.data.push([results[i][xvar_colidx], results[i][ycol_idx]]);
+    }
+    dataset.push(plot);
+	});
+  $(this.dom_graph).empty(); // verwijder text enzo
+  $(this.dom_clickdata).empty();
+  this.plot_graph(dataset);
+
+}; // do_multi_plot
+
+
 ModelleertaalApp.prototype.set_axis_to_defaults = function() {
   // get column indices (in results array) of variables to plot
-  xvar_colidx = $(this.dom_x_var).val();
-  yvar_colidx = $(this.dom_y_var).val();
+  xvar_colidx = parseInt($(this.dom_x_var).val());
+  yvar_colidx = parseInt($(this.dom_y_var).val());
 
   // if undefined -> x first column, y second column of results
-  xvar_colidx = (xvar_colidx) ? xvar_colidx : 0;
-  yvar_colidx = (yvar_colidx) ? yvar_colidx : 1;
+  xvar_colidx = (!isNaN(xvar_colidx)) ? xvar_colidx : 0;
+  yvar_colidx = (!isNaN(yvar_colidx)) ? yvar_colidx : 1;
 
   // set column varnames in input fields
   $(this.dom_x_var).val(xvar_colidx);
@@ -614,18 +738,34 @@ ModelleertaalApp.prototype.set_axis_to_defaults = function() {
 };
 
 
-ModelleertaalApp.prototype.plot_graph = function(dataset, previous_plot) {
+ModelleertaalApp.prototype.plot_graph = function(dataset) {
 
   var self = this;
   var plot_yaxis_min;
 
-  function find_dataset_min_below_zero(d) {
+  // FIXME: Dit kan VEEL makkelijker en LEESBAARDER!
+  function find_datasets_min_below_zero(ds) {
       var min = 0;
-      var len = d.length;
+      var len_ds = ds.length;
+      var val, i;
+      console.log('find_ds_min len:', len_ds);
+  	  for (i = 0; i < len_ds; i++ ) {
+          val = find_dataset_min(ds[i]);
+          console.log('min:', i, min, val);
+          if ( val < min ) {
+  			       min = val;
+  	          }
+	    }
+	    return min;
+  }
+
+  function find_dataset_min(d) {
+      var min = Infinity;
+      var len = d.data.length;
       var val;
 
   	  for ( var i = 0; i < len; i++ ) {
-          val = d[i][1];
+          val = d.data[i][1];
           if ( val < min ) {
   			       min = val;
   	          }
@@ -637,20 +777,13 @@ ModelleertaalApp.prototype.plot_graph = function(dataset, previous_plot) {
     plot_yaxis_min = undefined;  // use autoscale for y-axis
   } else {
     // plot the y-axis from min(0, minimum of dataset)
-    plot_yaxis_min = find_dataset_min_below_zero(dataset);
+    // FIXME: Does not work for multiple datasets!!!!
+    plot_yaxis_min = find_datasets_min_below_zero(dataset);
   }
 
   $(this.dom_graph).css("font-family", "sans-serif");
 
-  var plot_object = $.plot($(this.dom_graph), [{
-      data: previous_plot,
-      color: '#d3d3d3'
-    },
-    {
-      data: dataset,
-      color: 'blue'
-    }
-  ], {
+  var plot_object = $.plot($(this.dom_graph), dataset, {
     series: {
       lines: {
         show: true
@@ -750,6 +883,7 @@ ModelleertaalApp.prototype.init_app = function() {
   this.previous_plot = [];
   this.has_run = false;
   this.tracing = false;
+  this.multiplot = false;
 
 };
 
@@ -850,8 +984,13 @@ ModelleertaalApp.prototype.create_pgfplot_header = function() {
 ModelleertaalApp.prototype.create_pgfplot = function() {
 		// Output PGFPlots plot
 
-    if (this.results.length === 0) {
+    if (!this.results_available()) {
       alert('Geen resultaten. Druk eerst op Run!');
+      return false;
+    }
+
+    if (this.multiplot) {
+      alert('Not Implemented! Dit werkt alleen met enkele grafiek');
       return false;
     }
 
