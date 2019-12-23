@@ -457,7 +457,6 @@ ModelleertaalApp.prototype.after_run = function() {
 };
 
 
-
 ModelleertaalApp.prototype.save_axis = function() {
   // save chosen variable, try to plot same graph
   this.xvar_last = $(this.dom_x_var).find(":selected").text();
@@ -692,6 +691,8 @@ ModelleertaalApp.prototype.set_graph_menu = function() {
 
 ModelleertaalApp.prototype.do_multi_plot = function() {
 
+  var graph_colors = ['#5899DA', '#E8743B', '#19A979', '#ED4A7B', '#945ECF','#13A4B4'];
+
   // FIXME cache this!!!
   var results = this.reduce_rows(this.results, this.max_rows_in_plot);
   var dataset = [];
@@ -701,6 +702,7 @@ ModelleertaalApp.prototype.do_multi_plot = function() {
   xvar_colidx = (!isNaN(xvar_colidx)) ? xvar_colidx : 0;
   $(this.dom_x_var).val(xvar_colidx);
 
+  var n = 0;
   // y-vars
   $("#select_graph").find("input:checked").each(function () {
     var ycol_idx = $(this).attr("idx_yvar");
@@ -709,10 +711,13 @@ ModelleertaalApp.prototype.do_multi_plot = function() {
     var plot = {
         data: []
       };
+
     for (var i = 0; i < results.length; i++) {
       // FIXME xvar_colidx scope!!!!
       plot.data.push([results[i][xvar_colidx], results[i][ycol_idx]]);
     }
+    plot.color = graph_colors[n];
+    n += 1;
     dataset.push(plot);
 	});
   $(this.dom_graph).empty(); // verwijder text enzo
