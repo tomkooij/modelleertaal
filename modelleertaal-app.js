@@ -652,7 +652,7 @@ ModelleertaalApp.prototype.toggle_plot_mode = function() {
   }
 
   if (!this.results_available()) {
-    msg = 'dit wordt een leeg vakje';
+    msg = '';
   }
   $("#multiplot").html(msg);
 
@@ -683,8 +683,6 @@ ModelleertaalApp.prototype.set_graph_menu = function() {
     $(this.dom_select_graph).empty();
     $(this.dom_select_graph).append($("<select>").attr("id", "y_var"));
     this.reset_axis_dropdown();
-    this.set_axis();
-    this.do_plot();
   }
   this.toggle_plot_mode();
 
@@ -872,18 +870,22 @@ ModelleertaalApp.prototype.init_app = function() {
     $(this.dom_startwaarden).val(this.model.startwaarden);
   }
   if (this.model.N) $(this.dom_nbox).val(this.model.N);
+
+  this.results = [];
+  this.scatter_plot = [];
+  this.previous_plot = [];
+  this.has_run = false;
+  this.tracing = false;
+
+  // (re)set graph menu
+  this.multiplot = false;
+  this.set_graph_menu();
   $(this.dom_y_var).empty();
   $(this.dom_x_var).empty();
   $('<option/>').val('').text('auto').appendTo(this.dom_x_var);
   $('<option/>').val('').text('auto').appendTo(this.dom_y_var);
   this.print_status("Status: Model geladen.", "Model geladen. Geen data. Druk op Run!");
   $(this.dom_datatable).empty();
-  this.results = [];
-  this.scatter_plot = [];
-  this.previous_plot = [];
-  this.has_run = false;
-  this.tracing = false;
-  this.multiplot = false;
 
 };
 
