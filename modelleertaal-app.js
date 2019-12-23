@@ -154,9 +154,7 @@ function ModelleertaalApp(params) {
   });
 
   this.multiplot = false;
-  $("#multiplot").css({
-      'cursor': 'pointer'
-  }).click(function() {
+  $("#multiplot").click(function() {
       self.multiplot = !self.multiplot;
       self.set_graph_menu();
   });
@@ -644,6 +642,12 @@ ModelleertaalApp.prototype.results_available = function() {
 
 ModelleertaalApp.prototype.toggle_plot_mode = function() {
 
+  if (!this.results_available()) {
+    $("#multiplot").empty();
+    $("#multiplot").removeClass("multiplot");
+    return;
+  }
+
   var msg = "";
   if (this.multiplot) {
      msg = 'Terug naar enkele grafiek';
@@ -651,10 +655,7 @@ ModelleertaalApp.prototype.toggle_plot_mode = function() {
      msg = 'Plot meerdere grafieken';
   }
 
-  if (!this.results_available()) {
-    msg = '';
-  }
-  $("#multiplot").html(msg);
+  $("#multiplot").html(msg).addClass("multiplot");
 
 }; // set_plot.mode
 
