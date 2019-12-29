@@ -691,6 +691,7 @@ ModelleertaalApp.prototype.set_graph_menu = function() {
 
 ModelleertaalApp.prototype.do_multi_plot = function() {
 
+  var self = this;
   var graph_colors = ['blue', '#E8743B', '#19A979', '#ED4A7B', '#945ECF','#13A4B4'];
 
   // FIXME cache this!!!
@@ -717,6 +718,7 @@ ModelleertaalApp.prototype.do_multi_plot = function() {
       plot.data.push([results[i][xvar_colidx], results[i][ycol_idx]]);
     }
     plot.color = graph_colors[n];
+    plot.label = self.allVars[ycol_idx];
     n += 1;
     dataset.push(plot);
 	});
@@ -752,10 +754,8 @@ ModelleertaalApp.prototype.plot_graph = function(dataset) {
       var min = 0;
       var len_ds = ds.length;
       var val, i;
-      console.log('find_ds_min len:', len_ds);
   	  for (i = 0; i < len_ds; i++ ) {
           val = find_dataset_min(ds[i]);
-          console.log('min:', i, min, val);
           if ( val < min ) {
   			       min = val;
   	          }
@@ -795,6 +795,7 @@ ModelleertaalApp.prototype.plot_graph = function(dataset) {
     else
         return val.toFixed(axis.tickDecimals);
   }
+  var legendContainer = document.getElementById("legend");
 
   var plot_object = $.plot($(this.dom_graph), dataset, {
     series: {
@@ -823,7 +824,11 @@ ModelleertaalApp.prototype.plot_graph = function(dataset) {
       min: plot_yaxis_min,
       tickFormatter: sciFormatter,
       axisLabel: this.allVars[$(this.dom_y_var).val()]
-    }]
+    }],
+    legend: {
+      show: (this.multiplot) ? true : null,
+      container: legendContainer,
+    }
   }); // $.plot()
 
   $(this.dom_graph).bind("plothover", function(event, pos, item) {

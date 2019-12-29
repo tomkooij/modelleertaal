@@ -138,6 +138,14 @@ Do not edit below this line: Change config.js above!
             cursor: pointer;
         }
 
+        /* fix flot legend background */
+        /* https://github.com/flot/flot/issues/1708 */
+        .legendLayer .background {
+            fill: rgba(255, 255, 255, 0.85);
+            stroke: rgba(0, 0, 0, 0.85);
+            stroke-width: 1;
+        }
+
         /* schaduw rand om werkblad zodat afmetinging zichtbaar is
        handig voor debuggen */
 
@@ -228,7 +236,6 @@ Do not edit below this line: Change config.js above!
                                     <select id="x_var">
                                       <option value=""></option>
                                     </select>
-                                    </span id="legend">
                                     <input id="plot" type="button" value="Plot!">
                                 </td>
                               </tr>
@@ -248,6 +255,7 @@ Do not edit below this line: Change config.js above!
                             <p>
                                 <div id="widget"></div>
                                 <div id="clickdata"></div>
+                                <div id="legend"></div>
                         </td>
                         <td style="vertical-align:top" width=200px align="top"><textarea id="startwaarden" rows=15 cols=20>//Startwaarden:</textarea></td>
                     </tr>
