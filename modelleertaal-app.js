@@ -691,7 +691,7 @@ ModelleertaalApp.prototype.set_graph_menu = function() {
 
 ModelleertaalApp.prototype.do_multi_plot = function() {
 
-  var graph_colors = ['#5899DA', '#E8743B', '#19A979', '#ED4A7B', '#945ECF','#13A4B4'];
+  var graph_colors = ['blue', '#E8743B', '#19A979', '#ED4A7B', '#945ECF','#13A4B4'];
 
   // FIXME cache this!!!
   var results = this.reduce_rows(this.results, this.max_rows_in_plot);
@@ -787,6 +787,15 @@ ModelleertaalApp.prototype.plot_graph = function(dataset) {
 
   $(this.dom_graph).css("font-family", "sans-serif");
 
+  function sciFormatter(val, axis) {
+    // format large numbers in scientific notation: 1e6
+    // probably *much* (much!) slower than the default tickformatter
+    if (Math.abs(val) > 9e4)
+        return val.toExponential(1);
+    else
+        return val.toFixed(axis.tickDecimals);
+  }
+
   var plot_object = $.plot($(this.dom_graph), dataset, {
     series: {
       lines: {
@@ -806,11 +815,13 @@ ModelleertaalApp.prototype.plot_graph = function(dataset) {
       show: true
     },
     xaxes: [{
+      tickFormatter: sciFormatter,
       axisLabel: this.allVars[$(this.dom_x_var).val()]
     }],
     yaxes: [{
       position: 'left',
       min: plot_yaxis_min,
+      tickFormatter: sciFormatter,
       axisLabel: this.allVars[$(this.dom_y_var).val()]
     }]
   }); // $.plot()
