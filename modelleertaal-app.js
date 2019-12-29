@@ -4,13 +4,11 @@ var FileSaver = require('file-saver');
 // this also depends on:
 // jQuery
 // jQuery.Flot
-// JQueyr.axislabels
 // These libs are not included, because the Flot libray does not play well
 // with browserify.
 // Include this in the HTML with:
 //<script src="scripts/jquery-3.2.1.min.js"></script>
 //<script src="scripts/jquery.flot.js"></script>
-//<script src="scripts/jquery.flot.axislabels.js"></script>
 
 
 //jshint devel:true
@@ -82,6 +80,7 @@ function ModelleertaalApp(params) {
   this.dom_select_graph = "#select_graph";
   this.dom_model_keuze = "#model_keuze";
   this.dom_permalink = "#permaklink";
+  this.dom_legend = "#legend";
 
   this.read_model();
 
@@ -682,6 +681,7 @@ ModelleertaalApp.prototype.set_graph_menu = function() {
     // reset single dropdown menu for y-var.
     $(this.dom_select_graph).empty();
     $(this.dom_select_graph).append($("<select>").attr("id", "y_var"));
+    $(this.dom_legend).empty();
     this.reset_axis_dropdown();
   }
   this.toggle_plot_mode();
@@ -815,16 +815,16 @@ ModelleertaalApp.prototype.plot_graph = function(dataset) {
     axisLabels: {
       show: true
     },
-    xaxes: [{
+    xaxis: {
       tickFormatter: sciFormatter,
       axisLabel: this.allVars[$(this.dom_x_var).val()]
-    }],
-    yaxes: [{
+    },
+    yaxis: {
       position: 'left',
-      min: plot_yaxis_min,
       tickFormatter: sciFormatter,
+      min: plot_yaxis_min,
       axisLabel: this.allVars[$(this.dom_y_var).val()]
-    }],
+    },
     legend: {
       show: (this.multiplot) ? true : null,
       container: legendContainer,

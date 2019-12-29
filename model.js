@@ -72,7 +72,7 @@ Model.prototype.parseBogusXMLString = function(xmlString) {
           if (matches !== null) {
             if (matches[1] == 'N')
               this.N = parseInt(matches[2], 10);
-              console.log('Found N = '+this.N+' in model.xml');
+              if (this.debug) console.log('Found N = '+this.N+' in model.xml');
           }
         }
         switch(lines[line].replace('\r','')) {
