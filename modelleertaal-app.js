@@ -852,8 +852,8 @@ ModelleertaalApp.prototype.plot_graph = function(dataset) {
   }); // $.plot()
 
   $(this.dom_graph).bind("plotclick", function(event, pos, item) {
-    if (item.seriesIndex == 1) {
-     // clicked on currect graph
+    if ((self.multiplot) || (item.seriesIndex == 1)) {
+     // multiplot: click on all lines, single plot: do not allow click on previous plot
      var table = $('<table>').addClass('table');
      table.append(self.table_header());
      table.append(self.table_row(self.get_result_rowIndex(item.dataIndex)));
