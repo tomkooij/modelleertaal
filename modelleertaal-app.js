@@ -53,7 +53,7 @@ function ModelleertaalApp(params) {
   this.CodeMirror = params.CodeMirror || true;
   this.CodeMirrorActive = false;
 
-  this.yaxis_autoscale = true;
+  this.yaxis_autoscale = false;  // try to include origin (y=0) by default
 
   this.dom_modelregels = "#modelregels";
   this.dom_startwaarden = "#startwaarden";
