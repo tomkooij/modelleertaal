@@ -10,28 +10,12 @@ var FileSaver = require('file-saver');
 //<script src="scripts/jquery-3.2.1.min.js"></script>
 //<script src="scripts/jquery.flot.js"></script>
 
-
 //jshint devel:true
 //jshint es5:true
 //jshint loopfunc: true
 
-/* version history
-v4.4.0 (13sep19) Add read N=1000 from XML. Add error msg for ... "Vul hier iets in"
-v4.4.1 (15sep19) Accept ... and unicode symbol '...' as BLANK (Vul hier in error)
-v4.5 (28sep19) Bugfix: fix double alert 'cannot read property of undefined' on parse error
-     accepteer unicode squared/cubed F=k*v²
-v5.0 dev (WIP)
-    ENH: Meerdere plots tegelijkertijd in een grafiek
-    ENH: Klik op y-as for autoscale aan/uit (plot y-as vanaf nul)
-    ENH: (app) layout, bestanden menu
-    ENH: (app) update_modeljs.py script
-    ENH: PGFPlots: verbeterde plots
-    ENH: 'EN' en 'OF' logische operatoren
-    Fix: boolean variablen in output (tabel)
-    Fix: "BLANK" geeft nu ook "vul iets in bij de puntjes" als de regel alleen "..." bevat
-*/
-var version = "v5.0 dev";
-
+/* version history: CHANGELOG.md */
+var version = "v5.0 dev rc";
 
 function ModelleertaalApp(params) {
 
