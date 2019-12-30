@@ -228,7 +228,7 @@ Do not edit below this line: Change config.js above!
                             <table class="plot_dialog">
                               <tr>
                                 <td> verticaal: </td>
-                                <td id="select_graph">
+                                <td rowspan="2" id="select_graph">
                                     <select id="y_var">
                                       <option value=""></option>
                                     </select>
@@ -241,6 +241,11 @@ Do not edit below this line: Change config.js above!
                                 </td>
                               </tr>
                               <tr>
+                                <td></td>
+                                <td><div id="legend"></div></td>
+                                <td></td>
+                              </tr>
+                              <tr>
                                 <td colspan="3">
                                     <span id="multiplot"></span>
                                 </td>
@@ -248,10 +253,7 @@ Do not edit below this line: Change config.js above!
                             </table>
                         </td>
                         <td style="vertical-align:top" width=300px><textarea id="modelregels" rows=15 cols=30>//Modelregels:</textarea>
-                            <p>
-                                <div id="widget"></div>
-                                <div id="clickdata"></div>
-                                <div id="legend"></div>
+                            <p><div id="clickdata"></div>
                         </td>
                         <td style="vertical-align:top" width=200px align="top"><textarea id="startwaarden" rows=15 cols=20>//Startwaarden:</textarea></td>
                     </tr>
