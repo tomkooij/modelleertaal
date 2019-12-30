@@ -797,6 +797,14 @@ ModelleertaalApp.prototype.plot_graph = function(dataset) {
   }
   var legendContainer = document.getElementById("legend");
 
+  var axis_font = {
+    size: 12,
+    lineHeight: 13,
+    family: "sans-serif",
+    variant: "small-caps",
+    color: "#545454"
+  };
+
   var plot_object = $.plot($(this.dom_graph), dataset, {
     series: {
       lines: {
@@ -816,10 +824,14 @@ ModelleertaalApp.prototype.plot_graph = function(dataset) {
       show: true
     },
     xaxis: {
+      font: axis_font,
+      showTicks: false,
       tickFormatter: sciFormatter,
       axisLabel: this.allVars[$(this.dom_x_var).val()]
     },
     yaxis: {
+      font: axis_font,
+      showTicks: false,
       position: 'left',
       tickFormatter: sciFormatter,
       min: plot_yaxis_min,
