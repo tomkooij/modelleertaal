@@ -9,15 +9,17 @@ dev
 - Meerdere plots tegelijkertijd in een grafiek
 - Klik op y-as for autoscale aan/uit (plot y-as vanaf nul)
 - Tooltips om waarden af te lezen in grafiek
-- (app) layout, bestanden menu
-- (app) `update_modeljs.py` script
+- app layout, bestanden menu
+- `update_modeljs.py` script: genereer `models.js`automatisch 
 - PGFPlots: verbeterde plots
-- 'EN' en 'OF' logische operatoren
+- 'EN' en 'OF' logische operatoren toegevoegd
+- Kies automatisch voor het (y,x)-diagram als y en x variabelen in model zitten.
+- Zet directe link naar model in URL en browser history
 
 ### Bug Fixes ###
 
 - [#35](https://github.com/tomkooij/modelleertaal/issues/35) - "BLANK" geeft nu ook "vul iets in bij de puntjes" als de regel alleen "..." bevat
-- boolean variablen in output (tabel)
+- fix boolean variablen in output (tabel)
   
 ## [4.5.0]
 
