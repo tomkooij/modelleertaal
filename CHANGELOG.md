@@ -8,6 +8,7 @@ dev
 
 - Meerdere plots tegelijkertijd in een grafiek
 - Klik op y-as for autoscale aan/uit (plot y-as vanaf nul)
+- Tooltips om waarden af te lezen in grafiek
 - (app) layout, bestanden menu
 - (app) `update_modeljs.py` script
 - PGFPlots: verbeterde plots
