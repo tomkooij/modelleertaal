@@ -751,8 +751,8 @@ ModelleertaalApp.prototype.plot_graph = function(dataset) {
   var self = this;
   var plot_yaxis_min;
 
-  var x_var_name = this.allVars[$(this.dom_x_var).val()]
-  var y_var_name = this.allVars[$(this.dom_y_var).val()]
+  var x_var_name = this.allVars[$(this.dom_x_var).val()];
+  var y_var_name = this.allVars[$(this.dom_y_var).val()];
 
   // FIXME: Dit kan VEEL makkelijker en LEESBAARDER!
   function find_datasets_min_below_zero(ds) {
