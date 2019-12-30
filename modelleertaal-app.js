@@ -606,11 +606,13 @@ ModelleertaalApp.prototype.do_plot = function() {
 
   var current_plot = {
       data: [],
-      color: 'blue'
+      color: 'blue',
+      label: this.allVars[yvar_colidx]
     };
   var previous_plot = {
       data: this.previous_plot,
-      color: '#d3d3d3'
+      color: '#d3d3d3',
+      label: ''
   };
 
   for (var i = 0; i < results.length; i++) {
@@ -749,6 +751,9 @@ ModelleertaalApp.prototype.plot_graph = function(dataset) {
   var self = this;
   var plot_yaxis_min;
 
+  var x_var_name = this.allVars[$(this.dom_x_var).val()]
+  var y_var_name = this.allVars[$(this.dom_y_var).val()]
+
   // FIXME: Dit kan VEEL makkelijker en LEESBAARDER!
   function find_datasets_min_below_zero(ds) {
       var min = 0;
@@ -827,7 +832,7 @@ ModelleertaalApp.prototype.plot_graph = function(dataset) {
       font: axis_font,
       showTicks: false,
       tickFormatter: sciFormatter,
-      axisLabel: this.allVars[$(this.dom_x_var).val()]
+      axisLabel: x_var_name
     },
     yaxis: {
       font: axis_font,
@@ -835,11 +840,15 @@ ModelleertaalApp.prototype.plot_graph = function(dataset) {
       position: 'left',
       tickFormatter: sciFormatter,
       min: plot_yaxis_min,
-      axisLabel: this.allVars[$(this.dom_y_var).val()]
+      axisLabel: y_var_name
     },
     legend: {
       show: (this.multiplot) ? true : null,
       container: legendContainer,
+    },
+    tooltip: {
+      show: true,
+      content: "%lx: %x.2, %s: %y.2"
     }
   }); // $.plot()
 
