@@ -74,7 +74,6 @@ function ModelleertaalApp(params) {
   this.dom_download_tsv = "#download_tsv";
   this.dom_download_tsv_fn = "#tsv_filename";
   this.dom_clickdata = "#clickdata";
-  this.dom_hoverdata = "#hoverdata";
   this.dom_x_var = "#x_var";
   this.dom_y_var = "#y_var";
   this.dom_select_graph = "#select_graph";
@@ -851,11 +850,6 @@ ModelleertaalApp.prototype.plot_graph = function(dataset) {
       content: "%lx: %x.2, %s: %y.2"
     }
   }); // $.plot()
-
-  $(this.dom_graph).bind("plothover", function(event, pos, item) {
-    var str = "(" + pos.x.toFixed(2) + ", " + pos.y.toFixed(2) + ")";
-    $(self.dom_hoverdata).text(str);
-  }); // $.bind("plothover")
 
   $(this.dom_graph).bind("plotclick", function(event, pos, item) {
     if (item.seriesIndex == 1) {
