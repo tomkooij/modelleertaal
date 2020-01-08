@@ -589,12 +589,12 @@ ModelleertaalApp.prototype.do_plot = function() {
 
   var current_plot = {
       data: [],
-      color: 'blue',
+      color: '#47a',  // blue
       label: this.allVars[yvar_colidx]
     };
   var previous_plot = {
       data: this.previous_plot,
-      color: '#d3d3d3',
+      color: '#d3d3d3', // light-gray
       label: ''
   };
 
@@ -628,6 +628,7 @@ ModelleertaalApp.prototype.toggle_plot_mode = function() {
   if (!this.results_available()) {
     $("#multiplot").empty();
     $("#multiplot").removeClass("multiplot");
+    $("#legend").css('display','none');  //hide legend
     return;
   }
 
@@ -639,6 +640,7 @@ ModelleertaalApp.prototype.toggle_plot_mode = function() {
   }
 
   $("#multiplot").html(msg).addClass("multiplot");
+  $("#legend").css('display','inline');
 
 }; // set_plot.mode
 
@@ -677,7 +679,11 @@ ModelleertaalApp.prototype.set_graph_menu = function() {
 ModelleertaalApp.prototype.do_multi_plot = function() {
 
   var self = this;
-  var graph_colors = ['blue', '#E8743B', '#19A979', '#ED4A7B', '#945ECF','#13A4B4'];
+
+  // qualitative colour scheme that is colour-blind safe.
+  // https://personal.sron.nl/~pault/#sec:qualitative
+  // blue, cyan, green, yellow, red, purple, grey
+  var graph_colors = ['#47a', '#6ce', '#283', '#cb4', '#e67','#a37', '#bbb'];
 
   // FIXME cache this!!!
   var results = this.reduce_rows(this.results, this.max_rows_in_plot);
