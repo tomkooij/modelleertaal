@@ -589,7 +589,7 @@ ModelleertaalApp.prototype.do_plot = function() {
 
   var current_plot = {
       data: [],
-      color: '#47a',  // blue
+      color: 'blue',
       label: this.allVars[yvar_colidx]
     };
   var previous_plot = {
@@ -683,7 +683,7 @@ ModelleertaalApp.prototype.do_multi_plot = function() {
   // qualitative colour scheme that is colour-blind safe.
   // https://personal.sron.nl/~pault/#sec:qualitative
   // blue, cyan, green, yellow, red, purple, grey
-  var graph_colors = ['#47a', '#6ce', '#283', '#cb4', '#e67','#a37', '#bbb'];
+  var graph_colors = ['blue', '#6ce', '#283', '#cb4', '#e67','#a37', '#bbb'];
 
   // FIXME cache this!!!
   var results = this.reduce_rows(this.results, this.max_rows_in_plot);
