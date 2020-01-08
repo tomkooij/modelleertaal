@@ -53,6 +53,12 @@ describe('CodeGenertor.generateCodeFromAst() generate javascript from parsed AST
         assert.include(code,'Math.sqrt');
     })
 
+    it('CodeGenerator generates log10 math function', function() {
+        ast = parser.parse("x=1\nt=log(x)");
+        code = codegenerator.generateCodeFromAst(ast);
+        assert.include(code,'Math.log10');
+    })
+
     it('CodeGenerator generates abs math function', function() {
         ast = parser.parse("x=1\nt=abs(x)");
         code = codegenerator.generateCodeFromAst(ast);
@@ -186,6 +192,18 @@ describe('CodeGenertor.generateCodeFromAst() correct output of math expressions'
         ast = parser.parse("x = abs(-42)");
         code = codegenerator.generateCodeFromAst(ast);
         assert.closeTo(eval(code),42,0.01);
+    })
+
+    it('Abs operator: log(1000) == 3', function() {
+        ast = parser.parse("x = log(1000)");
+        code = codegenerator.generateCodeFromAst(ast);
+        assert.closeTo(eval(code),3,0.01);
+    })
+
+    it('Abs operator: ln(1000) == 6,91', function() {
+        ast = parser.parse("x = ln(1000)");
+        code = codegenerator.generateCodeFromAst(ast);
+        assert.closeTo(eval(code),6.91,0.01);
     })
 });
 

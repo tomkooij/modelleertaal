@@ -328,6 +328,7 @@ CodeGenerator.prototype.parseNode = function(node) {
                     case 'arctan': return "Math.atan("+this.parseNode(node.expr)+")";
                     case 'exp': return "Math.exp("+this.parseNode(node.expr)+")";
                     case 'ln':  return "Math.log("+this.parseNode(node.expr)+")";
+                    case 'log':  return "Math.log10("+this.parseNode(node.expr)+")";
                     case 'sqrt': return "Math.sqrt("+this.parseNode(node.expr)+")";
                     case 'sign': return "Math.sign("+this.parseNode(node.expr)+")";
                     case 'teken': return "Math.sign("+this.parseNode(node.expr)+")";
