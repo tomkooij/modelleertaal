@@ -52,6 +52,12 @@ describe('CodeGenertor.generateCodeFromAst() generate javascript from parsed AST
         assert.include(code,'Math.exp');
         assert.include(code,'Math.sqrt');
     })
+
+    it('CodeGenerator generates abs math function', function() {
+        ast = parser.parse("x=1\nt=abs(x)");
+        code = codegenerator.generateCodeFromAst(ast);
+        assert.include(code,'Math.abs');
+    })
 });
 
 describe('CodeGenertor.generateCodeFromAst() correct output of math expressions', function(){
@@ -163,15 +169,23 @@ describe('CodeGenertor.generateCodeFromAst() correct output of math expressions'
         code = codegenerator.generateCodeFromAst(ast);
         assert.closeTo(eval(code),6.67e-11,0.01);
     })
+
     it('sign operator: sign(-8) == -1', function() {
         ast = parser.parse("x = sign(-8)");
         code = codegenerator.generateCodeFromAst(ast);
         assert.closeTo(eval(code),-1,0.01);
     })
+
     it('SysNat teken() operator: teken(v)*Fwr', function() {
         ast = parser.parse("x = teken(-8)");
         code = codegenerator.generateCodeFromAst(ast);
         assert.closeTo(eval(code),-1,0.01);
+    })
+
+    it('Abs operator: abs(-42) == 42', function() {
+        ast = parser.parse("x = abs(-42)");
+        code = codegenerator.generateCodeFromAst(ast);
+        assert.closeTo(eval(code),42,0.01);
     })
 });
 
