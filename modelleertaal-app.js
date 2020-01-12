@@ -15,7 +15,7 @@ var FileSaver = require('file-saver');
 //jshint loopfunc: true
 
 /* version history: CHANGELOG.md */
-var version = "v5.0 12jan2020";
+var version = "v5.x dev";
 
 function ModelleertaalApp(params) {
 
