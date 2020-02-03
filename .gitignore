@@ -15,3 +15,11 @@ html5check.py
 *_browserified.js
 bundle.js
 scripts/modelleertaal-app.browser.js
+
+# VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
