@@ -926,8 +926,10 @@ ModelleertaalApp.prototype.create_tsv = function() {
     tsv += this.allVars.join('\t'); //header row
     tsv += "\n";
 
-    tsv += this.results.map(function(d){
-        return d.join('\t');
+    tsv += this.results.map(function(row ){
+        return row.map(function(item) {
+          return typeof(item) === 'number' ? item.toPrecision(4) : item;
+        }).join('\t');
     }).join('\n');
 
     // replace . with , for NL Excel (should be an option)

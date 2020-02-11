@@ -4,6 +4,16 @@
 
 dev
 
+
+### Changes ###
+
+- Replace Google Analytics by Goatcounter. (Privacy friendly)
+
+### Bug Fixes ###
+
+- Round numbers in TSV export to 4 digits. Fix Google Sheets import issues.
+
+
 ## [5.0]
 
 12 jan 2020
