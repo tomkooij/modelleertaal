@@ -11,6 +11,7 @@ before_deploy:
   # create zipfile for release
   - zip modelleertaal-$TRAVIS_TAG.zip index.html config.js scripts/* modellen/*
   # create folder to deploy to gh-pages
+  - rm -rf _build
   - mkdir _build
   - cp index.html _build/
   - cp config.js _build/
