@@ -5,6 +5,10 @@
 dev
 
 
+## [5.0.1]
+
+12 Feb 2020
+
 ### Changes ###
 
 - Replace Google Analytics by Goatcounter. (Privacy friendly)
