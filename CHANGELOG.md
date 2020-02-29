@@ -4,6 +4,14 @@
 
 dev
 
+## [5.0.2]
+
+29 Feb 2020
+
+### Changes ###
+
+- Fix packaging (travis/releases). 
+  Make sure browserified modelleertaal-app.browser.js is deployed to releases.
 
 ## [5.0.1]
 
