@@ -301,6 +301,10 @@ Do not edit below this line: Change config.js above!
         rel_url = rel_url.split('index.html')[0]; // discard index.html#model= part.
         if (!rel_url.endsWith('/')) this.rel_url += '/';
 
+        if (typeof modelleertaalapp_js == 'undefined') {
+            alert('modelleertaal-app.browser.js not found or not loaded!');
+        }
+
         m = new modelleertaalapp_js.ModelleertaalApp({
             debug: true,
             model_index: model_index,
