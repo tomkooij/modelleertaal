@@ -13,6 +13,10 @@ m_f = 0,02
 R0 = i_f / (r_f + m_f)
 
 Pop = 100000
+Vatbaar = Pop
+Infected = 0
+Genezen =  0
+Overleden = 0
 
 t = 0
 dt = 1
@@ -28,11 +32,13 @@ G = G + dG
 O = O + dO
 V = V + dV
 
-Infected =Pop * I
+Infected = Pop * I
 Genezen = Pop * G
 Vatbaar = Pop * V
 Overleden = Pop * O
 
 t = t + dt
+
+R0 = i_f / (r_f + m_f)
 </modelregels>
 </modelleertaal>

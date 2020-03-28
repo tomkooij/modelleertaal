@@ -8,13 +8,13 @@ V = 1 - I
 i_f = 1,2
 r_f = 0,23
 
-R0 = i_f / (r_f)
-
 Pop = 100000
+Vatbaar = Pop
+Infected = 0
+Overleden = 0
 
 t = 0
 dt = 1
-
 </startwaarden>
 <modelregels>
 dI = i_f * V * I - r_f * I
@@ -30,5 +30,7 @@ Genezen = Pop * G
 Vatbaar = Pop * V
 
 t = t + dt
+
+R0 = i_f / (r_f)
 </modelregels>
 </modelleertaal>
