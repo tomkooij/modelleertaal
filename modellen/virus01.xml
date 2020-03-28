@@ -3,7 +3,7 @@ N=50
 <startwaarden>
 I = 0,01
 G = 0
-V = 1-I
+V = 1 - I
 
 i_f = 1,2
 r_f = 0,23
@@ -17,19 +17,18 @@ dt = 1
 
 </startwaarden>
 <modelregels>
-I_nieuw = I + i_f * V * I - r_f * I
-G_nieuw = G + r_f * I
-V_nieuw = V - i_f * V * I
+dI = i_f * V * I - r_f * I
+dG = r_f * I
+dV = - i_f * V * I
 
-Infected = Pop * I_nieuw
-Genezen = Pop * G_nieuw
-Vatbaar = Pop * V_nieuw
-popu = Infected + Genezen + Vatbaar
+I = I + dI
+G = G + dG
+V = V + dV
 
-I = I_nieuw
-G = G_nieuw
-V = V_nieuw
+Infected = Pop * I
+Genezen = Pop * G
+Vatbaar = Pop * V
 
-t=t+dt
+t = t + dt
 </modelregels>
 </modelleertaal>

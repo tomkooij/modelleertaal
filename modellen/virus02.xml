@@ -1,36 +1,38 @@
 <modelleertaal>
-N=50
+N = 50
 <startwaarden>
-I=0,01
-G=0
-V=1-I
-O=0
+I = 0,01
+G = 0
+V = 1 - I
+O = 0
 
-i_f=1,2
-r_f=0,23
-m_f=0,02
+i_f = 1,2
+r_f = 0,23
+m_f = 0,02
 
-R0=i_f/(r_f+m_f)
+R0 = i_f / (r_f + m_f)
 
-Pop=100000
+Pop = 100000
 
-t=0
-dt=1
+t = 0
+dt = 1
 </startwaarden>
 <modelregels>
-I=I+i_f*V*I-r_f*I-m_f*I
-G=G+r_f*I
-O=O+m_f*I
-V=V-i_f*V*I
+dI = i_f * V * I - r_f * I - m_f * I
+dG = r_f * I
+dO = m_f * I
+dV = - i_f * V * I
 
-Infected=Pop*I
-Genezen=Pop*G
-Vatbaar=Pop*V
-Overleden=Pop*O
+I = I + dI
+G = G + dG
+O = O + dO
+V = V + dV
 
-t=t+dt
+Infected =Pop * I
+Genezen = Pop * G
+Vatbaar = Pop * V
+Overleden = Pop * O
 
-
-
+t = t + dt
 </modelregels>
 </modelleertaal>
