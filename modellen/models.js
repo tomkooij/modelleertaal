@@ -14,4 +14,5 @@ var model_index = [
 		{title: "Examen vwo 2019-II Pariser Kanone (antwoord)", url: "modellen/examenvwo2019-2-antwoord.xml"},
 		{title: "Eenvoudig virusverspreidingsmodel", url: "modellen/virus01.xml"},
 		{title: "Eenvoudig virusverspreidingsmodel (met overledenen)", url: "modellen/virus02.xml"},
+		{title: "SIR-model", url: "modellen/sir.xml"},
 ];
