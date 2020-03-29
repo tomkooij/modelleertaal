@@ -1,0 +1,49 @@
+﻿<modelleertaal>
+N=5000
+<startwaarden>
+N = 1000
+I = 0,01 * N
+R = 0
+S = N - I
+' 
+i_f = 1,2
+r_f = 0,23
+
+t = 0
+dt = 0,01
+</startwaarden>
+<modelregels>
+' SIR-model
+' S(usceptible) aantal vatbaar
+' I(nfteced) aantal geinfecteerd
+' R(ecoverd) aantal genezen
+
+' kans op infectie
+infectiekans = i_f * I / N
+
+' veranderingen S -> I -> R
+delta_geinfecteerd = infectiekans * S * dt
+delta_hersteld = r_f * I * dt
+
+' verminder vatbaren met
+' het aanta nieuw geinfecteerden:
+S = S - delta_geinfecteerd
+' I neemt toe met de nieuw geinfecteerden,
+' verminderd met de nieuw herstelden
+I = I + delta_geinfecteerd - delta_hersteld 
+' toename van het aantal genezen:
+R = R + delta_hersteld
+
+t = t + dt
+
+' flatten the curve maatregel
+als t > 4 dan
+  i_f = 0.5
+eindals
+
+' zorg dat R0 in tabel komt
+R0 = i_f / (r_f)
+ 
+
+</modelregels>
+</modelleertaal>
