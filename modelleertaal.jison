@@ -94,6 +94,7 @@ als                                     return 'IF'
 dan                                     return 'THEN'
 stop                                    return 'STOP'
 anders                                  return 'ELSE'
+print                                   return 'PRINT'  //stop and print value
 
 // blank item, to be filled in by user. Throw custom error on this
 "..."                                   return 'BLANK'
@@ -171,6 +172,13 @@ stmt
      {$$ = {
                  type: 'Stop',
                  value: $1
+            };
+      }
+  | PRINT '(' IDENT ')'
+     {$$ = {
+                 type: 'Print',
+                 value: $1,
+                 varname: $3
             };
       }
   | BLANK

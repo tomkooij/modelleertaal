@@ -345,6 +345,10 @@ CodeGenerator.prototype.parseNode = function(node) {
                 return node.value;
         case 'Stop':
                 return 'bailout=true;\nbreak;';
+        case 'Print':
+                // print(x) wil stop execution and print "alert()" the value of variable x
+                var internal_var_name = this.namespace.varDict[node.varname];
+                return 'alert("Gestopt: '+node.varname+' = "+'+internal_var_name+'.toPrecision(4));\nbailout=true;\nbreak;';
         case 'Blank': {
                 var err_blank = new SyntaxError("Vul iets in in plaats van de puntjes ...");
                 throw_custom_error(err_blank, node.astName, node.lineNo);
