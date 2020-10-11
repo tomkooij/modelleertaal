@@ -1,8 +1,9 @@
 # Changelog
 
-## [5.x.dev]
+## [5.1]
 
-dev
+- Implement print(). Stops execution and print value of variable.
+- Auto plot (N, t) curve for exponentiale growth/decay
 
 ## [5.0.2]
 
