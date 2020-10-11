@@ -196,6 +196,9 @@ Namespace.prototype.sortVarNames = function () {
     } else if (this.varNames.includes('h') & this.varNames.includes('x')) {
       // try to plot h,x diagram
       nameList = ['x', 'h', 't', 's', 'y', 'v', 'vx', 'vy'];
+    } else if (this.varNames.includes('N') & this.varNames.includes('t')) {
+        // try to plot N,t diagram (For SIR-virusmodels: plot I,t)
+        nameList = ['t', 'I', 'N', 'x', 's', 'y', 'v', 'vx', 'vy'];
     } else {
       // try to plot s,t or x,t diagram
       nameList = ['t', 's', 'x', 'y', 'h', 'u', 'v', 'vx', 'vy'];
