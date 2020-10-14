@@ -201,7 +201,7 @@ Namespace.prototype.sortVarNames = function () {
         nameList = ['t', 'I', 'N', 'x', 's', 'y', 'v', 'vx', 'vy'];
     } else {
       // try to plot s,t or x,t diagram
-      nameList = ['t', 's', 'x', 'y', 'h', 'u', 'v', 'vx', 'vy'];
+      nameList = ['t', 's', 'x', 'y', 'h', 'u', 'v', 'vx', 'vy', 'θ', 'ϑ'];
     }
     var nextVariableIndex = 0 ; // place to swap next "special"variable with
 
