@@ -15,7 +15,7 @@ var FileSaver = require('file-saver');
 //jshint loopfunc: true
 
 /* version history: CHANGELOG.md */
-var version = "v5.1 11oct2020";
+var version = "v5.1.1 dev 14oct2020";
 
 function ModelleertaalApp(params) {
 
@@ -57,6 +57,8 @@ function ModelleertaalApp(params) {
   this.dom_download_pgf_fn = "#pgf_filename";
   this.dom_download_tsv = "#download_tsv";
   this.dom_download_tsv_fn = "#tsv_filename";
+  this.dom_download_svg = "#download_svg";
+  this.dom_download_svg_fn = "#svg_filename";
   this.dom_clickdata = "#clickdata";
   this.dom_x_var = "#x_var";
   this.dom_y_var = "#y_var";
@@ -129,6 +131,9 @@ function ModelleertaalApp(params) {
   });
   $(this.dom_download_tsv).click(function() {
     self.download_tsv();
+  });
+  $(this.dom_download_svg).click(function() {
+    self.download_svg();
   });
 
   $(this.dom_fileinput).change(function(event) {
@@ -300,6 +305,14 @@ ModelleertaalApp.prototype.download_tsv = function() {
 
   var filename = $(this.dom_download_tsv_fn).val();
   this.save_string(this.create_tsv(), filename);
+};
+
+
+ModelleertaalApp.prototype.download_svg = function() {
+  // download SVG Plot.
+
+  var filename = $(this.dom_download_svg_fn).val();
+  this.save_string(this.create_svgplot(), filename);
 };
 
 
@@ -1060,6 +1073,47 @@ ModelleertaalApp.prototype.create_pgfplot = function() {
 		PGFPlot_TeX += "\\end{tikzpicture}\n";
 		return PGFPlot_TeX;
 	};
+
+// 
+// SVG
+// 
+ModelleertaalApp.prototype.create_svgplot = function() {
+  // Output SVG plot
+
+  if (!this.results_available()) {
+    alert('Geen resultaten. Druk eerst op Run!');
+    return false;
+  }
+
+  if (this.multiplot) {
+    alert('Not Implemented! Dit werkt alleen met enkele grafiek');
+    return false;
+  }
+
+  this.scatter_plot = [];
+
+  this.set_axis_to_defaults();
+
+  var results = this.reduce_rows(this.results, this.max_rows_in_plot);
+
+  for (var i = 0; i < results.length; i++) {
+    this.scatter_plot.push([results[i][xvar_colidx], results[i][yvar_colidx]]);
+  }
+
+  var coordinates = this.scatter_plot.map(function(d){
+          return " "+d.join(',')+" ";
+      }).join('\n');
+
+  SVG_Plot = '<svg viewBox="0 0 100 100">\n';
+  // graph
+  SVG_Plot += '<polyline fill="none" stroke="black" '  ;                 
+  SVG_Plot += 'points= "\n';
+  SVG_Plot += coordinates; 
+  SVG_Plot += ' "/>\n';
+  SVG_Plot += '</svg>\n';
+  
+  return SVG_Plot;
+};
 
 
 //

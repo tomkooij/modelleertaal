@@ -1,5 +1,9 @@
 # Changelog
 
+## [5.1.1 dev]
+
+- Plot theta,t diagram (add theta unicode 3b8 to evaluator.sortVarNames())
+
 ## [5.1]
 
 - Implement print(). Stops execution and print value of variable.
