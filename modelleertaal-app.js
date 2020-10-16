@@ -89,7 +89,7 @@ function ModelleertaalApp(params) {
   this.init_app();
   this.load_model();
 
-  this.max_rows_in_plot = 100;
+  this.max_rows_in_plot = 200;
 
   var self = this;
 
