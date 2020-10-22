@@ -2,17 +2,26 @@
 %
 % pgfplot.tex is created by the PGFPlot output of the ModelleertaalApp.
 %
-\documentclass{article}
+\documentclass[12pt]{standalone}
 \usepackage{tikz}
-
 \usepackage{pgfplots}
+\usepackage{helvet}
 \usepackage[detect-none, list-final-separator={ en }, per-mode=symbol,
             retain-explicit-plus, output-decimal-marker={,},
             exponent-product={\cdot}, range-phrase={ tot }]{siunitx}
 \usepackage[font={small,sf},labelfont={bf},labelsep=endash]{caption}
-
+\usepackage[eulergreek]{sansmath}
+\pgfplotsset{
+  tick label style = {font=\sansmath\sffamily},
+  every axis label = {font=\sansmath\sffamily},
+  legend style = {font=\sansmath\sffamily},
+  label style = {font=\sansmath\sffamily},
+  /pgf/number format/.cd,
+  use comma,
+  1000 sep={},
+}
 \begin{document}
 
 \input{pgfplot.tex}
-
+  
 \end{document}
