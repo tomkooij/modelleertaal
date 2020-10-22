@@ -17,7 +17,7 @@ Compile TeX to PDF (for example using TeXLive):
 latexmk -c plot.tex
 ```
 
-Or upload both files to ShareLatex or similar online service. [Example on ShareLatex](https://www.sharelatex.com/project/59f49e118ade204b7f11ab8f) 
+Or upload both files to ShareLatex or similar online service. [Example on Overleaf](https://www.overleaf.com/project/59f49e118ade204b7f11ab8f) 
 
 Credit
 ======
