@@ -271,6 +271,8 @@ Do not edit below this line: Change config.js above!
         <div id="hacks">
             <input id="set_max_rows" type="button" value="Reduceer aantal punten in plot tot maximaal: ">
             <input type="text" id="max_rows" value="100" size=5><br>
+            <input id="set_precision" type="button" value="Stel het aantal significante cijfer in op: ">
+            <input type="text" id="precision" value="4" size=5><br>
             <input id="download_svg" type="button" value="Download plot as SVG:">
             <input type="text" id="svg_filename" value="plot.svg" size=15><br>
             <input id="download_pgf" type="button" value="Download PGFPlot:">
@@ -342,6 +344,10 @@ Do not edit below this line: Change config.js above!
             $("#set_max_rows").click(function() {
                 m.set_max_rows_in_plot($("#max_rows").val());
                 console.log("set to: " + m.max_rows_in_plot);
+            });
+            $("#set_precision").click(function() {
+                m.set_precision($("#precision").val());
+                console.log("set to: " + m.precision);
             });
             $("#toggle_profiel").click(function() {
                 actieve_profiel += 1;

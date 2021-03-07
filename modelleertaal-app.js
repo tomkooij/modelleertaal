@@ -90,6 +90,7 @@ function ModelleertaalApp(params) {
   this.load_model();
 
   this.max_rows_in_plot = 200;
+  this.precision = 4;
 
   var self = this;
 
@@ -535,7 +536,7 @@ ModelleertaalApp.prototype.table_row = function(rowIndex) {
     for (var j = 0; j < this.results[rowIndex].length; j++) {
       res = this.results[rowIndex][j];
       if (typeof(res) === 'number') {
-          res = fix(res.toPrecision(4));
+          res = fix(res.toPrecision(this.precision));
       } else {  // -- boolean
           if (res) {
             res = 'Waar';
@@ -898,6 +899,10 @@ ModelleertaalApp.prototype.set_max_rows_in_plot = function(max_rows) {
   this.max_rows_in_plot = max_rows;
 };
 
+ModelleertaalApp.prototype.set_precision = function(precision) {
+  this.precision = precision;
+};
+
 ModelleertaalApp.prototype.read_model_from_xml = function(XMLString) {
   this.model = new evaluator_js.Model();
   this.model.parseBogusXMLString(XMLString);
@@ -940,6 +945,7 @@ ModelleertaalApp.prototype.init_app = function() {
 // TSV -- use TSV instead of CSV to prevent , . decimal problems in Excel.
 //
 ModelleertaalApp.prototype.create_tsv = function() {
+    var self = this;
     var tsv = '';
 
     tsv += this.allVars.join('\t'); //header row
@@ -947,7 +953,7 @@ ModelleertaalApp.prototype.create_tsv = function() {
 
     tsv += this.results.map(function(row ){
         return row.map(function(item) {
-          return typeof(item) === 'number' ? item.toPrecision(4) : item;
+          return typeof(item) === 'number' ? item.toPrecision(self.precision) : item;
         }).join('\t');
     }).join('\n');
 
