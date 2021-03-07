@@ -307,7 +307,7 @@ CodeGenerator.prototype.parseNode = function(node) {
         case 'Unary':
                     switch(node.operator) {
                         case '+':   return "(" + this.parseNode(node.right) + ")";
-                        case '-':   return "(-1. * " + this.parseNode(node.right) + ")";
+                        case '-':   return "-1. * " + this.parseNode(node.right);
                         case 'NOT':  return "!("+ this.parseNode(node.right) + ")";
                         default: {
                             var err = new SyntaxError("Unknown unary:" + JSON.stringify(node));
@@ -339,6 +339,9 @@ CodeGenerator.prototype.parseNode = function(node) {
                     case 'sign': return "Math.sign("+this.parseNode(node.expr)+")";
                     case 'teken': return "Math.sign("+this.parseNode(node.expr)+")";
                     case 'abs': return "Math.abs("+this.parseNode(node.expr)+")";
+                    case 'min': return "Math.min("+this.parseNode(node.expr)+")";
+                    case 'max': return "Math.max("+this.parseNode(node.expr)+")";
+
                     default:
                         var err1 = new SyntaxError("Unknown function:" + JSON.stringify(node.func) + " Line: "+node.lineNo+" ("+node.astName+")");
                         throw_custom_error(err1, node.astName, node.lineNo);
@@ -347,6 +350,8 @@ CodeGenerator.prototype.parseNode = function(node) {
                 }
         case 'Number':
                 return parseFloat(node.value.replace(',','.'));
+        case 'List':
+                return this.parseNode(node.left) + "," + this.parseNode(node.right);
         case 'Boolean':
                 return node.value;
         case 'Stop':

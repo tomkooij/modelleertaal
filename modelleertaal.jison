@@ -96,6 +96,8 @@ stop                                    return 'STOP'
 anders                                  return 'ELSE'
 print                                   return 'PRINT'  //stop and print value
 
+";"                                     return 'SEP' // allow lists: min(1;2;3)
+
 // blank item, to be filled in by user. Throw custom error on this
 "..."                                   return 'BLANK'
 "…"                                     return 'BLANK'
@@ -127,6 +129,7 @@ print                                   return 'PRINT'  //stop and print value
 %left '>='
 %left '>'
 %left IF
+%left SEP
 
 %%
 
@@ -214,6 +217,15 @@ direct_declarator
 expr
   : direct_declarator
     {$$ = $1;}
+
+  | expr 'SEP' expr
+       {$$ = {
+               type: 'List',
+               operator: 'LIST',
+               left: $1,
+               right: $3
+       };
+  }
 
   | expr '==' expr
        {$$ = {
@@ -362,6 +374,7 @@ expr
   | '(' expr ')'
       {$$ = $2;}
 
+  
   | NUMBER
       {$$ = {
                   type: 'Number',

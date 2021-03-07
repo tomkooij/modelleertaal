@@ -5,6 +5,7 @@
 - Add sinr, cosr and tanr functions (trig with radians) by mierenhoop
 - Export N=... to model.xml
 - Allow user to set precision (significante cijfers) in table and TSV
+- implement min() and max() functions, with ; as separator. min(-10; 0) == 0
 
 ## [5.1.1]
 

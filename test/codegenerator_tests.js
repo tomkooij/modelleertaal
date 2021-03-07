@@ -205,6 +205,30 @@ describe('CodeGenertor.generateCodeFromAst() correct output of math expressions'
         code = codegenerator.generateCodeFromAst(ast);
         assert.closeTo(eval(code),6.91,0.01);
     })
+
+    it('Min function: min(1 ; 3) == 1', function() {
+        ast = parser.parse("x = min(1;3)");
+        code = codegenerator.generateCodeFromAst(ast);
+        assert.closeTo(eval(code),1,0.01);
+    })
+
+    it('Min function: min(10 ; 0.2; 3) == 0.2', function() {
+        ast = parser.parse("x = min(10;0.2;3)");
+        code = codegenerator.generateCodeFromAst(ast);
+        assert.closeTo(eval(code),0.2,0.01);
+    })
+
+    it('Min function: min(-3; 0) == -3', function() {
+        ast = parser.parse("x = min(-3;0)");
+        code = codegenerator.generateCodeFromAst(ast);
+        assert.closeTo(eval(code),-3,0.01);
+    })
+
+    it('Min function: min(-1 ; 2; -0.3) == -1', function() {
+        ast = parser.parse("x = min(-1;2;-0.3)");
+        code = codegenerator.generateCodeFromAst(ast);
+        assert.closeTo(eval(code),-1,0.01);
+    })
 });
 
 describe('CodeGenertor.generateCodeFromAst() correct flow control', function(){
