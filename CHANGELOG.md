@@ -1,6 +1,12 @@
 # Changelog
 
-## [5.1.1 dev]
+## [5.2 dev]
+
+- Add sinr, cosr and tanr functions (trig with radians) by mierenhoop
+- Export N=... to model.xml
+- Allow user to set precision (significante cijfers) in table and TSV
+
+## [5.1.1]
 
 - Plot theta,t diagram (add theta unicode 3b8 to evaluator.sortVarNames())
 
