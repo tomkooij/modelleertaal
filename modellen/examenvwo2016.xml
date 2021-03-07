@@ -1,6 +1,7 @@
 <modelleertaal>
+N=500
 <startwaarden>
-   	t = 0
+t = 0
 dt = 10
 Ra = 5,371E6
 Ma = 5,972E24

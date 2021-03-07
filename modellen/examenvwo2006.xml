@@ -1,4 +1,5 @@
 <modelleertaal>
+N=500
 <startwaarden>
 k = 2125      'brandstofverbruik
 mb = 255000   'massa brandstof
