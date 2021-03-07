@@ -15,7 +15,7 @@ var FileSaver = require('file-saver');
 //jshint loopfunc: true
 
 /* version history: CHANGELOG.md */
-var version = "v5.1.1 dev 14oct2020";
+var version = "v5.2 dev 7mar2021";
 
 function ModelleertaalApp(params) {
 
@@ -286,6 +286,12 @@ ModelleertaalApp.prototype.download_model = function() {
 
   var filename = $(this.dom_download_xml_fn).val();
   this.read_model();
+
+  // copy N from app, if exist, write into Model
+  if (this.N !== undefined) {
+    this.model.N = this.N;
+  }
+
   this.save_string(this.model.createBogusXMLString(), filename);
 };
 

@@ -94,7 +94,13 @@ Model.prototype.parseBogusXMLString = function(xmlString) {
 
 Model.prototype.createBogusXMLString = function() {
 
-    return '<modelleertaal>\n<startwaarden>\n' +
+    // TODO replace this with a function that exports all options.
+    var Nstring = '';
+    if (this.N !== undefined)
+            Nstring = 'N = ' + this.N + '\n';
+    return '<modelleertaal>\n' +
+            Nstring +
+            '<startwaarden>\n' +
             this.startwaarden +
             '\n</startwaarden>\n<modelregels>\n' +
             this.modelregels +
