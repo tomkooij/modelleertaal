@@ -1,6 +1,8 @@
 # Changelog
 
-## [5.2 dev]
+## [5.2]
+
+2 apr 2021
 
 - Add sinr, cosr and tanr functions (trig with radians) by mierenhoop
 - Export N=... to model.xml
