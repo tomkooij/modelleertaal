@@ -1,8 +1,8 @@
 # Changelog
 
-## [5.3 dev]
+## [5.3]
 
-- ...
+- Add leeg model
 
 ## [5.2]
 
