@@ -1,6 +1,6 @@
 language: node_js
 node_js:
-  - "6"   # test backwards compatibility
+  - "8"   # test backwards compatibility (grunt 1.4 requires node >=8)
   - node  # latest stable
 
 before_install: npm install -g grunt-cli
