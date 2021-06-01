@@ -2,6 +2,10 @@
 
 ## [5.4 dev]
 
+- Update grunt minimum version
+- arcsin/arccos/arctan in degrees, consistent with sin/cos/tan
+- arcsinr/arccosr/arctanr in radians, consistent with sinr/cosr/tanr
+
 ## [5.3]
 
 1 jun 2021

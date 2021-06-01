@@ -329,9 +329,12 @@ CodeGenerator.prototype.parseNode = function(node) {
                     case 'sinr': return "Math.sin("+this.parseNode(node.expr)+")";
                     case 'cosr': return "Math.cos("+this.parseNode(node.expr)+")";
                     case 'tanr': return "Math.tan("+this.parseNode(node.expr)+")";
-                    case 'arcsin': return "Math.asin("+this.parseNode(node.expr)+")";
-                    case 'arccos': return "Math.acos("+this.parseNode(node.expr)+")";
-                    case 'arctan': return "Math.atan("+this.parseNode(node.expr)+")";
+                    case 'arcsin': return "Math.asin("+this.parseNode(node.expr)+")*180./Math.PI";
+                    case 'arccos': return "Math.acos("+this.parseNode(node.expr)+")*180./Math.PI";
+                    case 'arctan': return "Math.atan("+this.parseNode(node.expr)+")*180./Math.PI";
+                    case 'arcsinr': return "Math.asin("+this.parseNode(node.expr)+")";
+                    case 'arccosr': return "Math.acos("+this.parseNode(node.expr)+")";
+                    case 'arctanr': return "Math.atan("+this.parseNode(node.expr)+")";
                     case 'exp': return "Math.exp("+this.parseNode(node.expr)+")";
                     case 'ln':  return "Math.log("+this.parseNode(node.expr)+")";
                     case 'log':  return "Math.log10("+this.parseNode(node.expr)+")";

@@ -164,8 +164,14 @@ describe('CodeGenertor.generateCodeFromAst() correct output of math expressions'
         assert.closeTo(eval(code),1.,0.01);
     })
 
-    it('Math.asin: arcsin(0.707) = 1/4*pi', function() {
+    it('Math.asin: arcsin(0.707) = 45', function() {
         ast = parser.parse("t=arcsin(0,707)");
+        code = codegenerator.generateCodeFromAst(ast);
+        assert.closeTo(eval(code),45,0.01);
+    })
+
+    it('Math.asin: arcsinr(0.707) = 1/4*pi', function() {
+        ast = parser.parse("t=arcsinr(0,707)");
         code = codegenerator.generateCodeFromAst(ast);
         assert.closeTo(eval(code),(1/4*3.1415),0.01);
     })
