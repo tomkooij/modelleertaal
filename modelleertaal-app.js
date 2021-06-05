@@ -807,8 +807,10 @@ ModelleertaalApp.prototype.plot_graph = function(dataset) {
     if (Math.abs(val) > 9e4)
         return val.toExponential(1);
     else
-        return val.toFixed(axis.tickDecimals);
+        //return val.toFixed(axis.tickDecimals);
+        return $.plot.defaultTickFormatter(val, axis);
   }
+
   var legendContainer = document.getElementById("legend");
 
   var axis_font = {
