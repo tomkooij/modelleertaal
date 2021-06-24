@@ -5,6 +5,8 @@
 - Update grunt minimum version
 - arcsin/arccos/arctan in degrees, consistent with sin/cos/tan
 - arcsinr/arccosr/arctanr in radians, consistent with sinr/cosr/tanr
+- Update Flot to 4.4.2
+- Patch Flot to fix tickDecimals (issue gh-57)
 
 ## [5.3]
 
