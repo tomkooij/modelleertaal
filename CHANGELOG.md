@@ -7,7 +7,10 @@
 - arcsinr/arccosr/arctanr in radians, consistent with sinr/cosr/tanr
 - Update Flot to 4.4.2
 - Patch Flot to fix tickDecimals (issue gh-57)
+- Include Flot 6ef52547a0049cee5ad02ef21645a035b67ffd59 (flot PR 1730) 
+  (Modelleertaal issue gh-38). Added README.CUSTOM-FLOT.md
 - Migrate to travis-ci.com
+
 
 ## [5.3]
 
