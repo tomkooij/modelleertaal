@@ -15,7 +15,7 @@ var FileSaver = require('file-saver');
 //jshint loopfunc: true
 
 /* version history: CHANGELOG.md */
-var version = "v5.4 dev 25jun2021 travis";
+var version = "v5.4 dev 29jun2021 goatcountertest2";
 
 function ModelleertaalApp(params) {
 
@@ -245,6 +245,12 @@ ModelleertaalApp.prototype.dropdown_load_model = function() {
         document.location.href = rel_link;
     }
 
+    // count model reload as pageview in goatcounter
+    if (window.goatcouter !== undefined) {
+      window.goatcounter.count({
+        path: location.pathname,
+      });
+    }
     this.load_model_xml_from_url(url);
 };
 
