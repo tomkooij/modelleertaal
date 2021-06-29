@@ -97,6 +97,12 @@ function ModelleertaalApp(params) {
   $(this.dom_run).click(function() {
     // read N from input field
     self.N = Number($(self.dom_nbox).val());
+    // count model run as pageview to #run in goatcounter
+    if (window.goatcounter !== undefined) {
+      window.goatcounter.count({
+        path: location.pathname + '#run',
+      });
+    }
     self.run();
   });
 
