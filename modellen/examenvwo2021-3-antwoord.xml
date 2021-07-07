@@ -7,23 +7,21 @@ s = 0 'm
 v = 0 'm
 m = 69 + 14,5 'kg
 alfa = 42 'graden
-g = ... 'm/s2
+g = 9,81 'm/s2
 f = 0,25
-
 </startwaarden>
 <modelregels>
 'Examen VWO 2021-III Kayak-jumping
 als s > 17,9 dan alfa = 0 eindals
 als s > 20 dan alfa = -42 eindals
 Fzlangs = m*g*sin(alfa)
-Fn = ...
+Fn = m*g*cos(alfa)
 Fw = f*Fn
 Fres = Fzlangs - Fw
 a = Fres / m
-v = ...
+v = v + a * dt
 s = s + v * dt
 als s > 23,8 dan stop eindals
 t = t + dt
-
 </modelregels>
 </modelleertaal>
