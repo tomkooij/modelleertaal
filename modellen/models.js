@@ -15,5 +15,6 @@ var model_index = [
 		{title: "Examen vwo 2021-III Kayak-Jumping", url: "modellen/examenvwo2021-3.xml"},
 		{title: "Examen vwo 2021-III Kayak-Jumping (antwoord)", url: "modellen/examenvwo2021-3-antwoord.xml"},
 		{title: "Examen vwo 2021-III Kayak-Jumping - met energie", url: "modellen/examenvwo2021-3-energie.xml"},
+		{title: "Examen vwo 2022-I Vrije worp bij basketbal", url: "modellen/examenvwo2022.xml"},
 		{title: "Leeg model", url: "modellen/leeg.xml"},
 ];
