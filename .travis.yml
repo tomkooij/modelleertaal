@@ -1,7 +1,8 @@
 language: node_js
 node_js:
   - "8"   # test backwards compatibility (grunt 1.4 requires node >=8)
-  - node  # latest stable
+  - "17"  # >= 17 breaks travis. No compatible with ubuntu xenial.  
+  #- node   # latest stable
 
 before_install: npm install -g grunt-cli
 install: npm install
@@ -28,7 +29,7 @@ deploy:
     verbose: true
     on:
       branch: master
-      node_js: node
+      node_js: "17"
   - provider: pages
     skip_cleanup: true
     github_token: $GITHUB_TOKEN
@@ -36,7 +37,7 @@ deploy:
     verbose: true
     on:
       branch: master
-      node_js: node
+      node_js: "17"
       tags: true
   - provider: releases
     file:
@@ -45,5 +46,5 @@ deploy:
     api_key: $GITHUB_TOKEN
     on:
       branch: master
-      node_js: node
+      node_js: "17"
       tags: true
