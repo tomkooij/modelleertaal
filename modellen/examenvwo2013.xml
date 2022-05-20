@@ -1,0 +1,34 @@
+<modelleertaal>
+N=500
+<startwaarden>
+// startwaarden
+// in SI-eenheden
+v = 0
+x = 0
+t = 0
+dt = 0,01
+mtr = 4500
+msleepwg = 7000
+mblok = 5000
+mtot = mtr + msleepwg + mblok
+Faandr = 45000
+kettingfactor = 0,081
+F0 = 15e3
+c = 1,2
+</startwaarden>
+<modelregels>
+// Examen VWO 2013-II
+// Trekkertrek
+xblok = kettingfactor * x
+als xblok > 6,8 dan
+ xblok = 6,8
+eindals
+Fw = F0 + c*mblok*xblok
+Fres = Faandr - Fw
+a = Fres / mtot
+v = v + a*dt
+x = x + v*dt
+t = t + dt
+als v<0 dan stop eindals
+</modelregels>
+</modelleertaal>

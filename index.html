@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<script src="config.js"></script>
+<!--
+
+Note to self:
+Do not edit below this line: Change config.js above!
+
+-->
+<script>
+    //
+    // WebApp configuration / customisation
+    //
+
+    if (typeof config_js_loaded === 'undefined') {
+        console.log('config.js not loaded: Using default configuration profiles.');
+        var N_default = 1000; // default waarde voor N (aantal iteraties)
+        var base_url = 'https://www.tomkooij.nl/modelleertaal';
+
+        // titelbalk bovenaan
+        var title = 'Modelleertaal';
+        var title_link = 'https://www.github.com/tomkooij/modelleertaal';
+
+        // definitie van het "profiel", welke knoppen staan aan enz.
+        var full_webapp = [{
+                id: "#model_keuze",
+                action: "show"
+            },
+            {
+                id: "#permalink",
+                action: "show"
+            },
+            {
+                id: "#open_file_dialog",
+                action: "hide"
+            },
+            // model blok
+            {
+                id: "#continue_dialog",
+                action: "show"
+            },
+            {
+                id: "#debugger_dialog",
+                action: "show"
+            },
+            // tabel output
+        ];
+
+        var leerling_versie = [
+            // Uitgekleede webapp met zo min mogelijk afleiding
+            // bovenste blok
+            {
+                id: "#model_keuze",
+                action: "show"
+            },
+            {
+                id: "#permalink",
+                action: "hide"
+            },
+            {
+                id: "#open_file_dialog",
+                action: "hide"
+            },
+            // model blok
+            {
+                id: "#continue_dialog",
+                action: "hide"
+            },
+            {
+                id: "#debugger_dialog",
+                action: "hide"
+            },
+            // tabel output
+        ];
+
+        var profiellen = [full_webapp, leerling_versie];
+        var actieve_profiel = 0;
+    };
+</script>
+
+<head>
+    <meta charset="utf-8">
+    <title>Modelleertaal webapp</title>
+
+    <style>
+        html {
+            font-family: Helvetica, arial, sans-serif;
+            font-size: 100%;
+        }
+
+        table {
+            border: 1px solid black;
+        }
+
+        th,
+        td {
+            text-align: center;
+            border: 1px solid black;
+            padding: 5px;
+        }
+
+        table.app {
+            border: none;
+        }
+
+        table.app th {
+            border: none;
+            padding: 5px;
+        }
+
+        table.app td {
+            text-align: left;
+            border: none;
+            padding: 5px;
+        }
+
+        table.plot_dialog {
+            border: none;
+        }
+
+        table.plot_dialog td {
+            vertical-align: top;
+            text-align: left;
+            padding: 0px;
+        }
+
+        .multiplot {
+            background-color: #e7e7e7;
+            color: black;
+            border: none;
+            padding: 4px 4px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 10px;
+            margin: 4px 2px;
+            cursor: pointer;
+        }
+
+        /* fix flot legend background */
+        /* https://github.com/flot/flot/issues/1708 */
+        .legendLayer .background {
+            fill: rgba(255, 255, 255, 0.85);
+            stroke: rgba(0, 0, 0, 0.85);
+            stroke-width: 1;
+        }
+
+        /* schaduw rand om werkblad zodat afmetinging zichtbaar is
+       handig voor debuggen */
+
+        #werkBlad {
+            padding: 1em;
+            margin: .5em auto;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
+        }
+
+        #graph {
+            width: 450px;
+            height: 300px;
+        }
+
+        .CodeMirror {
+            height: auto;
+            border: 1px solid #ddd;
+        }
+
+        .CodeMirror pre {
+            padding-left: 7px;
+            line-height: 1.25;
+        }
+    </style>
+    <script src="scripts/jquery-3.2.1.min.js"></script>
+    <script src="scripts/jquery.flot.js"></script>
+    <script src="scripts/jquery.flot.tooltip.js"></script>
+</head>
+
+
+<body>
+    <div id="werkBlad">
+        <!-- CSS zorg voor met werkvlak met schaduw -->
+        <h2><a id="title" href="https://github.com/tomkooij/modelleertaal">Modelleertaal</a></h2>
+        <p>
+            <div>
+                Kies model:
+                <select id="model_keuze">
+                    <option value="0">models.js niet geladen!</option>
+                </select>
+                of:
+                <input id="enable_open_file_dialog" type="button" value="Bestanden...">
+                <p>
+                <span id="open_file_dialog">
+                    Bestanden van/naar computer:
+                    <input id="fileinput" type="file" style="width:0px">
+                    <button id="stupid_hack" onclick="fileinput.click()">Open bestand</button>
+                    <input id="download_xml" type="button" value="Sla op (download) als:">
+                    <input type="text" id="xml_filename" value="model.xml" size=15><br>
+                </span>
+            </div>
+    </div>
+    <div id="werkBlad">
+        <div>
+            <input id="run" type="button" value="RUN!">
+            Aantal iteraties = <input type="text" id="NBox" value="1000" size=5>.
+            <span id="continue_dialog">
+                <input id="continue" type="button" value="Voeg toe:">
+                <input type="text" id="NBoxContinue" value="10" size=3>
+                iteraties.
+            </span>
+            <span id="debugger_dialog">
+                Debugger:
+                <input id="trace" type="button" value="Volgende regel">
+            </span>
+            <div>
+                <table class="app">
+                    <tr>
+                        <td>
+                            Status: <span id="status_bar"></span>
+                        </td>
+                        <td>Modelregels:</td>
+                        <td>Startwaarden:</td>
+                    </tr>
+                    <tr>
+
+                        <td rowspan="2" class="graphbox">
+                            <div id="graph" class="graph"></div>
+                            <p>
+                            <table class="plot_dialog">
+                              <tr>
+                                <td> verticaal: </td>
+                                <td rowspan="2" id="select_graph">
+                                    <select id="y_var">
+                                      <option value=""></option>
+                                    </select>
+                                </td>
+                                <td> horizontaal:
+                                    <select id="x_var">
+                                      <option value=""></option>
+                                    </select>
+                                    <input id="plot" type="button" value="Plot!">
+                                </td>
+                              </tr>
+                              <tr>
+                                <td></td>
+                                <td><div id="legend"></div></td>
+                                <td></td>
+                              </tr>
+                              <tr>
+                                <td colspan="3">
+                                    <span id="multiplot"></span>
+                                </td>
+                              </tr>
+                            </table>
+                        </td>
+                        <td style="vertical-align:top" width=300px><textarea id="modelregels" rows=15 cols=30>//Modelregels:</textarea>
+                            <p><div id="clickdata"></div>
+                        </td>
+                        <td style="vertical-align:top" width=200px align="top"><textarea id="startwaarden" rows=15 cols=20>//Startwaarden:</textarea></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="werkBlad">
+        <div id="datatable">Hier komt een tabel...</div>
+    </div>
+
+    <div id="werkBlad">
+        <div id="hack_toggle">Klik voor meer opties...</div>
+        <div id="hacks">
+            <input id="set_max_rows" type="button" value="Reduceer aantal punten in plot tot maximaal: ">
+            <input type="text" id="max_rows" value="100" size=5><br>
+            <input id="set_precision" type="button" value="Stel het aantal significante cijfer in op: ">
+            <input type="text" id="precision" value="4" size=5><br>
+            <input id="download_svg" type="button" value="Download plot as SVG:">
+            <input type="text" id="svg_filename" value="plot.svg" size=15><br>
+            <input id="download_pgf" type="button" value="Download PGFPlot:">
+            <input type="text" id="pgf_filename" value="pgfplot.tex" size=15><br>
+            <input id="download_tsv" type="button" value="Download TSV:">
+            <input type="text" id="tsv_filename" value="model_data.tsv" size=15><br>
+        </div>
+    </div>
+
+    <div id="werkBlad">
+        <div>
+            <input id="toggle_profiel" type="button" value="Toggle profiel: Meer/minder knoppen">
+        </div>
+    </div>
+
+    <!-- jQuery is included in head section -->
+    <!-- config.js included at the top of this file -->
+    <script src="modellen/models.js"></script>
+    <script src="scripts/modelleertaal-app.browser.js"></script>
+    <link rel="stylesheet" href="scripts/codemirror.css">
+    <script src="scripts/codemirror.js"></script>
+    <script src="scripts/codemirror-mode-modelleertaal.js"></script>
+
+    <script type="text/javascript">
+
+        // FIXME hack below :-(
+        // split window.location.href in two parts
+        var base_url = window.location.origin;
+        var rel_url = window.location.href.split(base_url)[1];
+        rel_url = rel_url.split('index.html')[0]; // discard index.html#model= part.
+        if (!rel_url.endsWith('/')) this.rel_url += '/';
+
+        if (typeof modelleertaalapp_js == 'undefined') {
+            alert('modelleertaal-app.browser.js not found or not loaded!');
+        }
+
+        m = new modelleertaalapp_js.ModelleertaalApp({
+            debug: true,
+            model_index: model_index,
+            base_url: base_url,
+            rel_url: rel_url,
+        });
+
+        $(document).ready(function() {
+            console.log("Start!");
+
+            // customize titel
+            if (m.version) {
+              if (m.version.includes("dev")) {
+                title += " "+m.version;
+              }
+            }
+            $('#title').html(title);
+            $('#title').attr('href', title_link);
+
+            // Laadt het profiel (defintie in script bovenaan deze pagina)
+            activeer_profiel(profiellen[actieve_profiel]);
+
+            $("#hacks").hide();
+            $("#hack_toggle").css({
+                'cursor': 'pointer'
+            }).click(function() {
+                $("#hack_toggle").hide();
+                $("#hacks").show();
+            });
+            $("#pgfplot").click(function() {
+                m.download_pgfplot();
+            });
+            $("#set_max_rows").click(function() {
+                m.set_max_rows_in_plot($("#max_rows").val());
+                console.log("set to: " + m.max_rows_in_plot);
+            });
+            $("#set_precision").click(function() {
+                m.set_precision($("#precision").val());
+                console.log("set to: " + m.precision);
+            });
+            $("#toggle_profiel").click(function() {
+                actieve_profiel += 1;
+                if (actieve_profiel > profiellen.length - 1) actieve_profiel = 0;
+                console.log('actieve_profiel', actieve_profiel);
+                activeer_profiel(profiellen[actieve_profiel]);
+            });
+            $("#enable_open_file_dialog").click(function() {
+                $("#open_file_dialog").show();
+            });
+
+        });
+
+        activeer_profiel = function(profiel) {
+            // zet knoppen/divs/span (id) aan/uit enz.
+            console.log('Activeer profiel: ', profiel);
+            profiel.forEach(function(item) {
+                switch (item.action) {
+                    case 'hide': {
+                        $(item.id).hide();
+                        break;
+                    }
+                    case 'show': {
+                        $(item.id).show();
+                        break;
+                    }
+                }
+            });
+        }
+
+    </script>
+
+    <!-- Goat Counter -->
+    <script data-goatcounter="https://tomkooij.goatcounter.com/count"
+        async src="//gc.zgo.at/count.js"></script>
+</body>
+
+</html>

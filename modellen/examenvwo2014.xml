@@ -1,0 +1,27 @@
+<modelleertaal>
+N=500
+<startwaarden>
+// Startwaarden
+// in SI-eenheden
+t = 0  // niet in examen!
+dt = 0,01
+x = 0
+y = 2,5
+g = 9,81
+alfa = 45
+v0 = 12
+vx = v0*cos(alfa)
+vy = v0*sin(alfa)
+</startwaarden>
+<modelregels>
+//Examen VWO 2014-II
+// Kogelstoten
+x = x + vx*dt
+y = y + vy*dt
+vy = vy - g*dt
+t = t + dt
+Als y<0
+Dan stop
+eindals
+</modelregels>
+</modelleertaal>

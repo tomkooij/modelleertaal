@@ -1,0 +1,31 @@
+<modelleertaal>
+N=500
+<modelregels>
+'Examen VWO 2005-I Champignon
+Fz = m * 9,81
+Fw = k * Opp * v^2
+Fr = Fz - Fw
+a = Fr/m
+v = v + a*dt
+x = x + v*dt
+als t > 13 dan
+    Opp = Opp + dOpp
+eindals
+als Opp > 42,6 dan
+    Opp = 42,6
+eindals
+t = t + dt
+
+</modelregels>
+<startwaarden>
+m = 91
+k = 0,37
+Opp = 0,8
+v = 0
+x = 0
+t = 0
+dOpp = 1,1
+dt = 0,1
+
+</startwaarden>
+</modelleertaal>
