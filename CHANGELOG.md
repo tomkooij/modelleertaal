@@ -2,7 +2,13 @@
 
 ## [5.5 dev]
  - 
- 
+
+## [5.4.2]
+
+20 may 2022
+
+- Add Examen 2022 
+
 ## [5.4]
 
 - Update grunt minimum version
