@@ -1,7 +1,7 @@
 Simple compiler and webapp for *Modelleertaal*
 ==========================================
 
-[![travis](https://travis-ci.com/tomkooij/modelleertaal.svg?branch=master)](https://travis-ci.com/tomkooij/modelleertaal)
+[![test](https://github.com/tomkooij/modelleertaal/actions/workflows/test.yml/badge.svg)](https://github.com/tomkooij/modelleertaal/actions/workflows/test.yml)
 
 *Modelleertaal* to javascript compiler in javascript/jison. A simple demo webapp is included that can run most (all?)
 of the models used in high school physics in NL.
