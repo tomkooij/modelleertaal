@@ -558,6 +558,179 @@
             margin-top: 8px;
         }
 
+        /* grafisch model */
+        #grafisch_model > div,
+        #grafisch_model > p,
+        #grafisch_model > details,
+        #grafisch_model > button {
+            margin-top: 10px;
+        }
+
+        #grafisch_view {
+            position: relative;
+        }
+
+        #grafisch_svg {
+            overflow: auto;
+            max-height: 75vh;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: #fff;
+            cursor: grab;
+        }
+
+        #grafisch_svg .placeholder {
+            cursor: default;
+        }
+
+        .grafisch_zoom {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin-left: auto;
+        }
+
+        #grafisch_zoom_waarde {
+            min-width: 3em;
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--muted);
+        }
+
+        /* form of the selected element: a small window next to it */
+        #grafisch_eigenschappen {
+            position: absolute;
+            z-index: 5;
+            width: min(380px, calc(100% - 16px));
+        }
+
+        #grafisch_eigenschappen:empty {
+            display: none;
+        }
+
+        @media (max-width: 600px) {
+            #grafisch_eigenschappen {
+                position: static;
+                width: auto;
+                margin-top: 10px;
+            }
+        }
+
+        #grafisch_svg svg {
+            display: block;
+            max-width: none;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        #grafisch_svg [data-id] {
+            cursor: move;
+            touch-action: none;
+        }
+
+        #grafisch_svg .selected > rect,
+        #grafisch_svg .selected > circle,
+        #grafisch_svg .selected > path {
+            stroke: #d97706;
+            stroke-width: 3.5;
+        }
+
+        #grafisch_knoppen {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px;
+        }
+
+        #grafisch_melding:not(:empty) {
+            margin-top: 10px;
+            padding: 8px 12px;
+            border-radius: 6px;
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        #grafisch_model > #grafisch_melding:empty {
+            margin-top: 0;
+        }
+
+        .grafisch_form {
+            display: grid;
+            gap: 8px;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-left: 4px solid #d97706;
+            border-radius: 6px;
+            background: var(--card);
+            box-shadow: 0 6px 20px rgba(17, 24, 39, 0.18);
+        }
+
+        .grafisch_form h2 {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            color: var(--text);
+        }
+
+        button.grafisch_sluit {
+            border: 0;
+            background: none;
+            padding: 0 4px;
+            font-size: 1.2rem;
+            line-height: 1;
+            color: var(--muted);
+            min-height: 0;
+        }
+
+        .grafisch_form_melding:not(:empty) {
+            padding: 6px 10px;
+            border-radius: 6px;
+            background: #fee2e2;
+            color: #991b1b;
+            font-size: 0.9rem;
+        }
+
+        .grafisch_form h2,
+        .grafisch_form p {
+            margin: 0;
+        }
+
+        .grafisch_form label {
+            display: grid;
+            grid-template-columns: minmax(90px, 11em) minmax(0, 1fr);
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+        }
+
+        .grafisch_form input[type="text"] {
+            font-family: ui-monospace, Consolas, monospace;
+            min-width: 0;
+        }
+
+        .grafisch_form_knoppen {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .grafisch_legenda {
+            color: var(--muted);
+            font-size: 0.85rem;
+        }
+
+        #grafisch_tabel table {
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        #grafisch_tabel td {
+            border-top: 1px solid var(--border);
+            padding: 3px 8px;
+            vertical-align: top;
+        }
+
         /* meer opties */
         details summary {
             cursor: pointer;
@@ -683,6 +856,47 @@
                 <div id="datatable"></div>
             </section>
         </div>
+
+        <details class="card" id="grafisch_model">
+            <summary>Weergave als grafisch model</summary>
+            <div id="grafisch_knoppen">
+                <button id="grafisch_nieuw_toestand" type="button">+ Toestandsvariabele</button>
+                <button id="grafisch_nieuw_hulp" type="button">+ Hulpvariabele</button>
+                <button id="grafisch_nieuw_constante" type="button">+ Constante</button>
+                <button id="grafisch_undo" type="button" disabled title="Maak de laatste wijziging in het diagram ongedaan (Ctrl+Z)">&#8630; Ongedaan maken</button>
+                <span class="grafisch_zoom">
+                    <button id="grafisch_zoom_uit" type="button" title="Uitzoomen (Ctrl + muiswiel)" aria-label="Uitzoomen">&minus;</button>
+                    <span id="grafisch_zoom_waarde">100%</span>
+                    <button id="grafisch_zoom_in" type="button" title="Inzoomen (Ctrl + muiswiel)" aria-label="Inzoomen">+</button>
+                    <button id="grafisch_zoom_passend" type="button" title="Maak het hele model zichtbaar">Passend</button>
+                </span>
+            </div>
+            <p class="grafisch_legenda">
+                Klik op een symbool om het aan te passen of te verwijderen (Delete). Sleep een symbool om het te verplaatsen,
+                sleep de achtergrond om het beeld te verschuiven. Elke wijziging komt in de tekst van het model.
+            </p>
+            <div id="grafisch_view">
+                <div id="grafisch_svg"></div>
+                <div id="grafisch_eigenschappen"></div>
+            </div>
+            <div id="grafisch_melding" role="alert"></div>
+            <details>
+                <summary>Legenda</summary>
+                <p class="grafisch_legenda">
+                    Rechthoek: toestandsvariabele &middot; pijp met kraantje: stroom &middot; cirkel: hulpvariabele
+                    (gestippeld: met voorwaarde) &middot; ruit: constante &middot; bliksem: voorval &middot;
+                    rode pijl: &ldquo;hangt af van&rdquo; (lichte stippels: alleen in de voorwaarde van
+                    <i>als&nbsp;&hellip;&nbsp;dan</i>) &middot; grijze streepjes: beginwaarde &middot; blauwe streepjes:
+                    voorval verandert een toestand. Wijs een symbool aan voor de formule.
+                </p>
+            </details>
+            <details>
+                <summary>Herkende elementen</summary>
+                <div id="grafisch_tabel"></div>
+            </details>
+            <button id="grafisch_herstel" type="button">Herstel indeling</button>
+            <button id="download_grafisch" type="button">Download grafisch model als SVG</button>
+        </details>
 
         <details class="card" id="meer_opties">
             <summary>Meer opties…</summary>

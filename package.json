@@ -1,6 +1,6 @@
 {
   "name": "evaluator",
-  "version": "6.0.0",
+  "version": "6.1.0-grafisch-dev",
   "author": "Tom Kooij",
   "description": "Javascript implementatie van modelregels",
   "repository": "https://github.com/tomkooij/modelleertaal.git",
