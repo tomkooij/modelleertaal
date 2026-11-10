@@ -192,17 +192,9 @@
 
         #classic_link {
             margin-left: auto;
-            padding: 6px 12px;
-            border: 1px solid var(--primary);
-            border-radius: 6px;
-            color: var(--primary);
-            text-decoration: none;
+            color: var(--muted);
+            font-size: 0.8rem;
             white-space: nowrap;
-        }
-
-        #classic_link:hover {
-            background: var(--primary);
-            color: #fff;
         }
 
         .model_select {
@@ -565,7 +557,7 @@
             <button id="enable_open_file_dialog" type="button">Bestanden…</button>
             <button id="permalink" type="button" title="Kopieer een link naar dit model (met jouw wijzigingen)">Deel link</button>
         </div>
-        <a id="classic_link" href="https://www.tomkooij.nl/modelleertaal-classic" title="De vorige versie van deze webapp, met de oude indeling">Liever de oude versie? <strong>Modelleertaal classic</strong> &rarr;</a>
+        <a id="classic_link" href="https://www.tomkooij.nl/modelleertaal-classic" title="De vorige versie van deze webapp, met de oude indeling">oude versie</a>
         <div id="open_file_dialog">
             <input id="fileinput" type="file" accept=".xml,.txt" hidden>
             <button id="open_file" type="button">Open model van computer</button>
@@ -670,6 +662,7 @@
 
     <footer>
         <span id="version"></span>
+        &middot; Liever de oude indeling? Gebruik <a href="https://www.tomkooij.nl/modelleertaal-classic">Modelleertaal classic</a>.
     </footer>
 
     <!-- jQuery is included in head section -->
