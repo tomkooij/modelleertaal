@@ -9,6 +9,12 @@
   stromen, hulpvariabelen, constanten, voorvallen and relatiepijlen). Works
   without Run and updates while typing. Elements can be dragged (arrows and
   pipes follow), "Herstel indeling" resets. Download as SVG. New module `grafisch.js`.
+- The graphical model is also input: click a symbol to change its name, formula,
+  value or (for a flow) where it comes from and goes to; add toestandsvariabelen,
+  stromen, hulpvariabelen and constanten; give an unknown (?) variable a value;
+  remove elements. Every change is a small edit of the text of the model
+  (comments and layout of the text are kept, Ctrl+Z in the editor works).
+  New module `grafisch-edit.js`.
 
 ## [6.0]
 

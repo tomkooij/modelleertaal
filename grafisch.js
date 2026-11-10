@@ -61,35 +61,51 @@ function isVar(node, name) {
 
 var PREC = {'LIST': 0, '||': 1, '&&': 2, '==': 3, '<': 3, '>': 3, '<=': 3, '>=': 3,
             '+': 4, '-': 4, '*': 5, '/': 5, '^': 7};
-var OPS = {'*': '·', '/': '/', '^': '^', '+': ' + ', '-': ' − ', '&&': ' en ', '||': ' of ',
-           '==': ' = ', '<': ' < ', '>': ' > ', '<=': ' ≤ ', '>=': ' ≥ ', 'LIST': ', '};
+// how to write an expression: for reading (diagram, table) and as modelleertaal code
+var SHOW = {'*': '·', '/': '/', '^': '^', '+': ' + ', '-': ' − ', '&&': ' en ', '||': ' of ',
+            '==': ' = ', '<': ' < ', '>': ' > ', '<=': ' ≤ ', '>=': ' ≥ ', 'LIST': '; ',
+            minus: '−', pi: 'π'};
+var CODE = {'*': ' * ', '/': ' / ', '^': '^', '+': ' + ', '-': ' - ', '&&': ' en ', '||': ' of ',
+            '==': ' == ', '<': ' < ', '>': ' > ', '<=': ' <= ', '>=': ' >= ', 'LIST': '; ',
+            minus: '-', pi: 'pi'};
 
-function fmt(node, parentPrec, rightSide) {
-    // expression --> readable string (minimal parentheses)
+function write(node, ops, parentPrec, rightSide) {
+    // expression --> string (minimal parentheses)
     var s, prec;
     parentPrec = parentPrec || 0;
     if (!node) return '?';
     switch (node.type) {
         case 'Variable': return node.name;
-        case 'Number': return node.value == '3.14159265359' ? 'π' : String(node.value);
+        case 'Number': return node.value == '3.14159265359' ? ops.pi : String(node.value);
         case 'Boolean': return node.value == 'true' ? 'waar' : 'onwaar';
-        case 'Function': return node.func + '(' + fmt(node.expr) + ')';
+        case 'Function': return node.func + '(' + write(node.expr, ops) + ')';
+        case 'Blank': return '...';
         case 'Unary':
             prec = 6;
-            s = (node.operator == 'NOT' ? 'niet ' : (node.operator == '-' ? '−' : '+')) +
-                fmt(node.right, prec, true);
+            s = (node.operator == 'NOT' ? 'niet ' : (node.operator == '-' ? ops.minus : '+')) +
+                write(node.right, ops, prec, true);
             break;
         case 'Binary':
         case 'Logical':
         case 'List':
             prec = PREC[node.operator];
-            s = fmt(node.left, prec, false) + OPS[node.operator] + fmt(node.right, prec, true);
+            s = write(node.left, ops, prec, false) + ops[node.operator] + write(node.right, ops, prec, true);
             break;
         default:
             return '?';
     }
     if (prec < parentPrec || (prec == parentPrec && rightSide)) s = '(' + s + ')';
     return s;
+}
+
+function fmt(node, parentPrec, rightSide) {
+    // readable: a·dt
+    return write(node, SHOW, parentPrec, rightSide);
+}
+
+function code(node, parentPrec, rightSide) {
+    // modelleertaal: a * dt
+    return write(node, CODE, parentPrec, rightSide);
 }
 
 function signedTerms(expr, sign, out) {
@@ -245,9 +261,12 @@ function analyse(startwaarden_ast, modelregels_ast) {
     for (i = 0; i < stockOrder.length; i++) {
         name = stockOrder[i];
         if (name == time) continue;
+        // editable: one update line  x = x + ... - ...  (see grafisch-edit.js)
         var stock = add({id: name, kind: 'stock', name: name,
                          initial: init.hasOwnProperty(name) ? fmt(init[name]) : '?',
-                         inflows: [], outflows: [], general: null});
+                         initialCode: init.hasOwnProperty(name) ? code(init[name]) : '',
+                         inflows: [], outflows: [], general: null,
+                         updates: assigned[name].uncond.length, conditional: assigned[name].cond.length > 0});
         var updates = assigned[name].uncond;
         for (j = 0; j < updates.length; j++) {
             var terms = signedTerms(updates[j].expr, 1, []);
@@ -275,6 +294,7 @@ function analyse(startwaarden_ast, modelregels_ast) {
                         var rate = stripDt(def, dt);
                         f = {id: f ? v + '#' + flows.length : v, kind: 'flow', name: v, label: v,
                              from: term.sign < 0 ? name : null, to: term.sign > 0 ? name : null,
+                             term: v, code: code(def),
                              definition: fmt(def), rate: rate ? fmt(rate) : null,
                              deps: without(variables(def), [dt])};
                         if (!flowOfVar[v]) flowOfVar[v] = f;
@@ -285,6 +305,7 @@ function analyse(startwaarden_ast, modelregels_ast) {
                     var rdef = assigned[r.name].uncond[0].expr;
                     f = {id: r.name, kind: 'flow', name: r.name, label: r.name,
                          from: term.sign < 0 ? name : null, to: term.sign > 0 ? name : null,
+                         term: code(term.expr, 4, true), code: code(rdef),
                          definition: fmt(rdef), rate: fmt(rdef), isRate: true,
                          deps: without(variables(rdef), [dt])};
                     flowOfVar[r.name] = f;
@@ -296,6 +317,7 @@ function analyse(startwaarden_ast, modelregels_ast) {
                     nAnon += 1;
                     f = {id: '~f' + nAnon, kind: 'flow', name: null, label: label,
                          from: term.sign < 0 ? name : null, to: term.sign > 0 ? name : null,
+                         term: code(term.expr, 4, true), code: code(term.expr),
                          definition: fmt(term.expr), rate: r ? label : null,
                          deps: without(variables(term.expr), [dt])};
                     flows.push(add(f));
@@ -347,6 +369,7 @@ function analyse(startwaarden_ast, modelregels_ast) {
         var conditional = assigned[name].uncond.length === 0;
         if (conditional && init.hasOwnProperty(name)) defs.push('anders ' + fmt(init[name]) + ' (startwaarde)');
         add({id: name, kind: 'aux', name: name, definition: defs.join('; '),
+             code: assigned[name].uncond.length == 1 && !assigned[name].cond.length ? code(assigned[name].uncond[0].expr) : null,
              conditional: conditional, deps: without(addAll(deps.slice(), cdeps), [name, dt]),
              condDeps: without(cdeps, deps)});
     }
@@ -356,7 +379,7 @@ function analyse(startwaarden_ast, modelregels_ast) {
         name = initOrder[i];
         if (elements.hasOwnProperty(name) || isStock[name] || name == time || name == dt) continue;
         // vx = v0 * cos(alfa): relation arrows from v0 and alfa
-        add({id: name, kind: 'const', name: name, definition: fmt(init[name]),
+        add({id: name, kind: 'const', name: name, definition: fmt(init[name]), code: code(init[name]),
              deps: without(variables(init[name]), [name, dt, time])});
     }
 
@@ -911,3 +934,6 @@ exports.layout = layout;
 exports.toSVG = toSVG;
 exports.table = table;
 exports.fmt = fmt;
+exports.code = code;
+exports.collect = collect;
+exports.variables = variables;

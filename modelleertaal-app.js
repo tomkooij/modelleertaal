@@ -1,6 +1,7 @@
 var evaluator_js = require('./evaluator.js');
 var autoplot = require('./autoplot.js');
 var grafisch = require('./grafisch.js');
+var grafisch_edit = require('./grafisch-edit.js');
 var Blob = require('blob');
 var FileSaver = require('file-saver');
 // this also depends on:
@@ -87,6 +88,9 @@ function ModelleertaalApp(params) {
   this.dom_grafisch_tabel = "#grafisch_tabel";
   this.dom_download_grafisch = "#download_grafisch";
   this.dom_grafisch_reset = "#grafisch_herstel";
+  this.dom_grafisch_form = "#grafisch_eigenschappen";
+  this.dom_grafisch_melding = "#grafisch_melding";
+  this.grafisch_selected = undefined;   // id of the selected element
   this.grafisch_moved = {};   // positions of elements dragged by the user
   this.model_title = '';
 
@@ -243,13 +247,17 @@ function ModelleertaalApp(params) {
         if (f.from == id && !f.to) ids.push(f.id, f.id + ':dst');
       });
     }
-    drag = {ids: ids, x: m.x, y: m.y, start: ids.map(function(k) { return {x: pos[k].x, y: pos[k].y}; })};
+    drag = {id: id, moved: false, ids: ids, x: m.x, y: m.y,
+            start: ids.map(function(k) { return {x: pos[k].x, y: pos[k].y}; })};
     e.preventDefault();
   });
   $(window).on('pointermove', function(event) {
     if (!drag) return;
     var m = self.grafisch_point(event.originalEvent);
     var pos = self.grafisch_layout.pos;
+    // a small movement is a click (select), not a drag
+    if (!drag.moved && Math.abs(m.x - drag.x) + Math.abs(m.y - drag.y) < 4) return;
+    drag.moved = true;
     drag.ids.forEach(function(k, n) {
       pos[k].x = Math.round(drag.start[n].x + m.x - drag.x);
       pos[k].y = Math.round(drag.start[n].y + m.y - drag.y);
@@ -262,9 +270,18 @@ function ModelleertaalApp(params) {
       });
     }
   });
-  $(window).on('pointerup pointercancel', function() {
+  $(window).on('pointerup pointercancel', function(event) {
+    if (drag && !drag.moved && event.type == 'pointerup') {
+      // click: select the element (a cloud: its flow) and show its properties
+      self.grafisch_select(drag.id.replace(/:(src|dst)$/, ''));
+    }
     drag = null;
   });
+
+  // grafisch model as input: new elements
+  $('#grafisch_nieuw_toestand').click(function() { self.grafisch_new_form('stock'); });
+  $('#grafisch_nieuw_hulp').click(function() { self.grafisch_new_form('aux'); });
+  $('#grafisch_nieuw_constante').click(function() { self.grafisch_new_form('const'); });
 
   $(this.dom_fileinput).change(function(event) {
     self.read_file(event);
@@ -556,9 +573,13 @@ ModelleertaalApp.prototype.draw_grafisch_model = function() {
   try {
     g = this.analyse_grafisch_model();
   } catch (err) {
-    svg.empty().append($('<div>').addClass('placeholder')
-      .text('Geen grafisch model: ' + (err.message || 'fout in het model') + ''));
+    svg.empty().append($('<div>').addClass('placeholder').text(err.empty ?
+      'Nog geen model. Begin met + Toestandsvariabele, of typ het model hierboven.' :
+      'Geen grafisch model: ' + (err.message || 'fout in het model')));
     tabel.empty();
+    this.grafisch_g = undefined;
+    this.grafisch_layout = undefined;
+    this.grafisch_select(undefined);
     return;
   }
   this.grafisch_g = g;
@@ -581,15 +602,285 @@ ModelleertaalApp.prototype.draw_grafisch_model = function() {
       .append($('<td>').text(row.definition)));
   });
   tabel.empty().append(table);
+  // the form of the selected element shows the new text of the model
+  if (this.grafisch_selected !== undefined || !this.grafisch_form_new) this.grafisch_select(this.grafisch_selected);
 };
 
 
 ModelleertaalApp.prototype.render_grafisch_model = function() {
   // draw this.grafisch_g with the (dragged) positions in this.grafisch_layout.
   // The drawing only grows while dragging, so it does not jump under the mouse.
+  var self = this;
   var opts = {bounds: this.grafisch_bounds};
   $(this.dom_grafisch_svg).html(grafisch.toSVG(this.grafisch_g, this.grafisch_layout, opts));
   this.grafisch_bounds = opts.used;
+  if (this.grafisch_selected !== undefined) {
+    $(this.dom_grafisch_svg).find('[data-id]').filter(function() {
+      return $(this).attr('data-id').replace(/:(src|dst)$/, '') == self.grafisch_selected;
+    }).addClass('selected');
+  }
+};
+
+
+//
+// Grafisch model as input: a change in the diagram is a small change in the text
+// of the model (grafisch-edit.js). The text stays the source: Ctrl+Z in the editor works.
+//
+ModelleertaalApp.prototype.write_model = function(model) {
+  // put a model changed by the program in the editors
+  if (this.CodeMirrorActive) {
+    if (this.startwaarden_editor.getValue() != model.startwaarden) this.startwaarden_editor.setValue(model.startwaarden);
+    if (this.modelregels_editor.getValue() != model.modelregels) this.modelregels_editor.setValue(model.modelregels);
+  } else {
+    $(this.dom_startwaarden).val(model.startwaarden);
+    $(this.dom_modelregels).val(model.modelregels);
+  }
+  this.on_model_edited();
+};
+
+
+ModelleertaalApp.prototype.grafisch_message = function(text) {
+  $(this.dom_grafisch_melding).text(text || '');
+};
+
+
+ModelleertaalApp.prototype.grafisch_apply = function(ops, select) {
+  // apply the edit operations (see grafisch-edit.js) to the text of the model. All or nothing.
+  this.read_model();
+  var model = {startwaarden: this.model.startwaarden, modelregels: this.model.modelregels};
+  try {
+    ops.forEach(function(op) {
+      model = grafisch_edit.apply(model, op);
+    });
+  } catch (err) {
+    this.grafisch_message(err.message);
+    return false;
+  }
+  this.grafisch_message('');
+  this.write_model(model);
+  clearTimeout(this.grafisch_timer);
+  this.grafisch_form_new = false;
+  this.grafisch_selected = select;
+  this.draw_grafisch_model();
+  return true;
+};
+
+
+ModelleertaalApp.prototype.grafisch_form = function(title, note, fields, buttons) {
+  // fields: [{key, label, value, placeholder, options: [{value, text}]}]
+  // buttons: [{text, action: function(values)}]  The first button is also the Enter key.
+  var box = $(this.dom_grafisch_form).empty();
+  if (!title) return;
+  var form = $('<form>').addClass('grafisch_form').attr('autocomplete', 'off');
+  var inputs = {};
+  form.append($('<h2>').text(title));
+  if (note) form.append($('<p>').addClass('grafisch_legenda').text(note));
+  fields.forEach(function(f) {
+    var input;
+    if (f.options) {
+      input = $('<select>');
+      f.options.forEach(function(o) {
+        input.append($('<option>').val(o.value).text(o.text));
+      });
+      input.val(f.value);
+    } else {
+      input = $('<input type="text" spellcheck="false" autocapitalize="off">').val(f.value).attr('placeholder', f.placeholder || '');
+    }
+    inputs[f.key] = input;
+    form.append($('<label>').append($('<span>').text(f.label)).append(input));
+  });
+  var row = $('<div>').addClass('grafisch_form_knoppen');
+  buttons.forEach(function(b, n) {
+    row.append($('<button>').attr('type', n === 0 ? 'submit' : 'button').text(b.text).click(function(event) {
+      event.preventDefault();
+      var values = {};
+      for (var key in inputs) {
+        if (inputs.hasOwnProperty(key)) values[key] = inputs[key].val();
+      }
+      b.action(values);
+    }));
+  });
+  box.append(form.append(row));
+  return form;
+};
+
+
+ModelleertaalApp.prototype.grafisch_new_form = function(kind) {
+  // form for a new toestandsvariabele ('stock'), hulpvariabele ('aux') or constante ('const')
+  var self = this;
+  var close = {text: 'Annuleer', action: function() {
+    self.grafisch_form_new = false;
+    self.grafisch_select(undefined);
+  }};
+  this.grafisch_message('');
+  this.grafisch_selected = undefined;
+  this.grafisch_form_new = true;
+  if (this.grafisch_g) this.render_grafisch_model();
+  var form;
+  if (kind == 'stock') {
+    form = this.grafisch_form('Nieuwe toestandsvariabele',
+      'Een grootheid die elke stap een beetje verandert, zoals de plaats x of de snelheid v. ' +
+      'In de tekst komt: x = x + dx met dx = (verandering per tijdseenheid) * dt.',
+      [{key: 'name', label: 'Naam', value: '', placeholder: 'bijvoorbeeld x'},
+       {key: 'initial', label: 'Beginwaarde', value: '0'},
+       {key: 'rate', label: 'Verandering per tijdseenheid', value: '', placeholder: 'formule, bijvoorbeeld v'}],
+      [{text: 'Voeg toe', action: function(v) {
+        self.grafisch_apply([{op: 'addStock', name: v.name, initial: v.initial, rate: v.rate}], $.trim(v.name));
+      }}, close]);
+  } else if (kind == 'aux') {
+    form = this.grafisch_form('Nieuwe hulpvariabele', 'Een grootheid die elke stap met een formule wordt uitgerekend, zoals Fres.',
+      [{key: 'name', label: 'Naam', value: '', placeholder: 'bijvoorbeeld Fres'},
+       {key: 'text', label: 'Formule', value: '', placeholder: 'bijvoorbeeld Fz - Fw'}],
+      [{text: 'Voeg toe', action: function(v) {
+        self.grafisch_apply([{op: 'addAux', name: v.name, text: v.text}], $.trim(v.name));
+      }}, close]);
+  } else {
+    form = this.grafisch_form('Nieuwe constante', 'Een grootheid die niet verandert, zoals de massa m. Komt bij de startwaarden.',
+      [{key: 'name', label: 'Naam', value: '', placeholder: 'bijvoorbeeld m'},
+       {key: 'text', label: 'Waarde', value: ''}],
+      [{text: 'Voeg toe', action: function(v) {
+        self.grafisch_apply([{op: 'addConstant', name: v.name, text: v.text}], $.trim(v.name));
+      }}, close]);
+  }
+  form.find('input').first().focus();
+};
+
+
+ModelleertaalApp.prototype.grafisch_flow_form = function(stock, direction) {
+  // new flow into ('in') or out of ('out') a toestandsvariabele or constante
+  var self = this;
+  this.grafisch_form_new = true;
+  this.grafisch_message('');
+  var form = this.grafisch_form(direction == 'in' ? 'Nieuwe stroom naar ' + stock : 'Nieuwe stroom uit ' + stock,
+    'In de tekst komt: ' + stock + ' = ' + stock + (direction == 'in' ? ' + ' : ' - ') + 'naam, met naam = (stroomsterkte) * dt.',
+    [{key: 'name', label: 'Naam', value: '', placeholder: 'd' + stock},
+     {key: 'rate', label: 'Stroomsterkte (per tijdseenheid)', value: '', placeholder: 'formule'}],
+    [{text: 'Voeg toe', action: function(v) {
+      self.grafisch_apply([{op: 'addFlow', stock: stock, direction: direction, name: v.name, rate: v.rate}], stock);
+    }}, {text: 'Annuleer', action: function() {
+      self.grafisch_form_new = false;
+      self.grafisch_select(stock);
+    }}]);
+  form.find('input').first().focus();
+};
+
+
+ModelleertaalApp.prototype.grafisch_select = function(id) {
+  // select an element of the grafisch model and show the form with its properties
+  var self = this, g = this.grafisch_g;
+  var el = (g && id !== undefined && g.elements.hasOwnProperty(id)) ? g.elements[id] : undefined;
+  var changed = (el ? id : undefined) !== this.grafisch_selected;
+  this.grafisch_selected = el ? id : undefined;
+  this.grafisch_form_new = false;
+  if (changed) this.grafisch_message('');
+  if (g && this.grafisch_layout) this.render_grafisch_model();
+  if (!el) {
+    this.grafisch_form(null);
+    return;
+  }
+
+  var rename = function(ops, v) {
+    // returns the id after the change of the name
+    var name = $.trim(v.name);
+    if (name === '' || name == el.name) return id;
+    ops.push({op: 'rename', id: id, name: name});
+    // a dragged element stays where it is under its new name
+    ['', ':src', ':dst'].forEach(function(suffix) {
+      if (self.grafisch_moved[id + suffix]) self.grafisch_moved[name + suffix] = self.grafisch_moved[id + suffix];
+    });
+    return name;
+  };
+  var apply = function(ops, select) {
+    if (ops.length) self.grafisch_apply(ops, select);
+  };
+  var remove = {text: 'Verwijder', action: function() {
+    self.grafisch_apply([{op: 'remove', id: id}], undefined);
+  }};
+  var inflow = {text: '+ Stroom erin', action: function() { self.grafisch_flow_form(id, 'in'); }};
+  var outflow = {text: '+ Stroom eruit', action: function() { self.grafisch_flow_form(id, 'out'); }};
+  var manual = 'Dit kun je alleen in de tekst van het model aanpassen.';
+
+  switch (el.kind) {
+    case 'stock':
+      this.grafisch_form('Toestandsvariabele ' + el.name,
+        (el.general || el.updates != 1) ? 'De stromen van ' + el.name + ' kun je alleen in de tekst aanpassen.' : '',
+        [{key: 'name', label: 'Naam', value: el.name},
+         {key: 'text', label: 'Beginwaarde', value: el.initialCode}],
+        [{text: 'Pas toe', action: function(v) {
+          var ops = [], now = rename(ops, v);
+          if ($.trim(v.text) != el.initialCode) ops.push({op: 'setDefinition', id: now, text: v.text});
+          apply(ops, now);
+        }}, inflow, outflow, remove]);
+      break;
+    case 'const':
+      this.grafisch_form('Constante ' + el.name, 'Met een stroom erin of eruit wordt het een toestandsvariabele.',
+        [{key: 'name', label: 'Naam', value: el.name},
+         {key: 'text', label: 'Waarde', value: el.code}],
+        [{text: 'Pas toe', action: function(v) {
+          var ops = [], now = rename(ops, v);
+          if ($.trim(v.text) != el.code) ops.push({op: 'setDefinition', id: now, text: v.text});
+          apply(ops, now);
+        }}, inflow, outflow, remove]);
+      break;
+    case 'aux':
+      if (el.code === null) {
+        this.grafisch_form('Hulpvariabele ' + el.name, el.definition + '. ' + manual,
+          [{key: 'name', label: 'Naam', value: el.name}],
+          [{text: 'Pas toe', action: function(v) {
+            var ops = [], now = rename(ops, v);
+            apply(ops, now);
+          }}]);
+        break;
+      }
+      this.grafisch_form('Hulpvariabele ' + el.name, '',
+        [{key: 'name', label: 'Naam', value: el.name},
+         {key: 'text', label: 'Formule', value: el.code}],
+        [{text: 'Pas toe', action: function(v) {
+          var ops = [], now = rename(ops, v);
+          if ($.trim(v.text) != el.code) ops.push({op: 'setDefinition', id: now, text: v.text});
+          apply(ops, now);
+        }}, remove]);
+      break;
+    case 'flow':
+      var ends = [{value: '', text: 'buiten (wolkje)'}];
+      g.order.forEach(function(k) {
+        var e = g.elements[k];
+        if (e.kind == 'stock') ends.push({value: k, text: k});
+        if (e.kind == 'const') ends.push({value: k, text: k + ' (constante, wordt toestandsvariabele)'});
+      });
+      this.grafisch_form('Stroom ' + (el.name || el.label),
+        el.name ? (el.isRate ? 'Stroomsterkte per tijdseenheid: in de tekst staat ' + el.term + '.' : '') :
+          'Deze stroom heeft geen naam: hij staat als ' + el.term + ' in de regel van ' + (el.to || el.from) + '.',
+        [{key: 'name', label: 'Naam', value: el.name || '', placeholder: '(geen naam)'},
+         {key: 'text', label: 'Formule', value: el.code},
+         {key: 'from', label: 'Van', value: el.from || '', options: ends},
+         {key: 'to', label: 'Naar', value: el.to || '', options: ends}],
+        [{text: 'Pas toe', action: function(v) {
+          var ops = [], now = rename(ops, v);
+          if ($.trim(v.text) != el.code) ops.push({op: 'setDefinition', id: now, text: v.text});
+          if (v.from != (el.from || '') || v.to != (el.to || '')) {
+            ops.push({op: 'setFlowEnds', id: now, from: v.from || null, to: v.to || null});
+            // a flow without a name gets a name: its id is not known here
+            if (now == id && !el.name) now = undefined;
+          }
+          apply(ops, now);
+        }}, remove]);
+      break;
+    case 'unknown':
+      this.grafisch_form('Onbekend: ' + el.name, el.name + ' wordt gebruikt, maar heeft nog geen waarde of formule.',
+        [{key: 'text', label: 'Waarde of formule', value: ''}],
+        [{text: 'Maak constante', action: function(v) {
+          apply([{op: 'define', id: id, kind: 'const', text: v.text}], id);
+        }}, {text: 'Maak hulpvariabele', action: function(v) {
+          apply([{op: 'define', id: id, kind: 'aux', text: v.text}], id);
+        }}]);
+      break;
+    case 'event':
+      this.grafisch_form('Voorval', 'als ' + el.condition + ' dan ' + el.actions.join('; ') + '. ' + manual, [], []);
+      break;
+    default:
+      this.grafisch_form(el.name, el.definition + '. ' + manual, [], []);
+  }
 };
 
 

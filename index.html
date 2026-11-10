@@ -582,6 +582,67 @@
             touch-action: none;
         }
 
+        #grafisch_svg .selected > rect,
+        #grafisch_svg .selected > circle,
+        #grafisch_svg .selected > path {
+            stroke: #d97706;
+            stroke-width: 3.5;
+        }
+
+        #grafisch_knoppen {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px;
+        }
+
+        #grafisch_melding:not(:empty) {
+            margin-top: 10px;
+            padding: 8px 12px;
+            border-radius: 6px;
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        #grafisch_model > #grafisch_melding:empty,
+        #grafisch_model > #grafisch_eigenschappen:empty {
+            margin-top: 0;
+        }
+
+        .grafisch_form {
+            display: grid;
+            gap: 8px;
+            max-width: 560px;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-left: 4px solid #d97706;
+            border-radius: 6px;
+        }
+
+        .grafisch_form h2,
+        .grafisch_form p {
+            margin: 0;
+        }
+
+        .grafisch_form label {
+            display: grid;
+            grid-template-columns: minmax(90px, 11em) minmax(0, 1fr);
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+        }
+
+        .grafisch_form input[type="text"] {
+            font-family: ui-monospace, Consolas, monospace;
+            min-width: 0;
+        }
+
+        .grafisch_form_knoppen {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
         .grafisch_legenda {
             color: var(--muted);
             font-size: 0.85rem;
@@ -726,14 +787,22 @@
 
         <details class="card" id="grafisch_model">
             <summary>Weergave als grafisch model</summary>
+            <div id="grafisch_knoppen">
+                <button id="grafisch_nieuw_toestand" type="button">+ Toestandsvariabele</button>
+                <button id="grafisch_nieuw_hulp" type="button">+ Hulpvariabele</button>
+                <button id="grafisch_nieuw_constante" type="button">+ Constante</button>
+                <span class="grafisch_legenda">Klik op een symbool om het aan te passen. Elke wijziging komt in de tekst van het model.</span>
+            </div>
             <div id="grafisch_svg"></div>
+            <div id="grafisch_melding" role="alert"></div>
+            <div id="grafisch_eigenschappen"></div>
             <p class="grafisch_legenda">
                 Rechthoek: toestandsvariabele &middot; pijp met kraantje: stroom &middot; cirkel: hulpvariabele
                 (gestippeld: met voorwaarde) &middot; ruit: constante &middot; bliksem: voorval &middot;
                 rode pijl: &ldquo;hangt af van&rdquo; (lichte stippels: alleen in de voorwaarde van
                 <i>als&nbsp;&hellip;&nbsp;dan</i>) &middot; grijze streepjes: beginwaarde &middot; blauwe streepjes:
-                voorval verandert een toestand. Wijs een symbool aan voor de formule;
-                sleep de symbolen om de indeling aan te passen.
+                voorval verandert een toestand. Wijs een symbool aan voor de formule,
+                klik erop om het aan te passen, sleep om de indeling te veranderen.
             </p>
             <details>
                 <summary>Herkende elementen</summary>
