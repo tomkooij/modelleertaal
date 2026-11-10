@@ -86,6 +86,7 @@ function ModelleertaalApp(params) {
   this.dom_grafisch = "#grafisch_model";
   this.dom_grafisch_svg = "#grafisch_svg";
   this.dom_view_switch = ".view_switch";
+  this.dom_workspace = ".workspace";
   this.weergave = 'tekst';   // 'tekst' or 'grafisch' (text and diagram)
   this.dom_download_grafisch = "#download_grafisch";
   this.dom_grafisch_reset = "#grafisch_herstel";
@@ -733,12 +734,19 @@ ModelleertaalApp.prototype.set_weergave = function(weergave, save) {
     $(this).attr('aria-pressed', String($(this).attr('data-weergave') == self.weergave));
   });
   $(this.dom_grafisch).prop('hidden', this.weergave != 'grafisch');
+  // the page layout changes: the model gets the whole width, the graph goes below it
+  $(this.dom_workspace).toggleClass('met_grafisch', this.weergave == 'grafisch');
   if (this.grafisch_open()) {
     this.draw_grafisch_model();
   } else {
     this.grafisch_form_new = false;
     this.grafisch_select(undefined);
     this.grafisch_linked = undefined;
+  }
+  // the graph has another size now
+  if (this.results_available()) {
+    this.do_plot();
+    this.draw_thumbnails();
   }
   if (save) this.save_settings();
 };

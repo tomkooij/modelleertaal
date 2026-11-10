@@ -42,9 +42,11 @@
   shows "Volgende regel" and "Voeg toe". Significant digits and "verticale as
   vanaf 0" are remembered in the browser.
 - Graphical model in the model card: switch "Tekst | Tekst + grafisch" next to
-  the title (remembered). The diagram is above the editors, the graph stays
-  in view on the right (sticky on wide screens). The panel "Weergave als
-  grafisch model" at the bottom is gone.
+  the title (remembered). With "Tekst + grafisch" the model gets the whole
+  width: diagram left and text right (≥ 1200 px, else diagram above the
+  text), graph and table below it, next to each other. With "Tekst" the
+  graph stays in view on the right (sticky on wide screens). The panel
+  "Weergave als grafisch model" at the bottom is gone.
 - Symbol and text are linked: a selected symbol marks its lines in the
   editors (definition, beginwaarde, the line where a flow enters); the cursor
   in a line lights up its symbol. After Run the tooltip of a symbol shows the

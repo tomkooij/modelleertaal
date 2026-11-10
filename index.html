@@ -374,6 +374,44 @@
             gap: 12px;
         }
 
+        /* Tekst + grafisch: the model (diagram and text) gets the whole width,
+           graph and table below it, next to each other */
+        @media (min-width: 961px) {
+            .workspace.met_grafisch {
+                grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+                grid-template-rows: auto auto;
+                grid-template-areas: "model model" "graph table";
+            }
+
+            .workspace.met_grafisch .area_graph {
+                position: static;
+            }
+        }
+
+        /* wide screen: diagram left, text right, in the same card */
+        @media (min-width: 1200px) {
+            .met_grafisch .area_model {
+                display: grid;
+                grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+                grid-template-areas: "head head" "diagram text";
+                column-gap: 16px;
+                align-items: start;
+            }
+
+            .met_grafisch .model_head {
+                grid-area: head;
+            }
+
+            .met_grafisch #grafisch_model {
+                grid-area: diagram;
+                margin-bottom: 0;
+            }
+
+            .met_grafisch .area_model .editors {
+                grid-area: text;
+            }
+        }
+
         @media (max-width: 960px) {
             .workspace {
                 grid-template-columns: minmax(0, 1fr);
