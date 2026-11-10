@@ -114,22 +114,18 @@ print                                   return 'PRINT'  //stop and print value
 %token ENDIF
 %token EQUALS
 
-/* operator associations and precedence */
+/* operator associations and precedence (lowest first)
+   Comparisons bind weaker than arithmetic:  t + dt > 10  ==  (t + dt) > 10
+   Unary minus binds weaker than ^:          -3^2 == -9                      */
+%left SEP
+%left '||'
+%left '&&'
+%right NOT
+%left '==' '<=' '<' '>=' '>'
 %left '+' '-'
 %left '*' '/'
-%left '^' 'SQUARED' 'CUBED'
-%left '||' '&&'
-%right NOT
 %right UMINUS
-
-
-%left '=='
-%left '<='
-%left '<'
-%left '>='
-%left '>'
-%left IF
-%left SEP
+%left '^' 'SQUARED' 'CUBED'
 
 %%
 
@@ -195,6 +191,15 @@ stmt
 condition
   : expr
      {$$ = $1;}
+  /* allow CoachTaal style 'als x = 3 dan' (single = as equals) */
+  | expr ASSIGN expr
+     {$$ = {
+             type: 'Logical',
+             operator: '==',
+             left: $1,
+             right: $3
+     };
+  }
   ;
 
 direct_declarator
@@ -347,14 +352,14 @@ expr
          };
        }
 
-  | '-' expr
+  | '-' expr %prec UMINUS
             {$$ = {
                   type: 'Unary',
                   operator: '-',
                   right: $2
             };
           }
-  | '+' expr
+  | '+' expr %prec UMINUS
             {$$ = {
                   type: 'Unary',
                   operator: '+',
@@ -368,7 +373,6 @@ expr
                 right: $2
           };
         }
-  }
 
   /* parentheses are handled in the parser */
   | '(' expr ')'

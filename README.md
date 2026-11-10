@@ -1,7 +1,7 @@
 Simple compiler and webapp for *Modelleertaal*
 ==========================================
 
-[![travis](https://travis-ci.com/tomkooij/modelleertaal.svg?branch=master)](https://travis-ci.com/tomkooij/modelleertaal)
+[![test](https://github.com/tomkooij/modelleertaal/actions/workflows/test.yml/badge.svg)](https://github.com/tomkooij/modelleertaal/actions/workflows/test.yml)
 
 *Modelleertaal* to javascript compiler in javascript/jison. A simple demo webapp is included that can run most (all?)
 of the models used in high school physics in NL.
@@ -40,6 +40,7 @@ The language is a subset of "CoachTaal" which is an imperative language derived 
  - Statements are not ; terminated
  - = is used for assignments (:= is allowed, and treated as an alias. Slightly different from CoachTaal)
  - == is used for the 'equal' operator, instead of =. In practice the == operator should never be used.
+   A single = is accepted as 'equal' directly in a condition: `als x = 3 dan`.
  - Only 'als dan eindals' 'anders' and 'stop' statements are implemented. Other flowcontrol is never used in *Modelleertaal*.
  - Functions cannot be defined. Most math functions from CoachTaal are implemented.
  - sin(x), cos(x) and tan(x) are always in degrees. Other trig functions in radians.

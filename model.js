@@ -61,7 +61,9 @@ Model.prototype.parseBogusXMLString = function(xmlString) {
     this.startwaarden = '';
     this.modelregels = '';
 
-    var lines = xmlString.split('\n');
+    // strip BOM and Windows line endings (\r confuses the line numbers in error messages)
+    if (xmlString.charCodeAt(0) === 0xFEFF) xmlString = xmlString.slice(1);
+    var lines = xmlString.split(/\r?\n/);
 
     for(var line = 1; line < lines.length; line++) {
 

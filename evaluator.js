@@ -133,7 +133,7 @@ if (!Array.prototype.indexOf) {
 
 // remove javascript illegal or special char from variable names
 Namespace.prototype.mangleName= function(string) {
-    return this.varPrefix + string.replace('\{','_lA_').replace('\}','_rA_').replace('\[','_lH_').replace('\]','_rH_').replace('\|','_I_');
+    return this.varPrefix + string.replace(/\{/g,'_lA_').replace(/\}/g,'_rA_').replace(/\[/g,'_lH_').replace(/\]/g,'_rH_').replace(/\|/g,'_I_');
 };
 
 // create (or reference) variable that is on the left side of an assignment
@@ -153,10 +153,54 @@ Namespace.prototype.referenceVar = function(node) {
 
     // it should exist (but perhaps in "startwaarden" (constNames))
     if ((this.varNames.indexOf(name) == -1) && (this.constNames.indexOf(name) == -1)) {
-        var err = new EvalError('Variabele niet gedefineerd: '+ name + ' Line: '+node.lineNo+" ("+node.astName+")" );
+        var msg = "De variabele '" + name + "' heeft nog geen waarde.";
+        var lijkt_op = this.findSimilarName(name);
+        if (lijkt_op) {
+            msg += " Bedoel je '" + lijkt_op + "'? (Let op hoofdletters en typefouten.)";
+        } else if (node.astName == 'startwaarden') {
+            msg += " Geef '" + name + "' eerst (hoger in de startwaarden) een waarde.";
+        } else {
+            msg += " Geef '" + name + "' een startwaarde, of bereken '" + name + "' eerder in het model.";
+        }
+        var err = new EvalError(msg);
+        err.undefined_variable = name;
         throw_custom_error(err, node.astName, node.lineNo);
     }
     return this.varDict[name];
+};
+
+// find a known variable that looks like name (typo or wrong case)
+Namespace.prototype.findSimilarName = function(name) {
+
+    function distance(a, b) {
+        // Levenshtein distance
+        var i, j, prev, tmp;
+        var row = [];
+        for (j = 0; j <= b.length; j++) row[j] = j;
+        for (i = 1; i <= a.length; i++) {
+            prev = row[0];
+            row[0] = i;
+            for (j = 1; j <= b.length; j++) {
+                tmp = row[j];
+                row[j] = Math.min(row[j] + 1, row[j-1] + 1,
+                                  prev + (a.charAt(i-1) == b.charAt(j-1) ? 0 : 1));
+                prev = tmp;
+            }
+        }
+        return row[b.length];
+    }
+
+    var known = this.constNames.concat(this.varNames);
+    var i;
+    for (i = 0; i < known.length; i++) {
+        if (known[i].toLowerCase() == name.toLowerCase()) return known[i];
+    }
+    if (name.length < 3) return null;
+    for (i = 0; i < known.length; i++) {
+        if (known[i].length >= 3 && distance(known[i], name) <= 2 &&
+            distance(known[i].toLowerCase(), name.toLowerCase()) <= (name.length > 4 ? 2 : 1)) return known[i];
+    }
+    return null;
 };
 
 Namespace.prototype.listAllVars = function() {
@@ -307,7 +351,7 @@ CodeGenerator.prototype.parseNode = function(node) {
         case 'Unary':
                     switch(node.operator) {
                         case '+':   return "(" + this.parseNode(node.right) + ")";
-                        case '-':   return "-1. * " + this.parseNode(node.right);
+                        case '-':   return "(-1. * " + this.parseNode(node.right) + ")";
                         case 'NOT':  return "!("+ this.parseNode(node.right) + ")";
                         default: {
                             var err = new SyntaxError("Unknown unary:" + JSON.stringify(node));
@@ -339,6 +383,10 @@ CodeGenerator.prototype.parseNode = function(node) {
                     case 'ln':  return "Math.log("+this.parseNode(node.expr)+")";
                     case 'log':  return "Math.log10("+this.parseNode(node.expr)+")";
                     case 'sqrt': return "Math.sqrt("+this.parseNode(node.expr)+")";
+                    case 'wortel': return "Math.sqrt("+this.parseNode(node.expr)+")";
+                    case 'sqr': return "Math.pow("+this.parseNode(node.expr)+",2)";
+                    case 'entier': return "Math.floor("+this.parseNode(node.expr)+")";
+                    case 'round': return "Math.round("+this.parseNode(node.expr)+")";
                     case 'sign': return "Math.sign("+this.parseNode(node.expr)+")";
                     case 'teken': return "Math.sign("+this.parseNode(node.expr)+")";
                     case 'abs': return "Math.abs("+this.parseNode(node.expr)+")";
@@ -346,7 +394,7 @@ CodeGenerator.prototype.parseNode = function(node) {
                     case 'max': return "Math.max("+this.parseNode(node.expr)+")";
 
                     default:
-                        var err1 = new SyntaxError("Unknown function:" + JSON.stringify(node.func) + " Line: "+node.lineNo+" ("+node.astName+")");
+                        var err1 = new SyntaxError("Onbekende functie '" + node.func + "(...)'. Bedoel je een vermenigvuldiging? Schrijf dan: " + node.func + " * (...)");
                         throw_custom_error(err1, node.astName, node.lineNo);
                     }
                 break;
@@ -361,10 +409,11 @@ CodeGenerator.prototype.parseNode = function(node) {
                 return 'bailout=true;\nbreak;';
         case 'Print':
                 // print(x) wil stop execution and print "alert()" the value of variable x
-                var internal_var_name = this.namespace.varDict[node.varname];
-                return 'alert("Gestopt: '+node.varname+' = "+'+internal_var_name+'.toPrecision(4));\nbailout=true;\nbreak;';
+                var internal_var_name = this.namespace.referenceVar({name: node.varname, lineNo: node.lineNo, astName: node.astName});
+                return 'report("Gestopt: '+node.varname+' = "+Number('+internal_var_name+').toPrecision(4));\nbailout=true;\nbreak;';
         case 'Blank': {
-                var err_blank = new SyntaxError("Vul iets in in plaats van de puntjes ...");
+                var err_blank = new SyntaxError("Vul iets in op de plaats van de puntjes ( ... ).");
+                err_blank.blank = true;
                 throw_custom_error(err_blank, node.astName, node.lineNo);
                 break;
                 }
@@ -407,16 +456,11 @@ function ModelregelsEvaluator(model, debug) {
         console.log(this.model.modelregels);
     }
 
-    try {
-      this.startwaarden_ast = parser.parse(this.model.startwaarden, 'startwaarden');
-    } catch(err) {
-      throw_custom_error(err, 'startwaarden', err.hash.line+1);
-    }
-    try {
-      this.modelregels_ast = parser.parse(this.model.modelregels, 'modelregels');
-    } catch(err) {
-      throw_custom_error(err, 'modelregels', err.hash.line+1);
-    }
+    this.messages = [];   // output of print()
+    this.stopped = false; // model stopped before N iterations (stop/print)
+
+    this.startwaarden_ast = parse_or_throw(this.model.startwaarden, 'startwaarden');
+    this.modelregels_ast = parse_or_throw(this.model.modelregels, 'modelregels');
 
     if (this.debug_ast) {
         console.log('*** AST startwaarden ***');
@@ -479,10 +523,10 @@ ModelregelsEvaluator.prototype.run = function() {
 
     } else {
       // check this.result properties FIXME
-      console.log("evaluator.run *** second run ***");
+      if (this.debug) console.log("evaluator.run *** second run ***");
 
       if (this.tracing) {
-          console.log("tracing...", this.breakpoint_at_line);
+          if (this.debug) console.log("tracing...", this.breakpoint_at_line);
           if ((this.breakpoint_at_line > 0) & (this.result.length > 1)) {
               // continue to trace a row: remove partial results.
               // do not remove first line (startwaarden)
@@ -495,22 +539,20 @@ ModelregelsEvaluator.prototype.run = function() {
       end = start + this.N;
     }
 
-    // separate function run_model() inside anonymous Function()
-    // to prevent bailout of the V8 optimising compiler in try {} catch
-    this.model = "function run_model(storage) { \n ";
+    this.generated_code = "function run_model(storage, report) { \n ";
 
     if (this.new_run) {
-        this.model += ""+
+        this.generated_code += ""+
                  this.codegenerator.generateVariableInitCode() +
                  this.startwaarden_code + "\n" +
                   "var i=0;\n" +
                   this.codegenerator.generateVariableStorageCode();
     } else {
-        this.model += ""+
+        this.generated_code += ""+
                   this.codegenerator.generateVariableInitCode_second_run();
     }
 
-    this.model +=
+    this.generated_code +=
                   "    var bailout = false;\n"+
                   "    for (i="+start+"; i < "+end+"; i++) { \n " +
                   this.modelregels_code + "\n" +
@@ -519,17 +561,12 @@ ModelregelsEvaluator.prototype.run = function() {
                   " if (bailout) {" +
                   this.codegenerator.generateVariableStorageCode() +
                   " }\n" +
-                  " return;} \n" +
-                  "    try \n" +
-                  "  { \n" +
-                  "      run_model(results); \n" +
-                  "  } catch (e) \n" +
-                  "  { console.log(e)} \n " +
-                  "return results;\n";
+                  " return bailout;} \n" +
+                  "return run_model(results, report);\n";
 
     if (this.debug) {
         console.log('*** generated js ***');
-        console.log(this.model);
+        console.log(this.generated_code);
         console.log("*** running! *** ");
         console.log("N = ", this.N);
     }
@@ -541,13 +578,20 @@ ModelregelsEvaluator.prototype.run = function() {
     //  http://moduscreate.com/javascript-performance-tips-tricks/
 
 
-    var runModel = new Function('results', this.model);
-    this.result = runModel(this.result);
+    var self = this;
+    this.messages = [];
+    var runModel = new Function('results', 'report', this.generated_code);
+    this.stopped = runModel(this.result, function(msg) {
+        self.messages.push(msg);
+    });
 
     var t2 = Date.now();
+    this.runtime_ms = t2 - t1;
 
-    console.log("Number of iterations: ", this.result.length);
-    console.log("Time: " + (t2 - t1) + "ms");
+    if (this.debug) {
+        console.log("Number of iterations: ", this.result.length);
+        console.log("Time: " + (t2 - t1) + "ms");
+    }
 
     // just fail if full row already executed.
     if (this.tracing)
@@ -556,12 +600,142 @@ ModelregelsEvaluator.prototype.run = function() {
         this.breakpoint_at_line += 1;
 
         if (this.breakpoint_at_line > this.modelregels_ast.length - 1)  {
-          console.log('end of row. Trace finished!');
+          if (this.debug) console.log('end of row. Trace finished!');
           this.tracing = false;
           this.breakpoint_at_line = undefined;
       }
     }
 };
+
+function parse_or_throw(code, ast_name) {
+    // parse code. Translate parser errors into something a student can read.
+    try {
+        return parser.parse(code, ast_name);
+    } catch(err) {
+        var blame = blame_line(err, code);
+        var line = blame.line;
+        err.parser_message = err.message; // original (jison) message
+        if (/^\s*$/.test(code.replace(/('|\/\/|#)[^\n]*/g, ''))) {
+            err.empty = true;
+            err.message = "Hier staat nog niets. Typ eerst de " + ast_name + ".";
+            line = undefined;
+        } else {
+            err.message = translate_parse_error(err, blame.previous);
+        }
+        throw_custom_error(err, ast_name, line);
+    }
+}
+
+function blame_line(err, code) {
+    // Find the line with the mistake.
+    // The parser reports the line of the first token that it cannot use.
+    // If a line is not finished ("x = 3 +") that is the *next* line.
+    // returns {line: (1-based) , previous: true if line before the parser error}
+    var hash = err.hash || {};
+    if (typeof hash.line != 'number') return {line: undefined, previous: false};
+
+    var lines = code.split('\n');
+    var line = hash.line + 1;
+    var expected = hash.expected || [];
+    // (hash.loc is the location of the previous token: look at the text)
+    var line_text = (lines[line - 1] !== undefined) ? lines[line - 1].replace(/^\s+/, '') : '';
+    var text = String(hash.text || '');
+
+    // parser expects a new statement: the previous lines are fine.
+    var new_statement = expected.indexOf("'IF'") != -1;
+    var first_on_line = !new_statement && text.length > 0 &&
+                        line_text.slice(0, text.length) == text;
+    // x = 3 +
+    // y = 2      <-- error at second '='
+    var assign_on_next_line = (hash.token == 'ASSIGN') && /^[^\s=:]+\s*:?=/.test(line_text);
+
+    function skip_blank_lines(i) {
+        // go up to the first line (1-based) that is not empty or comment
+        while (i > 1 && /^\s*(('|\/\/|#).*)?$/.test(lines[i - 1])) i--;
+        return i;
+    }
+
+    if (hash.token == 'EOF') {
+        return {line: skip_blank_lines(Math.min(line, lines.length)), previous: false};
+    }
+    if (line > 1 && (first_on_line || assign_on_next_line)) {
+        return {line: skip_blank_lines(line - 1), previous: true};
+    }
+    return {line: line, previous: false};
+}
+
+function translate_parse_error(err, previous_line) {
+    // jison error --> dutch message
+    var hash = err.hash || {};
+    var expected = hash.expected || [];
+    var token = hash.token;
+    var text = hash.text;
+    var lines = String(err.parser_message || err.message).split('\n');
+
+    function expects(name) {
+        return expected.indexOf("'" + name + "'") != -1;
+    }
+
+    if (/^Lexical error/.test(lines[0])) {
+        // lines[1] is the code, lines[2] is -----^ pointing to the character
+        var ch = (lines.length > 2) ? lines[1].charAt(lines[2].length - 1) : '';
+        return "Onbekend teken" + (ch ? " '" + ch + "'" : "") + ". Dit teken kan niet in een model gebruikt worden.";
+    }
+    if (token == 'EOF' && expects('ENDIF')) {
+        return "Er ontbreekt een 'eindals'. Elke 'als ... dan' moet worden afgesloten met 'eindals'.";
+    }
+    if (expects('THEN')) {
+        if (token == 'ASSIGN') {
+            return "Onverwachte '='. Gebruik in een voorwaarde '==' om te vergelijken, bijvoorbeeld: als (x == 3) en (y > 2) dan";
+        }
+        if (token == 'EOF' || token == 'IDENT' || token == 'IF' || token == 'STOP' || token == 'ENDIF') {
+            return "Na de voorwaarde van 'als' ontbreekt 'dan'. Schrijf: als ... dan ... eindals";
+        }
+    }
+    if (previous_line) {
+        // the mistake is in the line before the unexpected token
+        if (expects('ASSIGN') && expected.length == 1) {
+            return "Deze regel is niet af. Een modelregel ziet er zo uit: v = v + a*dt";
+        }
+        if (expects(')') && !expects('NUMBER')) {
+            return "Deze regel is niet af. Ontbreekt er een haakje sluiten ')'?";
+        }
+        return "Deze regel is niet af. Er ontbreekt iets aan het einde van de regel.";
+    }
+    if (token == 'ASSIGN' && expects(')')) {
+        return "Onverwachte '='. Gebruik '==' om te vergelijken, bijvoorbeeld: als (x == 3) en (y > 2) dan";
+    }
+    if (token == 'EOF' && expects(')')) {
+        return "Er ontbreekt een haakje sluiten ')'.";
+    }
+    if (token == ')') {
+        return "Er staat een haakje ')' te veel, of er ontbreekt een haakje openen '('.";
+    }
+    if (token == 'EOF') {
+        return "De laatste regel is niet af. Er ontbreekt iets aan het einde.";
+    }
+    if (token == 'ENDIF' || token == 'ELSE' || token == 'THEN') {
+        if (expects('NUMBER')) {
+            return "Onverwacht '" + text + "'. De regel hiervoor is niet af.";
+        }
+        return "Onverwacht '" + text + "'. Hier hoort geen '" + text + "'. Ontbreekt er een 'als' of 'dan'?";
+    }
+    if (token == 'ASSIGN') {
+        return "Onverwachte '='. Is de regel hiervoor wel af? Links van '=' moet precies \u00e9\u00e9n variabele staan, bijvoorbeeld: v = v + a*dt";
+    }
+    if (expects('ASSIGN') && expected.length == 1) {
+        return "Na de variabele wordt een '=' verwacht, maar er staat '" + text + "'. Een modelregel ziet er zo uit: v = v + a*dt";
+    }
+    if (token == 'NUMBER' || token == 'IDENT' || token == '(') {
+        if (!expects('NUMBER')) {
+            return "Onverwacht '" + text + "'. Ontbreekt er een bewerking ( + - * / ) of staat hier iets te veel?";
+        }
+    }
+    if (expects('NUMBER')) {
+        return "Onverwacht '" + text + "'. Hier wordt een getal of variabele verwacht.";
+    }
+    return "Onverwacht '" + text + "'. Deze regel klopt niet.";
+}
 
 function throw_custom_error(err, ast_name, line_number) {
     // insert line number etc in Error:
