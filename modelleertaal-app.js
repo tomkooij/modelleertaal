@@ -185,7 +185,7 @@ function ModelleertaalApp(params) {
     var row = $('#titel_rij');
     var open = row.prop('hidden');
     row.prop('hidden', !open);
-    $(this).attr('aria-expanded', String(open)).html(open ? 'titel &#9652;' : 'titel &#9662;');
+    $(this).attr('aria-expanded', String(open)).html(open ? 'Pas titel aan &#9652;' : 'Pas titel aan &#9662;');
     if (open) $(self.dom_titel).focus().select();
   });
 
