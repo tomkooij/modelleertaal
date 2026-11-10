@@ -6,13 +6,13 @@ Simple compiler and webapp for *Modelleertaal*
 *Modelleertaal* to javascript compiler in javascript/jison. A simple demo webapp is included that can run most (all?)
 of the models used in high school physics in NL.
 
-> **Liever de oude indeling? Gebruik [Modelleertaal classic](https://www.tomkooij.nl/modelleertaal-classic).**
+> **Prefer the old layout? Use [Modelleertaal classic](https://www.tomkooij.nl/modelleertaal-classic).**
 >
-> Vanaf versie 6 heeft de webapp een nieuwe indeling: na Run verschijnen automatisch de relevante grafieken,
-> foutmeldingen staan in de pagina en de webapp werkt ook op een telefoon. Wie gewend is aan de vorige versie
-> (5.4.2), bijvoorbeeld omdat lesmateriaal of instructies daarop gebaseerd zijn, kan die blijven gebruiken op
-> [www.tomkooij.nl/modelleertaal-classic](https://www.tomkooij.nl/modelleertaal-classic). Dat is een
-> gearchiveerde kopie: hij blijft beschikbaar, maar krijgt geen updates meer.
+> Version 6 of the webapp has a new layout: after Run the relevant graphs are shown automatically,
+> error messages appear in the page and the webapp also works on phones. If you are used to the previous
+> version (5.4.2), for example because your lesson material or instructions are based on it, you can keep using
+> it at [www.tomkooij.nl/modelleertaal-classic](https://www.tomkooij.nl/modelleertaal-classic). This is an
+> archived copy: it stays available, but it will not be updated.
 
 ## Webapp
 
