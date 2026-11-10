@@ -15,6 +15,7 @@
 - Run with Ctrl+Enter. Changing the axis replots immediately (Plot button removed).
 - New responsive layout (works on phones), `lang="nl"`.
 - "Deel link": link that contains the (changed) model: `index.html#code=...`
+- Editable model title (default: the title from the menu). The title goes into the share link.
 - Ask for confirmation before changes to a model are lost.
 - Table: small numbers (1e-5) are no longer shown as 0.
 - Multiplot: colour next to the checkbox instead of a separate legend.
