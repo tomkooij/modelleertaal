@@ -15,6 +15,12 @@
   remove elements. Every change is a small edit of the text of the model
   (comments and layout of the text are kept, Ctrl+Z in the editor works).
   New module `grafisch-edit.js`.
+- Graphical model controls: the form of the selected symbol opens next to it and
+  shows, for a toestandsvariabele, the formulas of its flows; Delete removes the
+  selected symbol, Escape or a click on the background closes the form;
+  "Ongedaan maken" (Ctrl+Z) for changes made in the diagram; zoom (buttons,
+  Ctrl + mouse wheel, "Passend") and pan (drag the background). A wide model
+  is fitted to the width.
 
 ## [6.0]
 

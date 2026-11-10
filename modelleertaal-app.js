@@ -278,6 +278,75 @@ function ModelleertaalApp(params) {
     drag = null;
   });
 
+  // drag the background: move the view (pan). Click on the background: nothing selected.
+  // (touch: the browser scrolls the view itself)
+  var pan = null;
+  $(this.dom_grafisch_svg).on('pointerdown', function(event) {
+    var e = event.originalEvent;
+    self.grafisch_focus = true;
+    if (e.button !== 0 || $(e.target).closest('[data-id]').length) return;
+    // not on the scrollbars
+    var box = this.getBoundingClientRect();
+    if (e.clientX > box.left + this.clientWidth || e.clientY > box.top + this.clientHeight) return;
+    pan = {x: e.clientX, y: e.clientY, left: this.scrollLeft, top: this.scrollTop, moved: false,
+           mouse: e.pointerType == 'mouse'};
+    if (pan.mouse) e.preventDefault();
+  });
+  $(window).on('pointermove', function(event) {
+    if (!pan) return;
+    var e = event.originalEvent;
+    if (Math.abs(e.clientX - pan.x) + Math.abs(e.clientY - pan.y) > 4) pan.moved = true;
+    if (pan.mouse && pan.moved) {
+      $(self.dom_grafisch_svg).scrollLeft(pan.left - (e.clientX - pan.x)).scrollTop(pan.top - (e.clientY - pan.y));
+    }
+  });
+  $(window).on('pointerup pointercancel', function(event) {
+    if (pan && !pan.moved && event.type == 'pointerup') {
+      self.grafisch_form_new = false;
+      self.grafisch_select(undefined);
+    }
+    pan = null;
+  });
+  $(this.dom_grafisch_svg).on('scroll', function() {
+    self.grafisch_place_form();
+  });
+  $(window).on('resize', function() {
+    if (self.grafisch_open() && self.grafisch_g) self.render_grafisch_model();
+  });
+
+  // zoom: buttons, and ctrl + mouse wheel (or pinch on a trackpad) on the diagram
+  $('#grafisch_zoom_in').click(function() { self.grafisch_set_zoom(self.grafisch_zoom_now * 1.25); });
+  $('#grafisch_zoom_uit').click(function() { self.grafisch_set_zoom(self.grafisch_zoom_now / 1.25); });
+  $('#grafisch_zoom_passend').click(function() { self.grafisch_set_zoom(null); });
+  var view = $(this.dom_grafisch_svg)[0];
+  if (view && view.addEventListener) {
+    view.addEventListener('wheel', function(e) {
+      if (!e.ctrlKey && !e.metaKey) return;
+      e.preventDefault();
+      self.grafisch_set_zoom(self.grafisch_zoom_now * (e.deltaY < 0 ? 1.1 : 1 / 1.1), e);
+    }, {passive: false});
+  }
+
+  // keys: Delete removes the selected element, Escape closes the form
+  $(document).on('pointerdown', function(event) {
+    if (!$(event.target).closest(self.dom_grafisch).length) self.grafisch_focus = false;
+  });
+  $(document).on('keydown', function(event) {
+    if (!self.grafisch_focus || !self.grafisch_open()) return;
+    var typing = $(event.target).closest('input, textarea, select, .CodeMirror').length > 0;
+    if (event.key == 'Escape') {
+      self.grafisch_form_new = false;
+      self.grafisch_select(undefined);
+    } else if ((event.key == 'Delete' || event.key == 'Backspace') && !typing && self.grafisch_selected !== undefined) {
+      event.preventDefault();
+      self.grafisch_apply([{op: 'remove', id: self.grafisch_selected}], undefined);
+    } else if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() == 'z' && !typing) {
+      event.preventDefault();
+      self.grafisch_undo();
+    }
+  });
+  $('#grafisch_undo').click(function() { self.grafisch_undo(); });
+
   // grafisch model as input: new elements
   $('#grafisch_nieuw_toestand').click(function() { self.grafisch_new_form('stock'); });
   $('#grafisch_nieuw_hulp').click(function() { self.grafisch_new_form('aux'); });
@@ -612,13 +681,89 @@ ModelleertaalApp.prototype.render_grafisch_model = function() {
   // The drawing only grows while dragging, so it does not jump under the mouse.
   var self = this;
   var opts = {bounds: this.grafisch_bounds};
-  $(this.dom_grafisch_svg).html(grafisch.toSVG(this.grafisch_g, this.grafisch_layout, opts));
+  var view = $(this.dom_grafisch_svg);
+  view.html(grafisch.toSVG(this.grafisch_g, this.grafisch_layout, opts));
   this.grafisch_bounds = opts.used;
+  // zoom: this.grafisch_zoom is a factor, or null: fit the width (not larger than 100%)
+  var svg = view.find('svg');
+  var w = parseFloat(svg.attr('width')), h = parseFloat(svg.attr('height'));
+  var zoom = this.grafisch_zoom;
+  // (not smaller than 50%: then it is unreadable, scroll instead)
+  if (!zoom) zoom = Math.max(0.5, Math.min(1, (view[0].clientWidth - 2) / w));
+  this.grafisch_zoom_now = zoom;
+  svg.attr('width', Math.round(w * zoom)).attr('height', Math.round(h * zoom));
+  $('#grafisch_zoom_waarde').text(Math.round(zoom * 100) + '%');
   if (this.grafisch_selected !== undefined) {
-    $(this.dom_grafisch_svg).find('[data-id]').filter(function() {
+    view.find('[data-id]').filter(function() {
       return $(this).attr('data-id').replace(/:(src|dst)$/, '') == self.grafisch_selected;
     }).addClass('selected');
   }
+  this.grafisch_place_form();
+};
+
+
+ModelleertaalApp.prototype.grafisch_set_zoom = function(zoom, wheel) {
+  // zoom: factor, or null to fit the width. wheel: keep the point under the mouse in place
+  if (!this.grafisch_g || !this.grafisch_layout) return;
+  var view = $(this.dom_grafisch_svg)[0];
+  var old = this.grafisch_zoom_now || 1;
+  var box = view.getBoundingClientRect();
+  var px = wheel ? wheel.clientX - box.left : view.clientWidth / 2;
+  var py = wheel ? wheel.clientY - box.top : view.clientHeight / 2;
+  var cx = (view.scrollLeft + px) / old, cy = (view.scrollTop + py) / old;
+  this.grafisch_zoom = zoom === null ? null : Math.max(0.3, Math.min(3, zoom));
+  this.render_grafisch_model();
+  view.scrollLeft = cx * this.grafisch_zoom_now - px;
+  view.scrollTop = cy * this.grafisch_zoom_now - py;
+};
+
+
+ModelleertaalApp.prototype.grafisch_place_form = function() {
+  // the form is a small window next to the selected element (wide screens)
+  var box = $(this.dom_grafisch_form), form = box.children('form');
+  if (!form.length) return;
+  var wrap = box.parent()[0].getBoundingClientRect();
+  var floating = box.css('position') == 'absolute';
+  if (!floating) {
+    box.css({left: '', top: ''});
+    return;
+  }
+  var view = $(this.dom_grafisch_svg)[0].getBoundingClientRect();
+  var left = 8, top = 8, self = this;
+  var el = $(this.dom_grafisch_svg).find('.selected').filter(function() {
+    return $(this).attr('data-id') == self.grafisch_selected;
+  })[0];
+  if (el && this.grafisch_selected !== undefined) {
+    var r = el.getBoundingClientRect();
+    left = r.left - wrap.left;
+    top = r.bottom - wrap.top + 10;
+    // element scrolled out of the view: keep the form at the edge
+    top = Math.max(view.top - wrap.top + 8, Math.min(top, view.bottom - wrap.top + 8));
+  }
+  left = Math.max(8, Math.min(left, wrap.width - box.outerWidth() - 8));
+  box.css({left: Math.round(left) + 'px', top: Math.round(top) + 'px'});
+};
+
+
+ModelleertaalApp.prototype.grafisch_undo = function() {
+  // undo the last change made in the diagram
+  var last = (this.grafisch_history || []).pop();
+  $('#grafisch_undo').prop('disabled', !(this.grafisch_history || []).length);
+  if (!last) return;
+  this.read_model();
+  if (this.model.startwaarden.replace(/\r/g, '') != last.after.startwaarden ||
+      this.model.modelregels.replace(/\r/g, '') != last.after.modelregels) {
+    // the text was changed in the editor after that
+    this.grafisch_history = [];
+    $('#grafisch_undo').prop('disabled', true);
+    this.grafisch_message('De tekst van het model is daarna veranderd. Gebruik Ctrl+Z in de tekst.');
+    return;
+  }
+  this.write_model(last.before);
+  clearTimeout(this.grafisch_timer);
+  this.grafisch_form_new = false;
+  this.grafisch_selected = last.selected;
+  this.draw_grafisch_model();
 };
 
 
@@ -640,7 +785,11 @@ ModelleertaalApp.prototype.write_model = function(model) {
 
 
 ModelleertaalApp.prototype.grafisch_message = function(text) {
-  $(this.dom_grafisch_melding).text(text || '');
+  // in the open form, else under the diagram
+  var inForm = $(this.dom_grafisch_form).find('.grafisch_form_melding');
+  inForm.text(text || '');
+  $(this.dom_grafisch_melding).text(inForm.length ? '' : (text || ''));
+  if (inForm.length && text) this.grafisch_place_form();
 };
 
 
@@ -657,6 +806,11 @@ ModelleertaalApp.prototype.grafisch_apply = function(ops, select) {
     return false;
   }
   this.grafisch_message('');
+  this.grafisch_history = this.grafisch_history || [];
+  this.grafisch_history.push({
+    before: {startwaarden: this.model.startwaarden.replace(/\r/g, ''), modelregels: this.model.modelregels.replace(/\r/g, '')},
+    after: model, selected: this.grafisch_selected});
+  $('#grafisch_undo').prop('disabled', false);
   this.write_model(model);
   clearTimeout(this.grafisch_timer);
   this.grafisch_form_new = false;
@@ -669,11 +823,16 @@ ModelleertaalApp.prototype.grafisch_apply = function(ops, select) {
 ModelleertaalApp.prototype.grafisch_form = function(title, note, fields, buttons) {
   // fields: [{key, label, value, placeholder, options: [{value, text}]}]
   // buttons: [{text, action: function(values)}]  The first button is also the Enter key.
+  var self = this;
   var box = $(this.dom_grafisch_form).empty();
   if (!title) return;
   var form = $('<form>').addClass('grafisch_form').attr('autocomplete', 'off');
   var inputs = {};
-  form.append($('<h2>').text(title));
+  form.append($('<h2>').text(title).append(
+    $('<button type="button" title="Sluiten (Esc)" aria-label="Sluiten">').addClass('grafisch_sluit').html('&times;').click(function() {
+      self.grafisch_form_new = false;
+      self.grafisch_select(undefined);
+    })));
   if (note) form.append($('<p>').addClass('grafisch_legenda').text(note));
   fields.forEach(function(f) {
     var input;
@@ -700,7 +859,12 @@ ModelleertaalApp.prototype.grafisch_form = function(title, note, fields, buttons
       b.action(values);
     }));
   });
-  box.append(form.append(row));
+  form.append($('<div>').addClass('grafisch_form_melding').attr('role', 'alert'));
+  if (buttons.length) form.append(row);
+  box.append(form);
+  // keys typed in the form are not for the diagram (Delete) or the model (Ctrl+Enter)
+  form.on('pointerdown', function() { self.grafisch_focus = true; });
+  this.grafisch_place_form();
   return form;
 };
 
@@ -799,16 +963,33 @@ ModelleertaalApp.prototype.grafisch_select = function(id) {
   var inflow = {text: '+ Stroom erin', action: function() { self.grafisch_flow_form(id, 'in'); }};
   var outflow = {text: '+ Stroom eruit', action: function() { self.grafisch_flow_form(id, 'out'); }};
   var manual = 'Dit kun je alleen in de tekst van het model aanpassen.';
+  // a toestandsvariabele shows how it changes: the formulas of its flows
+  var stockFlows = [];
+  if (el.kind == 'stock' && !el.general && el.updates == 1) {
+    [[el.inflows, 'Stroom erin'], [el.outflows, 'Stroom eruit']].forEach(function(side) {
+      side[0].forEach(function(fid) {
+        var f = g.elements[fid];
+        if (fid.indexOf('#') != -1) return;
+        var other = side[1] == 'Stroom erin' ? f.from : f.to;
+        stockFlows.push({key: 'flow:' + fid, flow: fid, value: f.code,
+          label: side[1] + (other ? (side[1] == 'Stroom erin' ? ' (uit ' : ' (naar ') + other + ')' : '') +
+                 (f.name ? ': ' + f.name + ' =' : '')});
+      });
+    });
+  }
 
   switch (el.kind) {
     case 'stock':
       this.grafisch_form('Toestandsvariabele ' + el.name,
         (el.general || el.updates != 1) ? 'De stromen van ' + el.name + ' kun je alleen in de tekst aanpassen.' : '',
         [{key: 'name', label: 'Naam', value: el.name},
-         {key: 'text', label: 'Beginwaarde', value: el.initialCode}],
+         {key: 'text', label: 'Beginwaarde', value: el.initialCode}].concat(stockFlows),
         [{text: 'Pas toe', action: function(v) {
           var ops = [], now = rename(ops, v);
           if ($.trim(v.text) != el.initialCode) ops.push({op: 'setDefinition', id: now, text: v.text});
+          stockFlows.forEach(function(f) {
+            if ($.trim(v[f.key]) != f.value) ops.push({op: 'setDefinition', id: f.flow, text: v[f.key]});
+          });
           apply(ops, now);
         }}, inflow, outflow, remove]);
       break;
@@ -1838,6 +2019,10 @@ ModelleertaalApp.prototype.init_app = function() {
     $('<div>').addClass('placeholder').text('Hier komt de tabel met resultaten.'));
   this.print_status("Model geladen. Druk op Run.");
   this.grafisch_moved = {};   // other model: forget dragged positions
+  this.grafisch_zoom = null;
+  this.grafisch_history = [];
+  this.grafisch_selected = undefined;
+  $('#grafisch_undo').prop('disabled', true);
   if (this.grafisch_open()) this.draw_grafisch_model();
 };
 
