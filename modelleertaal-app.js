@@ -19,7 +19,7 @@ var FileSaver = require('file-saver');
 /* globals $, CodeMirror */
 
 /* version history: CHANGELOG.md */
-var version = "v6.0";
+var version = "v6.1-grafisch-dev";
 
 var COLOR_PLOT = '#1d4ed8';
 var COLOR_PREVIOUS = '#c3c8d1';
