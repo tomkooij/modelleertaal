@@ -565,12 +565,93 @@
             margin-top: 8px;
         }
 
-        /* grafisch model */
-        #grafisch_model > div,
-        #grafisch_model > p,
-        #grafisch_model > details,
-        #grafisch_model > button {
-            margin-top: 10px;
+        /* kop van de modelkaart: titel en de keuze Tekst | Tekst + grafisch */
+        .model_head {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 6px 12px;
+            margin: -4px 0 8px;
+        }
+
+        .model_head #model_titel {
+            flex: 1 1 14em;
+            width: auto;
+            min-width: 0;
+            margin: 0;
+        }
+
+        .view_switch {
+            display: inline-flex;
+            border: 1px solid #9ca3af;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .view_switch button {
+            border: 0;
+            border-radius: 0;
+            min-height: 30px;
+            padding: 3px 12px;
+            font-size: 0.9rem;
+            background: #fff;
+            color: var(--muted);
+        }
+
+        .view_switch button + button {
+            border-left: 1px solid #9ca3af;
+        }
+
+        .view_switch button[aria-pressed="true"] {
+            background: var(--primary);
+            color: #fff;
+            font-weight: 600;
+        }
+
+        /* grafisch model: in de modelkaart, boven de editors */
+        #grafisch_model {
+            margin-bottom: 12px;
+        }
+
+        #grafisch_model[hidden] {
+            display: none;
+        }
+
+        #grafisch_model > div + div {
+            margin-top: 8px;
+        }
+
+        #grafisch_knoppen button {
+            min-height: 30px;
+            padding: 3px 9px;
+            font-size: 0.9rem;
+        }
+
+        /* legenda: een vaste strook onder het diagram */
+        .grafisch_strook {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px 16px;
+            color: var(--muted);
+            font-size: 0.8rem;
+        }
+
+        .grafisch_strook span {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .grafisch_strook svg {
+            display: block;
+        }
+
+        /* graph stays in view while scrolling through a long model (wide, high screens) */
+        @media (min-width: 961px) and (min-height: 700px) {
+            .area_graph {
+                position: sticky;
+                top: 8px;
+            }
         }
 
         #grafisch_view {
@@ -584,6 +665,8 @@
             border-radius: 6px;
             background: #fff;
             cursor: grab;
+            /* pinch to zoom is done by the webapp, not by the browser */
+            touch-action: pan-x pan-y;
         }
 
         #grafisch_svg .placeholder {
@@ -608,7 +691,7 @@
         #grafisch_eigenschappen {
             position: absolute;
             z-index: 5;
-            width: min(380px, calc(100% - 16px));
+            width: min(340px, calc(100% - 16px));
         }
 
         #grafisch_eigenschappen:empty {
@@ -635,11 +718,40 @@
             touch-action: none;
         }
 
+        /* you can click a symbol: it gets a thicker border under the mouse */
+        #grafisch_svg [data-id]:hover > rect,
+        #grafisch_svg [data-id]:hover > circle,
+        #grafisch_svg [data-id]:hover > path:first-of-type {
+            stroke-width: 3.5;
+        }
+
+        /* the symbol of the line with the cursor in the editor */
+        #grafisch_svg .linked > rect,
+        #grafisch_svg .linked > circle,
+        #grafisch_svg .linked > path {
+            stroke: #2563eb;
+            stroke-width: 3.5;
+        }
+
         #grafisch_svg .selected > rect,
         #grafisch_svg .selected > circle,
         #grafisch_svg .selected > path {
             stroke: #d97706;
             stroke-width: 3.5;
+        }
+
+        /* + buttons on the selected toestandsvariabele: new flow in / out */
+        #grafisch_svg [data-action] {
+            cursor: pointer;
+        }
+
+        #grafisch_svg [data-action]:hover circle {
+            fill: #fef3c7;
+        }
+
+        /* lines in the editors that belong to the selected symbol */
+        .mt-link-line {
+            background: #fef3c7;
         }
 
         #grafisch_knoppen {
@@ -727,15 +839,29 @@
             font-size: 0.85rem;
         }
 
-        #grafisch_tabel table {
-            border-collapse: collapse;
-            font-size: 0.85rem;
+        .grafisch_form input.invalid {
+            border-color: #dc2626;
+            box-shadow: 0 0 0 2px #fecaca;
         }
 
-        #grafisch_tabel td {
-            border-top: 1px solid var(--border);
-            padding: 3px 8px;
-            vertical-align: top;
+        /* names of the variables: click to put the name in the formula */
+        .grafisch_chips {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.8rem;
+            color: var(--muted);
+        }
+
+        .grafisch_chips button {
+            min-height: 0;
+            padding: 1px 7px;
+            border-color: var(--border);
+            border-radius: 10px;
+            font-family: ui-monospace, Consolas, monospace;
+            font-size: 0.85rem;
+            background: #eff6ff;
         }
 
         /* meer opties */
@@ -817,9 +943,44 @@
 
         <div class="workspace">
             <section class="card area_model" aria-label="Model">
-                <input id="model_titel" class="model_title" type="text" maxlength="120" spellcheck="false"
-                    placeholder="Naam van het model" aria-label="Titel van het model"
-                    title="Klik om de titel te veranderen. De titel gaat mee in Deel link en is de naam van het bestand bij Bewaar.">
+                <div class="model_head">
+                    <input id="model_titel" class="model_title" type="text" maxlength="120" spellcheck="false"
+                        placeholder="Naam van het model" aria-label="Titel van het model"
+                        title="Klik om de titel te veranderen. De titel gaat mee in Deel link en is de naam van het bestand bij Bewaar.">
+                    <div class="view_switch" role="group" aria-label="Weergave van het model">
+                        <button type="button" data-weergave="tekst" aria-pressed="true" title="Alleen de tekst van het model">Tekst</button>
+                        <button type="button" data-weergave="grafisch" aria-pressed="false" title="Het model ook als diagram: toestanden, stromen en pijlen">Tekst + grafisch</button>
+                    </div>
+                </div>
+
+                <div id="grafisch_model" hidden>
+                    <div id="grafisch_knoppen">
+                        <button id="grafisch_nieuw_toestand" type="button" title="Een grootheid die elke stap een beetje verandert, zoals x of v">+ Toestandsvariabele</button>
+                        <button id="grafisch_nieuw_hulp" type="button" title="Een grootheid die elke stap met een formule wordt uitgerekend, zoals Fres">+ Hulpvariabele</button>
+                        <button id="grafisch_nieuw_constante" type="button" title="Een grootheid die niet verandert, zoals de massa m">+ Constante</button>
+                        <button id="grafisch_undo" type="button" disabled title="Maak de laatste wijziging in het diagram ongedaan (Ctrl+Z)" aria-label="Ongedaan maken">&#8630;</button>
+                        <span class="grafisch_zoom">
+                            <button id="grafisch_zoom_uit" type="button" title="Uitzoomen (Ctrl + muiswiel)" aria-label="Uitzoomen">&minus;</button>
+                            <span id="grafisch_zoom_waarde">100%</span>
+                            <button id="grafisch_zoom_in" type="button" title="Inzoomen (Ctrl + muiswiel)" aria-label="Inzoomen">+</button>
+                            <button id="grafisch_zoom_passend" type="button" title="Maak het hele model zichtbaar">Passend</button>
+                            <button id="grafisch_herstel" type="button" title="Zet alle symbolen terug op hun eigen plek" aria-label="Herstel indeling">&#8634;</button>
+                            <button id="download_grafisch" type="button" title="Sla het diagram op als plaatje (SVG)" aria-label="Download diagram">&#10515;</button>
+                        </span>
+                    </div>
+                    <div id="grafisch_view">
+                        <div id="grafisch_svg"></div>
+                        <div id="grafisch_eigenschappen"></div>
+                    </div>
+                    <div class="grafisch_strook" aria-hidden="true">
+                        <span><svg width="22" height="14"><rect x="1" y="1" width="20" height="12" rx="2" fill="#dceaf8" stroke="#1f5fa8" stroke-width="1.5"/></svg>toestandsvariabele</span>
+                        <span><svg width="26" height="14"><path d="M0,7 H26" stroke="#1f5fa8" stroke-width="5"/><path d="M0,7 H26" stroke="#fff" stroke-width="2"/><path d="M7,1 L19,13 L19,1 L7,13 z" fill="#dceaf8" stroke="#1f5fa8" stroke-width="1.5" stroke-linejoin="round"/></svg>stroom</span>
+                        <span><svg width="16" height="16"><circle cx="8" cy="8" r="6.5" fill="#dceaf8" stroke="#1f5fa8" stroke-width="1.5"/></svg>hulpvariabele</span>
+                        <span><svg width="16" height="16"><path d="M8,1.5 L14.5,8 L8,14.5 L1.5,8 z" fill="#dceaf8" stroke="#1f5fa8" stroke-width="1.5"/></svg>constante</span>
+                        <span><svg width="24" height="10"><path d="M1,5 H19" stroke="#c62828" stroke-width="1.4"/><path d="M17,1 L23,5 L17,9 z" fill="#c62828"/></svg>hangt af van</span>
+                    </div>
+                    <div id="grafisch_melding" role="alert"></div>
+                </div>
 
                 <div class="editors">
                     <div>
@@ -866,47 +1027,6 @@
                 <div id="datatable"></div>
             </section>
         </div>
-
-        <details class="card" id="grafisch_model">
-            <summary>Weergave als grafisch model</summary>
-            <div id="grafisch_knoppen">
-                <button id="grafisch_nieuw_toestand" type="button">+ Toestandsvariabele</button>
-                <button id="grafisch_nieuw_hulp" type="button">+ Hulpvariabele</button>
-                <button id="grafisch_nieuw_constante" type="button">+ Constante</button>
-                <button id="grafisch_undo" type="button" disabled title="Maak de laatste wijziging in het diagram ongedaan (Ctrl+Z)">&#8630; Ongedaan maken</button>
-                <span class="grafisch_zoom">
-                    <button id="grafisch_zoom_uit" type="button" title="Uitzoomen (Ctrl + muiswiel)" aria-label="Uitzoomen">&minus;</button>
-                    <span id="grafisch_zoom_waarde">100%</span>
-                    <button id="grafisch_zoom_in" type="button" title="Inzoomen (Ctrl + muiswiel)" aria-label="Inzoomen">+</button>
-                    <button id="grafisch_zoom_passend" type="button" title="Maak het hele model zichtbaar">Passend</button>
-                </span>
-            </div>
-            <p class="grafisch_legenda">
-                Klik op een symbool om het aan te passen of te verwijderen (Delete). Sleep een symbool om het te verplaatsen,
-                sleep de achtergrond om het beeld te verschuiven. Elke wijziging komt in de tekst van het model.
-            </p>
-            <div id="grafisch_view">
-                <div id="grafisch_svg"></div>
-                <div id="grafisch_eigenschappen"></div>
-            </div>
-            <div id="grafisch_melding" role="alert"></div>
-            <details>
-                <summary>Legenda</summary>
-                <p class="grafisch_legenda">
-                    Rechthoek: toestandsvariabele &middot; pijp met kraantje: stroom &middot; cirkel: hulpvariabele
-                    (gestippeld: met voorwaarde) &middot; ruit: constante &middot; bliksem: voorval &middot;
-                    rode pijl: &ldquo;hangt af van&rdquo; (lichte stippels: alleen in de voorwaarde van
-                    <i>als&nbsp;&hellip;&nbsp;dan</i>) &middot; grijze streepjes: beginwaarde &middot; blauwe streepjes:
-                    voorval verandert een toestand. Wijs een symbool aan voor de formule.
-                </p>
-            </details>
-            <details>
-                <summary>Herkende elementen</summary>
-                <div id="grafisch_tabel"></div>
-            </details>
-            <button id="grafisch_herstel" type="button">Herstel indeling</button>
-            <button id="download_grafisch" type="button">Download grafisch model als SVG</button>
-        </details>
 
         <details class="card" id="meer_opties">
             <summary>Meer opties…</summary>

@@ -106,6 +106,40 @@ describe('grafisch.js - tekstmodel naar grafisch model', function() {
         assert.equal(svg2.match(/viewBox="([^"]*)"/)[1], svg.match(/viewBox="([^"]*)"/)[1]);
     });
 
+    it('regels bij elk element (symbool <-> modelregel)', function() {
+        var model = new evaluator_js.Model();
+        model.startwaarden = "m=80\nk=0.3\nv=0\nx=0\nt=0\ndt=0.1";
+        model.modelregels = "Fw = k*v^2\na = (m*9.81 - Fw)/m\nv = v + a*dt\nx = x + v*dt\n" +
+            "als x > 100 dan\n  v = 0\neindals\nt = t + dt";
+        var ev = new evaluator_js.ModelregelsEvaluator(model, false);
+        var g = grafisch.analyse(ev.startwaarden_ast, ev.modelregels_ast);
+        var ln = grafisch.lines(g, ev.startwaarden_ast, ev.modelregels_ast);
+        assert.deepEqual(ln.byElement.Fw, {startwaarden: [], modelregels: [1]});
+        assert.deepEqual(ln.byElement.k, {startwaarden: [2], modelregels: []});
+        assert.deepEqual(ln.byElement.v, {startwaarden: [3], modelregels: [3]});
+        assert.deepEqual(ln.byElement.a.modelregels, [2, 3], 'a = ... en v = v + a*dt');
+        // x = x + v*dt: unnamed flow, written in the line of x
+        var anon = g.flows.filter(function(f) { return !f.name; })[0];
+        assert.deepEqual(ln.byElement[anon.id].modelregels, [4]);
+        assert.equal(ln.byLine['modelregels:4'], 'x');
+        // v = 0 inside als ... dan: the voorval
+        var event = g.order.filter(function(id) { return g.elements[id].kind == 'event'; })[0];
+        assert.deepEqual(ln.byElement[event].modelregels, [6]);
+        assert.equal(ln.byLine['modelregels:6'], event);
+        assert.equal(ln.byLine['startwaarden:1'], 'm');
+        assert.isUndefined(ln.byLine['startwaarden:6'], 'dt is geen element');
+    });
+
+    it('waarden na een run in de tooltip, + knoppen bij geselecteerde toestand', function() {
+        var g = analyse("v=0\nx=0\nt=0\ndt=0.1", "v = v + 9.81*dt\nx = x + v*dt\nt = t + dt");
+        var svg = grafisch.toSVG(g, null, {selected: 'x', values: {x: {first: '0', last: '12.3'}}});
+        assert.include(svg, 'begin: 0, eind: 12.3');
+        assert.include(svg, 'data-action="flow-in" data-stock="x"');
+        assert.include(svg, 'data-action="flow-out" data-stock="x"');
+        assert.notInclude(grafisch.toSVG(g, null, {selected: 'v'}), 'data-stock="x"');
+        assert.notInclude(grafisch.toSVG(g), 'data-action');
+    });
+
     it('alle voorbeeldmodellen geven een SVG', function() {
         fs.readdirSync('modellen').filter(function(f) {
             return /\.xml$/.test(f) && f != 'leeg.xml';

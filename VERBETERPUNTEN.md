@@ -6,6 +6,11 @@ elk zo beschreven dat het los te bouwen is. Gebouwde punten staan gemarkeerd met
 Afwijking bij P1-7: "Download grafiek als SVG" is niet vervangen maar naar "Meer opties"
 verhuisd (naast PGFPlot, voor docenten); de PNG-knop staat bij de grafiek.
 
+Afwijkingen bij P2-4/P2-5: de schakelaar staat in de kop van de modelkaart, naast de titel.
+Een geselecteerde stroom markeert ook de regel van de toestandsvariabele waarin hij wordt
+opgeteld. Bij een constante staan "+ Stroom erin/eruit" nog in het formulier (geen + knopjes).
+Het formulier gaat naast het symbool als er onder en boven geen ruimte is.
+
 ## Uitgangspunten (gelden voor elk punt)
 
 - **Geen knoppencursus.** Een leerling uit 5 vwo moet zonder uitleg kunnen werken. Liever een
@@ -216,7 +221,7 @@ Vergelijk op gelijke eindtijd; stopt het model met `stop`, vergelijk dan de eind
 
 **Klaar als.** `examenvwo2005` met dt = 1 geeft de melding, met dt = 0,01 niet.
 
-### P2-4 Tekst en grafisch model naast elkaar, met onderlinge verwijzing
+### P2-4 Tekst en grafisch model naast elkaar, met onderlinge verwijzing (gebouwd)
 
 **Probleem.** Het grafische model zit dichtgeklapt helemaal onderaan ("Weergave als grafisch
 model"). Is het open, dan zijn Run en de grafiek uit beeld: je bewerkt het diagram, scrolt omhoog,
@@ -241,7 +246,7 @@ omgekeerde richting.
 **Klaar als.** Op 1400 px breed zijn diagram, tekst, Run en grafiek tegelijk in beeld voor
 `examenvwo2005`; klik op kraan `a` markeert regel 5 en 6; cursor op regel 3 laat `Fw` oplichten.
 
-### P2-5 Grafisch model: bediening zonder uitleg
+### P2-5 Grafisch model: bediening zonder uitleg (gebouwd)
 
 **Probleem.** Onder de knoppen staat een alinea uitleg ("Klik op een symbool om..., sleep...,
 sleep de achtergrond...") en twee uitklappers (Legenda, Herkende elementen): een knoppencursus

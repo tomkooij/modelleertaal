@@ -41,6 +41,25 @@
   (no button-as-label); "Meer/minder knoppen (profiel)" is now a checkbox that
   shows "Volgende regel" and "Voeg toe". Significant digits and "verticale as
   vanaf 0" are remembered in the browser.
+- Graphical model in the model card: switch "Tekst | Tekst + grafisch" next to
+  the title (remembered). The diagram is above the editors, the graph stays
+  in view on the right (sticky on wide screens). The panel "Weergave als
+  grafisch model" at the bottom is gone.
+- Symbol and text are linked: a selected symbol marks its lines in the
+  editors (definition, beginwaarde, the line where a flow enters); the cursor
+  in a line lights up its symbol. After Run the tooltip of a symbol shows the
+  begin and end value. New `grafisch.lines()`.
+- Diagram controls without instructions: the explanation paragraph,
+  "Legenda" and "Herkende elementen" are replaced by a small fixed legend
+  under the diagram; "Herstel indeling" and the SVG download are icons in the
+  toolbar. A selected toestandsvariabele has + buttons for a new flow in
+  (left) and out (right). Changes in the form are applied at once (Enter or
+  leaving the field, no "Pas toe"); an impossible change gets a red border
+  and leaves the text as it is. Under a formula: the names of the variables,
+  click to insert. The form opens below, above or next to the symbol and
+  never outside the diagram.
+- Phone: the diagram starts fitted to the width ("Passend", down to 30%);
+  zoom with two fingers.
 - Fix: after `stop`, "Voeg toe" and the debugger ("Volgende regel") no longer
   continue the model. `evaluator.stopped` is only true for `stop`/`print`, no
   longer for a debugger breakpoint.
