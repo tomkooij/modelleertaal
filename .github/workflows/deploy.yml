@@ -13,13 +13,32 @@ on:
   push:
     branches: [master]
     tags: ['v*']
+  pull_request:   # alleen de controle van DEV_PAGES_TOKEN, er wordt niets gepubliceerd
 
 concurrency:
   group: deploy-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
+  check-token:
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Controleer schrijfrechten op modelleertaal-dev (push --dry-run)
+        env:
+          TOKEN: ${{ secrets.DEV_PAGES_TOKEN }}
+        run: |
+          if [ -z "$TOKEN" ]; then
+            echo "::warning::Secret DEV_PAGES_TOKEN ontbreekt."
+            exit 0
+          fi
+          git init -q check && cd check
+          git -c user.name=check -c user.email=check@example.invalid commit -q --allow-empty -m check
+          git push --dry-run --force "https://x-access-token:${TOKEN}@github.com/tomkooij/modelleertaal-dev.git" HEAD:gh-pages
+          echo "DEV_PAGES_TOKEN heeft schrijfrechten op tomkooij/modelleertaal-dev."
+
   deploy:
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     permissions:
       contents: write   # gh-pages van deze repository en releases
