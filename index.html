@@ -684,6 +684,43 @@
             display: block;
         }
 
+        /* Herkende elementen: how the text was read, as a list (click a row: select it) */
+        .grafisch_lijst {
+            margin-top: 8px;
+        }
+
+        .grafisch_lijst summary {
+            font-size: 0.85rem;
+        }
+
+        #grafisch_tabel {
+            overflow-x: auto;
+            margin-top: 6px;
+        }
+
+        #grafisch_tabel table {
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        #grafisch_tabel td {
+            border-top: 1px solid var(--border);
+            padding: 3px 8px;
+            vertical-align: top;
+        }
+
+        #grafisch_tabel tr[data-id] {
+            cursor: pointer;
+        }
+
+        #grafisch_tabel tr[data-id]:hover {
+            background: #eff6ff;
+        }
+
+        #grafisch_tabel tr.selected {
+            background: #fef3c7;
+        }
+
         /* graph stays in view while scrolling through a long model (wide, high screens) */
         @media (min-width: 961px) and (min-height: 700px) {
             .area_graph {
@@ -1018,6 +1055,10 @@
                         <span><svg width="24" height="10"><path d="M1,5 H19" stroke="#c62828" stroke-width="1.4"/><path d="M17,1 L23,5 L17,9 z" fill="#c62828"/></svg>hangt af van</span>
                     </div>
                     <div id="grafisch_melding" role="alert"></div>
+                    <details class="grafisch_lijst">
+                        <summary>Herkende elementen</summary>
+                        <div id="grafisch_tabel"></div>
+                    </details>
                 </div>
 
                 <div class="editors">

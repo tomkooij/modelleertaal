@@ -87,6 +87,7 @@ function ModelleertaalApp(params) {
   this.dom_grafisch_svg = "#grafisch_svg";
   this.dom_view_switch = ".view_switch";
   this.dom_workspace = ".workspace";
+  this.dom_grafisch_tabel = "#grafisch_tabel";
   this.weergave = 'tekst';   // 'tekst' or 'grafisch' (text and diagram)
   this.dom_download_grafisch = "#download_grafisch";
   this.dom_grafisch_reset = "#grafisch_herstel";
@@ -247,6 +248,11 @@ function ModelleertaalApp(params) {
   // Tekst | Tekst + grafisch. The diagram is drawn from the text of the model (no Run needed)
   $(this.dom_view_switch).on('click', 'button', function() {
     self.set_weergave($(this).attr('data-weergave'), true);
+  });
+  // Herkende elementen: a click on a row selects the element in the diagram
+  $(this.dom_grafisch_tabel).on('click', 'tr[data-id]', function() {
+    self.grafisch_focus = true;
+    self.grafisch_select($(this).attr('data-id'));
   });
   // + on the selected toestandsvariabele: new flow in or out
   $(this.dom_grafisch_svg).on('click', '[data-action]', function() {
@@ -776,6 +782,7 @@ ModelleertaalApp.prototype.draw_grafisch_model = function() {
     this.grafisch_g = undefined;
     this.grafisch_layout = undefined;
     this.grafisch_lines = undefined;
+    $(this.dom_grafisch_tabel).empty();
     this.grafisch_select(undefined);
     return;
   }
@@ -791,6 +798,17 @@ ModelleertaalApp.prototype.draw_grafisch_model = function() {
   }
   this.grafisch_bounds = null;
   this.render_grafisch_model();
+  // Herkende elementen: the same model as a list
+  var table = $('<table>');
+  grafisch.table(g).forEach(function(row) {
+    var tr = $('<tr>')
+      .append($('<td>').text(row.kind))
+      .append($('<td>').append($('<b>').text(row.name)))
+      .append($('<td>').text(row.definition));
+    if (row.id !== undefined) tr.attr('data-id', row.id).attr('title', 'Klik om ' + row.name + ' in het diagram te kiezen');
+    table.append(tr);
+  });
+  $(this.dom_grafisch_tabel).empty().append(table);
   // the form of the selected element shows the new text of the model
   if (this.grafisch_selected !== undefined || !this.grafisch_form_new) this.grafisch_select(this.grafisch_selected);
 };
@@ -1259,8 +1277,11 @@ ModelleertaalApp.prototype.grafisch_select = function(id) {
   this.grafisch_form_new = false;
   if (changed) this.grafisch_message('');
   if (g && this.grafisch_layout) this.render_grafisch_model();
-  // the lines in the text that belong to this symbol
+  // the lines in the text that belong to this symbol, and its row in Herkende elementen
   this.grafisch_highlight_lines(this.grafisch_selected);
+  $(this.dom_grafisch_tabel).find('tr').removeClass('selected').filter(function() {
+    return $(this).attr('data-id') === self.grafisch_selected;
+  }).addClass('selected');
   if (!el) {
     this.grafisch_form(null);
     return;

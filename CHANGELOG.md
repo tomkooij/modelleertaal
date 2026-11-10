@@ -51,9 +51,10 @@
   editors (definition, beginwaarde, the line where a flow enters); the cursor
   in a line lights up its symbol. After Run the tooltip of a symbol shows the
   begin and end value. New `grafisch.lines()`.
-- Diagram controls without instructions: the explanation paragraph,
-  "Legenda" and "Herkende elementen" are replaced by a small fixed legend
-  under the diagram; "Herstel indeling" and the SVG download are icons in the
+- Diagram controls without instructions: the explanation paragraph and
+  "Legenda" are replaced by a small fixed legend under the diagram.
+  "Herkende elementen" (closed by default) is under the legend; a click on a
+  row selects that element in the diagram; "Herstel indeling" and the SVG download are icons in the
   toolbar. A selected toestandsvariabele has + buttons for a new flow in
   (left) and out (right). Changes in the form are applied at once (Enter or
   leaving the field, no "Pas toe"); an impossible change gets a red border

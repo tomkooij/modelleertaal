@@ -10,6 +10,8 @@ Afwijkingen bij P2-4/P2-5: de schakelaar staat in de kop van de modelkaart, naas
 Een geselecteerde stroom markeert ook de regel van de toestandsvariabele waarin hij wordt
 opgeteld. Bij een constante staan "+ Stroom erin/eruit" nog in het formulier (geen + knopjes).
 Het formulier gaat naast het symbool als er onder en boven geen ruimte is.
+"Herkende elementen" is op verzoek teruggezet: dichtgeklapt onder de legenda; een klik op een
+rij kiest dat element in het diagram.
 
 ## Uitgangspunten (gelden voor elk punt)
 

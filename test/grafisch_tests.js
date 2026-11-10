@@ -130,6 +130,17 @@ describe('grafisch.js - tekstmodel naar grafisch model', function() {
         assert.isUndefined(ln.byLine['startwaarden:6'], 'dt is geen element');
     });
 
+    it('herkende elementen: tabel met soort, naam, definitie en id', function() {
+        var g = analyse("m=1\nv=0\nt=0\ndt=0.1", "a = 9.81/m\nv = v + a*dt\nals v > 5 dan stop eindals\nt = t + dt");
+        var rows = grafisch.table(g);
+        var v = rows.filter(function(r) { return r.name == 'v'; })[0];
+        assert.equal(v.kind, 'Toestandsvariabele');
+        assert.equal(v.id, 'v');
+        assert.equal(rows.filter(function(r) { return r.name == 'a'; })[0].id, 'a');
+        var stop = rows.filter(function(r) { return r.kind == 'Stopvoorwaarde'; })[0];
+        assert.isUndefined(stop.id, 'een stopvoorwaarde is geen symbool');
+    });
+
     it('waarden na een run in de tooltip, + knoppen bij geselecteerde toestand', function() {
         var g = analyse("v=0\nx=0\nt=0\ndt=0.1", "v = v + 9.81*dt\nx = x + v*dt\nt = t + dt");
         var svg = grafisch.toSVG(g, null, {selected: 'x', values: {x: {first: '0', last: '12.3'}}});

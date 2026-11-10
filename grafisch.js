@@ -508,7 +508,7 @@ function table(g) {
             } else {
                 def = el.definition;
             }
-            rows.push({kind: KIND_NAMES[el.kind], name: el.name || el.label, definition: def});
+            rows.push({kind: KIND_NAMES[el.kind], name: el.name || el.label, definition: def, id: el.id});
         }
     }
     for (i = 0; i < g.stops.length; i++) rows.push({kind: 'Stopvoorwaarde', name: '', definition: g.stops[i]});
