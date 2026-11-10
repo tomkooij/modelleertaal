@@ -27,7 +27,7 @@ var leerling_versie = [
             // Uitgekleede webapp met zo min mogelijk afleiding
             // bovenste blok
             {id: "#model_keuze", action: "show"},
-            {id: "#permalink", action: "hide"},
+            {id: "#permalink", action: "show"},
             {id: "#open_file_dialog", action: "hide"},
             // model blok
             {id: "#continue_dialog", action: "hide"},
