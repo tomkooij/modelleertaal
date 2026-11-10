@@ -300,6 +300,18 @@
             white-space: normal;
         }
 
+        #endtime_hint {
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+
+        /* knop in een melding of in de statusregel */
+        button.inline_action {
+            min-height: 0;
+            padding: 2px 10px;
+            margin-left: 8px;
+        }
+
         kbd {
             font: inherit;
             font-size: 0.8rem;
@@ -794,6 +806,7 @@
             <button id="run" type="button" title="Run: voer het model uit (Ctrl+Enter)">&#9654; Run</button>
             <label>Aantal iteraties:
                 <input type="text" id="NBox" value="1000" inputmode="numeric">
+                <span id="endtime_hint" title="Aantal iteraties maal de tijdstap dt: zo lang rekent het model door (als het niet eerder stopt)"></span>
             </label>
             <span id="continue_dialog">
                 <button id="continue" type="button">Voeg toe:</button>

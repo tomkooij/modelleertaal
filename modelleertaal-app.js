@@ -61,6 +61,7 @@ function ModelleertaalApp(params) {
   this.dom_graph_note = "#graph_note";
   this.dom_results = ".results";
   this.dom_nbox = "#NBox";
+  this.dom_endtime_hint = "#endtime_hint";
   this.dom_nbox_continue = "#NBoxContinue";
   this.dom_run = "#run";
   this.dom_continue = "#continue";
@@ -136,7 +137,11 @@ function ModelleertaalApp(params) {
   });
 
   // (re)set the app
+  this.starting = true;
   this.init_app();
+  this.starting = false;
+  // after the first model is loaded: offer to continue with unsaved work
+  this.restore_check = true;
   this.load_model();
 
   $(this.dom_run).click(function() {
@@ -164,6 +169,11 @@ function ModelleertaalApp(params) {
     }
   });
 
+  $(this.dom_nbox).on('input', function() {
+    self.update_endtime_hint(false);
+    self.schedule_autosave();
+  });
+
   $(this.dom_model_keuze).change(function() {
     if (self.is_modified() && !window.confirm('Je hebt dit model aangepast.\n' +
         'Als je een ander model kiest, gaan je wijzigingen verloren.\n\nAnder model laden?')) {
@@ -180,6 +190,7 @@ function ModelleertaalApp(params) {
   });
 
   $(window).on('beforeunload', function(event) {
+    if (self.autosave_timer) self.autosave();
     if (self.is_modified()) {
       event.preventDefault();
       event.returnValue = '';
@@ -189,6 +200,7 @@ function ModelleertaalApp(params) {
 
   $(this.dom_titel).on('input', function() {
     self.update_document_title();
+    self.schedule_autosave();
   });
 
   $('#toggle_titel').click(function() {
@@ -496,12 +508,15 @@ ModelleertaalApp.prototype.print_status = function(status) {
 };
 
 
-ModelleertaalApp.prototype.show_message = function(type, title, text) {
-  // type: 'error', 'warning' or 'info'
-  $(this.dom_message).removeClass('error warning info').addClass(type).empty()
+ModelleertaalApp.prototype.show_message = function(type, title, text, buttons) {
+  // type: 'error', 'warning' or 'info'. buttons (optional): [{text, action}]
+  var box = $(this.dom_message).removeClass('error warning info').addClass(type).empty()
     .append($('<strong>').text(title))
-    .append($('<span>').text(text))
-    .show();
+    .append($('<span>').text(text));
+  (buttons || []).forEach(function(b) {
+    box.append($('<button type="button">').addClass('inline_action').text(b.text).click(b.action));
+  });
+  box.show();
 };
 
 
@@ -587,17 +602,20 @@ ModelleertaalApp.prototype.read_model = function() {
 };
 
 
+ModelleertaalApp.prototype.current_text = function() {
+  // the text in the editors: {modelregels, startwaarden}
+  if (this.CodeMirrorActive) {
+    return {modelregels: this.modelregels_editor.getValue(),
+            startwaarden: this.startwaarden_editor.getValue()};
+  }
+  return {modelregels: $(this.dom_modelregels).val(), startwaarden: $(this.dom_startwaarden).val()};
+};
+
+
 ModelleertaalApp.prototype.is_modified = function() {
   // has the user changed the model since it was loaded (or saved)?
   if (!this.loaded) return false;
-  var current = {};
-  if (this.CodeMirrorActive) {
-    current.modelregels = this.modelregels_editor.getValue();
-    current.startwaarden = this.startwaarden_editor.getValue();
-  } else {
-    current.modelregels = $(this.dom_modelregels).val();
-    current.startwaarden = $(this.dom_startwaarden).val();
-  }
+  var current = this.current_text();
   function normalize(s) {
     return String(s).replace(/\r/g, '').replace(/\s+$/, '');
   }
@@ -610,6 +628,9 @@ ModelleertaalApp.prototype.on_model_edited = function() {
   // called on every change in the editors.
   var self = this;
   this.remove_highlight_error();
+  clearTimeout(this.hint_timer);
+  this.hint_timer = setTimeout(function() { self.update_endtime_hint(true); }, 300);
+  this.schedule_autosave();
   if (this.grafisch_open()) {
     clearTimeout(this.grafisch_timer);
     this.grafisch_timer = setTimeout(function() { self.draw_grafisch_model(); }, 400);
@@ -618,6 +639,36 @@ ModelleertaalApp.prototype.on_model_edited = function() {
     this.set_stale(true);
     this.print_status("Model gewijzigd. Druk op Run.");
   }
+};
+
+
+ModelleertaalApp.prototype.read_dt = function() {
+  // the value of dt from the startwaarden, without running the model. null if unknown.
+  var model = new evaluator_js.Model();
+  model.startwaarden = this.current_text().startwaarden;
+  model.modelregels = 'dt = dt';
+  try {
+    var evaluator = new evaluator_js.ModelregelsEvaluator(model, false);
+    evaluator.set_state(0, true, false);
+    evaluator.run();
+    var dt = evaluator.result[0][evaluator.namespace.varNames.indexOf('dt')];
+    return (typeof dt == 'number' && isFinite(dt) && dt > 0) ? dt : null;
+  } catch (err) {
+    // syntax error, ... or no dt in the startwaarden: no hint
+    return null;
+  }
+};
+
+
+ModelleertaalApp.prototype.update_endtime_hint = function(model_changed) {
+  // next to the number of iterations: N x dt (how long the model runs)
+  if (model_changed || this.hint_dt === undefined) this.hint_dt = this.read_dt();
+  var N = Number(String($(this.dom_nbox).val()).replace(',', '.'));
+  var text = '';
+  if (this.hint_dt !== null && isFinite(N) && N >= 1) {
+    text = '× dt = ' + Number((Math.round(N) * this.hint_dt).toPrecision(this.precision));
+  }
+  $(this.dom_endtime_hint).text(text);
 };
 
 
@@ -1136,6 +1187,129 @@ ModelleertaalApp.prototype.download_model = function() {
   this.save_string(this.model.createBogusXMLString(), filename);
   // model is saved: do not warn for unsaved changes
   this.loaded = {modelregels: this.model.modelregels, startwaarden: this.model.startwaarden};
+  this.autosave();
+};
+
+
+//
+// Autosave: unsaved work is kept in the browser (localStorage), so it is not lost
+// when the tab is closed. On the next visit the user can continue with it.
+//
+var AUTOSAVE_KEY = 'modelleertaal_autosave';
+var AUTOSAVE_MAX_AGE = 30 * 24 * 3600 * 1000;   // 30 days
+
+function storage(action, value) {
+  // localStorage can be blocked (private window, settings): then nothing is saved
+  try {
+    if (action == 'get') return window.localStorage.getItem(AUTOSAVE_KEY);
+    if (action == 'set') window.localStorage.setItem(AUTOSAVE_KEY, value);
+    if (action == 'remove') window.localStorage.removeItem(AUTOSAVE_KEY);
+  } catch (err) {
+    return null;
+  }
+  return null;
+}
+
+
+ModelleertaalApp.prototype.schedule_autosave = function() {
+  var self = this;
+  clearTimeout(this.autosave_timer);
+  this.autosave_timer = setTimeout(function() { self.autosave(); }, 1000);
+};
+
+
+ModelleertaalApp.prototype.autosave = function() {
+  clearTimeout(this.autosave_timer);
+  this.autosave_timer = undefined;
+  if (this.is_modified()) {
+    var text = this.current_text();
+    storage('set', JSON.stringify({
+      t: this.get_title(),
+      m: text.modelregels,
+      s: text.startwaarden,
+      N: String($(this.dom_nbox).val()),
+      time: Date.now()
+    }));
+    this.restore_pending = false;
+  } else if (!this.restore_pending && !this.restore_check) {
+    // (not while the user can still choose to continue with the saved work)
+    storage('remove');
+  }
+};
+
+
+ModelleertaalApp.prototype.read_autosave = function() {
+  // the saved work, or null
+  var saved;
+  try {
+    saved = JSON.parse(storage('get'));
+  } catch (err) {
+    saved = null;
+  }
+  if (!saved || typeof saved.m != 'string' || typeof saved.s != 'string') return null;
+  var age = Date.now() - Number(saved.time);
+  if (isNaN(age) || age > AUTOSAVE_MAX_AGE) {
+    storage('remove');
+    return null;
+  }
+  return saved;
+};
+
+
+ModelleertaalApp.prototype.offer_restore = function() {
+  // ask if the user wants to continue with the work of the last visit
+  var self = this;
+  if (this.parse_url_hash().code) return;   // a shared link: open that model
+  var saved = this.read_autosave();
+  if (!saved) return;
+
+  var when = '';
+  try {
+    when = ' (' + new Date(saved.time).toLocaleString('nl-NL',
+      {day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit'}) + ')';
+  } catch (err) {
+    when = '';
+  }
+  this.restore_pending = true;
+  this.show_message('info', 'Verder werken?',
+    "Je was bezig met " + (saved.t ? "'" + saved.t + "'" : "een model") + when + ". Dat is nog niet opgeslagen.", [
+      {text: 'Ga verder', action: function() { self.restore_autosave(saved); }},
+      {text: 'Weggooien', action: function() {
+        self.restore_pending = false;
+        storage('remove');
+        self.clear_message();
+      }}
+    ]);
+};
+
+
+ModelleertaalApp.prototype.restore_autosave = function(saved) {
+  if (this.is_modified() && !window.confirm('Je hebt dit model aangepast.\n' +
+      'Als je verder gaat met het bewaarde model, gaan je wijzigingen verloren.\n\nBewaard model laden?')) {
+    return;
+  }
+  this.model = new evaluator_js.Model();
+  this.model.modelregels = saved.m;
+  this.model.startwaarden = saved.s;
+  var N = Number(saved.N);
+  if (isFinite(N) && N >= 1) this.model.N = N;
+  this.model_title = saved.t ? String(saved.t) : '';
+
+  // in the menu, like a model from a shared link
+  $(this.dom_model_keuze).find('option[value="restored"]').remove();
+  $('<option/>').val('restored').text((this.model_title || 'Model') + ' (bewaard)').prependTo(this.dom_model_keuze);
+  $(this.dom_model_keuze).val('restored');
+  this.dropdown_value = 'restored';
+  if (window.history.replaceState) {
+    window.history.replaceState('', document.title, window.location.pathname + window.location.search);
+  }
+
+  this.init_app();
+  // the restored model is not saved in a file: still warn before it is lost
+  this.loaded = {modelregels: '', startwaarden: ''};
+  this.restore_pending = false;
+  this.autosave();
+  this.print_status('Model van de vorige keer teruggezet. Druk op Run.');
 };
 
 
@@ -1287,7 +1461,18 @@ ModelleertaalApp.prototype.reveal = function(dom) {
 };
 
 
+ModelleertaalApp.prototype.stopped_by_model = function() {
+  // the last run was stopped by 'stop' (or print): continuing is not possible
+  if (!(this.has_run && this.evaluator && this.evaluator.stopped)) return false;
+  this.show_message('info', 'Het model is gestopt',
+    "Verder rekenen kan niet: het model is gestopt door 'stop'. Druk op Run om opnieuw te beginnen.");
+  return true;
+};
+
+
 ModelleertaalApp.prototype.continue_run = function() {
+
+  if (this.stopped_by_model()) return false;
 
   var N = this.read_N(this.dom_nbox_continue);
   if (N === null) return false;
@@ -1307,6 +1492,8 @@ ModelleertaalApp.prototype.continue_run = function() {
 
 
 ModelleertaalApp.prototype.trace = function() {
+
+  if (this.stopped_by_model()) return false;
 
   if (this.has_run) {
     this.new_run = false;
@@ -1443,7 +1630,34 @@ ModelleertaalApp.prototype.print_run_status = function() {
     }
   }
   this.print_status(status);
+
+  if (!this.evaluator.stopped && contains_stop(this.evaluator.modelregels_ast)) {
+    // the model has a stop condition, but did not get there: the graph is not finished
+    var self = this;
+    $(this.dom_status).append(document.createTextNode(" Het model is nog niet bij 'stop' gekomen."))
+      .append($('<button type="button">').addClass('inline_action')
+        .text('Verdubbel aantal iteraties')
+        .click(function() {
+          var N = Math.round(Number(String($(self.dom_nbox).val()).replace(',', '.')));
+          if (!isFinite(N) || N < 1) N = self.results.length - 1;
+          $(self.dom_nbox).val(Math.min(2 * N, N_MAX));
+          self.update_endtime_hint(false);
+          $(self.dom_run).click();
+        }));
+  }
 };
+
+
+function contains_stop(ast) {
+  // is there a 'stop' in the modelregels (also inside als ... dan ... eindals)?
+  for (var i = 0; i < (ast || []).length; i++) {
+    var stmt = ast[i];
+    if (stmt.type == 'Stop') return true;
+    if ((stmt.type == 'If' || stmt.type == 'IfElse') &&
+        (contains_stop(stmt.then) || contains_stop(stmt.elsestmt))) return true;
+  }
+  return false;
+}
 
 
 ModelleertaalApp.prototype.check_results = function() {
@@ -1958,6 +2172,7 @@ ModelleertaalApp.prototype.set_precision = function(precision) {
   precision = Math.round(Number(precision));
   if (!isFinite(precision) || precision < 1 || precision > 15) return;
   this.precision = precision;
+  this.update_endtime_hint(false);
   if (this.results_available()) this.print_table();
 };
 
@@ -2018,6 +2233,14 @@ ModelleertaalApp.prototype.init_app = function() {
   $(this.dom_datatable).empty().append(
     $('<div>').addClass('placeholder').text('Hier komt de tabel met resultaten.'));
   this.print_status("Model geladen. Druk op Run.");
+  this.update_endtime_hint(true);
+  if (this.restore_check) {
+    this.restore_check = false;
+    this.offer_restore();
+  } else if (!this.starting) {
+    // another model is loaded: the saved work is no longer needed
+    this.autosave();
+  }
   this.grafisch_moved = {};   // other model: forget dragged positions
   this.grafisch_zoom = null;
   this.grafisch_history = [];

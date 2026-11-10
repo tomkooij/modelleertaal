@@ -406,11 +406,11 @@ CodeGenerator.prototype.parseNode = function(node) {
         case 'Boolean':
                 return node.value;
         case 'Stop':
-                return 'bailout=true;\nbreak;';
+                return 'halted=true;\nbailout=true;\nbreak;';
         case 'Print':
                 // print(x) wil stop execution and print "alert()" the value of variable x
                 var internal_var_name = this.namespace.referenceVar({name: node.varname, lineNo: node.lineNo, astName: node.astName});
-                return 'report("Gestopt: '+node.varname+' = "+Number('+internal_var_name+').toPrecision(4));\nbailout=true;\nbreak;';
+                return 'report("Gestopt: '+node.varname+' = "+Number('+internal_var_name+').toPrecision(4));\nhalted=true;\nbailout=true;\nbreak;';
         case 'Blank': {
                 var err_blank = new SyntaxError("Vul iets in op de plaats van de puntjes ( ... ).");
                 err_blank.blank = true;
@@ -457,7 +457,7 @@ function ModelregelsEvaluator(model, debug) {
     }
 
     this.messages = [];   // output of print()
-    this.stopped = false; // model stopped before N iterations (stop/print)
+    this.stopped = false; // model stopped by stop/print (not by the debugger)
 
     this.startwaarden_ast = parse_or_throw(this.model.startwaarden, 'startwaarden');
     this.modelregels_ast = parse_or_throw(this.model.modelregels, 'modelregels');
@@ -504,6 +504,11 @@ ModelregelsEvaluator.prototype.run = function() {
 
     var start = 0;
     var end = 0;
+
+    if (!this.new_run && this.stopped) {
+      // stopped by stop/print: never continue after the stop
+      return;
+    }
 
     if (this.new_run) {
       // first run of model!
@@ -554,6 +559,7 @@ ModelregelsEvaluator.prototype.run = function() {
 
     this.generated_code +=
                   "    var bailout = false;\n"+
+                  "    var halted = false;\n"+
                   "    for (i="+start+"; i < "+end+"; i++) { \n " +
                   this.modelregels_code + "\n" +
                   this.codegenerator.generateVariableStorageCode() +
@@ -561,7 +567,7 @@ ModelregelsEvaluator.prototype.run = function() {
                   " if (bailout) {" +
                   this.codegenerator.generateVariableStorageCode() +
                   " }\n" +
-                  " return bailout;} \n" +
+                  " return halted;} \n" +
                   "return run_model(results, report);\n";
 
     if (this.debug) {

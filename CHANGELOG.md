@@ -21,6 +21,16 @@
   "Ongedaan maken" (Ctrl+Z) for changes made in the diagram; zoom (buttons,
   Ctrl + mouse wheel, "Passend") and pan (drag the background). A wide model
   is fitted to the width.
+- Unsaved work is kept in the browser (localStorage). On the next visit:
+  "Verder werken?" with "Ga verder" and "Weggooien". Not for a shared link
+  (`#code=`); removed after "Sla model op" or after choosing another model.
+- Next to "Aantal iteraties": `× dt = 50`, how long the model runs (N × dt,
+  from the startwaarden, updates while typing).
+- If the model has a `stop` that was not reached: hint in the status line with
+  a button "Verdubbel aantal iteraties" (doubles N and runs again).
+- Fix: after `stop`, "Voeg toe" and the debugger ("Volgende regel") no longer
+  continue the model. `evaluator.stopped` is only true for `stop`/`print`, no
+  longer for a debugger breakpoint.
 
 ## [6.0]
 
