@@ -86,6 +86,8 @@ function ModelleertaalApp(params) {
   this.dom_grafisch_svg = "#grafisch_svg";
   this.dom_grafisch_tabel = "#grafisch_tabel";
   this.dom_download_grafisch = "#download_grafisch";
+  this.dom_grafisch_reset = "#grafisch_herstel";
+  this.grafisch_moved = {};   // positions of elements dragged by the user
   this.model_title = '';
 
   this.read_model();
@@ -218,6 +220,50 @@ function ModelleertaalApp(params) {
   });
   $(this.dom_download_grafisch).click(function() {
     self.download_grafisch_model();
+  });
+  $(this.dom_grafisch_reset).click(function() {
+    self.grafisch_moved = {};
+    self.draw_grafisch_model();
+  });
+
+  // drag elements of the grafisch model. Arrows and pipes are drawn again from the new positions.
+  var drag = null, frame = null;
+  $(this.dom_grafisch_svg).on('pointerdown', '[data-id]', function(event) {
+    var e = event.originalEvent;
+    if (e.button !== 0 || !self.grafisch_layout) return;
+    var id = $(this).attr('data-id');
+    var pos = self.grafisch_layout.pos;
+    if (!pos[id]) return;
+    var m = self.grafisch_point(e);
+    // a toestandsvariabele takes its flows to and from a cloud along (pipe stays straight)
+    var ids = [id];
+    if (self.grafisch_g.elements[id] && self.grafisch_g.elements[id].kind == 'stock') {
+      self.grafisch_g.flows.forEach(function(f) {
+        if (f.to == id && !f.from) ids.push(f.id, f.id + ':src');
+        if (f.from == id && !f.to) ids.push(f.id, f.id + ':dst');
+      });
+    }
+    drag = {ids: ids, x: m.x, y: m.y, start: ids.map(function(k) { return {x: pos[k].x, y: pos[k].y}; })};
+    e.preventDefault();
+  });
+  $(window).on('pointermove', function(event) {
+    if (!drag) return;
+    var m = self.grafisch_point(event.originalEvent);
+    var pos = self.grafisch_layout.pos;
+    drag.ids.forEach(function(k, n) {
+      pos[k].x = Math.round(drag.start[n].x + m.x - drag.x);
+      pos[k].y = Math.round(drag.start[n].y + m.y - drag.y);
+      self.grafisch_moved[k] = {x: pos[k].x, y: pos[k].y};
+    });
+    if (!frame) {
+      frame = window.requestAnimationFrame(function() {
+        frame = null;
+        self.render_grafisch_model();
+      });
+    }
+  });
+  $(window).on('pointerup pointercancel', function() {
+    drag = null;
   });
 
   $(this.dom_fileinput).change(function(event) {
@@ -515,7 +561,18 @@ ModelleertaalApp.prototype.draw_grafisch_model = function() {
     tabel.empty();
     return;
   }
-  svg.html(grafisch.toSVG(g));
+  this.grafisch_g = g;
+  this.grafisch_layout = grafisch.layout(g);
+  // keep the positions the user dragged (while editing the same model)
+  var pos = this.grafisch_layout.pos;
+  for (var id in this.grafisch_moved) {
+    if (this.grafisch_moved.hasOwnProperty(id) && pos[id]) {
+      pos[id].x = this.grafisch_moved[id].x;
+      pos[id].y = this.grafisch_moved[id].y;
+    }
+  }
+  this.grafisch_bounds = null;
+  this.render_grafisch_model();
   var table = $('<table>');
   grafisch.table(g).forEach(function(row) {
     table.append($('<tr>')
@@ -527,15 +584,38 @@ ModelleertaalApp.prototype.draw_grafisch_model = function() {
 };
 
 
+ModelleertaalApp.prototype.render_grafisch_model = function() {
+  // draw this.grafisch_g with the (dragged) positions in this.grafisch_layout.
+  // The drawing only grows while dragging, so it does not jump under the mouse.
+  var opts = {bounds: this.grafisch_bounds};
+  $(this.dom_grafisch_svg).html(grafisch.toSVG(this.grafisch_g, this.grafisch_layout, opts));
+  this.grafisch_bounds = opts.used;
+};
+
+
+ModelleertaalApp.prototype.grafisch_point = function(e) {
+  // mouse/touch position in SVG coordinates
+  var svg = $(this.dom_grafisch_svg).find('svg')[0];
+  var pt = svg.createSVGPoint();
+  pt.x = e.clientX;
+  pt.y = e.clientY;
+  return pt.matrixTransform(svg.getScreenCTM().inverse());
+};
+
+
 ModelleertaalApp.prototype.download_grafisch_model = function() {
-  var g;
-  try {
-    g = this.analyse_grafisch_model();
-  } catch (err) {
-    this.show_error(err);
-    return;
+  // download with the positions as shown (dragged by the user)
+  var g = this.grafisch_g, lay = this.grafisch_layout;
+  if (!g || !this.grafisch_open()) {
+    try {
+      g = this.analyse_grafisch_model();
+    } catch (err) {
+      this.show_error(err);
+      return;
+    }
+    lay = undefined;
   }
-  this.save_string('<?xml version="1.0" encoding="UTF-8"?>\n' + grafisch.toSVG(g), 'grafisch_model.svg');
+  this.save_string('<?xml version="1.0" encoding="UTF-8"?>\n' + grafisch.toSVG(g, lay), 'grafisch_model.svg');
 };
 
 
@@ -1466,6 +1546,7 @@ ModelleertaalApp.prototype.init_app = function() {
   $(this.dom_datatable).empty().append(
     $('<div>').addClass('placeholder').text('Hier komt de tabel met resultaten.'));
   this.print_status("Model geladen. Druk op Run.");
+  this.grafisch_moved = {};   // other model: forget dragged positions
   if (this.grafisch_open()) this.draw_grafisch_model();
 };
 

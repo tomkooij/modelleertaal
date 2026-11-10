@@ -89,6 +89,23 @@ describe('grafisch.js - tekstmodel naar grafisch model', function() {
         assert.isTrue(g.links.some(function(l) { return l.from == 'k' && l.to == 'F' && l.kind == 'relation'; }));
     });
 
+    it('verplaatste elementen: pijp en pijlen volgen de nieuwe posities', function() {
+        var g = analyse("S=990\nI=10\nb=0.3\nN=1000\nt=0\ndt=0.1",
+            "besmet = b*S*I/N*dt\nS = S - besmet\nI = I + besmet\nt = t + dt");
+        var lay = grafisch.layout(g);
+        lay.pos.besmet.x = 123;
+        lay.pos.besmet.y = 77;
+        var opts = {};
+        var svg = grafisch.toSVG(g, lay, opts);
+        assert.include(svg, 'data-id="besmet"');
+        assert.include(svg, 'data-id="S"');
+        assert.include(svg, ' L123,77 ', 'pijp loopt via het verplaatste kraantje');
+        assert.isAbove(opts.used.maxY, 77);
+        // bounds only grow
+        var svg2 = grafisch.toSVG(g, grafisch.layout(g), {bounds: opts.used});
+        assert.equal(svg2.match(/viewBox="([^"]*)"/)[1], svg.match(/viewBox="([^"]*)"/)[1]);
+    });
+
     it('alle voorbeeldmodellen geven een SVG', function() {
         fs.readdirSync('modellen').filter(function(f) {
             return /\.xml$/.test(f) && f != 'leeg.xml';

@@ -564,7 +564,12 @@ function layout(g) {
             else flowGeom[f.id].src = {x: pos[s].x + dx, y: L.stockH / 2 + 100};
         }
     }
-    for (i = 0; i < g.flows.length; i++) pos[g.flows[i].id] = flowGeom[g.flows[i].id].valve;
+    for (i = 0; i < g.flows.length; i++) {
+        f = g.flows[i];
+        pos[f.id] = flowGeom[f.id].valve;
+        if (flowGeom[f.id].src) pos[f.id + ':src'] = flowGeom[f.id].src;
+        if (flowGeom[f.id].dst) pos[f.id + ':dst'] = flowGeom[f.id].dst;
+    }
 
     // --- other elements in layers: inputs above the row, outputs below
     var isRow = function(id) { var k = g.elements[id].kind; return k == 'stock' || k == 'flow'; };
@@ -731,34 +736,50 @@ var LINK_STYLE = {
     action: 'stroke="' + C.blue + '" stroke-width="1.4" stroke-dasharray="5 3" marker-end="url(#ab)"'
 };
 
-function toSVG(g, lay) {
+function unit(a, b) {
+    var dx = b.x - a.x, dy = b.y - a.y, l = Math.sqrt(dx * dx + dy * dy);
+    return l > 1e-9 ? {x: dx / l, y: dy / l} : {x: 1, y: 0};
+}
+
+function toSVG(g, lay, opts) {
+    // lay: layout(g), possibly with positions changed by the user (lay.pos[id] = {x, y}).
+    //      Clouds of a flow are lay.pos[flowId + ':src'] and lay.pos[flowId + ':dst'].
+    // opts.bounds: {minX, minY, maxX, maxY}: draw at least this area (no jumps while dragging)
+    // opts.used: filled with the bounds of this drawing
     lay = lay || layout(g);
+    opts = opts || {};
     var pos = lay.pos, out = [], i, el, p, id;
     var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    if (opts.bounds) {
+        minX = opts.bounds.minX; minY = opts.bounds.minY; maxX = opts.bounds.maxX; maxY = opts.bounds.maxY;
+    }
     var grow = function(x, y, r) {
         minX = Math.min(minX, x - r); maxX = Math.max(maxX, x + r);
         minY = Math.min(minY, y - r); maxY = Math.max(maxY, y + r);
     };
 
-    // flows (pipes) first
+    // flows (pipes) first: source (stock or cloud) --> valve --> destination (stock or cloud)
+    var valveDir = {};
     for (i = 0; i < g.flows.length; i++) {
-        var f = g.flows[i], geo = lay.flows[f.id], v = geo.valve, pts;
-        var a = f.from ? pos[f.from] : null, b = f.to ? pos[f.to] : null;
-        if (geo.detour) {
-            var yb = v.y;
-            pts = [{x: a.x, y: L.stockH / 2 + 3}, {x: a.x, y: yb}, {x: b.x, y: yb}, {x: b.x, y: L.stockH / 2 + 6}];
-        } else if (geo.src && geo.src.y !== 0) {          // vertical in from below
-            pts = [{x: v.x, y: geo.src.y - 10}, {x: v.x, y: L.stockH / 2 + 6}];
-        } else if (geo.dst && geo.dst.y !== 0) {          // vertical out to below
-            pts = [{x: v.x, y: L.stockH / 2 + 3}, {x: v.x, y: geo.dst.y - 14}];
-        } else {
-            var x0 = a ? a.x + L.stockW / 2 + 3 : geo.src.x + 17;
-            var x1 = b ? b.x - L.stockW / 2 - 6 : geo.dst.x - 20;
-            pts = [{x: x0, y: 0}, {x: x1, y: 0}];
+        var f = g.flows[i], v = pos[f.id];
+        var a = f.from ? pos[f.from] : pos[f.id + ':src'];
+        var b = f.to ? pos[f.to] : pos[f.id + ':dst'];
+        var u0 = unit(a, v), u1 = unit(v, b);
+        var ra = f.from ? radius(g.elements[f.from], u0.x, u0.y) : 17;
+        var rb = f.to ? radius(g.elements[f.to], -u1.x, -u1.y) + 3 : 20;
+        var start = {x: a.x + u0.x * ra, y: a.y + u0.y * ra}, end = {x: b.x - u1.x * rb, y: b.y - u1.y * rb};
+        var straight = Math.abs(u0.x * u1.y - u0.y * u1.x) < 1e-3 && (u0.x * u1.x + u0.y * u1.y) > 0;
+        pipe(straight ? [start, end] : [start, v, end], out);
+        var ud = unit(a, b);
+        valveDir[f.id] = Math.abs(ud.y) > Math.abs(ud.x) ? 'v' : 'h';
+        if (!f.from) {
+            out.push('<g data-id="' + esc(f.id) + ':src">' + cloud(a.x, a.y) + '</g>');
+            grow(a.x, a.y, 22);
         }
-        pipe(pts, out);
-        if (geo.src) { out.push(cloud(geo.src.x, geo.src.y)); grow(geo.src.x, geo.src.y, 22); }
-        if (geo.dst) { out.push(cloud(geo.dst.x, geo.dst.y)); grow(geo.dst.x, geo.dst.y, 22); }
+        if (!f.to) {
+            out.push('<g data-id="' + esc(f.id) + ':dst">' + cloud(b.x, b.y) + '</g>');
+            grow(b.x, b.y, 22);
+        }
     }
 
     // relation arrows
@@ -766,10 +787,11 @@ function toSVG(g, lay) {
         var lk = g.links[i], s = pos[lk.from], t = pos[lk.to];
         if (!s || !t) continue;
         var dx = t.x - s.x, dy = t.y - s.y, len = Math.sqrt(dx * dx + dy * dy) || 1, d;
-        if (s.y === 0 && t.y === 0) {
+        var onRow = function(e) { return e.kind == 'stock' || e.kind == 'flow'; };
+        if (onRow(g.elements[lk.from]) && onRow(g.elements[lk.to]) && Math.abs(dy) < 1) {
             // both on the row of stocks and flows: arc over the row instead of along the pipes
             var top = function(el) { return el.kind == 'stock' ? -L.stockH / 2 - 2 : -12; };
-            var y0 = top(g.elements[lk.from]), y1 = top(g.elements[lk.to]) - 3;
+            var y0 = s.y + top(g.elements[lk.from]), y1 = t.y + top(g.elements[lk.to]) - 3;
             var arcH = Math.min(60, 26 + 0.1 * Math.abs(dx));
             var sx0 = s.x + (dx > 0 ? 8 : -8), ex0 = t.x + (dx > 0 ? -4 : 4);
             d = 'M' + sx0.toFixed(1) + ',' + y0 + ' C' + sx0.toFixed(1) + ',' + (y0 - arcH).toFixed(1) +
@@ -794,53 +816,56 @@ function toSVG(g, lay) {
         p = pos[id];
         if (!p) continue;
         var tip = '<title>' + esc(tooltip(g, el)) + '</title>';
+        out.push('<g data-id="' + esc(id) + '">');
         var x = p.x, y = p.y, label = el.name || el.label;
         switch (el.kind) {
             case 'stock':
-                out.push('<g>' + tip + '<rect x="' + (x - L.stockW / 2) + '" y="' + (y - L.stockH / 2) + '" width="' + L.stockW +
+                out.push(tip + '<rect x="' + (x - L.stockW / 2) + '" y="' + (y - L.stockH / 2) + '" width="' + L.stockW +
                     '" height="' + L.stockH + '" rx="3" fill="' + C.fill + '" stroke="' + C.blue + '" stroke-width="2"/>' +
-                    '<text x="' + x + '" y="' + (y + 5) + '" text-anchor="middle" font-weight="bold">' + esc(label) + '</text></g>');
+                    '<text x="' + x + '" y="' + (y + 5) + '" text-anchor="middle" font-weight="bold">' + esc(label) + '</text>');
                 grow(x, y, L.stockW / 2 + 4);
                 break;
             case 'flow':
-                out.push('<g>' + tip + valve(x, y, lay.flows[id]) +
-                    '<text x="' + x + '" y="' + (y + 28) + '" text-anchor="middle" class="small">' + esc(shorten(label)) + '</text></g>');
+                out.push(tip + valve(x, y, valveDir[id]) +
+                    '<text x="' + x + '" y="' + (y + 28) + '" text-anchor="middle" class="small">' + esc(shorten(label)) + '</text>');
                 grow(x, y + 20, 30);
                 break;
             case 'aux':
-                out.push('<g>' + tip + '<circle cx="' + x + '" cy="' + y + '" r="18" fill="' + C.fill + '" stroke="' + C.blue +
+                out.push(tip + '<circle cx="' + x + '" cy="' + y + '" r="18" fill="' + C.fill + '" stroke="' + C.blue +
                     '" stroke-width="2"' + (el.conditional ? ' stroke-dasharray="4 2"' : '') + '/>' +
-                    '<text x="' + x + '" y="' + (y + 34) + '" text-anchor="middle">' + esc(label) + '</text></g>');
+                    '<text x="' + x + '" y="' + (y + 34) + '" text-anchor="middle">' + esc(label) + '</text>');
                 grow(x, y + 10, 30);
                 break;
             case 'const':
-                out.push('<g>' + tip + '<path d="M' + x + ',' + (y - 10) + ' L' + (x + 10) + ',' + y + ' L' + x + ',' + (y + 10) +
+                out.push(tip + '<path d="M' + x + ',' + (y - 10) + ' L' + (x + 10) + ',' + y + ' L' + x + ',' + (y + 10) +
                     ' L' + (x - 10) + ',' + y + ' z" fill="' + C.fill + '" stroke="' + C.blue + '" stroke-width="2"/>' +
-                    '<text x="' + x + '" y="' + (y + 26) + '" text-anchor="middle">' + esc(label) + '</text></g>');
+                    '<text x="' + x + '" y="' + (y + 26) + '" text-anchor="middle">' + esc(label) + '</text>');
                 grow(x, y + 10, 30);
                 break;
             case 'event':
-                out.push('<g>' + tip + '<path d="M' + (x + 3) + ',' + (y - 15) + ' L' + (x - 9) + ',' + (y + 2) + ' L' + (x - 1) + ',' + (y + 2) +
+                out.push(tip + '<path d="M' + (x + 3) + ',' + (y - 15) + ' L' + (x - 9) + ',' + (y + 2) + ' L' + (x - 1) + ',' + (y + 2) +
                     ' L' + (x - 4) + ',' + (y + 15) + ' L' + (x + 9) + ',' + (y - 3) + ' L' + (x + 1) + ',' + (y - 3) + ' z"' +
                     ' fill="#ffe08a" stroke="#b07d00" stroke-width="1.5"/>' +
-                    '<text x="' + x + '" y="' + (y + 30) + '" text-anchor="middle" class="small">' + esc(shorten(el.condition, 22)) + '</text></g>');
+                    '<text x="' + x + '" y="' + (y + 30) + '" text-anchor="middle" class="small">' + esc(shorten(el.condition, 22)) + '</text>');
                 grow(x, y + 10, 40);
                 break;
             case 'time':
-                out.push('<g>' + tip + '<circle cx="' + x + '" cy="' + y + '" r="16" fill="#fff" stroke="' + C.grey + '" stroke-width="2"/>' +
+                out.push(tip + '<circle cx="' + x + '" cy="' + y + '" r="16" fill="#fff" stroke="' + C.grey + '" stroke-width="2"/>' +
                     '<path d="M' + x + ',' + (y - 10) + ' L' + x + ',' + y + ' L' + (x + 7) + ',' + (y + 4) + '" fill="none" stroke="' + C.grey + '" stroke-width="2"/>' +
-                    '<text x="' + x + '" y="' + (y + 32) + '" text-anchor="middle">' + esc(label) + '</text></g>');
+                    '<text x="' + x + '" y="' + (y + 32) + '" text-anchor="middle">' + esc(label) + '</text>');
                 grow(x, y + 10, 30);
                 break;
             default:   // unknown
-                out.push('<g>' + tip + '<circle cx="' + x + '" cy="' + y + '" r="18" fill="#fdecea" stroke="' + C.red + '" stroke-width="2"/>' +
+                out.push(tip + '<circle cx="' + x + '" cy="' + y + '" r="18" fill="#fdecea" stroke="' + C.red + '" stroke-width="2"/>' +
                     '<text x="' + x + '" y="' + (y + 6) + '" text-anchor="middle" fill="' + C.red + '" font-weight="bold">?</text>' +
-                    '<text x="' + x + '" y="' + (y + 34) + '" text-anchor="middle">' + esc(label) + '</text></g>');
+                    '<text x="' + x + '" y="' + (y + 34) + '" text-anchor="middle">' + esc(label) + '</text>');
                 grow(x, y + 10, 30);
         }
+        out.push('</g>');
     }
 
     if (minX == Infinity) { minX = 0; minY = 0; maxX = 100; maxY = 50; }
+    opts.used = {minX: minX, minY: minY, maxX: maxX, maxY: maxY};
     var pad = 12, w = maxX - minX + 2 * pad, h = maxY - minY + 2 * pad;
     return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="' + (minX - pad).toFixed(0) + ' ' + (minY - pad).toFixed(0) + ' ' +
         w.toFixed(0) + ' ' + h.toFixed(0) + '" width="' + w.toFixed(0) + '" height="' + h.toFixed(0) + '"' +
@@ -857,9 +882,9 @@ function toSVG(g, lay) {
         '</defs>' + out.join('') + '</svg>';
 }
 
-function valve(x, y, geo) {
-    // bow tie across the pipe
-    var vertical = geo && !geo.detour && ((geo.src && geo.src.y !== 0) || (geo.dst && geo.dst.y !== 0));
+function valve(x, y, dir) {
+    // bow tie across the pipe (dir: 'h' horizontal or 'v' vertical pipe)
+    var vertical = dir == 'v';
     var d = vertical ?
         'M' + (x - 9) + ',' + (y - 9) + ' L' + (x + 9) + ',' + (y - 9) + ' L' + (x - 9) + ',' + (y + 9) + ' L' + (x + 9) + ',' + (y + 9) + ' z' :
         'M' + (x - 9) + ',' + (y - 9) + ' L' + (x + 9) + ',' + (y + 9) + ' L' + (x + 9) + ',' + (y - 9) + ' L' + (x - 9) + ',' + (y + 9) + ' z';

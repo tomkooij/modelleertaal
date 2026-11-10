@@ -573,6 +573,13 @@
         #grafisch_svg svg {
             display: block;
             max-width: none;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        #grafisch_svg [data-id] {
+            cursor: move;
+            touch-action: none;
         }
 
         .grafisch_legenda {
@@ -725,12 +732,14 @@
                 (gestippeld: met voorwaarde) &middot; ruit: constante &middot; bliksem: voorval &middot;
                 rode pijl: &ldquo;hangt af van&rdquo; (lichte stippels: alleen in de voorwaarde van
                 <i>als&nbsp;&hellip;&nbsp;dan</i>) &middot; grijze streepjes: beginwaarde &middot; blauwe streepjes:
-                voorval verandert een toestand. Wijs een symbool aan voor de formule.
+                voorval verandert een toestand. Wijs een symbool aan voor de formule;
+                sleep de symbolen om de indeling aan te passen.
             </p>
             <details>
                 <summary>Herkende elementen</summary>
                 <div id="grafisch_tabel"></div>
             </details>
+            <button id="grafisch_herstel" type="button">Herstel indeling</button>
             <button id="download_grafisch" type="button">Download grafisch model als SVG</button>
         </details>
 
