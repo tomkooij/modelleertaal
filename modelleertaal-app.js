@@ -180,6 +180,15 @@ function ModelleertaalApp(params) {
     self.update_document_title();
   });
 
+  $('#toggle_titel').click(function() {
+    // titel is verborgen totdat de gebruiker hem wil aanpassen
+    var row = $('#titel_rij');
+    var open = row.prop('hidden');
+    row.prop('hidden', !open);
+    $(this).attr('aria-expanded', String(open)).html(open ? 'titel &#9652;' : 'titel &#9662;');
+    if (open) $(self.dom_titel).focus().select();
+  });
+
   $(this.dom_permalink).click(function(event) {
     event.preventDefault();
     self.copy_share_url();

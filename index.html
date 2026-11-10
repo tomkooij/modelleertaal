@@ -151,6 +151,26 @@
             margin-bottom: 10px;
         }
 
+        .model_title[hidden] {
+            display: none;
+        }
+
+        /* klein uitklaplinkje voor de titel */
+        button.linkbutton {
+            border: none;
+            background: none;
+            min-height: 0;
+            padding: 2px 4px;
+            color: var(--muted);
+            font-size: 0.8rem;
+            text-decoration: underline;
+        }
+
+        button.linkbutton:hover {
+            background: none;
+            color: var(--text);
+        }
+
         .model_title label {
             font-weight: 600;
         }
@@ -586,6 +606,7 @@
             </select>
             <button id="enable_open_file_dialog" type="button">Bestanden…</button>
             <button id="permalink" type="button" title="Kopieer een link naar dit model (met jouw wijzigingen)">Deel link</button>
+            <button id="toggle_titel" type="button" class="linkbutton" aria-expanded="false" aria-controls="titel_rij" title="Pas de titel aan die meegaat in Deel link">titel &#9662;</button>
         </div>
         <div id="open_file_dialog">
             <input id="fileinput" type="file" accept=".xml,.txt" hidden>
@@ -617,7 +638,7 @@
 
         <div class="workspace">
             <section class="card area_model" aria-label="Model">
-                <div class="model_title">
+                <div class="model_title" id="titel_rij" hidden>
                     <label for="model_titel">Titel:</label>
                     <input id="model_titel" type="text" maxlength="120" title="De titel van dit model. Gaat mee in de link als je op Deel link klikt.">
                 </div>
