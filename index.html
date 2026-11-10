@@ -36,10 +36,6 @@
                     id: "#permalink",
                     action: "show"
                 },
-                {
-                    id: "#open_file_dialog",
-                    action: "hide"
-                },
                 // model blok
                 {
                     id: "#continue_dialog",
@@ -62,10 +58,6 @@
                 {
                     id: "#permalink",
                     action: "show"
-                },
-                {
-                    id: "#open_file_dialog",
-                    action: "hide"
                 },
                 // model blok
                 {
@@ -143,42 +135,61 @@
             min-width: 0;
         }
 
-        /* titel van het model, boven de editors */
-        .model_title {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 10px;
-        }
-
-        .model_title[hidden] {
-            display: none;
-        }
-
-        /* klein uitklaplinkje voor de titel */
-        button.linkbutton {
-            border: none;
-            background: none;
+        /* titel van het model, boven de editors: ziet eruit als een kop, klik om te typen */
+        #model_titel {
+            display: block;
+            width: 100%;
+            margin: -4px 0 8px;
+            padding: 3px 6px;
             min-height: 0;
-            padding: 2px 4px;
-            color: var(--muted);
-            font-size: 0.8rem;
-            text-decoration: underline;
+            border: 1px solid transparent;
+            border-radius: 6px;
+            background: transparent;
+            font-size: 1.1rem;
+            font-weight: 650;
+            text-overflow: ellipsis;
         }
 
-        button.linkbutton:hover {
-            background: none;
+        #model_titel:hover {
+            border-color: var(--border);
+        }
+
+        #model_titel:focus {
+            border-color: #9ca3af;
+            background: #fff;
+        }
+
+        /* kop van een kaart met een kleine knop rechts */
+        .card_head {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        button.small_action {
+            min-height: 0;
+            padding: 3px 10px;
+            font-size: 0.85rem;
+            color: var(--muted);
+        }
+
+        button.small_action:hover {
             color: var(--text);
         }
 
-        .model_title label {
-            font-weight: 600;
+        button.small_action[hidden] {
+            display: none;
         }
 
-        #model_titel {
-            flex: 1;
-            min-width: 0;
-            font-weight: 600;
+        .plot_dialog #download_png {
+            margin-left: auto;
+        }
+
+        /* Deel link: bevestiging in de knop zelf */
+        #permalink.done {
+            border-color: #16a34a;
+            color: #166534;
         }
 
         /* knoppen en invoervelden */
@@ -190,7 +201,8 @@
 
         button,
         select,
-        input[type="text"] {
+        input[type="text"],
+        input[type="number"] {
             border: 1px solid #9ca3af;
             border-radius: 6px;
             background: #fff;
@@ -235,29 +247,12 @@
             gap: 4px 12px;
         }
 
-        #classic_link {
-            color: var(--muted);
-            font-size: 0.8rem;
-        }
-
-        #classic_link a {
-            color: inherit;
-        }
-
         .model_select {
             display: flex;
             flex-wrap: wrap;
             align-items: center;
             gap: 8px;
             min-width: 0;
-        }
-
-        #open_file_dialog {
-            flex-basis: 100%;
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: 8px;
         }
 
         /* run balk */
@@ -755,6 +750,10 @@
             margin-top: 12px;
         }
 
+        .options input[type="number"] {
+            width: 5.5em;
+        }
+
         .options > div {
             display: flex;
             flex-wrap: wrap;
@@ -782,22 +781,16 @@
     <header class="topbar">
         <div class="brand">
             <h1><a id="title" href="https://github.com/tomkooij/modelleertaal">Modelleertaal</a></h1>
-            <span id="classic_link">Liever de oude indeling? Gebruik <a href="https://www.tomkooij.nl/modelleertaal-classic" title="De vorige versie van deze webapp, met de oude indeling">Modelleertaal classic</a>.</span>
         </div>
         <div class="model_select">
             <label for="model_keuze">Kies model:</label>
             <select id="model_keuze">
                 <option value="0">models.js niet geladen!</option>
             </select>
-            <button id="enable_open_file_dialog" type="button">Bestanden…</button>
-            <button id="permalink" type="button" title="Kopieer een link naar dit model (met jouw wijzigingen)">Deel link</button>
-            <button id="toggle_titel" type="button" class="linkbutton" aria-expanded="false" aria-controls="titel_rij" title="Pas de titel aan die meegaat in Deel link">Pas titel aan &#9662;</button>
-        </div>
-        <div id="open_file_dialog">
             <input id="fileinput" type="file" accept=".xml,.txt" hidden>
-            <button id="open_file" type="button">Open model van computer</button>
-            <button id="download_xml" type="button">Sla model op als:</button>
-            <input type="text" id="xml_filename" value="model.xml" size="15" aria-label="Bestandsnaam">
+            <button id="open_file" type="button" title="Open een model (.xml) dat op je computer staat">Open</button>
+            <button id="download_xml" type="button" title="Sla dit model op je computer op (.xml). De naam van het bestand is de titel van het model.">Bewaar</button>
+            <button id="permalink" type="button" title="Kopieer een link naar dit model (met jouw wijzigingen)">Deel link</button>
         </div>
     </header>
 
@@ -824,10 +817,10 @@
 
         <div class="workspace">
             <section class="card area_model" aria-label="Model">
-                <div class="model_title" id="titel_rij" hidden>
-                    <label for="model_titel">Titel:</label>
-                    <input id="model_titel" type="text" maxlength="120" title="De titel van dit model. Gaat mee in de link als je op Deel link klikt.">
-                </div>
+                <input id="model_titel" class="model_title" type="text" maxlength="120" spellcheck="false"
+                    placeholder="Naam van het model" aria-label="Titel van het model"
+                    title="Klik om de titel te veranderen. De titel gaat mee in Deel link en is de naam van het bestand bij Bewaar.">
+
                 <div class="editors">
                     <div>
                         <h2>Modelregels</h2>
@@ -860,12 +853,16 @@
                     </div>
                     <label><input type="checkbox" id="multiplot"> meerdere grafieken in één figuur</label>
                     <label title="Uit: de verticale as wordt automatisch geschaald"><input type="checkbox" id="yaxis_zero" checked> verticale as vanaf 0</label>
+                    <button id="download_png" type="button" class="small_action" hidden title="Sla deze grafiek op als plaatje (PNG), bijvoorbeeld voor een verslag">Download grafiek</button>
                 </div>
                 <div id="clickdata"></div>
             </section>
 
             <section class="card results area_table" aria-label="Tabel">
-                <h2>Tabel</h2>
+                <div class="card_head">
+                    <h2>Tabel</h2>
+                    <button id="download_tsv" type="button" class="small_action" hidden title="Sla de hele tabel op als bestand dat je in Excel kunt openen (TSV)">Download tabel (Excel)</button>
+                </div>
                 <div id="datatable"></div>
             </section>
         </div>
@@ -915,34 +912,29 @@
             <summary>Meer opties…</summary>
             <div class="options">
                 <div>
-                    <button id="set_max_rows" type="button">Maximaal aantal punten in grafiek:</button>
-                    <input type="text" id="max_rows" value="500" size="5" aria-label="Maximaal aantal punten">
+                    <label for="precision">Aantal significante cijfers in tabel:</label>
+                    <input type="number" id="precision" value="4" min="1" max="15" step="1">
                 </div>
                 <div>
-                    <button id="set_precision" type="button">Aantal significante cijfers:</button>
-                    <input type="text" id="precision" value="4" size="5" aria-label="Aantal significante cijfers">
+                    <label for="max_rows">Maximaal aantal punten in grafiek:</label>
+                    <input type="number" id="max_rows" value="500" min="2" step="100">
                 </div>
                 <div>
-                    <button id="download_tsv" type="button">Download tabel (TSV, voor Excel):</button>
-                    <input type="text" id="tsv_filename" value="model_data.tsv" size="15" aria-label="Bestandsnaam">
+                    <label><input type="checkbox" id="toon_extra"> Toon de knoppen &ldquo;Volgende regel&rdquo; (regel voor regel rekenen) en &ldquo;Voeg toe&rdquo; (iteraties toevoegen)</label>
                 </div>
                 <div>
-                    <button id="download_svg" type="button">Download grafiek als SVG:</button>
-                    <input type="text" id="svg_filename" value="plot.svg" size="15" aria-label="Bestandsnaam">
-                </div>
-                <div>
-                    <button id="download_pgf" type="button">Download PGFPlot (LaTeX):</button>
-                    <input type="text" id="pgf_filename" value="pgfplot.tex" size="15" aria-label="Bestandsnaam">
-                </div>
-                <div>
-                    <button id="toggle_profiel" type="button">Meer/minder knoppen (profiel)</button>
+                    <span>Grafiek voor docenten:</span>
+                    <button id="download_svg" type="button" title="De lijn van de grafiek als SVG (zonder assen)">Download als SVG</button>
+                    <button id="download_pgf" type="button" title="De grafiek als PGFPlot voor LaTeX, op millimeterpapier">Download als PGFPlot (LaTeX)</button>
                 </div>
             </div>
         </details>
     </main>
 
     <footer>
-        <span id="version"></span>    </footer>
+        <span id="version"></span>
+        <span id="classic_link">&middot; Liever de oude indeling? Gebruik <a href="https://www.tomkooij.nl/modelleertaal-classic" title="De vorige versie van deze webapp, met de oude indeling">Modelleertaal classic</a>.</span>
+    </footer>
 
     <!-- jQuery is included in head section -->
     <!-- config.js included at the top of this file -->
@@ -989,19 +981,22 @@
             $('#title').attr('href', title_link);
             $('#version').text('Modelleertaal webapp ' + (m.version || ''));
 
-            $("#set_max_rows").click(function() {
-                m.set_max_rows_in_plot($("#max_rows").val());
-            });
-            $("#set_precision").click(function() {
-                m.set_precision($("#precision").val());
-            });
-            $("#toggle_profiel").click(function() {
-                actieve_profiel += 1;
-                if (actieve_profiel > profiellen.length - 1) actieve_profiel = 0;
-                activeer_profiel(profiellen[actieve_profiel]);
-            });
-            $("#enable_open_file_dialog").click(function() {
-                $("#open_file_dialog").toggle();
+            // vinkje in Meer opties: kies het profiel waarin de debugger (Volgende regel) zichtbaar is of niet
+            function toont_debugger(profiel) {
+                return profiel.some(function(item) {
+                    return item.id == '#debugger_dialog' && item.action == 'show';
+                });
+            }
+            $("#toon_extra").prop('checked', toont_debugger(profiellen[actieve_profiel]));
+            $("#toon_extra").change(function() {
+                var gewenst = $(this).prop('checked');
+                for (var i = 0; i < profiellen.length; i++) {
+                    if (toont_debugger(profiellen[i]) == gewenst) {
+                        actieve_profiel = i;
+                        activeer_profiel(profiellen[i]);
+                        return;
+                    }
+                }
             });
             $("#open_file").click(function() {
                 $("#fileinput").click();

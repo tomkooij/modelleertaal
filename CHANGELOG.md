@@ -28,6 +28,19 @@
   from the startwaarden, updates while typing).
 - If the model has a `stop` that was not reached: hint in the status line with
   a button "Verdubbel aantal iteraties" (doubles N and runs again).
+- Top bar: "Open", "Bewaar" and "Deel link" are always visible ("Bestanden…"
+  and the file name field are gone). "Deel link" confirms in the button itself
+  ("Link gekopieerd ✓"). The link to Modelleertaal classic is in the footer.
+- The title of the model is a heading above the editors that can be edited
+  directly ("Pas titel aan" is gone). Downloaded files are named after the
+  title: `Examen vwo 2014-II Kogelstoten.xml`, `... (y,x).png`, `....tsv`.
+- "Download tabel (Excel)" in the heading of the table and "Download grafiek"
+  next to the graph (after Run). The graph is saved as a PNG with axes, labels
+  and (multiplot) legend. SVG and PGFPlot stay in "Meer opties".
+- "Meer opties": significant digits and max. points are applied when changed
+  (no button-as-label); "Meer/minder knoppen (profiel)" is now a checkbox that
+  shows "Volgende regel" and "Voeg toe". Significant digits and "verticale as
+  vanaf 0" are remembered in the browser.
 - Fix: after `stop`, "Voeg toe" and the debugger ("Volgende regel") no longer
   continue the model. `evaluator.stopped` is only true for `stop`/`print`, no
   longer for a debugger breakpoint.

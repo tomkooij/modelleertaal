@@ -68,13 +68,12 @@ function ModelleertaalApp(params) {
   this.dom_trace = "#trace";
   this.dom_fileinput = "#fileinput";
   this.dom_download_xml = "#download_xml";
-  this.dom_download_xml_fn = "#xml_filename";
   this.dom_download_pgf = "#download_pgf";
-  this.dom_download_pgf_fn = "#pgf_filename";
   this.dom_download_tsv = "#download_tsv";
-  this.dom_download_tsv_fn = "#tsv_filename";
   this.dom_download_svg = "#download_svg";
-  this.dom_download_svg_fn = "#svg_filename";
+  this.dom_download_png = "#download_png";
+  this.dom_precision = "#precision";
+  this.dom_max_rows = "#max_rows";
   this.dom_clickdata = "#clickdata";
   this.dom_x_var = "#x_var";
   this.dom_y_var = "#y_var";
@@ -137,6 +136,7 @@ function ModelleertaalApp(params) {
   });
 
   // (re)set the app
+  this.load_settings();
   this.starting = true;
   this.init_app();
   this.starting = false;
@@ -203,15 +203,6 @@ function ModelleertaalApp(params) {
     self.schedule_autosave();
   });
 
-  $('#toggle_titel').click(function() {
-    // titel is verborgen totdat de gebruiker hem wil aanpassen
-    var row = $('#titel_rij');
-    var open = row.prop('hidden');
-    row.prop('hidden', !open);
-    $(this).attr('aria-expanded', String(open)).html(open ? 'Pas titel aan &#9652;' : 'Pas titel aan &#9662;');
-    if (open) $(self.dom_titel).focus().select();
-  });
-
   $(this.dom_permalink).click(function(event) {
     event.preventDefault();
     self.copy_share_url();
@@ -228,6 +219,17 @@ function ModelleertaalApp(params) {
   });
   $(this.dom_download_svg).click(function() {
     self.download_svg();
+  });
+  $(this.dom_download_png).click(function() {
+    self.download_png();
+  });
+
+  // Meer opties: applied when the value changes (no separate button)
+  $(this.dom_precision).on('change', function() {
+    self.set_precision($(this).val());
+  });
+  $(this.dom_max_rows).on('change', function() {
+    self.set_max_rows_in_plot($(this).val());
   });
 
   // grafisch model: drawn from the text of the model (no Run needed)
@@ -401,6 +403,7 @@ function ModelleertaalApp(params) {
 
   $(this.dom_yaxis_zero).change(function() {
     self.yaxis_autoscale = !$(this).prop('checked');
+    self.save_settings();
     self.do_plot();
   });
 
@@ -1138,7 +1141,7 @@ ModelleertaalApp.prototype.download_grafisch_model = function() {
     }
     lay = undefined;
   }
-  this.save_string('<?xml version="1.0" encoding="UTF-8"?>\n' + grafisch.toSVG(g, lay), 'grafisch_model.svg');
+  this.save_string('<?xml version="1.0" encoding="UTF-8"?>\n' + grafisch.toSVG(g, lay), this.file_name('.svg', 'grafisch model'));
 };
 
 
@@ -1178,7 +1181,7 @@ ModelleertaalApp.prototype.download_model = function() {
   // download model in "BogusXML" format
   //  just a text file with XML like tags...
 
-  var filename = $(this.dom_download_xml_fn).val();
+  var filename = this.file_name('.xml');
   this.read_model();
 
   var N = Number($(this.dom_nbox).val());
@@ -1197,18 +1200,41 @@ ModelleertaalApp.prototype.download_model = function() {
 //
 var AUTOSAVE_KEY = 'modelleertaal_autosave';
 var AUTOSAVE_MAX_AGE = 30 * 24 * 3600 * 1000;   // 30 days
+var SETTINGS_KEY = 'modelleertaal_instellingen';
 
-function storage(action, value) {
+function storage(action, value, key) {
   // localStorage can be blocked (private window, settings): then nothing is saved
+  key = key || AUTOSAVE_KEY;
   try {
-    if (action == 'get') return window.localStorage.getItem(AUTOSAVE_KEY);
-    if (action == 'set') window.localStorage.setItem(AUTOSAVE_KEY, value);
-    if (action == 'remove') window.localStorage.removeItem(AUTOSAVE_KEY);
+    if (action == 'get') return window.localStorage.getItem(key);
+    if (action == 'set') window.localStorage.setItem(key, value);
+    if (action == 'remove') window.localStorage.removeItem(key);
   } catch (err) {
     return null;
   }
   return null;
 }
+
+
+ModelleertaalApp.prototype.load_settings = function() {
+  // settings of the user (Meer opties) from the last visit
+  var settings;
+  try {
+    settings = JSON.parse(storage('get', null, SETTINGS_KEY)) || {};
+  } catch (err) {
+    settings = {};
+  }
+  var precision = Math.round(Number(settings.precision));
+  if (precision >= 1 && precision <= 15) this.precision = precision;
+  if (typeof settings.yaxis_zero == 'boolean') this.yaxis_autoscale = !settings.yaxis_zero;
+  $(this.dom_precision).val(this.precision);
+  $(this.dom_yaxis_zero).prop('checked', !this.yaxis_autoscale);
+};
+
+
+ModelleertaalApp.prototype.save_settings = function() {
+  storage('set', JSON.stringify({precision: this.precision, yaxis_zero: !this.yaxis_autoscale}), SETTINGS_KEY);
+};
 
 
 ModelleertaalApp.prototype.schedule_autosave = function() {
@@ -1337,6 +1363,23 @@ ModelleertaalApp.prototype.get_title = function() {
 };
 
 
+ModelleertaalApp.prototype.file_name = function(extension, suffix) {
+  // name of a downloaded file: the title of the model (+ suffix), without characters
+  // that are not allowed in a file name. 'Examen vwo 2005-I Champignon (x,t).png'
+  var name = this.get_title() || 'model';
+  if (suffix) name += ' ' + suffix;
+  name = name.replace(/[\\\/:*?"<>|\u0000-\u001f]+/g, '_').replace(/^[\s.]+|[\s.]+$/g, '');
+  return (name || 'model') + extension;
+};
+
+
+ModelleertaalApp.prototype.graph_name = function() {
+  // the graph that is shown, as in the thumbnails: (y,x)
+  if (this.multiplot) return '(' + this.multi_yvars.join(',') + ' tegen ' + this.xvar + ')';
+  return '(' + this.yvar + ',' + this.xvar + ')';
+};
+
+
 ModelleertaalApp.prototype.update_document_title = function() {
   var title = this.get_title();
   document.title = title ? title + ' - Modelleertaal' : 'Modelleertaal webapp';
@@ -1353,7 +1396,14 @@ ModelleertaalApp.prototype.copy_share_url = function() {
 
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(url).then(function() {
-      self.print_status("Link naar dit model gekopieerd naar het klembord.");
+      // confirmation in the button itself, where the user is looking
+      var button = $(self.dom_permalink);
+      if (!button.data('text')) button.data('text', button.text());
+      button.text('Link gekopieerd ✓').addClass('done');
+      clearTimeout(self.permalink_timer);
+      self.permalink_timer = setTimeout(function() {
+        button.text(button.data('text')).removeClass('done');
+      }, 2000);
     }, fallback);
   } else {
     fallback();
@@ -1365,14 +1415,14 @@ ModelleertaalApp.prototype.download_pgfplot = function() {
   // save the plot in TikZ/PGFPlot format
   var data = this.create_pgfplot();
   if (data === false) return;
-  this.save_string(data, $(this.dom_download_pgf_fn).val());
+  this.save_string(data, this.file_name('.tex', this.graph_name()));
 };
 
 
 ModelleertaalApp.prototype.download_tsv = function() {
   // download the results in TSV format.
   if (!this.require_results()) return;
-  this.save_string(this.create_tsv(), $(this.dom_download_tsv_fn).val());
+  this.save_string(this.create_tsv(), this.file_name('.tsv'));
 };
 
 
@@ -1380,7 +1430,45 @@ ModelleertaalApp.prototype.download_svg = function() {
   // download SVG Plot.
   var data = this.create_svgplot();
   if (data === false) return;
-  this.save_string(data, $(this.dom_download_svg_fn).val());
+  this.save_string(data, this.file_name('.svg', this.graph_name()));
+};
+
+
+ModelleertaalApp.prototype.download_png = function() {
+  // the graph as shown (with axes and labels) as a PNG image.
+  // Flot draws the lines on canvases and the text in an SVG layer: compose them.
+  var self = this;
+  if (!this.require_results() || !this.plot_object) return;
+  var sources = $(this.dom_graph).find('canvas, svg').toArray();
+  var composed = document.createElement('canvas');
+  var filename = this.file_name('.png', this.graph_name());
+  var legend = this.multiplot ? this.multi_yvars.slice() : [];
+
+  $.plot.composeImages(sources, composed).then(function() {
+    var out = document.createElement('canvas');
+    out.width = composed.width;
+    out.height = composed.height;
+    var ctx = out.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, out.width, out.height);
+    ctx.drawImage(composed, 0, 0);
+    // several graphs: the colours are next to the checkboxes on screen, put them in the image
+    var scale = out.width / Math.max(1, $(self.dom_graph).width());
+    ctx.font = Math.round(13 * scale) + 'px sans-serif';
+    ctx.textBaseline = 'middle';
+    legend.forEach(function(name, n) {
+      var y = (16 + 18 * n) * scale, x = out.width - 110 * scale;
+      ctx.fillStyle = COLORS_MULTIPLOT[n % COLORS_MULTIPLOT.length];
+      ctx.fillRect(x, y - 2 * scale, 18 * scale, 4 * scale);
+      ctx.fillStyle = '#111827';
+      ctx.fillText(name, x + 24 * scale, y);
+    });
+    out.toBlob(function(blob) {
+      FileSaver.saveAs(blob, filename);
+    }, 'image/png');
+  }, function() {
+    self.show_message('error', 'Niet gelukt', 'De grafiek kon niet als plaatje worden opgeslagen.');
+  });
 };
 
 
@@ -1592,6 +1680,7 @@ ModelleertaalApp.prototype.after_run = function() {
   if (this.allVars === undefined) return;
 
   this.set_stale(false);
+  $(this.dom_download_tsv + ',' + this.dom_download_png).prop('hidden', false);
 
   this.analysis = autoplot.analyse(this.allVars, this.results, this.evaluator.modelregels_ast);
   this.graphs = this.analysis.graphs;
@@ -2163,15 +2252,22 @@ function draw_sparkline(canvas, data, previous) {
 
 ModelleertaalApp.prototype.set_max_rows_in_plot = function(max_rows) {
   max_rows = Math.round(Number(max_rows));
-  if (!isFinite(max_rows) || max_rows < 2) return;
+  if (!isFinite(max_rows) || max_rows < 2) {
+    $(this.dom_max_rows).val(this.max_rows_in_plot);
+    return;
+  }
   this.max_rows_in_plot = max_rows;
   if (this.results_available()) this.do_plot();
 };
 
 ModelleertaalApp.prototype.set_precision = function(precision) {
   precision = Math.round(Number(precision));
-  if (!isFinite(precision) || precision < 1 || precision > 15) return;
+  if (!isFinite(precision) || precision < 1 || precision > 15) {
+    $(this.dom_precision).val(this.precision);
+    return;
+  }
   this.precision = precision;
+  this.save_settings();
   this.update_endtime_hint(false);
   if (this.results_available()) this.print_table();
 };
@@ -2230,6 +2326,7 @@ ModelleertaalApp.prototype.init_app = function() {
   $(this.dom_graph_tabs).empty();
   $(this.dom_graph_note).empty();
   $(this.dom_clickdata).empty();
+  $(this.dom_download_tsv + ',' + this.dom_download_png).prop('hidden', true);
   $(this.dom_datatable).empty().append(
     $('<div>').addClass('placeholder').text('Hier komt de tabel met resultaten.'));
   this.print_status("Model geladen. Druk op Run.");

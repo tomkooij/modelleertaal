@@ -1,7 +1,10 @@
 # Verbeterpunten Modelleertaal webapp
 
-Analyse van v6.1-grafisch-dev (branch `grafisch-model`), 10 nov 2026. Nog niets gebouwd:
-dit is een lijst met voorstellen, elk zo beschreven dat het los te bouwen is.
+Analyse van v6.1-grafisch-dev (branch `grafisch-model`), 10 nov 2026. Een lijst met voorstellen,
+elk zo beschreven dat het los te bouwen is. Gebouwde punten staan gemarkeerd met "(gebouwd)".
+
+Afwijking bij P1-7: "Download grafiek als SVG" is niet vervangen maar naar "Meer opties"
+verhuisd (naast PGFPlot, voor docenten); de PNG-knop staat bij de grafiek.
 
 ## Uitgangspunten (gelden voor elk punt)
 
@@ -39,7 +42,7 @@ dit is een lijst met voorstellen, elk zo beschreven dat het los te bouwen is.
 
 ## Prioriteit 1: klein werk, groot effect
 
-### P1-1 Werk niet kwijtraken (automatisch bewaren)
+### P1-1 Werk niet kwijtraken (automatisch bewaren) (gebouwd)
 
 **Probleem.** Tabblad dicht of Chromebook in slaap: model weg. Er is alleen een
 "weet je het zeker"-melding (`beforeunload`).
@@ -55,7 +58,7 @@ in de URL en met een bewaard model jonger dan 30 dagen: toon in `#message` (type
 **Klaar als.** Model wijzigen, tab sluiten, opnieuw openen, "Ga verder": tekst, titel en N zijn terug.
 Na "Sla model op" of "Weggooien" komt de melding niet meer.
 
-### P1-2 Eindtijd tonen bij "Aantal iteraties"
+### P1-2 Eindtijd tonen bij "Aantal iteraties" (gebouwd)
 
 **Probleem.** Leerlingen denken in tijd ("ik wil 20 s zien"), niet in iteraties. Het verband
 N x dt = eindtijd is juist een leerdoel, maar is nu pas na Run te zien in de statusregel.
@@ -70,7 +73,7 @@ Geen `dt` gevonden: niets tonen. Geen tweede invoerveld. De eenheid alleen tonen
 **Klaar als.** dt = 0,1 en N = 500 toont "x dt = 50"; N of dt veranderen past het direct aan;
 syntaxfout in de startwaarden geeft geen foutmelding, alleen geen hint.
 
-### P1-3 Hint als het model niet bij `stop` uitkomt of te vroeg klaar is
+### P1-3 Hint als het model niet bij `stop` uitkomt of te vroeg klaar is (gebouwd)
 
 **Probleem.** Staat er een stopconditie in het model en wordt die niet bereikt, dan lijkt de grafiek
 "af" terwijl de beweging nog loopt. Leerlingen zien dat niet.
@@ -83,7 +86,7 @@ statusregel: "Het model is niet gestopt door 'stop': verhoog het aantal iteratie
 
 **Klaar als.** `examenvwo2014` met N = 100 toont de hint; één klik geeft N = 200 en een gestopt model.
 
-### P1-4 Bug: doorrekenen na `stop`
+### P1-4 Bug: doorrekenen na `stop` (gebouwd)
 
 **Waargenomen.** `examenvwo2019-2-antwoord`: Run stopt na 1018 iteraties. Daarna voegt
 "Volgende regel" en "Voeg toe" toch rijen toe (1019, 1020), elk met status "Model gestopt".
@@ -93,7 +96,7 @@ statusregel: "Het model is niet gestopt door 'stop': verhoog het aantal iteratie
 
 **Klaar als.** Na een gestopte run blijft het aantal rijen gelijk bij beide knoppen. Mocha-test erbij.
 
-### P1-5 Bovenbalk opruimen: titel, bestanden, classic-link
+### P1-5 Bovenbalk opruimen: titel, bestanden, classic-link (gebouwd)
 
 **Probleem.** Vijf bedieningselementen voor iets wat één naam en één menu is: "Kies model",
 "Bestanden…" (klapt een rij open met een bestandsnaamveld), "Deel link", "Pas titel aan ▾"
@@ -131,7 +134,7 @@ opbouw voor een leerling die begint met modelleren.
 **Klaar als.** Elk voorbeeld draait zonder waarschuwing en geeft als eerste automatische grafiek
 de voor de hand liggende ((x,t), (u,t), (N,t), (y,x) bij de worp en de planeetbaan).
 
-### P1-7 "Meer opties" opschonen
+### P1-7 "Meer opties" opschonen (gebouwd)
 
 **Probleem.** "Knop + invoerveld" waarbij de knop eigenlijk het label is (je moet op het label
 klikken om de waarde toe te passen). "Meer/minder knoppen (profiel)" zegt niet wat het doet.
