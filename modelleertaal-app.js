@@ -80,6 +80,8 @@ function ModelleertaalApp(params) {
   this.dom_yaxis_zero = "#yaxis_zero";
   this.dom_model_keuze = "#model_keuze";
   this.dom_permalink = "#permalink";
+  this.dom_titel = "#model_titel";
+  this.model_title = '';
 
   this.read_model();
 
@@ -172,6 +174,19 @@ function ModelleertaalApp(params) {
       event.returnValue = '';
       return '';
     }
+  });
+
+  $(this.dom_titel).on('input', function() {
+    self.update_document_title();
+  });
+
+  $('#toggle_titel').click(function() {
+    // titel is verborgen totdat de gebruiker hem wil aanpassen
+    var row = $('#titel_rij');
+    var open = row.prop('hidden');
+    row.prop('hidden', !open);
+    $(this).attr('aria-expanded', String(open)).html(open ? 'Pas titel aan &#9652;' : 'Pas titel aan &#9662;');
+    if (open) $(self.dom_titel).focus().select();
   });
 
   $(this.dom_permalink).click(function(event) {
@@ -296,7 +311,9 @@ ModelleertaalApp.prototype.load_model = function() {
       this.model.modelregels = String(shared.m || '');
       this.model.startwaarden = String(shared.s || '');
       if (shared.N) this.model.N = Number(shared.N);
-      $('<option/>').val('shared').text('Gedeeld model (uit link)').prependTo(this.dom_model_keuze);
+      this.model_title = shared.t ? String(shared.t) : 'Gedeeld model';
+      $(this.dom_model_keuze).find('option[value="shared"]').remove();
+      $('<option/>').val('shared').text(this.model_title + ' (uit link)').prependTo(this.dom_model_keuze);
       $(this.dom_model_keuze).val('shared');
       this.dropdown_value = 'shared';
       this.init_app();
@@ -317,6 +334,9 @@ ModelleertaalApp.prototype.load_model = function() {
       // set dropdown to selected model
       $(this.dom_model_keuze).val(index);
       this.dropdown_value = String(index);
+      this.model_title = this.model_index[index].title;
+    } else {
+      this.model_title = decodeURIComponent(url_params.model);
     }
     this.load_model_xml_from_url(model_url);
   } else {
@@ -392,6 +412,7 @@ ModelleertaalApp.prototype.dropdown_load_model = function() {
 
   var url = this.model_index[model_keuze].url;
   var name = this.model_name_from_url(url);
+  this.model_title = this.model_index[model_keuze].title;
 
   // verander de URL in de browser (history)
   if (name && window.history.replaceState) {
@@ -471,6 +492,7 @@ ModelleertaalApp.prototype.read_file = function(evt) {
           "'" + f.name + "' is geen model van de modelleertaal webapp.");
         return;
       }
+      self.model_title = f.name.replace(/\.[^.]*$/, '');
       self.init_app();
       self.print_status("Model geladen uit " + f.name + ". Druk op Run.");
     };
@@ -501,15 +523,29 @@ ModelleertaalApp.prototype.share_url = function() {
   // link to this model. If the model was changed, the model is put in the link.
   var base = window.location.origin + window.location.pathname;
   var entry = this.model_index[this.dropdown_value];
+  var title = this.get_title();
 
-  if (entry && !this.is_modified()) {
+  if (entry && !this.is_modified() && title == entry.title) {
     return base + '#model=' + this.model_name_from_url(entry.url);
   }
   this.read_model();
   var shared = {m: this.model.modelregels, s: this.model.startwaarden};
+  if (title) shared.t = title;
   var N = Number($(this.dom_nbox).val());
   if (isFinite(N) && N > 0) shared.N = N;
   return base + '#code=' + encode_base64url(JSON.stringify(shared));
+};
+
+
+ModelleertaalApp.prototype.get_title = function() {
+  // title of the model (editable by the user, goes into the share link)
+  return $.trim($(this.dom_titel).val() || '');
+};
+
+
+ModelleertaalApp.prototype.update_document_title = function() {
+  var title = this.get_title();
+  document.title = title ? title + ' - Modelleertaal' : 'Modelleertaal webapp';
 };
 
 
@@ -1325,8 +1361,10 @@ ModelleertaalApp.prototype.init_app = function() {
     $(this.dom_startwaarden).val(this.model.startwaarden);
   }
   $(this.dom_nbox).val(this.model.N ? this.model.N : this.N_default);
+  $(this.dom_titel).val(this.model_title || '');
+  this.update_document_title();
 
-  this.loaded = {modelregels: this.model.modelregels, startwaarden: this.model.startwaarden};
+  this.loaded ={modelregels: this.model.modelregels, startwaarden: this.model.startwaarden};
 
   this.results = [];
   this.allVars = [];
