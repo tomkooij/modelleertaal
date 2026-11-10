@@ -143,6 +143,24 @@
             min-width: 0;
         }
 
+        /* titel van het model, boven de editors */
+        .model_title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .model_title label {
+            font-weight: 600;
+        }
+
+        #model_titel {
+            flex: 1;
+            min-width: 0;
+            font-weight: 600;
+        }
+
         /* knoppen en invoervelden */
         button,
         input,
@@ -599,6 +617,10 @@
 
         <div class="workspace">
             <section class="card area_model" aria-label="Model">
+                <div class="model_title">
+                    <label for="model_titel">Titel:</label>
+                    <input id="model_titel" type="text" maxlength="120" title="De titel van dit model. Gaat mee in de link als je op Deel link klikt.">
+                </div>
                 <div class="editors">
                     <div>
                         <h2>Modelregels</h2>
