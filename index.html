@@ -190,11 +190,20 @@
             gap: 8px 20px;
         }
 
+        .brand {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: baseline;
+            gap: 4px 12px;
+        }
+
         #classic_link {
-            margin-left: 4px;
             color: var(--muted);
             font-size: 0.8rem;
-            white-space: nowrap;
+        }
+
+        #classic_link a {
+            color: inherit;
         }
 
         .model_select {
@@ -548,7 +557,10 @@
 
 <body>
     <header class="topbar">
-        <h1><a id="title" href="https://github.com/tomkooij/modelleertaal">Modelleertaal</a></h1>
+        <div class="brand">
+            <h1><a id="title" href="https://github.com/tomkooij/modelleertaal">Modelleertaal</a></h1>
+            <span id="classic_link">Liever de oude indeling? Gebruik <a href="https://www.tomkooij.nl/modelleertaal-classic" title="De vorige versie van deze webapp, met de oude indeling">Modelleertaal classic</a>.</span>
+        </div>
         <div class="model_select">
             <label for="model_keuze">Kies model:</label>
             <select id="model_keuze">
@@ -556,7 +568,6 @@
             </select>
             <button id="enable_open_file_dialog" type="button">Bestanden…</button>
             <button id="permalink" type="button" title="Kopieer een link naar dit model (met jouw wijzigingen)">Deel link</button>
-            <a id="classic_link" href="https://www.tomkooij.nl/modelleertaal-classic" title="De vorige versie van deze webapp, met de oude indeling">oude versie</a>
         </div>
         <div id="open_file_dialog">
             <input id="fileinput" type="file" accept=".xml,.txt" hidden>
