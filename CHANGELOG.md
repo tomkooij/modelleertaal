@@ -1,7 +1,36 @@
 # Changelog
 
-## [5.5 dev]
- - 
+## [6.0 dev]
+
+### Webapp
+
+- Automatic graphs: after Run the relevant graphs are chosen from the model
+  (state variables like `x = x + v*dt`, variables that change) and shown as
+  clickable thumbnails. New module `autoplot.js`.
+- Previous run (gray line) is shown for every graph, not only the last one plotted.
+- Error messages in Dutch in the page (no more `alert()`), with the line marked
+  in the editor. Suggestions for typos in variable names.
+- Warning if a variable is no longer a valid number (division by zero, dt too large).
+- Status shows if the model was stopped by `stop` and the final time.
+- Run with Ctrl+Enter. Changing the axis replots immediately (Plot button removed).
+- New responsive layout (works on phones), `lang="nl"`.
+- "Deel link": link that contains the (changed) model: `index.html#code=...`
+- Ask for confirmation before changes to a model are lost.
+- Table: small numbers (1e-5) are no longer shown as 0.
+- Multiplot: colour next to the checkbox instead of a separate legend.
+- SVG export is scaled and no longer upside down.
+- Debug output in console only with `index.html#debug`.
+
+### Compiler
+
+- Fix operator precedence: `als t + dt > 10 dan` was parsed as `t + (dt > 10)`.
+  `min(a+1; b)` returned `b`.
+- Fix `2 - -x` (generated invalid javascript).
+- Allow `als x = 3 dan` (single `=` as equals, in a condition).
+- Add `sqr()`, `wortel()`, `entier()` and `round()`.
+- `print()` no longer uses `alert()`: output in `evaluator.messages`.
+- `evaluator.stopped` is true if the model stopped before N iterations.
+- Line numbers in errors are correct for files with Windows line endings.
 
 ## [5.4.2]
 

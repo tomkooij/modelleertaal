@@ -1,173 +1,536 @@
 <!DOCTYPE html>
-<html lang="en">
-
-<script src="config.js"></script>
-<!--
-
-Note to self:
-Do not edit below this line: Change config.js above!
-
--->
-<script>
-    //
-    // WebApp configuration / customisation
-    //
-
-    if (typeof config_js_loaded === 'undefined') {
-        console.log('config.js not loaded: Using default configuration profiles.');
-        var N_default = 1000; // default waarde voor N (aantal iteraties)
-        var base_url = 'https://www.tomkooij.nl/modelleertaal';
-
-        // titelbalk bovenaan
-        var title = 'Modelleertaal';
-        var title_link = 'https://www.github.com/tomkooij/modelleertaal';
-
-        // definitie van het "profiel", welke knoppen staan aan enz.
-        var full_webapp = [{
-                id: "#model_keuze",
-                action: "show"
-            },
-            {
-                id: "#permalink",
-                action: "show"
-            },
-            {
-                id: "#open_file_dialog",
-                action: "hide"
-            },
-            // model blok
-            {
-                id: "#continue_dialog",
-                action: "show"
-            },
-            {
-                id: "#debugger_dialog",
-                action: "show"
-            },
-            // tabel output
-        ];
-
-        var leerling_versie = [
-            // Uitgekleede webapp met zo min mogelijk afleiding
-            // bovenste blok
-            {
-                id: "#model_keuze",
-                action: "show"
-            },
-            {
-                id: "#permalink",
-                action: "hide"
-            },
-            {
-                id: "#open_file_dialog",
-                action: "hide"
-            },
-            // model blok
-            {
-                id: "#continue_dialog",
-                action: "hide"
-            },
-            {
-                id: "#debugger_dialog",
-                action: "hide"
-            },
-            // tabel output
-        ];
-
-        var profiellen = [full_webapp, leerling_versie];
-        var actieve_profiel = 0;
-    };
-</script>
+<html lang="nl">
 
 <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Modelleertaal webapp</title>
 
+    <script src="config.js"></script>
+    <!--
+
+    Note to self:
+    Do not edit below this line: Change config.js above!
+
+    -->
+    <script>
+        //
+        // WebApp configuration / customisation
+        //
+
+        if (typeof config_js_loaded === 'undefined') {
+            console.log('config.js not loaded: Using default configuration profiles.');
+            var N_default = 1000; // default waarde voor N (aantal iteraties)
+            var base_url = 'https://www.tomkooij.nl/modelleertaal';
+
+            // titelbalk bovenaan
+            var title = 'Modelleertaal';
+            var title_link = 'https://www.github.com/tomkooij/modelleertaal';
+
+            // definitie van het "profiel", welke knoppen staan aan enz.
+            var full_webapp = [{
+                    id: "#model_keuze",
+                    action: "show"
+                },
+                {
+                    id: "#permalink",
+                    action: "show"
+                },
+                {
+                    id: "#open_file_dialog",
+                    action: "hide"
+                },
+                // model blok
+                {
+                    id: "#continue_dialog",
+                    action: "show"
+                },
+                {
+                    id: "#debugger_dialog",
+                    action: "show"
+                },
+                // tabel output
+            ];
+
+            var leerling_versie = [
+                // Uitgekleede webapp met zo min mogelijk afleiding
+                // bovenste blok
+                {
+                    id: "#model_keuze",
+                    action: "show"
+                },
+                {
+                    id: "#permalink",
+                    action: "hide"
+                },
+                {
+                    id: "#open_file_dialog",
+                    action: "hide"
+                },
+                // model blok
+                {
+                    id: "#continue_dialog",
+                    action: "hide"
+                },
+                {
+                    id: "#debugger_dialog",
+                    action: "hide"
+                },
+                // tabel output
+            ];
+
+            var profiellen = [full_webapp, leerling_versie];
+            var actieve_profiel = 0;
+        };
+    </script>
+
+    <link rel="stylesheet" href="scripts/codemirror.css">
     <style>
+        :root {
+            --bg: #f3f4f6;
+            --card: #ffffff;
+            --border: #d1d5db;
+            --text: #111827;
+            --muted: #4b5563;
+            --primary: #1d4ed8;
+            --primary-dark: #1e3a8a;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
         html {
-            font-family: Helvetica, arial, sans-serif;
+            font-family: system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
             font-size: 100%;
+            color: var(--text);
+            background: var(--bg);
         }
 
-        table {
-            border: 1px solid black;
+        body {
+            margin: 0 auto;
+            padding: 12px 16px 32px;
+            max-width: 1400px;
         }
 
-        th,
-        td {
-            text-align: center;
-            border: 1px solid black;
-            padding: 5px;
+        h1 {
+            font-size: 1.35rem;
+            margin: 0;
         }
 
-        table.app {
-            border: none;
-        }
-
-        table.app th {
-            border: none;
-            padding: 5px;
-        }
-
-        table.app td {
-            text-align: left;
-            border: none;
-            padding: 5px;
-        }
-
-        table.plot_dialog {
-            border: none;
-        }
-
-        table.plot_dialog td {
-            vertical-align: top;
-            text-align: left;
-            padding: 0px;
-        }
-
-        .multiplot {
-            background-color: #e7e7e7;
-            color: black;
-            border: none;
-            padding: 4px 4px;
-            text-align: center;
+        h1 a {
+            color: inherit;
             text-decoration: none;
-            display: inline-block;
-            font-size: 10px;
-            margin: 4px 2px;
+        }
+
+        h1 a:hover {
+            text-decoration: underline;
+        }
+
+        h2 {
+            font-size: 0.95rem;
+            margin: 0 0 6px;
+            color: var(--muted);
+            font-weight: 600;
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px 14px;
+            margin-top: 12px;
+            min-width: 0;
+        }
+
+        /* knoppen en invoervelden */
+        button,
+        input,
+        select {
+            font: inherit;
+        }
+
+        button,
+        select,
+        input[type="text"] {
+            border: 1px solid #9ca3af;
+            border-radius: 6px;
+            background: #fff;
+            color: var(--text);
+            padding: 6px 10px;
+            min-height: 36px;
+        }
+
+        button {
             cursor: pointer;
+            background: #f9fafb;
         }
 
-        /* fix flot legend background */
-        /* https://github.com/flot/flot/issues/1708 */
-        .legendLayer .background {
-            fill: rgba(255, 255, 255, 0.85);
-            stroke: rgba(0, 0, 0, 0.85);
-            stroke-width: 1;
+        button:hover {
+            background: #e5e7eb;
         }
 
-        /* schaduw rand om werkblad zodat afmetinging zichtbaar is
-       handig voor debuggen */
-
-        #werkBlad {
-            padding: 1em;
-            margin: .5em auto;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
+        button:focus-visible,
+        select:focus-visible,
+        input:focus-visible,
+        summary:focus-visible {
+            outline: 3px solid #93c5fd;
+            outline-offset: 1px;
         }
 
-        #graph {
-            width: 450px;
-            height: 300px;
+        select {
+            max-width: 100%;
+        }
+
+        /* bovenste balk: titel en modelkeuze */
+        .topbar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px 20px;
+        }
+
+        .model_select {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px;
+            min-width: 0;
+        }
+
+        #open_file_dialog {
+            flex-basis: 100%;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* run balk */
+        .runbar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px 18px;
+        }
+
+        .runbar label,
+        .runbar span {
+            white-space: nowrap;
+        }
+
+        #run {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: #fff;
+            font-weight: 700;
+            font-size: 1.05rem;
+            padding: 8px 26px;
+        }
+
+        #run:hover {
+            background: var(--primary-dark);
+        }
+
+        #run.attention {
+            box-shadow: 0 0 0 4px #bfdbfe;
+        }
+
+        #NBox,
+        #NBoxContinue {
+            width: 6.5em;
+        }
+
+        #status_bar {
+            color: var(--muted);
+            white-space: normal;
+        }
+
+        kbd {
+            font: inherit;
+            font-size: 0.8rem;
+            color: var(--muted);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 1px 5px;
+        }
+
+        /* (fout)meldingen */
+        #message {
+            display: none;
+            margin-top: 12px;
+            padding: 10px 14px;
+            border-radius: 8px;
+            border: 1px solid;
+            border-left-width: 6px;
+            line-height: 1.45;
+        }
+
+        #message strong {
+            margin-right: 8px;
+        }
+
+        #message.error {
+            background: #fef2f2;
+            border-color: #dc2626;
+        }
+
+        #message.warning {
+            background: #fffbeb;
+            border-color: #d97706;
+        }
+
+        #message.info {
+            background: #eff6ff;
+            border-color: #2563eb;
+        }
+
+        /* werkblad: model links, grafiek rechts */
+        .workspace {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+            grid-template-rows: auto 1fr;
+            grid-template-areas: "model graph" "table graph";
+            column-gap: 12px;
+            align-items: start;
+        }
+
+        .area_model {
+            grid-area: model;
+        }
+
+        .area_graph {
+            grid-area: graph;
+        }
+
+        .area_table {
+            grid-area: table;
+        }
+
+        .editors {
+            display: grid;
+            grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+            gap: 12px;
+        }
+
+        @media (max-width: 960px) {
+            .workspace {
+                grid-template-columns: minmax(0, 1fr);
+                grid-template-rows: auto;
+                grid-template-areas: "model" "graph" "table";
+            }
+        }
+
+        @media (max-width: 520px) {
+            .editors {
+                grid-template-columns: minmax(0, 1fr);
+            }
+        }
+
+        textarea {
+            width: 100%;
+            font-family: monospace;
         }
 
         .CodeMirror {
             height: auto;
-            border: 1px solid #ddd;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .CodeMirror-scroll {
+            min-height: 14em;
         }
 
         .CodeMirror pre {
             padding-left: 7px;
-            line-height: 1.25;
+            line-height: 1.3;
+        }
+
+        .mt-error-line {
+            background: #fecaca;
+        }
+
+        .mt-error-gutter {
+            background: #dc2626;
+        }
+
+        .mt-error-gutter .CodeMirror-linenumber {
+            color: #fff;
+        }
+
+        .mt-trace-line {
+            background: #dbeafe;
+        }
+
+        /* grafieken */
+        .results.stale #graph,
+        .results.stale #graph_tabs,
+        .results.stale #datatable,
+        .results.stale #clickdata {
+            opacity: 0.4;
+        }
+
+        #graph {
+            width: 100%;
+            height: 360px;
+            font-family: sans-serif;
+        }
+
+        .placeholder {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            min-height: 3em;
+            color: var(--muted);
+            text-align: center;
+        }
+
+        #graph_tabs {
+            display: none;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 10px;
+        }
+
+        #graph_tabs:not(:empty) {
+            display: flex;
+        }
+
+        #graph_tabs button {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 3px 3px 4px;
+            background: #fff;
+            border: 2px solid var(--border);
+            font-size: 0.85rem;
+            line-height: 1.2;
+        }
+
+        #graph_tabs button:hover {
+            border-color: #6b7280;
+        }
+
+        #graph_tabs button.selected {
+            border-color: var(--primary);
+            background: #eff6ff;
+            font-weight: 600;
+        }
+
+        .plot_dialog {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-start;
+            gap: 8px 18px;
+            margin-top: 10px;
+        }
+
+        .plot_dialog {
+            align-items: center;
+        }
+
+        .plot_dialog label,
+        .plot_dialog .axis {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        #y_checks {
+            display: none;
+            flex-wrap: wrap;
+            gap: 4px 14px;
+            padding: 6px 0;
+        }
+
+        #y_checks .swatch {
+            display: none;
+            width: 14px;
+            height: 4px;
+            border-radius: 2px;
+        }
+
+        #graph_note {
+            color: var(--muted);
+            font-size: 0.85rem;
+            min-height: 1.2em;
+        }
+
+
+        /* tabel */
+        .table_scroll {
+            overflow-x: auto;
+            max-width: 100%;
+        }
+
+        table.table {
+            border-collapse: collapse;
+            font-variant-numeric: tabular-nums;
+        }
+
+        table.table th,
+        table.table td {
+            text-align: right;
+            border: 1px solid var(--border);
+            padding: 4px 10px;
+            white-space: nowrap;
+        }
+
+        table.table th {
+            background: #f3f4f6;
+            text-align: center;
+        }
+
+        table.table tr.truncated td {
+            text-align: left;
+            padding: 2px;
+        }
+
+        table.table tr.truncated button {
+            border: none;
+            background: none;
+            color: var(--primary);
+            min-height: 30px;
+        }
+
+        table.table tr.truncated button:hover {
+            text-decoration: underline;
+        }
+
+        #clickdata {
+            margin-top: 8px;
+        }
+
+        /* meer opties */
+        details summary {
+            cursor: pointer;
+            color: var(--muted);
+        }
+
+        .options {
+            display: grid;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .options > div {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px;
+        }
+
+        footer {
+            margin-top: 14px;
+            color: var(--muted);
+            font-size: 0.85rem;
+        }
+
+        footer a {
+            color: inherit;
         }
     </style>
     <script src="scripts/jquery-3.2.1.min.js"></script>
@@ -177,193 +540,136 @@ Do not edit below this line: Change config.js above!
 
 
 <body>
-    <div id="werkBlad">
-        <!-- CSS zorg voor met werkvlak met schaduw -->
-        <h2><a id="title" href="https://github.com/tomkooij/modelleertaal">Modelleertaal</a></h2>
-        <p>
-            <div>
-                Kies model:
-                <select id="model_keuze">
-                    <option value="0">models.js niet geladen!</option>
-                </select>
-                of:
-                <input id="enable_open_file_dialog" type="button" value="Bestanden...">
-                <p>
-                <span id="open_file_dialog">
-                    Bestanden van/naar computer:
-                    <input id="fileinput" type="file" style="width:0px">
-                    <button id="stupid_hack" onclick="fileinput.click()">Open bestand</button>
-                    <input id="download_xml" type="button" value="Sla op (download) als:">
-                    <input type="text" id="xml_filename" value="model.xml" size=15><br>
-                </span>
-            </div>
-    </div>
-    <div id="werkBlad">
-        <div>
-            <input id="run" type="button" value="RUN!">
-            Aantal iteraties = <input type="text" id="NBox" value="1000" size=5>.
+    <header class="topbar">
+        <h1><a id="title" href="https://github.com/tomkooij/modelleertaal">Modelleertaal</a></h1>
+        <div class="model_select">
+            <label for="model_keuze">Kies model:</label>
+            <select id="model_keuze">
+                <option value="0">models.js niet geladen!</option>
+            </select>
+            <button id="enable_open_file_dialog" type="button">Bestanden…</button>
+            <button id="permalink" type="button" title="Kopieer een link naar dit model (met jouw wijzigingen)">Deel link</button>
+        </div>
+        <div id="open_file_dialog">
+            <input id="fileinput" type="file" accept=".xml,.txt" hidden>
+            <button id="open_file" type="button">Open model van computer</button>
+            <button id="download_xml" type="button">Sla model op als:</button>
+            <input type="text" id="xml_filename" value="model.xml" size="15" aria-label="Bestandsnaam">
+        </div>
+    </header>
+
+    <main>
+        <div class="card runbar">
+            <button id="run" type="button" title="Run: voer het model uit (Ctrl+Enter)">&#9654; Run</button>
+            <label>Aantal iteraties:
+                <input type="text" id="NBox" value="1000" inputmode="numeric">
+            </label>
             <span id="continue_dialog">
-                <input id="continue" type="button" value="Voeg toe:">
-                <input type="text" id="NBoxContinue" value="10" size=3>
-                iteraties.
+                <button id="continue" type="button">Voeg toe:</button>
+                <input type="text" id="NBoxContinue" value="10" inputmode="numeric" aria-label="Aantal extra iteraties">
+                iteraties
             </span>
             <span id="debugger_dialog">
                 Debugger:
-                <input id="trace" type="button" value="Volgende regel">
+                <button id="trace" type="button">Volgende regel</button>
             </span>
-            <div>
-                <table class="app">
-                    <tr>
-                        <td>
-                            Status: <span id="status_bar"></span>
-                        </td>
-                        <td>Modelregels:</td>
-                        <td>Startwaarden:</td>
-                    </tr>
-                    <tr>
+            <span id="status_bar" role="status" aria-live="polite"></span>
+        </div>
 
-                        <td rowspan="2" class="graphbox">
-                            <div id="graph" class="graph"></div>
-                            <p>
-                            <table class="plot_dialog">
-                              <tr>
-                                <td> verticaal: </td>
-                                <td rowspan="2" id="select_graph">
-                                    <select id="y_var">
-                                      <option value=""></option>
-                                    </select>
-                                </td>
-                                <td> horizontaal:
-                                    <select id="x_var">
-                                      <option value=""></option>
-                                    </select>
-                                    <input id="plot" type="button" value="Plot!">
-                                </td>
-                              </tr>
-                              <tr>
-                                <td></td>
-                                <td><div id="legend"></div></td>
-                                <td></td>
-                              </tr>
-                              <tr>
-                                <td colspan="3">
-                                    <span id="multiplot"></span>
-                                </td>
-                              </tr>
-                            </table>
-                        </td>
-                        <td style="vertical-align:top" width=300px><textarea id="modelregels" rows=15 cols=30>//Modelregels:</textarea>
-                            <p><div id="clickdata"></div>
-                        </td>
-                        <td style="vertical-align:top" width=200px align="top"><textarea id="startwaarden" rows=15 cols=20>//Startwaarden:</textarea></td>
-                    </tr>
-                </table>
+        <div id="message" role="alert"></div>
+
+        <div class="workspace">
+            <section class="card area_model" aria-label="Model">
+                <div class="editors">
+                    <div>
+                        <h2>Modelregels</h2>
+                        <textarea id="modelregels" rows="15" cols="30" spellcheck="false">//Modelregels:</textarea>
+                    </div>
+                    <div>
+                        <h2>Startwaarden</h2>
+                        <textarea id="startwaarden" rows="15" cols="20" spellcheck="false">//Startwaarden:</textarea>
+                    </div>
+                </div>
+            </section>
+
+            <section class="card results area_graph" aria-label="Grafiek">
+                <div id="graph" class="graph"></div>
+                <div id="graph_note"></div>
+                <div id="graph_tabs" aria-label="Automatische grafieken"></div>
+                <div class="plot_dialog">
+                    <div class="axis" id="select_graph">
+                        <label for="y_var">verticaal:</label>
+                        <select id="y_var">
+                            <option value="">auto</option>
+                        </select>
+                        <div id="y_checks"></div>
+                    </div>
+                    <div class="axis">
+                        <label for="x_var">horizontaal:</label>
+                        <select id="x_var">
+                            <option value="">auto</option>
+                        </select>
+                    </div>
+                    <label><input type="checkbox" id="multiplot"> meerdere grafieken in één figuur</label>
+                    <label title="Uit: de verticale as wordt automatisch geschaald"><input type="checkbox" id="yaxis_zero" checked> verticale as vanaf 0</label>
+                </div>
+                <div id="clickdata"></div>
+            </section>
+
+            <section class="card results area_table" aria-label="Tabel">
+                <h2>Tabel</h2>
+                <div id="datatable"></div>
+            </section>
+        </div>
+
+        <details class="card" id="meer_opties">
+            <summary>Meer opties…</summary>
+            <div class="options">
+                <div>
+                    <button id="set_max_rows" type="button">Maximaal aantal punten in grafiek:</button>
+                    <input type="text" id="max_rows" value="500" size="5" aria-label="Maximaal aantal punten">
+                </div>
+                <div>
+                    <button id="set_precision" type="button">Aantal significante cijfers:</button>
+                    <input type="text" id="precision" value="4" size="5" aria-label="Aantal significante cijfers">
+                </div>
+                <div>
+                    <button id="download_tsv" type="button">Download tabel (TSV, voor Excel):</button>
+                    <input type="text" id="tsv_filename" value="model_data.tsv" size="15" aria-label="Bestandsnaam">
+                </div>
+                <div>
+                    <button id="download_svg" type="button">Download grafiek als SVG:</button>
+                    <input type="text" id="svg_filename" value="plot.svg" size="15" aria-label="Bestandsnaam">
+                </div>
+                <div>
+                    <button id="download_pgf" type="button">Download PGFPlot (LaTeX):</button>
+                    <input type="text" id="pgf_filename" value="pgfplot.tex" size="15" aria-label="Bestandsnaam">
+                </div>
+                <div>
+                    <button id="toggle_profiel" type="button">Meer/minder knoppen (profiel)</button>
+                </div>
             </div>
-        </div>
-    </div>
+        </details>
+    </main>
 
-    <div id="werkBlad">
-        <div id="datatable">Hier komt een tabel...</div>
-    </div>
-
-    <div id="werkBlad">
-        <div id="hack_toggle">Klik voor meer opties...</div>
-        <div id="hacks">
-            <input id="set_max_rows" type="button" value="Reduceer aantal punten in plot tot maximaal: ">
-            <input type="text" id="max_rows" value="100" size=5><br>
-            <input id="set_precision" type="button" value="Stel het aantal significante cijfer in op: ">
-            <input type="text" id="precision" value="4" size=5><br>
-            <input id="download_svg" type="button" value="Download plot as SVG:">
-            <input type="text" id="svg_filename" value="plot.svg" size=15><br>
-            <input id="download_pgf" type="button" value="Download PGFPlot:">
-            <input type="text" id="pgf_filename" value="pgfplot.tex" size=15><br>
-            <input id="download_tsv" type="button" value="Download TSV:">
-            <input type="text" id="tsv_filename" value="model_data.tsv" size=15><br>
-        </div>
-    </div>
-
-    <div id="werkBlad">
-        <div>
-            <input id="toggle_profiel" type="button" value="Toggle profiel: Meer/minder knoppen">
-        </div>
-    </div>
+    <footer>
+        <span id="version"></span>
+    </footer>
 
     <!-- jQuery is included in head section -->
     <!-- config.js included at the top of this file -->
     <script src="modellen/models.js"></script>
     <script src="scripts/modelleertaal-app.browser.js"></script>
-    <link rel="stylesheet" href="scripts/codemirror.css">
     <script src="scripts/codemirror.js"></script>
     <script src="scripts/codemirror-mode-modelleertaal.js"></script>
 
     <script type="text/javascript">
-
-        // FIXME hack below :-(
-        // split window.location.href in two parts
-        var base_url = window.location.origin;
-        var rel_url = window.location.href.split(base_url)[1];
-        rel_url = rel_url.split('index.html')[0]; // discard index.html#model= part.
-        if (!rel_url.endsWith('/')) this.rel_url += '/';
-
         if (typeof modelleertaalapp_js == 'undefined') {
             alert('modelleertaal-app.browser.js not found or not loaded!');
         }
 
-        m = new modelleertaalapp_js.ModelleertaalApp({
-            debug: true,
-            model_index: model_index,
-            base_url: base_url,
-            rel_url: rel_url,
-        });
-
-        $(document).ready(function() {
-            console.log("Start!");
-
-            // customize titel
-            if (m.version) {
-              if (m.version.includes("dev")) {
-                title += " "+m.version;
-              }
-            }
-            $('#title').html(title);
-            $('#title').attr('href', title_link);
-
-            // Laadt het profiel (defintie in script bovenaan deze pagina)
-            activeer_profiel(profiellen[actieve_profiel]);
-
-            $("#hacks").hide();
-            $("#hack_toggle").css({
-                'cursor': 'pointer'
-            }).click(function() {
-                $("#hack_toggle").hide();
-                $("#hacks").show();
-            });
-            $("#pgfplot").click(function() {
-                m.download_pgfplot();
-            });
-            $("#set_max_rows").click(function() {
-                m.set_max_rows_in_plot($("#max_rows").val());
-                console.log("set to: " + m.max_rows_in_plot);
-            });
-            $("#set_precision").click(function() {
-                m.set_precision($("#precision").val());
-                console.log("set to: " + m.precision);
-            });
-            $("#toggle_profiel").click(function() {
-                actieve_profiel += 1;
-                if (actieve_profiel > profiellen.length - 1) actieve_profiel = 0;
-                console.log('actieve_profiel', actieve_profiel);
-                activeer_profiel(profiellen[actieve_profiel]);
-            });
-            $("#enable_open_file_dialog").click(function() {
-                $("#open_file_dialog").show();
-            });
-
-        });
-
-        activeer_profiel = function(profiel) {
+        function activeer_profiel(profiel) {
             // zet knoppen/divs/span (id) aan/uit enz.
-            console.log('Activeer profiel: ', profiel);
             profiel.forEach(function(item) {
                 switch (item.action) {
                     case 'hide': {
@@ -378,6 +684,41 @@ Do not edit below this line: Change config.js above!
             });
         }
 
+        // Laadt het profiel (defintie in config.js)
+        // (voordat het model geladen wordt: zo verspringt de pagina niet)
+        activeer_profiel(profiellen[actieve_profiel]);
+
+        var m = new modelleertaalapp_js.ModelleertaalApp({
+            // debug uitvoer in console: index.html#debug
+            debug: /(^#|&)debug\b/.test(window.location.hash),
+            model_index: model_index,
+            N_default: N_default
+        });
+
+        $(document).ready(function() {
+            // customize titel
+            $('#title').text(title);
+            $('#title').attr('href', title_link);
+            $('#version').text('Modelleertaal webapp ' + (m.version || ''));
+
+            $("#set_max_rows").click(function() {
+                m.set_max_rows_in_plot($("#max_rows").val());
+            });
+            $("#set_precision").click(function() {
+                m.set_precision($("#precision").val());
+            });
+            $("#toggle_profiel").click(function() {
+                actieve_profiel += 1;
+                if (actieve_profiel > profiellen.length - 1) actieve_profiel = 0;
+                activeer_profiel(profiellen[actieve_profiel]);
+            });
+            $("#enable_open_file_dialog").click(function() {
+                $("#open_file_dialog").toggle();
+            });
+            $("#open_file").click(function() {
+                $("#fileinput").click();
+            });
+        });
     </script>
 
     <!-- Goat Counter -->
