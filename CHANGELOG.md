@@ -1,6 +1,8 @@
 # Changelog
 
-## [6.0 dev]
+## [6.0]
+
+10 nov 2026
 
 ### Webapp
 
