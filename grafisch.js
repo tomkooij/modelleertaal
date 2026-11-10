@@ -149,7 +149,7 @@ function collect(ast, conds, out) {
     for (var i = 0; i < ast.length; i++) {
         var stmt = ast[i];
         if (stmt.type == 'Assignment') {
-            out.assign.push({name: stmt.left, expr: stmt.right, conds: conds});
+            out.assign.push({name: stmt.left, expr: stmt.right, conds: conds, line: stmt.lineNo});
         } else if (stmt.type == 'If' || stmt.type == 'IfElse') {
             collect(stmt.then, conds.concat([{cond: stmt.cond, neg: false}]), out);
             if (stmt.elsestmt) collect(stmt.elsestmt, conds.concat([{cond: stmt.cond, neg: true}]), out);
@@ -429,6 +429,57 @@ function analyse(startwaarden_ast, modelregels_ast) {
 }
 
 
+// ------------------------------------------------------------------ lines
+
+function lines(g, startwaarden_ast, modelregels_ast) {
+    // which lines of the text belong to which element of the diagram.
+    //   byElement: id --> {startwaarden: [line, ...], modelregels: [line, ...]}   (1-based)
+    //   byLine:    'startwaarden:3' --> id
+    // A line where a toestandsvariabele is updated also belongs to its unnamed flows.
+    var byElement = {}, byLine = {}, i, j, a, id;
+
+    function idOf(name) {
+        if (g.elements.hasOwnProperty(name)) return name;
+        for (var k = 0; k < g.flows.length; k++) {
+            if (g.flows[k].name == name) return g.flows[k].id;
+        }
+        return null;
+    }
+    function put(id, editor, line, owner) {
+        if (id === null || !line) return;
+        var el = byElement[id] = byElement[id] || {startwaarden: [], modelregels: []};
+        if (el[editor].indexOf(line) == -1) el[editor].push(line);
+        if (owner && !byLine.hasOwnProperty(editor + ':' + line)) byLine[editor + ':' + line] = id;
+    }
+
+    var start = collect(startwaarden_ast || [], [], {assign: [], stops: []}).assign;
+    for (i = 0; i < start.length; i++) put(idOf(start[i].name), 'startwaarden', start[i].line, true);
+
+    var regels = collect(modelregels_ast || [], [], {assign: [], stops: []}).assign;
+    for (i = 0; i < regels.length; i++) {
+        a = regels[i];
+        id = idOf(a.name);
+        var el = id !== null ? g.elements[id] : null;
+        if (el && el.kind == 'stock' && a.conds.length) {
+            // x changes inside 'als ... dan': the line of the voorval
+            var key = fmtConds(a.conds);
+            for (j = 0; j < g.order.length; j++) {
+                var ev = g.elements[g.order[j]];
+                if (ev.kind == 'event' && ev.condition == key && ev.targets.indexOf(a.name) != -1) id = ev.id;
+            }
+        } else if (el && el.kind == 'stock') {
+            // the flows of x are in this line: x = x + dx  or  x = x + v * dt
+            for (j = 0; j < g.flows.length; j++) {
+                var f = g.flows[j];
+                if (f.to == a.name || f.from == a.name) put(f.id, 'modelregels', a.line, false);
+            }
+        }
+        put(id, 'modelregels', a.line, true);
+    }
+    return {byElement: byElement, byLine: byLine};
+}
+
+
 // ------------------------------------------------------------------ table
 
 var KIND_NAMES = {stock: 'Toestandsvariabele', flow: 'Stroomvariabele', aux: 'Hulpvariabele',
@@ -457,7 +508,7 @@ function table(g) {
             } else {
                 def = el.definition;
             }
-            rows.push({kind: KIND_NAMES[el.kind], name: el.name || el.label, definition: def});
+            rows.push({kind: KIND_NAMES[el.kind], name: el.name || el.label, definition: def, id: el.id});
         }
     }
     for (i = 0; i < g.stops.length; i++) rows.push({kind: 'Stopvoorwaarde', name: '', definition: g.stops[i]});
@@ -769,6 +820,8 @@ function toSVG(g, lay, opts) {
     //      Clouds of a flow are lay.pos[flowId + ':src'] and lay.pos[flowId + ':dst'].
     // opts.bounds: {minX, minY, maxX, maxY}: draw at least this area (no jumps while dragging)
     // opts.used: filled with the bounds of this drawing
+    // opts.selected: id of the selected element (a toestandsvariabele gets + buttons for new flows)
+    // opts.values: name --> {first, last}: values after a run, in the tooltip
     lay = lay || layout(g);
     opts = opts || {};
     var pos = lay.pos, out = [], i, el, p, id;
@@ -838,7 +891,7 @@ function toSVG(g, lay, opts) {
         el = g.elements[id];
         p = pos[id];
         if (!p) continue;
-        var tip = '<title>' + esc(tooltip(g, el)) + '</title>';
+        var tip = '<title>' + esc(tooltip(g, el) + valueText(el, opts.values)) + '</title>';
         out.push('<g data-id="' + esc(id) + '">');
         var x = p.x, y = p.y, label = el.name || el.label;
         switch (el.kind) {
@@ -887,6 +940,21 @@ function toSVG(g, lay, opts) {
         out.push('</g>');
     }
 
+    // selected toestandsvariabele: + buttons for a new flow in (left) and out (right)
+    el = opts.selected !== undefined && g.elements.hasOwnProperty(opts.selected) ? g.elements[opts.selected] : null;
+    if (el && el.kind == 'stock' && pos[el.id] && !el.general && el.updates == 1) {
+        p = pos[el.id];
+        [['in', -1, 'Nieuwe stroom naar ' + el.name], ['out', 1, 'Nieuwe stroom uit ' + el.name]].forEach(function(h) {
+            var hx = p.x + h[1] * (L.stockW / 2), hy = p.y - L.stockH / 2;
+            out.push('<g data-action="flow-' + h[0] + '" data-stock="' + esc(el.id) + '" class="handle">' +
+                '<title>' + esc(h[2]) + '</title>' +
+                '<circle cx="' + hx + '" cy="' + hy + '" r="10" fill="#fff" stroke="#d97706" stroke-width="2"/>' +
+                '<path d="M' + (hx - 5) + ',' + hy + ' H' + (hx + 5) + ' M' + hx + ',' + (hy - 5) + ' V' + (hy + 5) + '"' +
+                ' stroke="#b45309" stroke-width="2.2" stroke-linecap="round"/></g>');
+            grow(hx, hy, 12);
+        });
+    }
+
     if (minX == Infinity) { minX = 0; minY = 0; maxX = 100; maxY = 50; }
     opts.used = {minX: minX, minY: minY, maxX: maxX, maxY: maxY};
     var pad = 12, w = maxX - minX + 2 * pad, h = maxY - minY + 2 * pad;
@@ -920,6 +988,13 @@ function shorten(s, n) {
     return s.length > n ? s.substr(0, n - 1) + '…' : s;
 }
 
+function valueText(el, values) {
+    // after a run: the value at the start and at the end (values: name --> {first, last} as text)
+    var v = values && el.name && values.hasOwnProperty(el.name) ? values[el.name] : null;
+    if (!v) return '';
+    return v.first == v.last ? '\nwaarde: ' + v.first : '\nbegin: ' + v.first + ', eind: ' + v.last;
+}
+
 function tooltip(g, el) {
     switch (el.kind) {
         case 'stock': return el.name + ' (toestandsvariabele), beginwaarde ' + el.initial;
@@ -933,6 +1008,7 @@ exports.analyse = analyse;
 exports.layout = layout;
 exports.toSVG = toSVG;
 exports.table = table;
+exports.lines = lines;
 exports.fmt = fmt;
 exports.code = code;
 exports.collect = collect;

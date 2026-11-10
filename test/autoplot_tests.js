@@ -131,6 +131,48 @@ describe('evaluator.js - foutmeldingen en stop', function() {
         assert.isBelow(evaluator.result.length, 10);
     });
 
+    it('na stop wordt niet verder gerekend (iteraties toevoegen of debugger)', function() {
+        var model = new evaluator_js.Model();
+        model.startwaarden = "t=0";
+        model.modelregels = "t = t + 1\nals t > 4 dan stop eindals";
+        var evaluator = new evaluator_js.ModelregelsEvaluator(model, false);
+        evaluator.set_state(100, true, false);
+        evaluator.run();
+        var rows = evaluator.result.length;
+        evaluator.set_state(10, false, false);
+        evaluator.run();
+        assert.equal(evaluator.result.length, rows);
+        evaluator.set_state(1, false, true);
+        evaluator.run();
+        assert.equal(evaluator.result.length, rows);
+        assert.isTrue(evaluator.stopped);
+    });
+
+    it('debugger: een regel uitvoeren is geen stop', function() {
+        var model = new evaluator_js.Model();
+        model.startwaarden = "t=0";
+        model.modelregels = "t = t + 1\nx = 2 * t";
+        var evaluator = new evaluator_js.ModelregelsEvaluator(model, false);
+        evaluator.set_state(1, true, true);
+        evaluator.run();
+        assert.isFalse(evaluator.stopped);
+        evaluator.set_state(1, false, true);
+        evaluator.run();
+        assert.isFalse(evaluator.stopped);
+        assert.deepEqual(evaluator.result[1], [1, 2]);
+    });
+
+    it('zonder stop: stopped is onwaar', function() {
+        var model = new evaluator_js.Model();
+        model.startwaarden = "t=0";
+        model.modelregels = "t = t + 1\nals t > 400 dan stop eindals";
+        var evaluator = new evaluator_js.ModelregelsEvaluator(model, false);
+        evaluator.set_state(10, true, false);
+        evaluator.run();
+        assert.isFalse(evaluator.stopped);
+        assert.equal(evaluator.result.length, 11);
+    });
+
     it('ontbrekende startwaarde: melding met regelnummer en naam', function() {
         var err = error_of("a=2", "b = 1\nd = a + k");
         assert.equal(err.parser_name, 'modelregels');

@@ -61,19 +61,19 @@ function ModelleertaalApp(params) {
   this.dom_graph_note = "#graph_note";
   this.dom_results = ".results";
   this.dom_nbox = "#NBox";
+  this.dom_endtime_hint = "#endtime_hint";
   this.dom_nbox_continue = "#NBoxContinue";
   this.dom_run = "#run";
   this.dom_continue = "#continue";
   this.dom_trace = "#trace";
   this.dom_fileinput = "#fileinput";
   this.dom_download_xml = "#download_xml";
-  this.dom_download_xml_fn = "#xml_filename";
   this.dom_download_pgf = "#download_pgf";
-  this.dom_download_pgf_fn = "#pgf_filename";
   this.dom_download_tsv = "#download_tsv";
-  this.dom_download_tsv_fn = "#tsv_filename";
   this.dom_download_svg = "#download_svg";
-  this.dom_download_svg_fn = "#svg_filename";
+  this.dom_download_png = "#download_png";
+  this.dom_precision = "#precision";
+  this.dom_max_rows = "#max_rows";
   this.dom_clickdata = "#clickdata";
   this.dom_x_var = "#x_var";
   this.dom_y_var = "#y_var";
@@ -85,7 +85,10 @@ function ModelleertaalApp(params) {
   this.dom_titel = "#model_titel";
   this.dom_grafisch = "#grafisch_model";
   this.dom_grafisch_svg = "#grafisch_svg";
+  this.dom_view_switch = ".view_switch";
+  this.dom_workspace = ".workspace";
   this.dom_grafisch_tabel = "#grafisch_tabel";
+  this.weergave = 'tekst';   // 'tekst' or 'grafisch' (text and diagram)
   this.dom_download_grafisch = "#download_grafisch";
   this.dom_grafisch_reset = "#grafisch_herstel";
   this.dom_grafisch_form = "#grafisch_eigenschappen";
@@ -120,6 +123,16 @@ function ModelleertaalApp(params) {
     };
     this.modelregels_editor.on('change', on_change);
     this.startwaarden_editor.on('change', on_change);
+
+    // the symbol of the line with the cursor lights up in the diagram
+    var on_cursor = function(editor) {
+      self.grafisch_link_cursor(editor);
+    };
+    [this.modelregels_editor, this.startwaarden_editor].forEach(function(editor) {
+      editor.on('cursorActivity', on_cursor);
+      editor.on('focus', on_cursor);
+      editor.on('blur', on_cursor);
+    });
   } else {
     this.CodeMirror = false;
     this.CodeMirrorActive = false;
@@ -136,7 +149,12 @@ function ModelleertaalApp(params) {
   });
 
   // (re)set the app
+  this.load_settings();
+  this.starting = true;
   this.init_app();
+  this.starting = false;
+  // after the first model is loaded: offer to continue with unsaved work
+  this.restore_check = true;
   this.load_model();
 
   $(this.dom_run).click(function() {
@@ -164,6 +182,11 @@ function ModelleertaalApp(params) {
     }
   });
 
+  $(this.dom_nbox).on('input', function() {
+    self.update_endtime_hint(false);
+    self.schedule_autosave();
+  });
+
   $(this.dom_model_keuze).change(function() {
     if (self.is_modified() && !window.confirm('Je hebt dit model aangepast.\n' +
         'Als je een ander model kiest, gaan je wijzigingen verloren.\n\nAnder model laden?')) {
@@ -180,6 +203,7 @@ function ModelleertaalApp(params) {
   });
 
   $(window).on('beforeunload', function(event) {
+    if (self.autosave_timer) self.autosave();
     if (self.is_modified()) {
       event.preventDefault();
       event.returnValue = '';
@@ -189,15 +213,7 @@ function ModelleertaalApp(params) {
 
   $(this.dom_titel).on('input', function() {
     self.update_document_title();
-  });
-
-  $('#toggle_titel').click(function() {
-    // titel is verborgen totdat de gebruiker hem wil aanpassen
-    var row = $('#titel_rij');
-    var open = row.prop('hidden');
-    row.prop('hidden', !open);
-    $(this).attr('aria-expanded', String(open)).html(open ? 'Pas titel aan &#9652;' : 'Pas titel aan &#9662;');
-    if (open) $(self.dom_titel).focus().select();
+    self.schedule_autosave();
   });
 
   $(this.dom_permalink).click(function(event) {
@@ -217,10 +233,30 @@ function ModelleertaalApp(params) {
   $(this.dom_download_svg).click(function() {
     self.download_svg();
   });
+  $(this.dom_download_png).click(function() {
+    self.download_png();
+  });
 
-  // grafisch model: drawn from the text of the model (no Run needed)
-  $(this.dom_grafisch).on('toggle', function() {
-    if (this.open) self.draw_grafisch_model();
+  // Meer opties: applied when the value changes (no separate button)
+  $(this.dom_precision).on('change', function() {
+    self.set_precision($(this).val());
+  });
+  $(this.dom_max_rows).on('change', function() {
+    self.set_max_rows_in_plot($(this).val());
+  });
+
+  // Tekst | Tekst + grafisch. The diagram is drawn from the text of the model (no Run needed)
+  $(this.dom_view_switch).on('click', 'button', function() {
+    self.set_weergave($(this).attr('data-weergave'), true);
+  });
+  // Herkende elementen: a click on a row selects the element in the diagram
+  $(this.dom_grafisch_tabel).on('click', 'tr[data-id]', function() {
+    self.grafisch_focus = true;
+    self.grafisch_select($(this).attr('data-id'));
+  });
+  // + on the selected toestandsvariabele: new flow in or out
+  $(this.dom_grafisch_svg).on('click', '[data-action]', function() {
+    self.grafisch_flow_form($(this).attr('data-stock'), $(this).attr('data-action') == 'flow-in' ? 'in' : 'out');
   });
   $(this.dom_download_grafisch).click(function() {
     self.download_grafisch_model();
@@ -284,7 +320,7 @@ function ModelleertaalApp(params) {
   $(this.dom_grafisch_svg).on('pointerdown', function(event) {
     var e = event.originalEvent;
     self.grafisch_focus = true;
-    if (e.button !== 0 || $(e.target).closest('[data-id]').length) return;
+    if (e.button !== 0 || $(e.target).closest('[data-id], [data-action]').length) return;
     // not on the scrollbars
     var box = this.getBoundingClientRect();
     if (e.clientX > box.left + this.clientWidth || e.clientY > box.top + this.clientHeight) return;
@@ -325,6 +361,35 @@ function ModelleertaalApp(params) {
       e.preventDefault();
       self.grafisch_set_zoom(self.grafisch_zoom_now * (e.deltaY < 0 ? 1.1 : 1 / 1.1), e);
     }, {passive: false});
+
+    // touch screen: pinch with two fingers to zoom (one finger scrolls, as usual)
+    var pinch = null, pinch_frame = null;
+    var two_fingers = function(e) {
+      var a = e.touches[0], b = e.touches[1];
+      var dx = a.clientX - b.clientX, dy = a.clientY - b.clientY;
+      return {d: Math.max(1, Math.sqrt(dx * dx + dy * dy)),
+              clientX: (a.clientX + b.clientX) / 2, clientY: (a.clientY + b.clientY) / 2};
+    };
+    view.addEventListener('touchstart', function(e) {
+      if (e.touches.length != 2 || !self.grafisch_g) return;
+      e.preventDefault();
+      drag = null;
+      pan = null;
+      pinch = {start: two_fingers(e), zoom: self.grafisch_zoom_now || 1};
+    }, {passive: false});
+    view.addEventListener('touchmove', function(e) {
+      if (!pinch || e.touches.length != 2) return;
+      e.preventDefault();
+      pinch.now = two_fingers(e);
+      if (pinch_frame) return;
+      pinch_frame = window.requestAnimationFrame(function() {
+        pinch_frame = null;
+        if (pinch && pinch.now) self.grafisch_set_zoom(pinch.zoom * pinch.now.d / pinch.start.d, pinch.now);
+      });
+    }, {passive: false});
+    view.addEventListener('touchend', function(e) {
+      if (e.touches.length < 2) pinch = null;
+    });
   }
 
   // keys: Delete removes the selected element, Escape closes the form
@@ -389,6 +454,7 @@ function ModelleertaalApp(params) {
 
   $(this.dom_yaxis_zero).change(function() {
     self.yaxis_autoscale = !$(this).prop('checked');
+    self.save_settings();
     self.do_plot();
   });
 
@@ -496,12 +562,15 @@ ModelleertaalApp.prototype.print_status = function(status) {
 };
 
 
-ModelleertaalApp.prototype.show_message = function(type, title, text) {
-  // type: 'error', 'warning' or 'info'
-  $(this.dom_message).removeClass('error warning info').addClass(type).empty()
+ModelleertaalApp.prototype.show_message = function(type, title, text, buttons) {
+  // type: 'error', 'warning' or 'info'. buttons (optional): [{text, action}]
+  var box = $(this.dom_message).removeClass('error warning info').addClass(type).empty()
     .append($('<strong>').text(title))
-    .append($('<span>').text(text))
-    .show();
+    .append($('<span>').text(text));
+  (buttons || []).forEach(function(b) {
+    box.append($('<button type="button">').addClass('inline_action').text(b.text).click(b.action));
+  });
+  box.show();
 };
 
 
@@ -587,17 +656,20 @@ ModelleertaalApp.prototype.read_model = function() {
 };
 
 
+ModelleertaalApp.prototype.current_text = function() {
+  // the text in the editors: {modelregels, startwaarden}
+  if (this.CodeMirrorActive) {
+    return {modelregels: this.modelregels_editor.getValue(),
+            startwaarden: this.startwaarden_editor.getValue()};
+  }
+  return {modelregels: $(this.dom_modelregels).val(), startwaarden: $(this.dom_startwaarden).val()};
+};
+
+
 ModelleertaalApp.prototype.is_modified = function() {
   // has the user changed the model since it was loaded (or saved)?
   if (!this.loaded) return false;
-  var current = {};
-  if (this.CodeMirrorActive) {
-    current.modelregels = this.modelregels_editor.getValue();
-    current.startwaarden = this.startwaarden_editor.getValue();
-  } else {
-    current.modelregels = $(this.dom_modelregels).val();
-    current.startwaarden = $(this.dom_startwaarden).val();
-  }
+  var current = this.current_text();
   function normalize(s) {
     return String(s).replace(/\r/g, '').replace(/\s+$/, '');
   }
@@ -610,6 +682,9 @@ ModelleertaalApp.prototype.on_model_edited = function() {
   // called on every change in the editors.
   var self = this;
   this.remove_highlight_error();
+  clearTimeout(this.hint_timer);
+  this.hint_timer = setTimeout(function() { self.update_endtime_hint(true); }, 300);
+  this.schedule_autosave();
   if (this.grafisch_open()) {
     clearTimeout(this.grafisch_timer);
     this.grafisch_timer = setTimeout(function() { self.draw_grafisch_model(); }, 400);
@@ -621,33 +696,93 @@ ModelleertaalApp.prototype.on_model_edited = function() {
 };
 
 
+ModelleertaalApp.prototype.read_dt = function() {
+  // the value of dt from the startwaarden, without running the model. null if unknown.
+  var model = new evaluator_js.Model();
+  model.startwaarden = this.current_text().startwaarden;
+  model.modelregels = 'dt = dt';
+  try {
+    var evaluator = new evaluator_js.ModelregelsEvaluator(model, false);
+    evaluator.set_state(0, true, false);
+    evaluator.run();
+    var dt = evaluator.result[0][evaluator.namespace.varNames.indexOf('dt')];
+    return (typeof dt == 'number' && isFinite(dt) && dt > 0) ? dt : null;
+  } catch (err) {
+    // syntax error, ... or no dt in the startwaarden: no hint
+    return null;
+  }
+};
+
+
+ModelleertaalApp.prototype.update_endtime_hint = function(model_changed) {
+  // next to the number of iterations: N x dt (how long the model runs)
+  if (model_changed || this.hint_dt === undefined) this.hint_dt = this.read_dt();
+  var N = Number(String($(this.dom_nbox).val()).replace(',', '.'));
+  var text = '';
+  if (this.hint_dt !== null && isFinite(N) && N >= 1) {
+    text = '× dt = ' + Number((Math.round(N) * this.hint_dt).toPrecision(this.precision));
+  }
+  $(this.dom_endtime_hint).text(text);
+};
+
+
 ModelleertaalApp.prototype.grafisch_open = function() {
-  var details = $(this.dom_grafisch)[0];
-  return details !== undefined && details.open;
+  // is the diagram shown? (Tekst + grafisch)
+  return this.weergave == 'grafisch';
+};
+
+
+ModelleertaalApp.prototype.set_weergave = function(weergave, save) {
+  // 'tekst': only the text. 'grafisch': the diagram above the text, in the same card.
+  var self = this;
+  this.weergave = (weergave == 'grafisch') ? 'grafisch' : 'tekst';
+  $(this.dom_view_switch).find('button').each(function() {
+    $(this).attr('aria-pressed', String($(this).attr('data-weergave') == self.weergave));
+  });
+  $(this.dom_grafisch).prop('hidden', this.weergave != 'grafisch');
+  // the page layout changes: the model gets the whole width, the graph goes below it
+  $(this.dom_workspace).toggleClass('met_grafisch', this.weergave == 'grafisch');
+  if (this.grafisch_open()) {
+    this.draw_grafisch_model();
+  } else {
+    this.grafisch_form_new = false;
+    this.grafisch_select(undefined);
+    this.grafisch_linked = undefined;
+  }
+  // the graph has another size now
+  if (this.results_available()) {
+    this.do_plot();
+    this.draw_thumbnails();
+  }
+  if (save) this.save_settings();
 };
 
 
 ModelleertaalApp.prototype.analyse_grafisch_model = function() {
   // grafisch.js analysis of the model in the editors. Throws on syntax errors.
+  // Also: which lines of the text belong to which symbol (this.grafisch_lines)
   this.read_model();
   var ev = new evaluator_js.ModelregelsEvaluator(this.model, false);
-  return grafisch.analyse(ev.startwaarden_ast, ev.modelregels_ast);
+  var g = grafisch.analyse(ev.startwaarden_ast, ev.modelregels_ast);
+  this.grafisch_lines = grafisch.lines(g, ev.startwaarden_ast, ev.modelregels_ast);
+  return g;
 };
 
 
 ModelleertaalApp.prototype.draw_grafisch_model = function() {
   // draw the model as a Coach style stock-flow diagram (see grafisch.js)
-  var svg = $(this.dom_grafisch_svg), tabel = $(this.dom_grafisch_tabel);
+  var svg = $(this.dom_grafisch_svg);
   var g;
   try {
     g = this.analyse_grafisch_model();
   } catch (err) {
     svg.empty().append($('<div>').addClass('placeholder').text(err.empty ?
-      'Nog geen model. Begin met + Toestandsvariabele, of typ het model hierboven.' :
+      'Nog geen model. Begin met + Toestandsvariabele, of typ het model hieronder.' :
       'Geen grafisch model: ' + (err.message || 'fout in het model')));
-    tabel.empty();
     this.grafisch_g = undefined;
     this.grafisch_layout = undefined;
+    this.grafisch_lines = undefined;
+    $(this.dom_grafisch_tabel).empty();
     this.grafisch_select(undefined);
     return;
   }
@@ -663,16 +798,36 @@ ModelleertaalApp.prototype.draw_grafisch_model = function() {
   }
   this.grafisch_bounds = null;
   this.render_grafisch_model();
+  // Herkende elementen: the same model as a list
   var table = $('<table>');
   grafisch.table(g).forEach(function(row) {
-    table.append($('<tr>')
+    var tr = $('<tr>')
       .append($('<td>').text(row.kind))
       .append($('<td>').append($('<b>').text(row.name)))
-      .append($('<td>').text(row.definition)));
+      .append($('<td>').text(row.definition));
+    if (row.id !== undefined) tr.attr('data-id', row.id).attr('title', 'Klik om ' + row.name + ' in het diagram te kiezen');
+    table.append(tr);
   });
-  tabel.empty().append(table);
+  $(this.dom_grafisch_tabel).empty().append(table);
   // the form of the selected element shows the new text of the model
   if (this.grafisch_selected !== undefined || !this.grafisch_form_new) this.grafisch_select(this.grafisch_selected);
+};
+
+
+ModelleertaalApp.prototype.grafisch_values = function() {
+  // after a run: name --> {first, last} (as in the table), for the tooltips of the symbols
+  if (!this.results_available() || this.stale) return null;
+  var self = this, out = {};
+  var last = this.results[this.results.length - 1];
+  this.allVars.forEach(function(name, j) {
+    // a hulpvariabele gets its first value in the first iteration
+    var first = self.results[0][j];
+    for (var i = 0; i < self.results.length && typeof first == 'number' && !isFinite(first); i++) {
+      first = self.results[i][j];
+    }
+    out[name] = {first: self.format_number(first, j), last: self.format_number(last[j], j)};
+  });
+  return out;
 };
 
 
@@ -680,7 +835,8 @@ ModelleertaalApp.prototype.render_grafisch_model = function() {
   // draw this.grafisch_g with the (dragged) positions in this.grafisch_layout.
   // The drawing only grows while dragging, so it does not jump under the mouse.
   var self = this;
-  var opts = {bounds: this.grafisch_bounds};
+  var opts = {bounds: this.grafisch_bounds, values: this.grafisch_values(),
+              selected: this.grafisch_form_new ? undefined : this.grafisch_selected};
   var view = $(this.dom_grafisch_svg);
   view.html(grafisch.toSVG(this.grafisch_g, this.grafisch_layout, opts));
   this.grafisch_bounds = opts.used;
@@ -688,8 +844,10 @@ ModelleertaalApp.prototype.render_grafisch_model = function() {
   var svg = view.find('svg');
   var w = parseFloat(svg.attr('width')), h = parseFloat(svg.attr('height'));
   var zoom = this.grafisch_zoom;
-  // (not smaller than 50%: then it is unreadable, scroll instead)
-  if (!zoom) zoom = Math.max(0.5, Math.min(1, (view[0].clientWidth - 2) / w));
+  // not smaller than 50%: then it is unreadable, scroll instead.
+  // A phone shows the whole model (zoom in with two fingers).
+  var narrow = view[0].clientWidth < 600;
+  if (!zoom) zoom = Math.max(narrow ? 0.3 : 0.5, Math.min(1, (view[0].clientWidth - 2) / w));
   this.grafisch_zoom_now = zoom;
   svg.attr('width', Math.round(w * zoom)).attr('height', Math.round(h * zoom));
   $('#grafisch_zoom_waarde').text(Math.round(zoom * 100) + '%');
@@ -698,7 +856,52 @@ ModelleertaalApp.prototype.render_grafisch_model = function() {
       return $(this).attr('data-id').replace(/:(src|dst)$/, '') == self.grafisch_selected;
     }).addClass('selected');
   }
+  this.grafisch_mark_linked();
   this.grafisch_place_form();
+};
+
+
+ModelleertaalApp.prototype.grafisch_link_cursor = function(editor) {
+  // the cursor is in a line of the text: light up the symbol of that line
+  if (!this.grafisch_open() || !this.grafisch_lines) return;
+  var name = (editor === this.modelregels_editor) ? 'modelregels' : 'startwaarden';
+  var id = this.grafisch_lines.byLine[name + ':' + (editor.getCursor().line + 1)];
+  id = editor.hasFocus() ? id : undefined;
+  if (id === this.grafisch_linked) return;
+  this.grafisch_linked = id;
+  this.grafisch_mark_linked();
+};
+
+
+ModelleertaalApp.prototype.grafisch_mark_linked = function() {
+  var self = this;
+  var view = $(this.dom_grafisch_svg);
+  view.find('.linked').removeClass('linked');
+  if (this.grafisch_linked === undefined) return;
+  view.find('[data-id]').filter(function() {
+    return $(this).attr('data-id') == self.grafisch_linked;
+  }).addClass('linked');
+};
+
+
+ModelleertaalApp.prototype.grafisch_highlight_lines = function(id) {
+  // the lines of the text of the selected symbol get a colour (definition and beginwaarde)
+  var self = this;
+  (this.link_lines || []).forEach(function(h) {
+    h.editor.removeLineClass(h.handle, 'background', 'mt-link-line');
+  });
+  this.link_lines = [];
+  if (!this.CodeMirrorActive || id === undefined || !this.grafisch_lines) return;
+  var lines = this.grafisch_lines.byElement[id];
+  if (!lines) return;
+  ['startwaarden', 'modelregels'].forEach(function(name) {
+    var editor = self.get_editor(name);
+    lines[name].forEach(function(line) {
+      if (line >= 1 && line <= editor.lineCount()) {
+        self.link_lines.push({editor: editor, handle: editor.addLineClass(line - 1, 'background', 'mt-link-line')});
+      }
+    });
+  });
 };
 
 
@@ -719,28 +922,49 @@ ModelleertaalApp.prototype.grafisch_set_zoom = function(zoom, wheel) {
 
 
 ModelleertaalApp.prototype.grafisch_place_form = function() {
-  // the form is a small window next to the selected element (wide screens)
+  // the form is a small window next to the selected element (wide screens): below it,
+  // or above it if there is no room below. Never outside the diagram: the diagram is
+  // made at least as high as the form.
   var box = $(this.dom_grafisch_form), form = box.children('form');
-  if (!form.length) return;
-  var wrap = box.parent()[0].getBoundingClientRect();
-  var floating = box.css('position') == 'absolute';
-  if (!floating) {
+  var area = $(this.dom_grafisch_svg);
+  if (!form.length || box.css('position') != 'absolute') {
     box.css({left: '', top: ''});
+    area.css('min-height', '');
     return;
   }
-  var view = $(this.dom_grafisch_svg)[0].getBoundingClientRect();
-  var left = 8, top = 8, self = this;
-  var el = $(this.dom_grafisch_svg).find('.selected').filter(function() {
+  var formH = box.outerHeight(), formW = box.outerWidth();
+  area.css('min-height', Math.ceil(formH + 16) + 'px');
+  var wrap = box.parent()[0].getBoundingClientRect();
+  var view = area[0].getBoundingClientRect();
+  var minTop = view.top - wrap.top + 8, maxTop = view.bottom - wrap.top - formH - 8;
+  var left = 8, top = minTop, self = this;
+  var el = area.find('.selected').filter(function() {
     return $(this).attr('data-id') == self.grafisch_selected;
   })[0];
   if (el && this.grafisch_selected !== undefined) {
+    // below, above, right of or left of the symbol: the symbol (and its + buttons) stay visible
     var r = el.getBoundingClientRect();
+    var below = r.bottom - wrap.top + 10, above = r.top - wrap.top - 10 - formH;
+    var right = r.right - wrap.left + 18, leftside = r.left - wrap.left - 18 - formW;
     left = r.left - wrap.left;
-    top = r.bottom - wrap.top + 10;
-    // element scrolled out of the view: keep the form at the edge
-    top = Math.max(view.top - wrap.top + 8, Math.min(top, view.bottom - wrap.top + 8));
+    if (below <= maxTop) {
+      top = below;
+    } else if (above >= minTop) {
+      top = above;
+    } else if (right + formW <= wrap.width - 8) {
+      left = right;
+      top = r.top - wrap.top - 20;
+    } else if (leftside >= 8) {
+      left = leftside;
+      top = r.top - wrap.top - 20;
+    } else {
+      // no room anywhere: the side with the most room (covers as little as possible)
+      left = (wrap.width - (r.right - wrap.left) > r.left - wrap.left) ? right : leftside;
+      top = r.top - wrap.top - 20;
+    }
   }
-  left = Math.max(8, Math.min(left, wrap.width - box.outerWidth() - 8));
+  top = Math.max(minTop, Math.min(top, maxTop));
+  left = Math.max(8, Math.min(left, wrap.width - formW - 8));
   box.css({left: Math.round(left) + 'px', top: Math.round(top) + 'px'});
 };
 
@@ -820,20 +1044,85 @@ ModelleertaalApp.prototype.grafisch_apply = function(ops, select) {
 };
 
 
-ModelleertaalApp.prototype.grafisch_form = function(title, note, fields, buttons) {
-  // fields: [{key, label, value, placeholder, options: [{value, text}]}]
-  // buttons: [{text, action: function(values)}]  The first button is also the Enter key.
+ModelleertaalApp.prototype.grafisch_names = function() {
+  // names of the variables in the diagram (for the buttons under a formula),
+  // without the selected element itself
+  var g = this.grafisch_g, names = [];
+  if (!g) return names;
+  var self_name = (this.grafisch_selected !== undefined && g.elements[this.grafisch_selected]) ?
+    g.elements[this.grafisch_selected].name : null;
+  g.order.forEach(function(id) {
+    var name = g.elements[id].name;
+    if (name && name != self_name && names.indexOf(name) == -1) names.push(name);
+  });
+  return names;
+};
+
+
+ModelleertaalApp.prototype.grafisch_form = function(title, note, fields, buttons, onchange) {
+  // fields: [{key, label, value, placeholder, options: [{value, text}], formula: true}]
+  // buttons: [{text, action: function(values)}]
+  // onchange (optional), for an existing element: function(values, key). Every change is applied
+  //   at once: with Enter, or when you leave the field. Returns false if the change is not possible
+  //   (the text of the model is not changed, the field gets a red border).
+  //   Without onchange the first button is also the Enter key (new elements: "Voeg toe").
   var self = this;
   var box = $(this.dom_grafisch_form).empty();
-  if (!title) return;
+  if (!title) {
+    this.grafisch_place_form();
+    return;
+  }
+  var live = typeof onchange == 'function';
   var form = $('<form>').addClass('grafisch_form').attr('autocomplete', 'off');
-  var inputs = {};
+  var inputs = {}, formulas = [];
+
+  var values = function() {
+    var v = {};
+    for (var key in inputs) {
+      if (inputs.hasOwnProperty(key)) v[key] = inputs[key].val();
+    }
+    return v;
+  };
+  var changed = function() {
+    for (var key in inputs) {
+      if (inputs.hasOwnProperty(key) && inputs[key].val() !== inputs[key].data('committed')) return true;
+    }
+    return false;
+  };
+  var commit = function(key) {
+    // after the focus has moved on (Tab, click): apply, and keep the focus in the new form
+    setTimeout(function() {
+      if (!$.contains(document.documentElement, form[0]) || !changed()) return;
+      var refocus = null, active = document.activeElement;
+      for (var k in inputs) {
+        if (inputs.hasOwnProperty(k) && inputs[k][0] === active) {
+          refocus = {key: k, start: active.selectionStart, end: active.selectionEnd};
+        }
+      }
+      self.grafisch_refocus = refocus;
+      var ok = onchange(values(), key);
+      self.grafisch_refocus = null;
+      if (ok === false && $.contains(document.documentElement, form[0])) {
+        // not possible: keep what the user typed, so it can be corrected
+        if (inputs[key]) inputs[key].addClass('invalid');
+        for (k in inputs) {
+          if (inputs.hasOwnProperty(k)) inputs[k].data('committed', inputs[k].val());
+        }
+      }
+    }, 0);
+  };
+  var close = function() {
+    if (live && changed()) onchange(values());
+    self.grafisch_form_new = false;
+    self.grafisch_select(undefined);
+  };
+
   form.append($('<h2>').text(title).append(
-    $('<button type="button" title="Sluiten (Esc)" aria-label="Sluiten">').addClass('grafisch_sluit').html('&times;').click(function() {
-      self.grafisch_form_new = false;
-      self.grafisch_select(undefined);
-    })));
+    $('<button type="button" title="Sluiten (Esc)" aria-label="Sluiten">').addClass('grafisch_sluit').html('&times;')
+      .on('mousedown', function(event) { event.preventDefault(); })
+      .click(close)));
   if (note) form.append($('<p>').addClass('grafisch_legenda').text(note));
+
   fields.forEach(function(f) {
     var input;
     if (f.options) {
@@ -842,29 +1131,77 @@ ModelleertaalApp.prototype.grafisch_form = function(title, note, fields, buttons
         input.append($('<option>').val(o.value).text(o.text));
       });
       input.val(f.value);
+      if (live) input.on('change', function() { commit(f.key); });
     } else {
       input = $('<input type="text" spellcheck="false" autocapitalize="off">').val(f.value).attr('placeholder', f.placeholder || '');
+      if (live) {
+        input.on('blur', function() { commit(f.key); });
+        input.on('keydown', function(event) {
+          if (event.key == 'Enter') {
+            event.preventDefault();
+            commit(f.key);
+          }
+        });
+      }
+      input.on('input', function() { $(this).removeClass('invalid'); });
     }
+    input.data('committed', input.val());
     inputs[f.key] = input;
+    if (f.formula) formulas.push(input);
     form.append($('<label>').append($('<span>').text(f.label)).append(input));
   });
+
+  // the names of the variables: a click puts the name in the formula (no typing mistakes)
+  var names = this.grafisch_names();
+  if (formulas.length && names.length) {
+    var target = formulas[0];
+    formulas.forEach(function(input) {
+      input.on('focus', function() { target = input; });
+    });
+    var chips = $('<div>').addClass('grafisch_chips').append($('<span>').text('Invoegen:'));
+    names.forEach(function(name) {
+      chips.append($('<button type="button">').text(name).attr('title', 'Zet ' + name + ' in de formule')
+        .on('mousedown', function(event) { event.preventDefault(); })   // the focus stays in the formula
+        .click(function() {
+          var el = target[0], text = target.val();
+          var focused = document.activeElement === el;
+          var start = focused ? el.selectionStart : text.length, end = focused ? el.selectionEnd : text.length;
+          target.val(text.slice(0, start) + name + text.slice(end)).removeClass('invalid');
+          el.focus();
+          el.setSelectionRange(start + name.length, start + name.length);
+        }));
+    });
+    form.append(chips);
+  }
+
   var row = $('<div>').addClass('grafisch_form_knoppen');
   buttons.forEach(function(b, n) {
-    row.append($('<button>').attr('type', n === 0 ? 'submit' : 'button').text(b.text).click(function(event) {
+    var button = $('<button>').attr('type', (!live && n === 0) ? 'submit' : 'button').text(b.text).click(function(event) {
       event.preventDefault();
-      var values = {};
-      for (var key in inputs) {
-        if (inputs.hasOwnProperty(key)) values[key] = inputs[key].val();
-      }
-      b.action(values);
-    }));
+      b.action(values());
+    });
+    // a click on a button does not first apply the field you are typing in
+    if (live) button.on('mousedown', function(event) { event.preventDefault(); });
+    row.append(button);
   });
   form.append($('<div>').addClass('grafisch_form_melding').attr('role', 'alert'));
   if (buttons.length) form.append(row);
+  if (live) form.on('submit', function(event) { event.preventDefault(); });
   box.append(form);
   // keys typed in the form are not for the diagram (Delete) or the model (Ctrl+Enter)
   form.on('pointerdown', function() { self.grafisch_focus = true; });
   this.grafisch_place_form();
+
+  // the form was made again after a change: the cursor stays where it was
+  var refocus = this.grafisch_refocus;
+  if (refocus && inputs[refocus.key]) {
+    inputs[refocus.key].focus();
+    try {
+      inputs[refocus.key][0].setSelectionRange(refocus.start, refocus.end);
+    } catch (err) {
+      // (select: no cursor)
+    }
+  }
   return form;
 };
 
@@ -878,6 +1215,7 @@ ModelleertaalApp.prototype.grafisch_new_form = function(kind) {
   }};
   this.grafisch_message('');
   this.grafisch_selected = undefined;
+  this.grafisch_highlight_lines(undefined);
   this.grafisch_form_new = true;
   if (this.grafisch_g) this.render_grafisch_model();
   var form;
@@ -886,22 +1224,22 @@ ModelleertaalApp.prototype.grafisch_new_form = function(kind) {
       'Een grootheid die elke stap een beetje verandert, zoals de plaats x of de snelheid v. ' +
       'In de tekst komt: x = x + dx met dx = (verandering per tijdseenheid) * dt.',
       [{key: 'name', label: 'Naam', value: '', placeholder: 'bijvoorbeeld x'},
-       {key: 'initial', label: 'Beginwaarde', value: '0'},
-       {key: 'rate', label: 'Verandering per tijdseenheid', value: '', placeholder: 'formule, bijvoorbeeld v'}],
+       {key: 'initial', label: 'Beginwaarde', value: '0', formula: true},
+       {key: 'rate', label: 'Verandering per tijdseenheid', value: '', placeholder: 'formule, bijvoorbeeld v', formula: true}],
       [{text: 'Voeg toe', action: function(v) {
         self.grafisch_apply([{op: 'addStock', name: v.name, initial: v.initial, rate: v.rate}], $.trim(v.name));
       }}, close]);
   } else if (kind == 'aux') {
     form = this.grafisch_form('Nieuwe hulpvariabele', 'Een grootheid die elke stap met een formule wordt uitgerekend, zoals Fres.',
       [{key: 'name', label: 'Naam', value: '', placeholder: 'bijvoorbeeld Fres'},
-       {key: 'text', label: 'Formule', value: '', placeholder: 'bijvoorbeeld Fz - Fw'}],
+       {key: 'text', label: 'Formule', value: '', placeholder: 'bijvoorbeeld Fz - Fw', formula: true}],
       [{text: 'Voeg toe', action: function(v) {
         self.grafisch_apply([{op: 'addAux', name: v.name, text: v.text}], $.trim(v.name));
       }}, close]);
   } else {
     form = this.grafisch_form('Nieuwe constante', 'Een grootheid die niet verandert, zoals de massa m. Komt bij de startwaarden.',
       [{key: 'name', label: 'Naam', value: '', placeholder: 'bijvoorbeeld m'},
-       {key: 'text', label: 'Waarde', value: ''}],
+       {key: 'text', label: 'Waarde', value: '', formula: true}],
       [{text: 'Voeg toe', action: function(v) {
         self.grafisch_apply([{op: 'addConstant', name: v.name, text: v.text}], $.trim(v.name));
       }}, close]);
@@ -915,10 +1253,11 @@ ModelleertaalApp.prototype.grafisch_flow_form = function(stock, direction) {
   var self = this;
   this.grafisch_form_new = true;
   this.grafisch_message('');
+  if (this.grafisch_g) this.render_grafisch_model();
   var form = this.grafisch_form(direction == 'in' ? 'Nieuwe stroom naar ' + stock : 'Nieuwe stroom uit ' + stock,
     'In de tekst komt: ' + stock + ' = ' + stock + (direction == 'in' ? ' + ' : ' - ') + 'naam, met naam = (stroomsterkte) * dt.',
     [{key: 'name', label: 'Naam', value: '', placeholder: 'd' + stock},
-     {key: 'rate', label: 'Stroomsterkte (per tijdseenheid)', value: '', placeholder: 'formule'}],
+     {key: 'rate', label: 'Stroomsterkte (per tijdseenheid)', value: '', placeholder: 'formule', formula: true}],
     [{text: 'Voeg toe', action: function(v) {
       self.grafisch_apply([{op: 'addFlow', stock: stock, direction: direction, name: v.name, rate: v.rate}], stock);
     }}, {text: 'Annuleer', action: function() {
@@ -938,6 +1277,11 @@ ModelleertaalApp.prototype.grafisch_select = function(id) {
   this.grafisch_form_new = false;
   if (changed) this.grafisch_message('');
   if (g && this.grafisch_layout) this.render_grafisch_model();
+  // the lines in the text that belong to this symbol, and its row in Herkende elementen
+  this.grafisch_highlight_lines(this.grafisch_selected);
+  $(this.dom_grafisch_tabel).find('tr').removeClass('selected').filter(function() {
+    return $(this).attr('data-id') === self.grafisch_selected;
+  }).addClass('selected');
   if (!el) {
     this.grafisch_form(null);
     return;
@@ -955,7 +1299,7 @@ ModelleertaalApp.prototype.grafisch_select = function(id) {
     return name;
   };
   var apply = function(ops, select) {
-    if (ops.length) self.grafisch_apply(ops, select);
+    if (ops.length) return self.grafisch_apply(ops, select);
   };
   var remove = {text: 'Verwijder', action: function() {
     self.grafisch_apply([{op: 'remove', id: id}], undefined);
@@ -971,7 +1315,7 @@ ModelleertaalApp.prototype.grafisch_select = function(id) {
         var f = g.elements[fid];
         if (fid.indexOf('#') != -1) return;
         var other = side[1] == 'Stroom erin' ? f.from : f.to;
-        stockFlows.push({key: 'flow:' + fid, flow: fid, value: f.code,
+        stockFlows.push({key: 'flow:' + fid, flow: fid, value: f.code, formula: true,
           label: side[1] + (other ? (side[1] == 'Stroom erin' ? ' (uit ' : ' (naar ') + other + ')' : '') +
                  (f.name ? ': ' + f.name + ' =' : '')});
       });
@@ -983,44 +1327,47 @@ ModelleertaalApp.prototype.grafisch_select = function(id) {
       this.grafisch_form('Toestandsvariabele ' + el.name,
         (el.general || el.updates != 1) ? 'De stromen van ' + el.name + ' kun je alleen in de tekst aanpassen.' : '',
         [{key: 'name', label: 'Naam', value: el.name},
-         {key: 'text', label: 'Beginwaarde', value: el.initialCode}].concat(stockFlows),
-        [{text: 'Pas toe', action: function(v) {
+         {key: 'text', label: 'Beginwaarde', value: el.initialCode, formula: true}].concat(stockFlows),
+        [remove],
+        function(v) {
           var ops = [], now = rename(ops, v);
           if ($.trim(v.text) != el.initialCode) ops.push({op: 'setDefinition', id: now, text: v.text});
           stockFlows.forEach(function(f) {
             if ($.trim(v[f.key]) != f.value) ops.push({op: 'setDefinition', id: f.flow, text: v[f.key]});
           });
-          apply(ops, now);
-        }}, inflow, outflow, remove]);
+          return apply(ops, now);
+        });
       break;
     case 'const':
       this.grafisch_form('Constante ' + el.name, 'Met een stroom erin of eruit wordt het een toestandsvariabele.',
         [{key: 'name', label: 'Naam', value: el.name},
-         {key: 'text', label: 'Waarde', value: el.code}],
-        [{text: 'Pas toe', action: function(v) {
+         {key: 'text', label: 'Waarde', value: el.code, formula: true}],
+        [inflow, outflow, remove],
+        function(v) {
           var ops = [], now = rename(ops, v);
           if ($.trim(v.text) != el.code) ops.push({op: 'setDefinition', id: now, text: v.text});
-          apply(ops, now);
-        }}, inflow, outflow, remove]);
+          return apply(ops, now);
+        });
       break;
     case 'aux':
       if (el.code === null) {
         this.grafisch_form('Hulpvariabele ' + el.name, el.definition + '. ' + manual,
-          [{key: 'name', label: 'Naam', value: el.name}],
-          [{text: 'Pas toe', action: function(v) {
+          [{key: 'name', label: 'Naam', value: el.name}], [],
+          function(v) {
             var ops = [], now = rename(ops, v);
-            apply(ops, now);
-          }}]);
+            return apply(ops, now);
+          });
         break;
       }
       this.grafisch_form('Hulpvariabele ' + el.name, '',
         [{key: 'name', label: 'Naam', value: el.name},
-         {key: 'text', label: 'Formule', value: el.code}],
-        [{text: 'Pas toe', action: function(v) {
+         {key: 'text', label: 'Formule', value: el.code, formula: true}],
+        [remove],
+        function(v) {
           var ops = [], now = rename(ops, v);
           if ($.trim(v.text) != el.code) ops.push({op: 'setDefinition', id: now, text: v.text});
-          apply(ops, now);
-        }}, remove]);
+          return apply(ops, now);
+        });
       break;
     case 'flow':
       var ends = [{value: '', text: 'buiten (wolkje)'}];
@@ -1033,10 +1380,11 @@ ModelleertaalApp.prototype.grafisch_select = function(id) {
         el.name ? (el.isRate ? 'Stroomsterkte per tijdseenheid: in de tekst staat ' + el.term + '.' : '') :
           'Deze stroom heeft geen naam: hij staat als ' + el.term + ' in de regel van ' + (el.to || el.from) + '.',
         [{key: 'name', label: 'Naam', value: el.name || '', placeholder: '(geen naam)'},
-         {key: 'text', label: 'Formule', value: el.code},
+         {key: 'text', label: 'Formule', value: el.code, formula: true},
          {key: 'from', label: 'Van', value: el.from || '', options: ends},
          {key: 'to', label: 'Naar', value: el.to || '', options: ends}],
-        [{text: 'Pas toe', action: function(v) {
+        [remove],
+        function(v) {
           var ops = [], now = rename(ops, v);
           if ($.trim(v.text) != el.code) ops.push({op: 'setDefinition', id: now, text: v.text});
           if (v.from != (el.from || '') || v.to != (el.to || '')) {
@@ -1044,12 +1392,12 @@ ModelleertaalApp.prototype.grafisch_select = function(id) {
             // a flow without a name gets a name: its id is not known here
             if (now == id && !el.name) now = undefined;
           }
-          apply(ops, now);
-        }}, remove]);
+          return apply(ops, now);
+        });
       break;
     case 'unknown':
       this.grafisch_form('Onbekend: ' + el.name, el.name + ' wordt gebruikt, maar heeft nog geen waarde of formule.',
-        [{key: 'text', label: 'Waarde of formule', value: ''}],
+        [{key: 'text', label: 'Waarde of formule', value: '', formula: true}],
         [{text: 'Maak constante', action: function(v) {
           apply([{op: 'define', id: id, kind: 'const', text: v.text}], id);
         }}, {text: 'Maak hulpvariabele', action: function(v) {
@@ -1087,7 +1435,7 @@ ModelleertaalApp.prototype.download_grafisch_model = function() {
     }
     lay = undefined;
   }
-  this.save_string('<?xml version="1.0" encoding="UTF-8"?>\n' + grafisch.toSVG(g, lay), 'grafisch_model.svg');
+  this.save_string('<?xml version="1.0" encoding="UTF-8"?>\n' + grafisch.toSVG(g, lay), this.file_name('.svg', 'grafisch model'));
 };
 
 
@@ -1127,7 +1475,7 @@ ModelleertaalApp.prototype.download_model = function() {
   // download model in "BogusXML" format
   //  just a text file with XML like tags...
 
-  var filename = $(this.dom_download_xml_fn).val();
+  var filename = this.file_name('.xml');
   this.read_model();
 
   var N = Number($(this.dom_nbox).val());
@@ -1136,6 +1484,154 @@ ModelleertaalApp.prototype.download_model = function() {
   this.save_string(this.model.createBogusXMLString(), filename);
   // model is saved: do not warn for unsaved changes
   this.loaded = {modelregels: this.model.modelregels, startwaarden: this.model.startwaarden};
+  this.autosave();
+};
+
+
+//
+// Autosave: unsaved work is kept in the browser (localStorage), so it is not lost
+// when the tab is closed. On the next visit the user can continue with it.
+//
+var AUTOSAVE_KEY = 'modelleertaal_autosave';
+var AUTOSAVE_MAX_AGE = 30 * 24 * 3600 * 1000;   // 30 days
+var SETTINGS_KEY = 'modelleertaal_instellingen';
+
+function storage(action, value, key) {
+  // localStorage can be blocked (private window, settings): then nothing is saved
+  key = key || AUTOSAVE_KEY;
+  try {
+    if (action == 'get') return window.localStorage.getItem(key);
+    if (action == 'set') window.localStorage.setItem(key, value);
+    if (action == 'remove') window.localStorage.removeItem(key);
+  } catch (err) {
+    return null;
+  }
+  return null;
+}
+
+
+ModelleertaalApp.prototype.load_settings = function() {
+  // settings of the user (Meer opties) from the last visit
+  var settings;
+  try {
+    settings = JSON.parse(storage('get', null, SETTINGS_KEY)) || {};
+  } catch (err) {
+    settings = {};
+  }
+  var precision = Math.round(Number(settings.precision));
+  if (precision >= 1 && precision <= 15) this.precision = precision;
+  if (typeof settings.yaxis_zero == 'boolean') this.yaxis_autoscale = !settings.yaxis_zero;
+  $(this.dom_precision).val(this.precision);
+  $(this.dom_yaxis_zero).prop('checked', !this.yaxis_autoscale);
+  this.set_weergave(settings.weergave, false);
+};
+
+
+ModelleertaalApp.prototype.save_settings = function() {
+  storage('set', JSON.stringify({precision: this.precision, yaxis_zero: !this.yaxis_autoscale,
+                                 weergave: this.weergave}), SETTINGS_KEY);
+};
+
+
+ModelleertaalApp.prototype.schedule_autosave = function() {
+  var self = this;
+  clearTimeout(this.autosave_timer);
+  this.autosave_timer = setTimeout(function() { self.autosave(); }, 1000);
+};
+
+
+ModelleertaalApp.prototype.autosave = function() {
+  clearTimeout(this.autosave_timer);
+  this.autosave_timer = undefined;
+  if (this.is_modified()) {
+    var text = this.current_text();
+    storage('set', JSON.stringify({
+      t: this.get_title(),
+      m: text.modelregels,
+      s: text.startwaarden,
+      N: String($(this.dom_nbox).val()),
+      time: Date.now()
+    }));
+    this.restore_pending = false;
+  } else if (!this.restore_pending && !this.restore_check) {
+    // (not while the user can still choose to continue with the saved work)
+    storage('remove');
+  }
+};
+
+
+ModelleertaalApp.prototype.read_autosave = function() {
+  // the saved work, or null
+  var saved;
+  try {
+    saved = JSON.parse(storage('get'));
+  } catch (err) {
+    saved = null;
+  }
+  if (!saved || typeof saved.m != 'string' || typeof saved.s != 'string') return null;
+  var age = Date.now() - Number(saved.time);
+  if (isNaN(age) || age > AUTOSAVE_MAX_AGE) {
+    storage('remove');
+    return null;
+  }
+  return saved;
+};
+
+
+ModelleertaalApp.prototype.offer_restore = function() {
+  // ask if the user wants to continue with the work of the last visit
+  var self = this;
+  if (this.parse_url_hash().code) return;   // a shared link: open that model
+  var saved = this.read_autosave();
+  if (!saved) return;
+
+  var when = '';
+  try {
+    when = ' (' + new Date(saved.time).toLocaleString('nl-NL',
+      {day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit'}) + ')';
+  } catch (err) {
+    when = '';
+  }
+  this.restore_pending = true;
+  this.show_message('info', 'Verder werken?',
+    "Je was bezig met " + (saved.t ? "'" + saved.t + "'" : "een model") + when + ". Dat is nog niet opgeslagen.", [
+      {text: 'Ga verder', action: function() { self.restore_autosave(saved); }},
+      {text: 'Weggooien', action: function() {
+        self.restore_pending = false;
+        storage('remove');
+        self.clear_message();
+      }}
+    ]);
+};
+
+
+ModelleertaalApp.prototype.restore_autosave = function(saved) {
+  if (this.is_modified() && !window.confirm('Je hebt dit model aangepast.\n' +
+      'Als je verder gaat met het bewaarde model, gaan je wijzigingen verloren.\n\nBewaard model laden?')) {
+    return;
+  }
+  this.model = new evaluator_js.Model();
+  this.model.modelregels = saved.m;
+  this.model.startwaarden = saved.s;
+  var N = Number(saved.N);
+  if (isFinite(N) && N >= 1) this.model.N = N;
+  this.model_title = saved.t ? String(saved.t) : '';
+
+  // in the menu, like a model from a shared link
+  $(this.dom_model_keuze).find('option[value="restored"]').remove();
+  $('<option/>').val('restored').text((this.model_title || 'Model') + ' (bewaard)').prependTo(this.dom_model_keuze);
+  $(this.dom_model_keuze).val('restored');
+  this.dropdown_value = 'restored';
+  if (window.history.replaceState) {
+    window.history.replaceState('', document.title, window.location.pathname + window.location.search);
+  }
+
+  this.init_app();
+  // the restored model is not saved in a file: still warn before it is lost
+  this.loaded = {modelregels: '', startwaarden: ''};
+  this.restore_pending = false;
+  this.autosave();
+  this.print_status('Model van de vorige keer teruggezet. Druk op Run.');
 };
 
 
@@ -1163,6 +1659,23 @@ ModelleertaalApp.prototype.get_title = function() {
 };
 
 
+ModelleertaalApp.prototype.file_name = function(extension, suffix) {
+  // name of a downloaded file: the title of the model (+ suffix), without characters
+  // that are not allowed in a file name. 'Examen vwo 2005-I Champignon (x,t).png'
+  var name = this.get_title() || 'model';
+  if (suffix) name += ' ' + suffix;
+  name = name.replace(/[\\\/:*?"<>|\u0000-\u001f]+/g, '_').replace(/^[\s.]+|[\s.]+$/g, '');
+  return (name || 'model') + extension;
+};
+
+
+ModelleertaalApp.prototype.graph_name = function() {
+  // the graph that is shown, as in the thumbnails: (y,x)
+  if (this.multiplot) return '(' + this.multi_yvars.join(',') + ' tegen ' + this.xvar + ')';
+  return '(' + this.yvar + ',' + this.xvar + ')';
+};
+
+
 ModelleertaalApp.prototype.update_document_title = function() {
   var title = this.get_title();
   document.title = title ? title + ' - Modelleertaal' : 'Modelleertaal webapp';
@@ -1179,7 +1692,14 @@ ModelleertaalApp.prototype.copy_share_url = function() {
 
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(url).then(function() {
-      self.print_status("Link naar dit model gekopieerd naar het klembord.");
+      // confirmation in the button itself, where the user is looking
+      var button = $(self.dom_permalink);
+      if (!button.data('text')) button.data('text', button.text());
+      button.text('Link gekopieerd ✓').addClass('done');
+      clearTimeout(self.permalink_timer);
+      self.permalink_timer = setTimeout(function() {
+        button.text(button.data('text')).removeClass('done');
+      }, 2000);
     }, fallback);
   } else {
     fallback();
@@ -1191,14 +1711,14 @@ ModelleertaalApp.prototype.download_pgfplot = function() {
   // save the plot in TikZ/PGFPlot format
   var data = this.create_pgfplot();
   if (data === false) return;
-  this.save_string(data, $(this.dom_download_pgf_fn).val());
+  this.save_string(data, this.file_name('.tex', this.graph_name()));
 };
 
 
 ModelleertaalApp.prototype.download_tsv = function() {
   // download the results in TSV format.
   if (!this.require_results()) return;
-  this.save_string(this.create_tsv(), $(this.dom_download_tsv_fn).val());
+  this.save_string(this.create_tsv(), this.file_name('.tsv'));
 };
 
 
@@ -1206,7 +1726,45 @@ ModelleertaalApp.prototype.download_svg = function() {
   // download SVG Plot.
   var data = this.create_svgplot();
   if (data === false) return;
-  this.save_string(data, $(this.dom_download_svg_fn).val());
+  this.save_string(data, this.file_name('.svg', this.graph_name()));
+};
+
+
+ModelleertaalApp.prototype.download_png = function() {
+  // the graph as shown (with axes and labels) as a PNG image.
+  // Flot draws the lines on canvases and the text in an SVG layer: compose them.
+  var self = this;
+  if (!this.require_results() || !this.plot_object) return;
+  var sources = $(this.dom_graph).find('canvas, svg').toArray();
+  var composed = document.createElement('canvas');
+  var filename = this.file_name('.png', this.graph_name());
+  var legend = this.multiplot ? this.multi_yvars.slice() : [];
+
+  $.plot.composeImages(sources, composed).then(function() {
+    var out = document.createElement('canvas');
+    out.width = composed.width;
+    out.height = composed.height;
+    var ctx = out.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, out.width, out.height);
+    ctx.drawImage(composed, 0, 0);
+    // several graphs: the colours are next to the checkboxes on screen, put them in the image
+    var scale = out.width / Math.max(1, $(self.dom_graph).width());
+    ctx.font = Math.round(13 * scale) + 'px sans-serif';
+    ctx.textBaseline = 'middle';
+    legend.forEach(function(name, n) {
+      var y = (16 + 18 * n) * scale, x = out.width - 110 * scale;
+      ctx.fillStyle = COLORS_MULTIPLOT[n % COLORS_MULTIPLOT.length];
+      ctx.fillRect(x, y - 2 * scale, 18 * scale, 4 * scale);
+      ctx.fillStyle = '#111827';
+      ctx.fillText(name, x + 24 * scale, y);
+    });
+    out.toBlob(function(blob) {
+      FileSaver.saveAs(blob, filename);
+    }, 'image/png');
+  }, function() {
+    self.show_message('error', 'Niet gelukt', 'De grafiek kon niet als plaatje worden opgeslagen.');
+  });
 };
 
 
@@ -1287,7 +1845,18 @@ ModelleertaalApp.prototype.reveal = function(dom) {
 };
 
 
+ModelleertaalApp.prototype.stopped_by_model = function() {
+  // the last run was stopped by 'stop' (or print): continuing is not possible
+  if (!(this.has_run && this.evaluator && this.evaluator.stopped)) return false;
+  this.show_message('info', 'Het model is gestopt',
+    "Verder rekenen kan niet: het model is gestopt door 'stop'. Druk op Run om opnieuw te beginnen.");
+  return true;
+};
+
+
 ModelleertaalApp.prototype.continue_run = function() {
+
+  if (this.stopped_by_model()) return false;
 
   var N = this.read_N(this.dom_nbox_continue);
   if (N === null) return false;
@@ -1307,6 +1876,8 @@ ModelleertaalApp.prototype.continue_run = function() {
 
 
 ModelleertaalApp.prototype.trace = function() {
+
+  if (this.stopped_by_model()) return false;
 
   if (this.has_run) {
     this.new_run = false;
@@ -1405,6 +1976,7 @@ ModelleertaalApp.prototype.after_run = function() {
   if (this.allVars === undefined) return;
 
   this.set_stale(false);
+  $(this.dom_download_tsv + ',' + this.dom_download_png).prop('hidden', false);
 
   this.analysis = autoplot.analyse(this.allVars, this.results, this.evaluator.modelregels_ast);
   this.graphs = this.analysis.graphs;
@@ -1418,6 +1990,8 @@ ModelleertaalApp.prototype.after_run = function() {
 
   this.print_run_status();
   this.check_results();
+  // values in the tooltips of the diagram
+  if (this.grafisch_open() && this.grafisch_g) this.render_grafisch_model();
 };
 
 
@@ -1443,7 +2017,34 @@ ModelleertaalApp.prototype.print_run_status = function() {
     }
   }
   this.print_status(status);
+
+  if (!this.evaluator.stopped && contains_stop(this.evaluator.modelregels_ast)) {
+    // the model has a stop condition, but did not get there: the graph is not finished
+    var self = this;
+    $(this.dom_status).append(document.createTextNode(" Het model is nog niet bij 'stop' gekomen."))
+      .append($('<button type="button">').addClass('inline_action')
+        .text('Verdubbel aantal iteraties')
+        .click(function() {
+          var N = Math.round(Number(String($(self.dom_nbox).val()).replace(',', '.')));
+          if (!isFinite(N) || N < 1) N = self.results.length - 1;
+          $(self.dom_nbox).val(Math.min(2 * N, N_MAX));
+          self.update_endtime_hint(false);
+          $(self.dom_run).click();
+        }));
+  }
 };
+
+
+function contains_stop(ast) {
+  // is there a 'stop' in the modelregels (also inside als ... dan ... eindals)?
+  for (var i = 0; i < (ast || []).length; i++) {
+    var stmt = ast[i];
+    if (stmt.type == 'Stop') return true;
+    if ((stmt.type == 'If' || stmt.type == 'IfElse') &&
+        (contains_stop(stmt.then) || contains_stop(stmt.elsestmt))) return true;
+  }
+  return false;
+}
 
 
 ModelleertaalApp.prototype.check_results = function() {
@@ -1949,15 +2550,23 @@ function draw_sparkline(canvas, data, previous) {
 
 ModelleertaalApp.prototype.set_max_rows_in_plot = function(max_rows) {
   max_rows = Math.round(Number(max_rows));
-  if (!isFinite(max_rows) || max_rows < 2) return;
+  if (!isFinite(max_rows) || max_rows < 2) {
+    $(this.dom_max_rows).val(this.max_rows_in_plot);
+    return;
+  }
   this.max_rows_in_plot = max_rows;
   if (this.results_available()) this.do_plot();
 };
 
 ModelleertaalApp.prototype.set_precision = function(precision) {
   precision = Math.round(Number(precision));
-  if (!isFinite(precision) || precision < 1 || precision > 15) return;
+  if (!isFinite(precision) || precision < 1 || precision > 15) {
+    $(this.dom_precision).val(this.precision);
+    return;
+  }
   this.precision = precision;
+  this.save_settings();
+  this.update_endtime_hint(false);
   if (this.results_available()) this.print_table();
 };
 
@@ -2015,13 +2624,24 @@ ModelleertaalApp.prototype.init_app = function() {
   $(this.dom_graph_tabs).empty();
   $(this.dom_graph_note).empty();
   $(this.dom_clickdata).empty();
+  $(this.dom_download_tsv + ',' + this.dom_download_png).prop('hidden', true);
   $(this.dom_datatable).empty().append(
     $('<div>').addClass('placeholder').text('Hier komt de tabel met resultaten.'));
   this.print_status("Model geladen. Druk op Run.");
+  this.update_endtime_hint(true);
+  if (this.restore_check) {
+    this.restore_check = false;
+    this.offer_restore();
+  } else if (!this.starting) {
+    // another model is loaded: the saved work is no longer needed
+    this.autosave();
+  }
   this.grafisch_moved = {};   // other model: forget dragged positions
   this.grafisch_zoom = null;
   this.grafisch_history = [];
   this.grafisch_selected = undefined;
+  this.grafisch_linked = undefined;
+  this.grafisch_highlight_lines(undefined);
   $('#grafisch_undo').prop('disabled', true);
   if (this.grafisch_open()) this.draw_grafisch_model();
 };

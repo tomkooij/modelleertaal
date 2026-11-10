@@ -21,6 +21,51 @@
   "Ongedaan maken" (Ctrl+Z) for changes made in the diagram; zoom (buttons,
   Ctrl + mouse wheel, "Passend") and pan (drag the background). A wide model
   is fitted to the width.
+- Unsaved work is kept in the browser (localStorage). On the next visit:
+  "Verder werken?" with "Ga verder" and "Weggooien". Not for a shared link
+  (`#code=`); removed after "Sla model op" or after choosing another model.
+- Next to "Aantal iteraties": `× dt = 50`, how long the model runs (N × dt,
+  from the startwaarden, updates while typing).
+- If the model has a `stop` that was not reached: hint in the status line with
+  a button "Verdubbel aantal iteraties" (doubles N and runs again).
+- Top bar: "Open", "Bewaar" and "Deel link" are always visible ("Bestanden…"
+  and the file name field are gone). "Deel link" confirms in the button itself
+  ("Link gekopieerd ✓"). The link to Modelleertaal classic is in the footer.
+- The title of the model is a heading above the editors that can be edited
+  directly ("Pas titel aan" is gone). Downloaded files are named after the
+  title: `Examen vwo 2014-II Kogelstoten.xml`, `... (y,x).png`, `....tsv`.
+- "Download tabel (Excel)" in the heading of the table and "Download grafiek"
+  next to the graph (after Run). The graph is saved as a PNG with axes, labels
+  and (multiplot) legend. SVG and PGFPlot stay in "Meer opties".
+- "Meer opties": significant digits and max. points are applied when changed
+  (no button-as-label); "Meer/minder knoppen (profiel)" is now a checkbox that
+  shows "Volgende regel" and "Voeg toe". Significant digits and "verticale as
+  vanaf 0" are remembered in the browser.
+- Graphical model in the model card: switch "Tekst | Tekst + grafisch" next to
+  the title (remembered). With "Tekst + grafisch" the model gets the whole
+  width: diagram left and text right (≥ 1200 px, else diagram above the
+  text), graph and table below it, next to each other. With "Tekst" the
+  graph stays in view on the right (sticky on wide screens). The panel
+  "Weergave als grafisch model" at the bottom is gone.
+- Symbol and text are linked: a selected symbol marks its lines in the
+  editors (definition, beginwaarde, the line where a flow enters); the cursor
+  in a line lights up its symbol. After Run the tooltip of a symbol shows the
+  begin and end value. New `grafisch.lines()`.
+- Diagram controls without instructions: the explanation paragraph and
+  "Legenda" are replaced by a small fixed legend under the diagram.
+  "Herkende elementen" (closed by default) is under the legend; a click on a
+  row selects that element in the diagram; "Herstel indeling" and the SVG download are icons in the
+  toolbar. A selected toestandsvariabele has + buttons for a new flow in
+  (left) and out (right). Changes in the form are applied at once (Enter or
+  leaving the field, no "Pas toe"); an impossible change gets a red border
+  and leaves the text as it is. Under a formula: the names of the variables,
+  click to insert. The form opens below, above or next to the symbol and
+  never outside the diagram.
+- Phone: the diagram starts fitted to the width ("Passend", down to 30%);
+  zoom with two fingers.
+- Fix: after `stop`, "Voeg toe" and the debugger ("Volgende regel") no longer
+  continue the model. `evaluator.stopped` is only true for `stop`/`print`, no
+  longer for a debugger breakpoint.
 
 ## [6.0]
 
