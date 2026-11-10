@@ -1,0 +1,72 @@
+# Overgezet van .travis.yml:
+#  - push naar master  -> www.tomkooij.nl/modelleertaal-dev  (gh-pages van tomkooij/modelleertaal-dev)
+#  - tag (v...)        -> www.tomkooij.nl/modelleertaal      (gh-pages van deze repository, LIVE)
+#                         + GitHub release met zipbestand
+#
+# Voor de dev-site is een secret DEV_PAGES_TOKEN nodig: een (fine-grained) personal
+# access token met "Contents: read and write" op tomkooij/modelleertaal-dev.
+# Zonder dat secret wordt de dev-deploy overgeslagen.
+
+name: deploy
+
+on:
+  push:
+    branches: [master]
+    tags: ['v*']
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # gh-pages van deze repository en releases
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+      - run: npm install
+      - run: npx grunt build
+      - run: npx grunt test
+
+      - name: Maak de map met de webapp
+        run: |
+          rm -rf _build
+          mkdir _build
+          cp index.html config.js _build/
+          cp -R scripts modellen _build/
+          touch _build/.nojekyll
+
+      - name: Deploy naar modelleertaal-dev (push naar master)
+        if: github.ref == 'refs/heads/master'
+        env:
+          TOKEN: ${{ secrets.DEV_PAGES_TOKEN }}
+        run: |
+          if [ -z "$TOKEN" ]; then
+            echo "::warning::Secret DEV_PAGES_TOKEN ontbreekt: dev-deploy overgeslagen."
+            exit 0
+          fi
+          ./.github/publish_pages.sh "https://x-access-token:${TOKEN}@github.com/tomkooij/modelleertaal-dev.git"
+
+      - name: Deploy naar de live site (tag)
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./.github/publish_pages.sh "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+
+      - name: Release met zipbestand (tag)
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          ZIP="modelleertaal-${TAG}.zip"
+          zip -r "$ZIP" index.html config.js scripts modellen
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" "$ZIP" --clobber
+          else
+            gh release create "$TAG" "$ZIP" --title "$TAG" --generate-notes
+          fi
