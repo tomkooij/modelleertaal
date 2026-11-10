@@ -1,5 +1,6 @@
 var evaluator_js = require('./evaluator.js');
 var autoplot = require('./autoplot.js');
+var grafisch = require('./grafisch.js');
 var Blob = require('blob');
 var FileSaver = require('file-saver');
 // this also depends on:
@@ -81,6 +82,10 @@ function ModelleertaalApp(params) {
   this.dom_model_keuze = "#model_keuze";
   this.dom_permalink = "#permalink";
   this.dom_titel = "#model_titel";
+  this.dom_grafisch = "#grafisch_model";
+  this.dom_grafisch_svg = "#grafisch_svg";
+  this.dom_grafisch_tabel = "#grafisch_tabel";
+  this.dom_download_grafisch = "#download_grafisch";
   this.model_title = '';
 
   this.read_model();
@@ -205,6 +210,14 @@ function ModelleertaalApp(params) {
   });
   $(this.dom_download_svg).click(function() {
     self.download_svg();
+  });
+
+  // grafisch model: drawn from the text of the model (no Run needed)
+  $(this.dom_grafisch).on('toggle', function() {
+    if (this.open) self.draw_grafisch_model();
+  });
+  $(this.dom_download_grafisch).click(function() {
+    self.download_grafisch_model();
   });
 
   $(this.dom_fileinput).change(function(event) {
@@ -463,11 +476,66 @@ ModelleertaalApp.prototype.is_modified = function() {
 
 ModelleertaalApp.prototype.on_model_edited = function() {
   // called on every change in the editors.
+  var self = this;
   this.remove_highlight_error();
+  if (this.grafisch_open()) {
+    clearTimeout(this.grafisch_timer);
+    this.grafisch_timer = setTimeout(function() { self.draw_grafisch_model(); }, 400);
+  }
   if (this.results_available() && !this.stale) {
     this.set_stale(true);
     this.print_status("Model gewijzigd. Druk op Run.");
   }
+};
+
+
+ModelleertaalApp.prototype.grafisch_open = function() {
+  var details = $(this.dom_grafisch)[0];
+  return details !== undefined && details.open;
+};
+
+
+ModelleertaalApp.prototype.analyse_grafisch_model = function() {
+  // grafisch.js analysis of the model in the editors. Throws on syntax errors.
+  this.read_model();
+  var ev = new evaluator_js.ModelregelsEvaluator(this.model, false);
+  return grafisch.analyse(ev.startwaarden_ast, ev.modelregels_ast);
+};
+
+
+ModelleertaalApp.prototype.draw_grafisch_model = function() {
+  // draw the model as a Coach style stock-flow diagram (see grafisch.js)
+  var svg = $(this.dom_grafisch_svg), tabel = $(this.dom_grafisch_tabel);
+  var g;
+  try {
+    g = this.analyse_grafisch_model();
+  } catch (err) {
+    svg.empty().append($('<div>').addClass('placeholder')
+      .text('Geen grafisch model: ' + (err.message || 'fout in het model') + ''));
+    tabel.empty();
+    return;
+  }
+  svg.html(grafisch.toSVG(g));
+  var table = $('<table>');
+  grafisch.table(g).forEach(function(row) {
+    table.append($('<tr>')
+      .append($('<td>').text(row.kind))
+      .append($('<td>').append($('<b>').text(row.name)))
+      .append($('<td>').text(row.definition)));
+  });
+  tabel.empty().append(table);
+};
+
+
+ModelleertaalApp.prototype.download_grafisch_model = function() {
+  var g;
+  try {
+    g = this.analyse_grafisch_model();
+  } catch (err) {
+    this.show_error(err);
+    return;
+  }
+  this.save_string('<?xml version="1.0" encoding="UTF-8"?>\n' + grafisch.toSVG(g), 'grafisch_model.svg');
 };
 
 
@@ -1398,6 +1466,7 @@ ModelleertaalApp.prototype.init_app = function() {
   $(this.dom_datatable).empty().append(
     $('<div>').addClass('placeholder').text('Hier komt de tabel met resultaten.'));
   this.print_status("Model geladen. Druk op Run.");
+  if (this.grafisch_open()) this.draw_grafisch_model();
 };
 
 

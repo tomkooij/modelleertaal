@@ -558,6 +558,39 @@
             margin-top: 8px;
         }
 
+        /* grafisch model */
+        #grafisch_model > div,
+        #grafisch_model > p,
+        #grafisch_model > details,
+        #grafisch_model > button {
+            margin-top: 10px;
+        }
+
+        #grafisch_svg {
+            overflow-x: auto;
+        }
+
+        #grafisch_svg svg {
+            display: block;
+            max-width: none;
+        }
+
+        .grafisch_legenda {
+            color: var(--muted);
+            font-size: 0.85rem;
+        }
+
+        #grafisch_tabel table {
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        #grafisch_tabel td {
+            border-top: 1px solid var(--border);
+            padding: 3px 8px;
+            vertical-align: top;
+        }
+
         /* meer opties */
         details summary {
             cursor: pointer;
@@ -683,6 +716,23 @@
                 <div id="datatable"></div>
             </section>
         </div>
+
+        <details class="card" id="grafisch_model">
+            <summary>Grafisch model (zoals in Coach)</summary>
+            <div id="grafisch_svg"></div>
+            <p class="grafisch_legenda">
+                Rechthoek: toestandsvariabele &middot; pijp met kraantje: stroom &middot; cirkel: hulpvariabele
+                (gestippeld: met voorwaarde) &middot; ruit: constante &middot; bliksem: voorval &middot;
+                rode pijl: &ldquo;hangt af van&rdquo; (lichte stippels: alleen in de voorwaarde van
+                <i>als&nbsp;&hellip;&nbsp;dan</i>) &middot; grijze streepjes: beginwaarde &middot; blauwe streepjes:
+                voorval verandert een toestand. Wijs een symbool aan voor de formule.
+            </p>
+            <details>
+                <summary>Herkende elementen</summary>
+                <div id="grafisch_tabel"></div>
+            </details>
+            <button id="download_grafisch" type="button">Download grafisch model als SVG</button>
+        </details>
 
         <details class="card" id="meer_opties">
             <summary>Meer opties…</summary>
