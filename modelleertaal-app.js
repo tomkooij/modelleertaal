@@ -90,6 +90,7 @@ function ModelleertaalApp(params) {
   this.dom_workspace = ".workspace";
   this.dom_grafisch_tabel = "#grafisch_tabel";
   this.weergave = 'tekst';   // 'tekst' or 'grafisch' (text and diagram)
+  this.grafisch_stijl = 'examen';   // style of the diagram: 'examen' or 'kleur' (see grafisch.js)
   this.dom_download_grafisch = "#download_grafisch";
   this.dom_grafisch_reset = "#grafisch_herstel";
   this.dom_grafisch_form = "#grafisch_eigenschappen";
@@ -249,6 +250,10 @@ function ModelleertaalApp(params) {
   // Tekst | Tekst + grafisch. The diagram is drawn from the text of the model (no Run needed)
   $(this.dom_view_switch).on('click', 'button', function() {
     self.set_weergave($(this).attr('data-weergave'), true);
+  });
+  // Examen | Kleur: style of the diagram
+  $('.stijl_switch').on('click', 'button', function() {
+    self.set_grafisch_stijl($(this).attr('data-stijl'), true);
   });
   // Herkende elementen: a click on a row selects the element in the diagram
   $(this.dom_grafisch_tabel).on('click', 'tr[data-id]', function() {
@@ -732,6 +737,25 @@ ModelleertaalApp.prototype.grafisch_open = function() {
 };
 
 
+ModelleertaalApp.prototype.set_grafisch_stijl = function(stijl, save) {
+  // 'examen': black and white, as in the exams. 'kleur': in color.
+  this.grafisch_stijl = (stijl == 'kleur') ? 'kleur' : 'examen';
+  var now = this.grafisch_stijl;
+  $('.stijl_switch button').each(function() {
+    $(this).attr('aria-pressed', String($(this).attr('data-stijl') == now));
+  });
+  $('.grafisch_strook').each(function() {
+    $(this).prop('hidden', $(this).attr('data-stijl') != now);
+  });
+  $(this.dom_grafisch_svg).attr('data-stijl', now);
+  if (this.grafisch_open() && this.grafisch_g) {
+    this.grafisch_bounds = null;
+    this.render_grafisch_model();
+  }
+  if (save) this.save_settings();
+};
+
+
 ModelleertaalApp.prototype.set_weergave = function(weergave, save) {
   // 'tekst': only the text. 'grafisch': the diagram above the text, in the same card.
   var self = this;
@@ -770,7 +794,7 @@ ModelleertaalApp.prototype.analyse_grafisch_model = function() {
 
 
 ModelleertaalApp.prototype.draw_grafisch_model = function() {
-  // draw the model as a Coach style stock-flow diagram (see grafisch.js)
+  // draw the model as a stock-flow diagram, in the style of the exams or in color (see grafisch.js)
   var svg = $(this.dom_grafisch_svg);
   var g;
   try {
@@ -835,7 +859,7 @@ ModelleertaalApp.prototype.render_grafisch_model = function() {
   // draw this.grafisch_g with the (dragged) positions in this.grafisch_layout.
   // The drawing only grows while dragging, so it does not jump under the mouse.
   var self = this;
-  var opts = {bounds: this.grafisch_bounds, values: this.grafisch_values(),
+  var opts = {bounds: this.grafisch_bounds, values: this.grafisch_values(), stijl: this.grafisch_stijl,
               selected: this.grafisch_form_new ? undefined : this.grafisch_selected};
   var view = $(this.dom_grafisch_svg);
   view.html(grafisch.toSVG(this.grafisch_g, this.grafisch_layout, opts));
@@ -1435,7 +1459,7 @@ ModelleertaalApp.prototype.download_grafisch_model = function() {
     }
     lay = undefined;
   }
-  this.save_string('<?xml version="1.0" encoding="UTF-8"?>\n' + grafisch.toSVG(g, lay), this.file_name('.svg', 'grafisch model'));
+  this.save_string('<?xml version="1.0" encoding="UTF-8"?>\n' + grafisch.toSVG(g, lay, {stijl: this.grafisch_stijl}), this.file_name('.svg', 'grafisch model'));
 };
 
 
@@ -1523,13 +1547,14 @@ ModelleertaalApp.prototype.load_settings = function() {
   if (typeof settings.yaxis_zero == 'boolean') this.yaxis_autoscale = !settings.yaxis_zero;
   $(this.dom_precision).val(this.precision);
   $(this.dom_yaxis_zero).prop('checked', !this.yaxis_autoscale);
+  this.set_grafisch_stijl(settings.grafisch_stijl, false);
   this.set_weergave(settings.weergave, false);
 };
 
 
 ModelleertaalApp.prototype.save_settings = function() {
   storage('set', JSON.stringify({precision: this.precision, yaxis_zero: !this.yaxis_autoscale,
-                                 weergave: this.weergave}), SETTINGS_KEY);
+                                 weergave: this.weergave, grafisch_stijl: this.grafisch_stijl}), SETTINGS_KEY);
 };
 
 

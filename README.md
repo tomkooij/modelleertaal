@@ -1,109 +1,135 @@
-Simple compiler and webapp for *Modelleertaal*
-==========================================
+Compiler en webapp voor *Modelleertaal*
+=======================================
 
-### [▶ Try the webapp!](https://tomkooij.github.io/modelleertaal)
+### [▶ Probeer de webapp!](https://tomkooij.github.io/modelleertaal)
 
-It runs in your browser (computer, tablet or phone). Nothing to install, no account.
+De webapp werkt in je browser (computer, tablet of telefoon). Niets installeren, geen account.
 
-> **Prefer the old layout? Use [Modelleertaal classic](https://www.tomkooij.nl/modelleertaal-classic).**
+> **Liever de oude indeling? Gebruik [Modelleertaal classic](https://www.tomkooij.nl/modelleertaal-classic).**
 >
-> Version 6 of the webapp has a new layout. If you are used to the previous version (5.4.2), for example
-> because your lesson material or instructions are based on it, you can keep using it at
-> [www.tomkooij.nl/modelleertaal-classic](https://www.tomkooij.nl/modelleertaal-classic). This is an
-> archived copy: it stays available, but it will not be updated.
+> Versie 6 van de webapp heeft een nieuwe indeling. Ben je gewend aan de vorige versie (5.4.2), bijvoorbeeld
+> omdat je lesmateriaal of instructies daarop gebaseerd zijn, dan kun je die blijven gebruiken op
+> [www.tomkooij.nl/modelleertaal-classic](https://www.tomkooij.nl/modelleertaal-classic). Dit is een
+> gearchiveerde kopie: die blijft beschikbaar, maar wordt niet meer bijgewerkt.
 
 [![test](https://github.com/tomkooij/modelleertaal/actions/workflows/test.yml/badge.svg)](https://github.com/tomkooij/modelleertaal/actions/workflows/test.yml)
 
-*Modelleertaal* is the language of *natuurkundig modelleren*: the numerical (dynamic) models in Dutch high
-school physics and in the central exams (vwo). This repository contains a fast *Modelleertaal* to javascript
-compiler and a webapp that runs all models used in Dutch high school physics. The webapp is in Dutch.
+*Modelleertaal* is de taal van *natuurkundig modelleren*: de numerieke (dynamische) modellen in de
+natuurkunde op de middelbare school en in de centrale examens (vwo). Deze repository bevat een snelle
+compiler van *Modelleertaal* naar javascript en een webapp die alle modellen uit de natuurkunde op de
+middelbare school kan doorrekenen.
 
 ## Webapp
 
-[![The webapp: text model, automatic graphs and the previous run in gray](images/webapp-tekst.png)](https://tomkooij.github.io/modelleertaal)
+[![De webapp: tekstmodel, automatische grafieken en de vorige run in grijs](images/webapp-tekst.png)](https://tomkooij.github.io/modelleertaal)
 
-The webapp is made for students: you should be able to use it without a manual.
+De webapp is gemaakt voor leerlingen: je moet hem zonder handleiding kunnen gebruiken.
 
-- **Model and Run.** Choose an exam model or start with an empty model. Type the *modelregels* and
-  *startwaarden* and press **Run** (or Ctrl+Enter).
-- **Automatic graphs.** After Run the webapp chooses the relevant graphs from the model: (x,t), (v,t),
-  (a,t), the trajectory (y,x), ... Click a thumbnail to show it large. Click a point to read its values.
-- **Compare runs.** The previous run stays visible as a gray line. Change a startwaarde (for example `k`),
-  press Run and see what changed.
-- **Error messages in Dutch,** in the page, with the line marked in the editor and suggestions for typos
-  (*Bedoel je 'Fres'?*). A warning if a value is no longer a valid number (division by zero, *dt* too large).
-- **Help while modelling.** Next to the number of iterations the webapp shows how long the model runs
-  (`× dt = 50`). If the model has a `stop` that is not reached, it says so and offers to double the
-  number of iterations.
-- **Table** with all values, and downloads: the table for Excel (TSV) and the graph as an image (PNG).
-- **Your work is not lost.** Unsaved work is kept in the browser: on your next visit you can continue.
-  **Bewaar** saves the model as a file, **Open** opens it again.
-- **Deel link** copies a link that contains the (changed) model and its title: share it with a student,
-  a colleague or in your lesson material.
+- **Model en Run.** Kies een examenmodel of begin met een leeg model. Typ de *modelregels* en
+  *startwaarden* en druk op **Run** (of Ctrl+Enter).
+- **Automatische grafieken.** Na Run kiest de webapp zelf de grafieken die bij het model passen: (x,t), (v,t),
+  (a,t), de baan (y,x), ... Klik op een miniatuur om die groot te zien. Klik op een punt om de waarden af te lezen.
+- **Runs vergelijken.** De vorige run blijft zichtbaar als grijze lijn. Verander een startwaarde (bijvoorbeeld `k`),
+  druk op Run en zie wat er veranderd is.
+- **Foutmeldingen in het Nederlands,** in de pagina, met de regel gemarkeerd in de editor en suggesties bij
+  typefouten (*Bedoel je 'Fres'?*). Een waarschuwing als een waarde geen geldig getal meer is (delen door nul,
+  *dt* te groot).
+- **Hulp bij het modelleren.** Naast het aantal iteraties laat de webapp zien hoe lang het model loopt
+  (`× dt = 50`). Heeft het model een `stop` die niet bereikt wordt, dan meldt de webapp dat en biedt aan om het
+  aantal iteraties te verdubbelen.
+- **Tabel** met alle waarden, en downloads: de tabel voor Excel (TSV) en de grafiek als plaatje (PNG).
+- **Je werk raakt niet kwijt.** Werk dat niet bewaard is, blijft in de browser staan: bij je volgende bezoek kun
+  je verder. **Bewaar** slaat het model op als bestand, **Open** opent het weer.
+- **Deel link** kopieert een link met het (aangepaste) model en de titel erin: deel die met een leerling,
+  een collega of in je lesmateriaal.
 
-### Graphical model
+### Grafisch model
 
-[![The graphical model (stock-flow diagram) next to the text of the model](images/webapp-grafisch.png)](https://tomkooij.github.io/modelleertaal)
+[![Het grafische model (stock-flow diagram) naast de tekst van het model](images/webapp-grafisch.png)](https://tomkooij.github.io/modelleertaal)
 
-Switch to **Tekst + grafisch** to see the model as a stock-flow diagram, like the graphical mode of Coach 7:
-*toestandsvariabelen* (rectangles), *stromen* (pipes with a valve), *hulpvariabelen* (circles),
-*constanten* (diamonds), *voorvallen* (lightning) and red arrows for "depends on".
+Kies **Tekst + grafisch** om het model als stock-flow diagram te zien, getekend zoals de grafische modellen
+in de centrale examens (vwo natuurkunde, bijvoorbeeld 2022-I *Vrije worp bij basketbal* en 2023-II *Fietshelm*):
+zwart op een grijze achtergrond, *toestandsvariabelen* (rechthoeken), *stromen* (holle pijlen met een ventiel:
+een cirkel met een kraantje), *hulpvariabelen* en *constanten* (cirkels, naam eronder) en zwarte pijlen voor
+"hangt af van". *Voorvallen* (`als ... dan` waarin een *toestandsvariabele* verandert) worden als bliksem getekend.
 
-- The diagram is drawn from the text of the model, while you type. No Run needed.
-- **Text and diagram are linked.** Click a symbol and its lines in the text are marked. Put the cursor
-  in a line of the text and its symbol lights up. After Run, hover over a symbol to see its first and last value.
-- **The diagram is also input.** Click a symbol to change its name or formula, add *toestandsvariabelen*,
-  *stromen*, *hulpvariabelen* and *constanten* (the **+** buttons on a selected *toestandsvariabele* add a
-  flow in or out), or remove them. Every change is a small change in the text of the model: the text stays
-  the model, as in the exams. Names of variables can be inserted with a click, so there are no typos.
-- Drag symbols, zoom and pan. *Herkende elementen* lists how each line of the text was recognised.
-  Download the diagram as SVG.
+<img src="images/webapp-grafisch-kleur.png" alt="Hetzelfde grafische model in kleur" width="400" align="right">
 
-### On a phone or tablet
+Liever in kleur? De schakelaar **Examen | Kleur** onder het diagram tekent hetzelfde model in de kleuren van
+Coach 7: blauwe symbolen en rode pijlen voor "hangt af van". In deze stijl zijn *hulpvariabelen* cirkels en
+*constanten* kleine cirkels met aan elke kant een streepje, zoals in Coach 7. Een *stroom* van of naar buiten
+het model begint of eindigt in een gestippelde cirkel. De webapp onthoudt je keuze, en **Download** slaat het
+diagram op in de stijl die je ziet.
 
-<img src="images/webapp-telefoon.png" alt="The webapp on a phone: the graph after Run" width="260" align="right">
+Bronnen van de twee stijlen:
 
-The layout adapts to the screen. On a phone the model, the graph and the table are below each other;
-after Run the page scrolls to the graph. The graphical model fits the width of the screen and you zoom
-with two fingers.
+| Stijl | Bron |
+|---|---|
+| Examen | De grafische modellen in de centrale examens natuurkunde vwo op [examenblad.nl](https://www.examenblad.nl): 2022-I *Vrije worp bij basketbal* (figuur 5), 2023-II *Fietshelm* (figuur 6), 2018-I *Uitrijden van een auto* (figuur 2) |
+| Kleur | Coach 7 (CMA), zoals beschreven in A. Heck, [*Guide on modelling*](https://staff.fnwi.uva.nl/a.j.p.heck/Guide_on_modelling/Text/grafischmodelleren.html) (UvA), figuur 3.10 *A graphical model in Coach 7*: een *hulpvariabele* is een cirkel ("indicated by a circle"), een *constante* een cirkel met aan elke kant een streepje ("a circle with two extra line segments on each side"). Het examen 2018-I gebruikt hetzelfde symbool voor een *constante*. |
 
-The webapp (HTML/Javascript) runs in any modern browser on Windows, macOS, ChromeOS, Android and iOS. It is
-developed and tested on Chrome. If it doesn't work or isn't easy to use: please
-[provide feedback](https://github.com/tomkooij/modelleertaal/issues).
+- Het diagram wordt getekend uit de tekst van het model, terwijl je typt. Run is niet nodig.
+- **Tekst en diagram zijn gekoppeld.** Klik op een symbool en de regels ervan worden gemarkeerd in de tekst.
+  Zet de cursor in een regel van de tekst en het symbool licht op. Na Run zie je de eerste en laatste waarde
+  als je met de muis boven een symbool staat.
+- **Het diagram is ook invoer.** Klik op een symbool om de naam of formule te veranderen, voeg
+  *toestandsvariabelen*, *stromen*, *hulpvariabelen* en *constanten* toe (met de **+** knoppen bij een gekozen
+  *toestandsvariabele* voeg je een stroom in of uit toe), of verwijder ze. Elke wijziging is een kleine wijziging
+  in de tekst van het model: de tekst blijft het model, net als in de examens. Namen van variabelen voeg je
+  in met een klik, dus zonder typefouten.
+- Versleep symbolen, zoom in en uit en schuif het diagram. *Herkende elementen* laat zien hoe elke regel van de
+  tekst herkend is. Download het diagram als SVG.
 
 <br clear="right">
 
-## Using the webapp in your own website
+### Op een telefoon of tablet
 
-(please do!)
+<img src="images/webapp-telefoon.png" alt="De webapp op een telefoon: de grafiek na Run" width="260" align="right">
 
-Only `index.html` and the folders `scripts/` and `modellen/` are needed to run the webapp in a browser or in a website. However
-you need the browserified file `scripts/modelleertaal-app.browser.js` which is not included in the `master` branch.
-You can build it yourself (see below) or download a zip or tarball from the [release page](https://github.com/tomkooij/modelleertaal/releases).
+De indeling past zich aan het scherm aan. Op een telefoon staan het model, de grafiek en de tabel onder elkaar;
+na Run scrolt de pagina naar de grafiek. Het grafische model past in de breedte van het scherm en je zoomt
+met twee vingers.
 
-Optionally change the models in `modellen/` and edit `modellen/models.js` accordingly. Put it on a website somewhere.
-All code runs in the browser, so a server is not needed.
+De webapp (HTML/Javascript) werkt in elke moderne browser op Windows, macOS, ChromeOS, Android en iOS. Hij is
+ontwikkeld en getest in Chrome. Werkt het niet, of is het niet makkelijk te gebruiken? Laat het weten:
+[geef feedback](https://github.com/tomkooij/modelleertaal/issues).
 
-The webapp can be customized (buttons and options turned off and on) in `config.js`.
+<br clear="right">
 
-## About *Modelleertaal*
+## De webapp in je eigen website gebruiken
 
-*Modelleertaal* is the language used for "natuurkundig modelleren"
-(dynamical models in high school physics in NL. System dynamics, Jay W. Forrester, DYNAMO, ...)
-The language is a subset of "CoachTaal" which is an imperative language derived from Pascal.
+(graag zelfs!)
 
-*Modelleertaal* tries to resemble the syntax used in NL textbooks and exams, which is CoachTaal with some differences:
+Alleen `index.html` en de mappen `scripts/` en `modellen/` zijn nodig om de webapp in een browser of op een
+website te draaien. Je hebt wel het gebrowserifyde bestand `scripts/modelleertaal-app.browser.js` nodig, dat
+niet in de `master` branch staat. Je kunt het zelf bouwen (zie hieronder) of een zip of tarball downloaden van
+de [releasepagina](https://github.com/tomkooij/modelleertaal/releases).
 
- - Statements are not ; terminated
- - = is used for assignments (:= is allowed, and treated as an alias. Slightly different from CoachTaal)
- - == is used for the 'equal' operator, instead of =. In practice the == operator should never be used.
-   A single = is accepted as 'equal' directly in a condition: `als x = 3 dan`.
- - Only 'als dan eindals' 'anders' and 'stop' statements are implemented. Other flowcontrol is never used in *Modelleertaal*.
- - Functions cannot be defined. Most math functions from CoachTaal are implemented.
- - sin(x), cos(x) and tan(x) are always in degrees. Other trig functions in radians.
- - C/Java style comments are allowed
+Pas eventueel de modellen in `modellen/` aan en wijzig `modellen/models.js` op dezelfde manier. Zet het
+geheel ergens op een website. Alle code draait in de browser, dus een server is niet nodig.
 
-Example:
+In `config.js` kun je de webapp aanpassen (knoppen en opties aan- en uitzetten).
+
+## Over *Modelleertaal*
+
+*Modelleertaal* is de taal die gebruikt wordt bij "natuurkundig modelleren"
+(dynamische modellen in de natuurkunde op de middelbare school in Nederland. System dynamics, Jay W. Forrester,
+DYNAMO, ...). De taal is een deelverzameling van "CoachTaal", een imperatieve taal afgeleid van Pascal.
+
+*Modelleertaal* probeert zo veel mogelijk te lijken op de schrijfwijze in Nederlandse lesmethodes en examens.
+Dat is CoachTaal, met een paar verschillen:
+
+ - Opdrachten eindigen niet met ;
+ - = is de toekenning (:= mag ook en betekent hetzelfde. Iets anders dan in CoachTaal)
+ - == is de operator 'is gelijk aan', in plaats van =. In de praktijk is == nooit nodig.
+   Een enkele = wordt direct in een voorwaarde geaccepteerd als 'is gelijk aan': `als x = 3 dan`.
+ - Alleen 'als dan eindals', 'anders' en 'stop' zijn geïmplementeerd. Andere opdrachten voor de programmaloop
+   worden in *Modelleertaal* nooit gebruikt.
+ - Je kunt geen functies definiëren. De meeste wiskundige functies uit CoachTaal zijn geïmplementeerd.
+ - sin(x), cos(x) en tan(x) rekenen altijd in graden. De andere goniometrische functies in radialen.
+ - Commentaar in de stijl van C/Java mag ook.
+
+Voorbeeld:
 ```
 Als (a == 0) En Niet(b == Waar) Dan Stop       'modelleertaal
 ```
@@ -130,13 +156,17 @@ Examen vwo 2005-I Champignon:
      als h < 350 dan k = 30 eindals
 ```
 
-## About the modelleertaal compiler
+## Over de compiler
 
-`evaluator.js` contains a compiler for *Modelleertaal* to javascript. Using a modern javascript compiler such as Node.js/Chrome V8 it is very fast. `run.js` contains a benchmark. Compared to other modellertaal interpreters/compilers it is orders of magnitude faster.
+`evaluator.js` bevat een compiler van *Modelleertaal* naar javascript. Met een moderne javascript-engine zoals
+Node.js/Chrome V8 is die erg snel. `run.js` bevat een benchmark. Vergeleken met andere interpreters en compilers
+voor modelleertaal is hij vele ordes van grootte sneller.
 
-The parser is build using [jison](https://github.com/zaach/jison). Modelleertaal is compiled to javascript which is executed using `eval()`. The `eval()` has been wrapped into an anonymous function to prevent bailout of the V8 optimising compiler.
+De parser is gebouwd met [jison](https://github.com/zaach/jison). Modelleertaal wordt gecompileerd naar
+javascript, dat wordt uitgevoerd met `eval()`. De `eval()` zit in een anonieme functie, zodat de optimaliserende
+compiler van V8 niet afhaakt.
 
-Usage:
+Gebruik:
 ```javascript
 model = new evaluator_js.Model();
 model.modelregels = "a = a + 1";
@@ -147,12 +177,13 @@ var evaluator = new evaluator_js.ModelregelsEvaluator(model);
 results = evaluator.run(N);
 ```
 
-`model.js` is used to read/write models. Models are stored in `BogusXML` which has an XML-like syntax with `<` and `>` allowed.
+`model.js` leest en schrijft modellen. Modellen worden opgeslagen in `BogusXML`: een syntax die op XML lijkt,
+maar waarin `<` en `>` mogen voorkomen.
 
-## Installation for development
+## Installatie voor ontwikkeling
 
-To use the `master` branch (development version) of the webapp and/or compiler you will need to build it. This requires Node.js,
-npm and grunt:
+Om de `master` branch (de ontwikkelversie) van de webapp en/of de compiler te gebruiken, moet je die eerst
+bouwen. Daarvoor heb je Node.js, npm en grunt nodig:
 
 ```
 npm install -g grunt-cli
@@ -160,22 +191,26 @@ npm install
 grunt
 ```
 
-## Running the webapp offline
+## De webapp offline gebruiken
 
-The webapp should run offline, but browser security may interfere with loading the models. (Cross site scripting protection may
-block the ajax request). At the time of writing CORS protection blocks the webapp on Chrome, Firefox and Edge. Either install a
-browser extension that disables CORS protection or use a local webserver (`python -m http.server`)
+De webapp zou offline moeten werken, maar de beveiliging van de browser kan het laden van de modellen
+tegenhouden (bescherming tegen cross-site scripting kan het ajax-verzoek blokkeren). Op het moment van schrijven
+blokkeert de CORS-bescherming de webapp in Chrome, Firefox en Edge. Installeer een browserextensie die de
+CORS-bescherming uitzet, of gebruik een lokale webserver (`python -m http.server`).
 
-## License and credits
+## Licentie en dank
 
-This compiler and webapp implements the language used in Dutch High School Physics exams.
-This language is (based on) Coach and CoachTaal. Coach is developped by [CMA Science](http://cma-science.nl/).
+Deze compiler en webapp implementeren de taal die gebruikt wordt in de natuurkunde-examens van de Nederlandse
+middelbare school. Deze taal is (gebaseerd op) Coach en CoachTaal. Coach is ontwikkeld door
+[CMA Science](http://cma-science.nl/).
 
-The webapp was built using jQuery and Flot and heavily inspired by [HiSPARC jSPARC](http://github.com/HiSPARC/jSPARC/).
+De webapp is gebouwd met jQuery en Flot en sterk geïnspireerd door [HiSPARC jSPARC](http://github.com/HiSPARC/jSPARC/).
 
-This was originally based on Zach Carter's [jsconf 2010 jison talk](https://github.com/zaach/zii-jsconf2010-talk).
+Het geheel is oorspronkelijk gebaseerd op Zach Carters [jsconf 2010 jison talk](https://github.com/zaach/zii-jsconf2010-talk).
 
-### MIT License
+### MIT-licentie
+
+De licentietekst is de officiële Engelse tekst:
 
 ```Copyright (c) 2017 Tom Kooij
 
