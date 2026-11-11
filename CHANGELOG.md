@@ -21,7 +21,11 @@
   voorvallen and relatiepijlen), drawn like the graphical models in the vwo
   exams (2022-I, 2023-II): black on gray, a stroom is a hollow arrow with a
   valve (circle with a tap), hulpvariabelen and constanten are circles with the
-  name below (or to the right, when an arrow leaves at the bottom). Works
+  name below (or to the right, when an arrow leaves at the bottom).
+  The switch "Examen | Kleur" below the diagram draws it in color instead (blue
+  symbols, red relatiepijlen, constanten as diamonds, a dashed circle for a
+  stroom from or to outside the model). The choice is remembered and used for
+  the SVG download. Works
   without Run and updates while typing. Elements can be dragged (arrows and
   pipes follow), "Herstel indeling" resets. Download as SVG. New module `grafisch.js`.
 - The graphical model is also input: click a symbol to change its name, formula,

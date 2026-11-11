@@ -7,6 +7,7 @@
     grijze achtergrond, toestandsvariabele als rechthoek, stroom als holle pijl
     met een ventiel (cirkel met kraantje), hulpvariabelen en constanten als
     cirkels met de naam eronder en zwarte relatiepijlen.
+    Er is ook een stijl in kleur (toSVG(g, lay, {stijl: 'kleur'})), zie STIJLEN.
 
     Herkenning (Euler-vorm, zoals in de examenmodellen):
 
@@ -762,15 +763,25 @@ function layout(g) {
 
 // ------------------------------------------------------------------ SVG
 
-// examenstijl: zwart op wit, op een grijze achtergrond
-var C = {line: '#000', fill: '#fff', bg: '#d4d4d4', red: '#c62828', text: '#000', grey: '#555'};
-var R = {aux: 13, valve: 10};   // radius of the circles: hulpvariabele/constante and ventiel
+// Two styles (opts.stijl):
+//   'examen': as the graphical models in the exams: black on white symbols, gray background,
+//             hollow pipe with a valve (circle with a tap), hulpvariabele and constante the same circle
+//   'kleur':  colors: blue symbols, red relatiepijlen, constante as a diamond, a flow from/to
+//             outside the model starts/ends in a dashed circle
+var STIJLEN = {
+    examen: {line: '#000', fill: '#fff', bg: '#d4d4d4', red: '#c62828', text: '#000', grey: '#555',
+             arrow: '#000', font: 'Times New Roman, Times, serif', size: 15,
+             aux: 13, constant: 13, valve: 10, gap: 2},
+    kleur: {line: '#1f5fa8', fill: '#dceaf8', bg: '#fff', red: '#c62828', text: '#1d2733', grey: '#6b7785',
+            arrow: '#c62828', font: 'Segoe UI, Helvetica, Arial, sans-serif', size: 13,
+            aux: 18, constant: 10, valve: 9, gap: 3, outside: 10}
+};
 
 function esc(s) {
     return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-function radius(el, dx, dy) {
+function radius(el, dx, dy, S) {
     // distance from center to the border of the symbol in direction (dx, dy)
     switch (el.kind) {
         case 'stock':
@@ -778,51 +789,81 @@ function radius(el, dx, dy) {
             var tx = Math.abs(dx) > 1e-9 ? (L.stockW / 2) / Math.abs(dx) : Infinity;
             var ty = Math.abs(dy) > 1e-9 ? (L.stockH / 2) / Math.abs(dy) : Infinity;
             return Math.min(tx, ty) * len + 3;
-        case 'flow': return R.valve + 2;
+        case 'flow': return S.valve + S.gap + 1;
+        case 'const': return S.constant + S.gap;
         case 'event': return 16;
-        default: return R.aux + 2;
+        default: return S.aux + S.gap;
     }
 }
 
-function pipeEnd(x, y) {
-    // the open end of a flow from or to outside the model (no cloud, as in the exams):
-    // an invisible area to drag it
-    return '<circle class="end" cx="' + x + '" cy="' + y + '" r="12" fill="#000" fill-opacity="0" stroke="none"/>';
+function pipeEnd(x, y, S) {
+    // the open end of a flow from or to outside the model.
+    // examen: not drawn (an invisible area to drag it), kleur: a dashed circle
+    if (!S.outside) {
+        return '<circle class="end" cx="' + x + '" cy="' + y + '" r="12" fill="#000" fill-opacity="0" stroke="none"/>';
+    }
+    return '<circle cx="' + x + '" cy="' + y + '" r="' + S.outside + '" fill="#fff" stroke="' + S.line +
+        '" stroke-width="1.5" stroke-dasharray="3 2.5"/>';
 }
 
-function pipe(points, out) {
-    // hollow pipe (white with a black border) with an open arrow head at the end
+function pipe(points, out, S) {
+    // pipe with an arrow head at the end.
+    // examen: hollow (white with a black border), open arrow head. kleur: blue, filled arrow head.
     var n = points.length, p = points[n - 1], q = points[n - 2];
     var ux = p.x - q.x, uy = p.y - q.y, l = Math.sqrt(ux * ux + uy * uy) || 1;
     ux /= l; uy /= l;
+    var d, i;
+    if (S.outside) {
+        d = 'M' + points[0].x + ',' + points[0].y;
+        for (i = 1; i < n; i++) d += ' L' + points[i].x + ',' + points[i].y;
+        out.push('<path d="' + d + '" fill="none" stroke="' + S.line + '" stroke-width="8" stroke-linejoin="round"/>');
+        out.push('<path d="' + d + '" fill="none" stroke="#fff" stroke-width="4" stroke-linejoin="round"/>');
+        out.push('<path d="M' + (p.x + ux * 4) + ',' + (p.y + uy * 4) +
+            ' L' + (p.x - ux * 10 - uy * 9) + ',' + (p.y - uy * 10 + ux * 9) +
+            ' L' + (p.x - ux * 10 + uy * 9) + ',' + (p.y - uy * 10 - ux * 9) + ' z" fill="' + S.line + '"/>');
+        return;
+    }
     var head = 17, half = 10;
     var base = {x: p.x - ux * head, y: p.y - uy * head};
     // closed start: the border goes a little further back than the white inside
     var s0 = points[0], s1 = points[1];
     var vx = s1.x - s0.x, vy = s1.y - s0.y, m = Math.sqrt(vx * vx + vy * vy) || 1;
     var path = function(first) {
-        var d = 'M' + first.x.toFixed(1) + ',' + first.y.toFixed(1);
-        for (var i = 1; i < n - 1; i++) d += ' L' + points[i].x + ',' + points[i].y;
-        return d + ' L' + base.x.toFixed(1) + ',' + base.y.toFixed(1);
+        var dd = 'M' + first.x.toFixed(1) + ',' + first.y.toFixed(1);
+        for (var k = 1; k < n - 1; k++) dd += ' L' + points[k].x + ',' + points[k].y;
+        return dd + ' L' + base.x.toFixed(1) + ',' + base.y.toFixed(1);
     };
     out.push('<path d="' + path({x: s0.x - vx / m * 1.5, y: s0.y - vy / m * 1.5}) +
-        '" fill="none" stroke="' + C.line + '" stroke-width="10" stroke-linejoin="round"/>');
-    out.push('<path d="' + path(s0) + '" fill="none" stroke="' + C.fill + '" stroke-width="7" stroke-linejoin="round"/>');
+        '" fill="none" stroke="' + S.line + '" stroke-width="10" stroke-linejoin="round"/>');
+    out.push('<path d="' + path(s0) + '" fill="none" stroke="' + S.fill + '" stroke-width="7" stroke-linejoin="round"/>');
     out.push('<path d="M' + p.x.toFixed(1) + ',' + p.y.toFixed(1) +
         ' L' + (base.x - uy * half).toFixed(1) + ',' + (base.y + ux * half).toFixed(1) +
         ' L' + (base.x + uy * half).toFixed(1) + ',' + (base.y - ux * half).toFixed(1) + ' z"' +
-        ' fill="' + C.fill + '" stroke="' + C.line + '" stroke-width="1.5" stroke-linejoin="miter"/>');
+        ' fill="' + S.fill + '" stroke="' + S.line + '" stroke-width="1.5" stroke-linejoin="miter"/>');
 }
 
-var LINK_STYLE = {
-    relation: 'stroke="' + C.line + '" stroke-width="1.3" marker-end="url(#ar)"',
-    // only in the condition of 'als ... dan': lighter
-    condition: 'stroke="' + C.line + '" stroke-width="1.1" stroke-opacity="0.45" stroke-dasharray="2 3" marker-end="url(#ar)"',
-    // beginwaarde of a toestandsvariabele
-    initial: 'stroke="' + C.grey + '" stroke-width="1.1" stroke-dasharray="4 3" marker-end="url(#ag)"',
-    // voorval changes a toestandsvariabele
-    action: 'stroke="' + C.line + '" stroke-width="1.3" stroke-dasharray="5 3" marker-end="url(#ar)"'
-};
+function linkStyle(kind, S) {
+    var w = S.outside ? 1.4 : 1.3;
+    switch (kind) {
+        // only in the condition of 'als ... dan': lighter
+        case 'condition': return 'stroke="' + S.arrow + '" stroke-width="1.1" stroke-opacity="0.45" stroke-dasharray="2 3" marker-end="url(#ar)"';
+        // beginwaarde of a toestandsvariabele
+        case 'initial': return 'stroke="' + S.grey + '" stroke-width="1.1" stroke-dasharray="4 3" marker-end="url(#ag)"';
+        // voorval changes a toestandsvariabele
+        case 'action': return 'stroke="' + S.line + '" stroke-width="' + w + '" stroke-dasharray="5 3" marker-end="url(#ab)"';
+        default: return 'stroke="' + S.arrow + '" stroke-width="' + w + '" marker-end="url(#ar)"';
+    }
+}
+
+function marker(id, color, S) {
+    // arrow head of a relatiepijl. examen: slender (as in the exams), kleur: a triangle
+    if (S.outside) {
+        return '<marker id="' + id + '" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">' +
+            '<path d="M0,0 L10,5 L0,10 z" fill="' + color + '"/></marker>';
+    }
+    return '<marker id="' + id + '" viewBox="0 0 12 10" refX="11" refY="5" markerWidth="9" markerHeight="7.5" ' +
+        'orient="auto-start-reverse" markerUnits="userSpaceOnUse"><path d="M0,1 L12,5 L0,9 L2.5,5 z" fill="' + color + '"/></marker>';
+}
 
 function unit(a, b) {
     var dx = b.x - a.x, dy = b.y - a.y, l = Math.sqrt(dx * dx + dy * dy);
@@ -831,13 +872,16 @@ function unit(a, b) {
 
 function toSVG(g, lay, opts) {
     // lay: layout(g), possibly with positions changed by the user (lay.pos[id] = {x, y}).
-    //      Clouds of a flow are lay.pos[flowId + ':src'] and lay.pos[flowId + ':dst'].
+    //      Open ends of a flow are lay.pos[flowId + ':src'] and lay.pos[flowId + ':dst'].
+    // opts.stijl: 'examen' (default) or 'kleur', see STIJLEN
     // opts.bounds: {minX, minY, maxX, maxY}: draw at least this area (no jumps while dragging)
     // opts.used: filled with the bounds of this drawing
     // opts.selected: id of the selected element (a toestandsvariabele gets + buttons for new flows)
     // opts.values: name --> {first, last}: values after a run, in the tooltip
     lay = lay || layout(g);
     opts = opts || {};
+    var S = STIJLEN.hasOwnProperty(opts.stijl) ? STIJLEN[opts.stijl] : STIJLEN.examen;
+    var exam = !S.outside;
     var pos = lay.pos, out = [], i, el, p, id;
     var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
     if (opts.bounds) {
@@ -848,26 +892,27 @@ function toSVG(g, lay, opts) {
         minY = Math.min(minY, y - r); maxY = Math.max(maxY, y + r);
     };
 
-    // flows (pipes) first: source (stock or cloud) --> valve --> destination (stock or cloud)
+    // flows (pipes) first: source (stock or open end) --> valve --> destination (stock or open end)
     var valveDir = {};
     for (i = 0; i < g.flows.length; i++) {
         var f = g.flows[i], v = pos[f.id];
         var a = f.from ? pos[f.from] : pos[f.id + ':src'];
         var b = f.to ? pos[f.to] : pos[f.id + ':dst'];
         var u0 = unit(a, v), u1 = unit(v, b);
-        var ra = f.from ? radius(g.elements[f.from], u0.x, u0.y) - 3 : 0;
-        var rb = f.to ? radius(g.elements[f.to], -u1.x, -u1.y) - 3 : 0;
+        // examen: the arrow head touches the stock, kleur: a small gap
+        var ra = f.from ? radius(g.elements[f.from], u0.x, u0.y, S) + (exam ? -3 : 0) : (exam ? 0 : S.outside + 1);
+        var rb = f.to ? radius(g.elements[f.to], -u1.x, -u1.y, S) + (exam ? -3 : 3) : (exam ? 0 : S.outside + 5);
         var start = {x: a.x + u0.x * ra, y: a.y + u0.y * ra}, end = {x: b.x - u1.x * rb, y: b.y - u1.y * rb};
         var straight = Math.abs(u0.x * u1.y - u0.y * u1.x) < 1e-3 && (u0.x * u1.x + u0.y * u1.y) > 0;
-        pipe(straight ? [start, end] : [start, v, end], out);
+        pipe(straight ? [start, end] : [start, v, end], out, S);
         var ud = unit(a, b);
         valveDir[f.id] = Math.abs(ud.y) > Math.abs(ud.x) ? 'v' : 'h';
         if (!f.from) {
-            out.push('<g data-id="' + esc(f.id) + ':src">' + pipeEnd(a.x, a.y) + '</g>');
+            out.push('<g data-id="' + esc(f.id) + ':src">' + pipeEnd(a.x, a.y, S) + '</g>');
             grow(a.x, a.y, 12);
         }
         if (!f.to) {
-            out.push('<g data-id="' + esc(f.id) + ':dst">' + pipeEnd(b.x, b.y) + '</g>');
+            out.push('<g data-id="' + esc(f.id) + ':dst">' + pipeEnd(b.x, b.y, S) + '</g>');
             grow(b.x, b.y, 12);
         }
     }
@@ -888,7 +933,7 @@ function toSVG(g, lay, opts) {
                 ' ' + ex0.toFixed(1) + ',' + (y1 - arcH).toFixed(1) + ' ' + ex0.toFixed(1) + ',' + y1;
             grow(s.x + dx / 2, y0 - 0.75 * arcH, 4);
         } else {
-            var r0 = radius(g.elements[lk.from], dx, dy), r1 = radius(g.elements[lk.to], -dx, -dy);
+            var r0 = radius(g.elements[lk.from], dx, dy, S), r1 = radius(g.elements[lk.to], -dx, -dy, S);
             var ux = dx / len, uy = dy / len;
             var sx = s.x + ux * r0, sy = s.y + uy * r0, ex = t.x - ux * (r1 + 2), ey = t.y - uy * (r1 + 2);
             var bend = Math.min(30, 0.12 * len);
@@ -896,7 +941,7 @@ function toSVG(g, lay, opts) {
             d = 'M' + sx.toFixed(1) + ',' + sy.toFixed(1) + ' Q' + cx.toFixed(1) + ',' + cy.toFixed(1) +
                 ' ' + ex.toFixed(1) + ',' + ey.toFixed(1);
         }
-        out.push('<path d="' + d + '" fill="none" ' + LINK_STYLE[lk.kind] + '/>');
+        out.push('<path d="' + d + '" fill="none" ' + linkStyle(lk.kind, S) + '/>');
     }
 
     // a relatiepijl leaves or enters a circle at the bottom: its name goes to the right
@@ -913,11 +958,16 @@ function toSVG(g, lay, opts) {
         if (dir.y > 0.3 || (row(g.elements[g.links[i].from]) && row(g.elements[g.links[i].to]) &&
                             Math.abs(to.y - from.y) < 1)) above[g.links[i].to] = true;
     }
-    var name = function(x, y, r, label, id) {
+    var name = function(x, y, r, label, id, cls) {
+        cls = (cls || 'name') + ' lbl';
         if (bottom[id]) grow(x + r + 4 + 8 * String(label).length, y, 4);
         return bottom[id] ?
-            '<text x="' + (x + r + 4) + '" y="' + (y + 5) + '" class="name lbl">' + esc(label) + '</text>' :
-            '<text x="' + x + '" y="' + (y + r + 16) + '" text-anchor="middle" class="name lbl">' + esc(label) + '</text>';
+            '<text x="' + (x + r + 4) + '" y="' + (y + 5) + '" class="' + cls + '">' + esc(label) + '</text>' :
+            '<text x="' + x + '" y="' + (y + r + 16) + '" text-anchor="middle" class="' + cls + '">' + esc(label) + '</text>';
+    };
+    var circle = function(x, y, r, fill, stroke, extra) {
+        return '<circle cx="' + x + '" cy="' + y + '" r="' + r + '" fill="' + fill + '" stroke="' + stroke +
+            '" stroke-width="' + (exam ? 1.5 : 2) + '"' + (extra || '') + '/>';
     };
 
     // symbols
@@ -931,42 +981,56 @@ function toSVG(g, lay, opts) {
         var x = p.x, y = p.y, label = el.name || el.label;
         switch (el.kind) {
             case 'stock':
-                // rectangle, name inside (as in the exams)
+                // rectangle, name inside
                 out.push(tip + '<rect x="' + (x - L.stockW / 2) + '" y="' + (y - L.stockH / 2) + '" width="' + L.stockW +
-                    '" height="' + L.stockH + '" fill="' + C.fill + '" stroke="' + C.line + '" stroke-width="1.5"/>' +
-                    '<text x="' + x + '" y="' + (y + 6) + '" text-anchor="middle" class="name">' + esc(label) + '</text>');
+                    '" height="' + L.stockH + '"' + (exam ? '' : ' rx="3"') + ' fill="' + S.fill + '" stroke="' + S.line +
+                    '" stroke-width="' + (exam ? 1.5 : 2) + '"/>' +
+                    '<text x="' + x + '" y="' + (y + (exam ? 6 : 5)) + '" text-anchor="middle" class="name stock">' + esc(label) + '</text>');
                 grow(x, y, L.stockW / 2 + 4);
                 break;
             case 'flow':
-                // ventiel: a circle on the pipe with a tap. An arrow from above: the tap below
-                var flip = above[id] && !bottom[id];
-                out.push(tip + valve(x, y, valveDir[id], flip) +
-                    name(x, flip && valveDir[id] != 'v' ? y + 7 : y, R.valve, shorten(label), id));
+                if (exam) {
+                    // ventiel: a circle on the pipe with a tap. An arrow from above: the tap below
+                    var flip = above[id] && !bottom[id];
+                    out.push(tip + valve(x, y, valveDir[id], flip, S) +
+                        name(x, flip && valveDir[id] != 'v' ? y + 7 : y, S.valve, shorten(label), id));
+                } else {
+                    out.push(tip + valve(x, y, valveDir[id], false, S) + name(x, y, 12, shorten(label), id, 'small'));
+                }
                 grow(x, y + 20, 30);
                 break;
             case 'aux':
+                out.push(tip + circle(x, y, S.aux, S.fill, S.line, el.conditional ? ' stroke-dasharray="4 2"' : '') +
+                    name(x, y, S.aux, label, id));
+                grow(x, y + 10, 30);
+                break;
             case 'const':
-                // hulpvariabele and constante: the same circle in the exams, name below
-                out.push(tip + '<circle cx="' + x + '" cy="' + y + '" r="' + R.aux + '" fill="' + C.fill + '" stroke="' + C.line +
-                    '" stroke-width="1.5"' + (el.conditional ? ' stroke-dasharray="4 2"' : '') + '/>' + name(x, y, R.aux, label, id));
+                // examen: the same circle as a hulpvariabele, kleur: a diamond
+                out.push(tip + (exam ? circle(x, y, S.constant, S.fill, S.line) :
+                    '<path d="M' + x + ',' + (y - 10) + ' L' + (x + 10) + ',' + y + ' L' + x + ',' + (y + 10) +
+                    ' L' + (x - 10) + ',' + y + ' z" fill="' + S.fill + '" stroke="' + S.line + '" stroke-width="2"/>') +
+                    name(x, y, S.constant, label, id));
                 grow(x, y + 10, 30);
                 break;
             case 'event':
                 out.push(tip + '<path d="M' + (x + 3) + ',' + (y - 15) + ' L' + (x - 9) + ',' + (y + 2) + ' L' + (x - 1) + ',' + (y + 2) +
                     ' L' + (x - 4) + ',' + (y + 15) + ' L' + (x + 9) + ',' + (y - 3) + ' L' + (x + 1) + ',' + (y - 3) + ' z"' +
-                    ' fill="' + C.fill + '" stroke="' + C.line + '" stroke-width="1.5" stroke-linejoin="round"/>' +
+                    (exam ? ' fill="' + S.fill + '" stroke="' + S.line + '" stroke-width="1.5" stroke-linejoin="round"/>' :
+                            ' fill="#ffe08a" stroke="#b07d00" stroke-width="1.5"/>') +
                     '<text x="' + x + '" y="' + (y + 30) + '" text-anchor="middle" class="small lbl">' + esc(shorten(el.condition, 22)) + '</text>');
                 grow(x, y + 10, 40);
                 break;
             case 'time':
-                out.push(tip + '<circle cx="' + x + '" cy="' + y + '" r="' + R.aux + '" fill="' + C.fill + '" stroke="' + C.line + '" stroke-width="1.5"/>' +
-                    '<path d="M' + x + ',' + (y - 8) + ' L' + x + ',' + y + ' L' + (x + 6) + ',' + (y + 3) + '" fill="none" stroke="' + C.line + '" stroke-width="1.5"/>' + name(x, y, R.aux, label, id));
+                var rt = exam ? S.aux : 16, hand = exam ? S.line : S.grey;
+                out.push(tip + circle(x, y, rt, '#fff', hand) +
+                    '<path d="M' + x + ',' + (y - rt + 5) + ' L' + x + ',' + y + ' L' + (x + 6) + ',' + (y + 3) +
+                    '" fill="none" stroke="' + hand + '" stroke-width="' + (exam ? 1.5 : 2) + '"/>' + name(x, y, rt, label, id));
                 grow(x, y + 10, 30);
                 break;
             default:   // unknown
-                out.push(tip + '<circle cx="' + x + '" cy="' + y + '" r="' + R.aux + '" fill="' + C.fill + '" stroke="' + C.red + '" stroke-width="1.5"/>' +
-                    '<text x="' + x + '" y="' + (y + 5) + '" text-anchor="middle" fill="' + C.red + '" font-weight="bold">?</text>' +
-                    name(x, y, R.aux, label, id));
+                out.push(tip + circle(x, y, S.aux, exam ? S.fill : '#fdecea', S.red) +
+                    '<text x="' + x + '" y="' + (y + 5) + '" text-anchor="middle" fill="' + S.red + '" font-weight="bold">?</text>' +
+                    name(x, y, S.aux, label, id));
                 grow(x, y + 10, 30);
         }
         out.push('</g>');
@@ -991,30 +1055,34 @@ function toSVG(g, lay, opts) {
     opts.used = {minX: minX, minY: minY, maxX: maxX, maxY: maxY};
     var pad = 12, w = maxX - minX + 2 * pad, h = maxY - minY + 2 * pad;
     var vbX = (minX - pad).toFixed(0), vbY = (minY - pad).toFixed(0);
-    // arrow head of a relatiepijl: slender, black (as in the exams)
-    var marker = function(mid, color) {
-        return '<marker id="' + mid + '" viewBox="0 0 12 10" refX="11" refY="5" markerWidth="9" markerHeight="7.5" ' +
-            'orient="auto-start-reverse" markerUnits="userSpaceOnUse"><path d="M0,1 L12,5 L0,9 L2.5,5 z" fill="' + color + '"/></marker>';
-    };
     return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="' + vbX + ' ' + vbY + ' ' +
         w.toFixed(0) + ' ' + h.toFixed(0) + '" width="' + w.toFixed(0) + '" height="' + h.toFixed(0) + '"' +
-        ' font-family="Times New Roman, Times, serif" font-size="15" fill="' + C.text + '">' +
-        '<style>.name{font-style:italic}' +
-        '.lbl{paint-order:stroke;stroke:' + C.bg + ';stroke-width:3px;stroke-linejoin:round}' +
-        '.small{font-size:12px;fill:' + C.grey + '}</style>' +
-        '<defs>' + marker('ar', C.line) + marker('ag', C.grey) + '</defs>' +
+        ' font-family="' + S.font + '" font-size="' + S.size + '" fill="' + S.text + '">' +
+        '<style>' + (exam ? '.name{font-style:italic}' : '.stock{font-weight:bold}') +
+        '.lbl{paint-order:stroke;stroke:' + S.bg + ';stroke-width:3px;stroke-linejoin:round}' +
+        '.small{font-size:' + (exam ? 12 : 11) + 'px;fill:' + S.grey + '}</style>' +
+        '<defs>' + marker('ar', S.arrow, S) + marker('ab', S.line, S) + marker('ag', S.grey, S) + '</defs>' +
         '<rect class="bg" x="' + vbX + '" y="' + vbY + '" width="' + w.toFixed(0) + '" height="' + h.toFixed(0) +
-        '" fill="' + C.bg + '"/>' + out.join('') + '</svg>';
+        '" fill="' + S.bg + '"/>' + out.join('') + '</svg>';
 }
 
-function valve(x, y, dir, flip) {
-    // ventiel: circle on the pipe with a tap (dir: 'h' horizontal or 'v' vertical pipe;
-    // tap above or left, flip: below or right)
-    var r = R.valve, t = r + 6, sg = flip ? -1 : 1, d = dir == 'v' ?
+function valve(x, y, dir, flip, S) {
+    // examen: ventiel, a circle on the pipe with a tap (dir: 'h' horizontal or 'v' vertical pipe;
+    //         tap above or left, flip: below or right)
+    // kleur: bow tie across the pipe
+    var r = S.valve, d;
+    if (S.outside) {
+        d = dir == 'v' ?
+            'M' + (x - r) + ',' + (y - r) + ' L' + (x + r) + ',' + (y - r) + ' L' + (x - r) + ',' + (y + r) + ' L' + (x + r) + ',' + (y + r) + ' z' :
+            'M' + (x - r) + ',' + (y - r) + ' L' + (x + r) + ',' + (y + r) + ' L' + (x + r) + ',' + (y - r) + ' L' + (x - r) + ',' + (y + r) + ' z';
+        return '<path d="' + d + '" fill="' + S.fill + '" stroke="' + S.line + '" stroke-width="2" stroke-linejoin="round"/>';
+    }
+    var t = r + 6, sg = flip ? -1 : 1;
+    d = dir == 'v' ?
         'M' + (x - sg * r) + ',' + y + ' H' + (x - sg * t) + ' M' + (x - sg * t) + ',' + (y - 4) + ' V' + (y + 4) :
         'M' + x + ',' + (y - sg * r) + ' V' + (y - sg * t) + ' M' + (x - 4) + ',' + (y - sg * t) + ' H' + (x + 4);
-    return '<circle cx="' + x + '" cy="' + y + '" r="' + r + '" fill="' + C.fill + '" stroke="' + C.line + '" stroke-width="1.5"/>' +
-        '<path d="' + d + '" fill="none" stroke="' + C.line + '" stroke-width="1.5"/>';
+    return '<circle cx="' + x + '" cy="' + y + '" r="' + r + '" fill="' + S.fill + '" stroke="' + S.line + '" stroke-width="1.5"/>' +
+        '<path d="' + d + '" fill="none" stroke="' + S.line + '" stroke-width="1.5"/>';
 }
 
 function shorten(s, n) {
@@ -1042,6 +1110,7 @@ function tooltip(g, el) {
 exports.analyse = analyse;
 exports.layout = layout;
 exports.toSVG = toSVG;
+exports.STIJLEN = STIJLEN;
 exports.table = table;
 exports.lines = lines;
 exports.fmt = fmt;

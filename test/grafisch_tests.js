@@ -106,6 +106,23 @@ describe('grafisch.js - tekstmodel naar grafisch model', function() {
         assert.equal(svg2.match(/viewBox="([^"]*)"/)[1], svg.match(/viewBox="([^"]*)"/)[1]);
     });
 
+    it('twee stijlen: examen (standaard) en kleur', function() {
+        var g = analyse("x=0\nk=0.5\nm=2\nt=0\ndt=0.1", "F = k * x\nx = x - F/m*dt\nt = t + dt");
+        var examen = grafisch.toSVG(g);
+        assert.equal(grafisch.toSVG(g, undefined, {stijl: 'examen'}), examen);
+        assert.equal(grafisch.toSVG(g, undefined, {stijl: 'onbekend'}), examen, 'onbekende stijl: examen');
+        assert.include(examen, 'fill="#d4d4d4"', 'grijze achtergrond');
+        assert.notInclude(examen, 'stroke-dasharray="3 2.5"', 'geen symbool voor buiten het model');
+        var kleur = grafisch.toSVG(g, undefined, {stijl: 'kleur'});
+        assert.include(kleur, '#1f5fa8');
+        assert.include(kleur, 'stroke-dasharray="3 2.5"', 'stroom naar buiten: gestippelde cirkel');
+        // the same elements, in both styles
+        ['x', 'k', 'm', 'F', '~f1:dst'].forEach(function(id) {
+            assert.include(examen, 'data-id="' + id + '"');
+            assert.include(kleur, 'data-id="' + id + '"');
+        });
+    });
+
     it('regels bij elk element (symbool <-> modelregel)', function() {
         var model = new evaluator_js.Model();
         model.startwaarden = "m=80\nk=0.3\nv=0\nx=0\nt=0\ndt=0.1";

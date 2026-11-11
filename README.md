@@ -51,6 +51,13 @@ black on a gray background, *toestandsvariabelen* (rectangles), *stromen* (hollo
 circle with a tap), *hulpvariabelen* and *constanten* (circles, name below) and black arrows for
 "depends on". *Voorvallen* (`als ... dan` that changes a *toestandsvariabele*) are drawn as lightning.
 
+<img src="images/webapp-grafisch-kleur.png" alt="The same graphical model in color" width="400" align="right">
+
+Prefer color? The switch **Examen | Kleur** below the diagram draws the same model in color: blue
+*toestandsvariabelen* and *stromen*, *hulpvariabelen* (circles), *constanten* (diamonds), red arrows for
+"depends on" and a dashed circle where a *stroom* comes from or goes to outside the model. The webapp
+remembers your choice, and **Download** saves the diagram in the style you see.
+
 - The diagram is drawn from the text of the model, while you type. No Run needed.
 - **Text and diagram are linked.** Click a symbol and its lines in the text are marked. Put the cursor
   in a line of the text and its symbol lights up. After Run, hover over a symbol to see its first and last value.
@@ -60,6 +67,8 @@ circle with a tap), *hulpvariabelen* and *constanten* (circles, name below) and 
   the model, as in the exams. Names of variables can be inserted with a click, so there are no typos.
 - Drag symbols, zoom and pan. *Herkende elementen* lists how each line of the text was recognised.
   Download the diagram as SVG.
+
+<br clear="right">
 
 ### On a phone or tablet
 
