@@ -13,6 +13,13 @@ Het formulier gaat naast het symbool als er onder en boven geen ruimte is.
 "Herkende elementen" is op verzoek teruggezet: dichtgeklapt onder de legenda; een klik op een
 rij kiest dat element in het diagram.
 
+Afwijkingen bij P2-1: Stap loopt ook binnen `als ... dan` regel voor regel (de voorwaarde is één
+stap, daarna de regels die worden uitgevoerd); daarom is één iteratie van `examenvwo2005` 9 stappen
+(7 regels en 2 voorwaarden) en niet 13. Het stappen gebruikt een eigen module `stapper.js` in plaats
+van de breakpoints van `evaluator.js` (die code blijft staan maar wordt niet meer gebruikt). Stap
+stopt na N iteraties. De grafiek blijft tijdens het stappen die van de laatste Run.
+Bij P2-2 staat ook een gewijzigd aantal iteraties in de notitie ("iteraties 500 → nu 1000").
+
 ## Uitgangspunten (gelden voor elk punt)
 
 - **Geen knoppencursus.** Een leerling uit 5 vwo moet zonder uitleg kunnen werken. Liever een
@@ -43,7 +50,7 @@ rij kiest dat element in het diagram.
 - Nederlandse foutmeldingen met gemarkeerde regel en "Bedoel je ...?".
 - Verouderde resultaten worden grijs en Run licht op na een wijziging.
 - Vorige run als grijze lijn. Dit is didactisch het sterkste onderdeel: bouw hierop voort.
-- Standaard staat het leerlingprofiel aan (debugger en "Voeg toe" verborgen).
+- Stap voor stap met de berekening in getallen, en de dt-controle na elke Run.
 
 ---
 
@@ -160,7 +167,7 @@ Downloads staan ver van waar ze over gaan.
 
 ## Prioriteit 2: de grootste didactische winst
 
-### P2-1 Stap voor stap: de rekenlus zichtbaar maken (vervangt de "Debugger")
+### P2-1 Stap voor stap: de rekenlus zichtbaar maken (vervangt de "Debugger") (gebouwd)
 
 **Probleem.** Regel voor regel door het model lopen is het beste middel om de rekenlus te
 begrijpen, maar het zit verstopt in het docentprofiel, heet "Debugger: Volgende regel", gaat na een
@@ -187,7 +194,7 @@ ingevulde getallen als tekst teruggeeft, in een eigen module met tests, de opmaa
 met getallen; 13 keer Stap doorloopt precies één iteratie inclusief de overgeslagen `als`;
 typen in de editor beëindigt het stappen.
 
-### P2-2 Vergelijken van runs: laat zien wát er veranderd is
+### P2-2 Vergelijken van runs: laat zien wát er veranderd is (gebouwd)
 
 **Probleem.** De grijze lijn is "de vorige run", maar de leerling moet zelf onthouden wat er
 anders was. Systematisch één grootheid variëren is een kernvaardigheid bij modelleren.
@@ -206,7 +213,7 @@ bepalen op de geparste startwaarden (naam → tekst van de waarde), los van witr
 **Klaar als.** k wijzigen en Run toont het verschil in woorden; met "Houd vast" aan blijft dezelfde
 grijze lijn staan na drie volgende runs.
 
-### P2-3 Waarschuwing "dt is te groot"
+### P2-3 Waarschuwing "dt is te groot" (gebouwd)
 
 **Probleem.** De nauwkeurigheid van een numeriek model hangt af van dt (examenstof). Nu komt er
 alleen een melding als waarden oneindig worden.

@@ -1,5 +1,38 @@
 # Changelog
 
+## [Unreleased]
+
+### Webapp
+
+- New button **Stap** next to Run (P2-1): computes the model one modelregel per
+  click and shows the calculation with the numbers filled in, below the run bar:
+  `iteratie 3, regel 6:  v = v + a*dt  →  v = 0,981 + 9,78 × 0,1 = 1,959`.
+  At `als ... dan` it shows whether the condition is true and which lines are
+  skipped or executed (also step by step). The line lights up in the editor and
+  the cell that changed lights up in the table. The first click (after loading,
+  after a change, after a Run or at the end) starts again at the startwaarden;
+  typing in the editor or Run ends the stepping. Replaces the debugger
+  ("Volgende regel") and "Voeg toe: N iteraties"; the checkbox for these
+  buttons in "Meer opties" and their entries in the profiles of `config.js`
+  are removed. New module `stapper.js` (no DOM, tested): the expressions are
+  computed with the code generator of `evaluator.js`, so stepping gives exactly
+  the same table as Run.
+- Comparing runs (P2-2): the note below the graph says what is different from
+  the previous run: "Grijs: vorige run (k = 0,37 → nu 0,50)", or "(model
+  gewijzigd)" for changed modelregels or more than three differences. The
+  differences are found in the parsed model (whitespace and comments do not
+  count). New button **Houd vast**: the gray line stays as a reference for the
+  next runs until the button is clicked again. The gray line is also shown with
+  "meerdere grafieken in één figuur". New module `vergelijk.js` (no DOM, tested).
+- Is dt small enough? (P2-3): after a Run the model is computed again in the
+  background with dt/2 and 2N iterations. If the end value of a
+  toestandsvariabele differs more than 5% of its range (with `stop`: the time
+  at which the model stops), a message says so: "De uitkomst hangt nog af van
+  de tijdstap: met dt = 0,05 eindigt x op 812 in plaats van 838. Probeer een
+  kleinere dt." Skipped for N > 100 000, without `dt` in the startwaarden, when
+  `dt` changes in the modelregels, or when the run took more than 200 ms. New
+  module `dtcheck.js` (no DOM, tested).
+
 ## [6.1.1]
 
 11 nov 2026

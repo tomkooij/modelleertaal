@@ -29,14 +29,19 @@ De webapp is gemaakt voor leerlingen: je moet hem zonder handleiding kunnen gebr
   *startwaarden* en druk op **Run** (of Ctrl+Enter).
 - **Automatische grafieken.** Na Run kiest de webapp zelf de grafieken die bij het model passen: (x,t), (v,t),
   (a,t), de baan (y,x), ... Klik op een miniatuur om die groot te zien. Klik op een punt om de waarden af te lezen.
+- **Stap voor stap.** Met **Stap** reken je het model regel voor regel door. Onder de runbalk staat de
+  berekening met ingevulde getallen (`v = v + a*dt  →  v = 0,981 + 9,78 × 0,1 = 1,959`), de regel licht op
+  in de editor en de waarde die net veranderde in de tabel. Zo zie je hoe de rekenlus werkt.
 - **Runs vergelijken.** De vorige run blijft zichtbaar als grijze lijn. Verander een startwaarde (bijvoorbeeld `k`),
-  druk op Run en zie wat er veranderd is.
+  druk op Run en zie wat er veranderd is; onder de grafiek staat wat er anders is (`k = 0,37 → nu 0,50`).
+  Met **Houd vast** blijft een grijze lijn staan als referentie.
 - **Foutmeldingen in het Nederlands,** in de pagina, met de regel gemarkeerd in de editor en suggesties bij
   typefouten (*Bedoel je 'Fres'?*). Een waarschuwing als een waarde geen geldig getal meer is (delen door nul,
   *dt* te groot).
 - **Hulp bij het modelleren.** Naast het aantal iteraties laat de webapp zien hoe lang het model loopt
   (`× dt = 50`). Heeft het model een `stop` die niet bereikt wordt, dan meldt de webapp dat en biedt aan om het
-  aantal iteraties te verdubbelen.
+  aantal iteraties te verdubbelen. Na Run rekent de webapp het model ook door met de halve tijdstap; hangt de
+  uitkomst daarvan af, dan krijg je de melding dat *dt* te groot is.
 - **Tabel** met alle waarden, en downloads: de tabel voor Excel (TSV) en de grafiek als plaatje (PNG).
 - **Je werk raakt niet kwijt.** Werk dat niet bewaard is, blijft in de browser staan: bij je volgende bezoek kun
   je verder. **Bewaar** slaat het model op als bestand, **Open** opent het weer.
