@@ -45,9 +45,11 @@ The webapp is made for students: you should be able to use it without a manual.
 
 [![The graphical model (stock-flow diagram) next to the text of the model](images/webapp-grafisch.png)](https://tomkooij.github.io/modelleertaal)
 
-Switch to **Tekst + grafisch** to see the model as a stock-flow diagram, like the graphical mode of Coach 7:
-*toestandsvariabelen* (rectangles), *stromen* (pipes with a valve), *hulpvariabelen* (circles),
-*constanten* (diamonds), *voorvallen* (lightning) and red arrows for "depends on".
+Switch to **Tekst + grafisch** to see the model as a stock-flow diagram, drawn like the graphical models
+in the central exams (vwo natuurkunde, for example 2022-I *Vrije worp bij basketbal* and 2023-II *Fietshelm*):
+black on a gray background, *toestandsvariabelen* (rectangles), *stromen* (hollow arrows with a valve: a
+circle with a tap), *hulpvariabelen* and *constanten* (circles, name below) and black arrows for
+"depends on". *Voorvallen* (`als ... dan` that changes a *toestandsvariabele*) are drawn as lightning.
 
 - The diagram is drawn from the text of the model, while you type. No Run needed.
 - **Text and diagram are linked.** Click a symbol and its lines in the text are marked. Put the cursor

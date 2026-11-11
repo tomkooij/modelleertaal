@@ -17,8 +17,11 @@
 - Fix: `N` in a link (`#model=...&N=100`) is no longer overruled by `N` in the
   model file.
 - New panel "Weergave als grafisch model": the text model is drawn as a
-  stock-flow diagram like the graphical mode of Coach 7 (toestandsvariabelen,
-  stromen, hulpvariabelen, constanten, voorvallen and relatiepijlen). Works
+  stock-flow diagram (toestandsvariabelen, stromen, hulpvariabelen, constanten,
+  voorvallen and relatiepijlen), drawn like the graphical models in the vwo
+  exams (2022-I, 2023-II): black on gray, a stroom is a hollow arrow with a
+  valve (circle with a tap), hulpvariabelen and constanten are circles with the
+  name below (or to the right, when an arrow leaves at the bottom). Works
   without Run and updates while typing. Elements can be dragged (arrows and
   pipes follow), "Herstel indeling" resets. Download as SVG. New module `grafisch.js`.
 - The graphical model is also input: click a symbol to change its name, formula,

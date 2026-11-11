@@ -1,9 +1,12 @@
 /*
     grafisch.js  (prototype)
 
-    Zet een tekstmodel (startwaarden + modelregels) om in een grafisch model,
-    zoals de grafische modus van Coach 7 (System Dynamics / stock-flow,
-    zie hoofdstuk 6 van de Coach 7 handleiding).
+    Zet een tekstmodel (startwaarden + modelregels) om in een grafisch model
+    (System Dynamics / stock-flow), getekend zoals de grafische modellen in de
+    centrale examens natuurkunde vwo (bijvoorbeeld 2022-I en 2023-II):
+    grijze achtergrond, toestandsvariabele als rechthoek, stroom als holle pijl
+    met een ventiel (cirkel met kraantje), hulpvariabelen en constanten als
+    cirkels met de naam eronder en zwarte relatiepijlen.
 
     Herkenning (Euler-vorm, zoals in de examenmodellen):
 
@@ -402,7 +405,7 @@ function analyse(startwaarden_ast, modelregels_ast) {
             if (d == dt) continue;
             if (d == time) showTime = true;
             else if (!elements.hasOwnProperty(idOf(d))) {
-                // Coach: element met vraagteken
+                // element met vraagteken
                 add({id: d, kind: 'unknown', name: d, definition: '? (geen startwaarde of formule)', deps: []});
             }
             var lk = idOf(d) + '>' + el.id;
@@ -759,7 +762,9 @@ function layout(g) {
 
 // ------------------------------------------------------------------ SVG
 
-var C = {blue: '#1f5fa8', fill: '#dceaf8', red: '#c62828', text: '#1d2733', grey: '#6b7785'};
+// examenstijl: zwart op wit, op een grijze achtergrond
+var C = {line: '#000', fill: '#fff', bg: '#d4d4d4', red: '#c62828', text: '#000', grey: '#555'};
+var R = {aux: 13, valve: 10};   // radius of the circles: hulpvariabele/constante and ventiel
 
 function esc(s) {
     return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -773,41 +778,50 @@ function radius(el, dx, dy) {
             var tx = Math.abs(dx) > 1e-9 ? (L.stockW / 2) / Math.abs(dx) : Infinity;
             var ty = Math.abs(dy) > 1e-9 ? (L.stockH / 2) / Math.abs(dy) : Infinity;
             return Math.min(tx, ty) * len + 3;
-        case 'flow': return 13;
-        case 'const': return 12;
+        case 'flow': return R.valve + 2;
         case 'event': return 16;
-        default: return 21;
+        default: return R.aux + 2;
     }
 }
 
-function cloud(x, y) {
-    return '<path d="M' + (x - 14) + ',' + (y + 8) +
-        ' a7,7 0 0,1 -2,-13 a9,9 0 0,1 15,-6 a8,8 0 0,1 14,4 a7,7 0 0,1 1,15 z"' +
-        ' fill="#fff" stroke="' + C.blue + '" stroke-width="1.5"/>';
+function pipeEnd(x, y) {
+    // the open end of a flow from or to outside the model (no cloud, as in the exams):
+    // an invisible area to drag it
+    return '<circle class="end" cx="' + x + '" cy="' + y + '" r="12" fill="#000" fill-opacity="0" stroke="none"/>';
 }
 
 function pipe(points, out) {
-    var d = 'M' + points[0].x + ',' + points[0].y;
-    for (var i = 1; i < points.length; i++) d += ' L' + points[i].x + ',' + points[i].y;
-    out.push('<path d="' + d + '" fill="none" stroke="' + C.blue + '" stroke-width="8" stroke-linejoin="round"/>');
-    out.push('<path d="' + d + '" fill="none" stroke="#fff" stroke-width="4" stroke-linejoin="round"/>');
-    // arrow head at the end
-    var p = points[points.length - 1], q = points[points.length - 2];
+    // hollow pipe (white with a black border) with an open arrow head at the end
+    var n = points.length, p = points[n - 1], q = points[n - 2];
     var ux = p.x - q.x, uy = p.y - q.y, l = Math.sqrt(ux * ux + uy * uy) || 1;
     ux /= l; uy /= l;
-    out.push('<path d="M' + (p.x + ux * 4) + ',' + (p.y + uy * 4) +
-        ' L' + (p.x - ux * 10 - uy * 9) + ',' + (p.y - uy * 10 + ux * 9) +
-        ' L' + (p.x - ux * 10 + uy * 9) + ',' + (p.y - uy * 10 - ux * 9) + ' z" fill="' + C.blue + '"/>');
+    var head = 17, half = 10;
+    var base = {x: p.x - ux * head, y: p.y - uy * head};
+    // closed start: the border goes a little further back than the white inside
+    var s0 = points[0], s1 = points[1];
+    var vx = s1.x - s0.x, vy = s1.y - s0.y, m = Math.sqrt(vx * vx + vy * vy) || 1;
+    var path = function(first) {
+        var d = 'M' + first.x.toFixed(1) + ',' + first.y.toFixed(1);
+        for (var i = 1; i < n - 1; i++) d += ' L' + points[i].x + ',' + points[i].y;
+        return d + ' L' + base.x.toFixed(1) + ',' + base.y.toFixed(1);
+    };
+    out.push('<path d="' + path({x: s0.x - vx / m * 1.5, y: s0.y - vy / m * 1.5}) +
+        '" fill="none" stroke="' + C.line + '" stroke-width="10" stroke-linejoin="round"/>');
+    out.push('<path d="' + path(s0) + '" fill="none" stroke="' + C.fill + '" stroke-width="7" stroke-linejoin="round"/>');
+    out.push('<path d="M' + p.x.toFixed(1) + ',' + p.y.toFixed(1) +
+        ' L' + (base.x - uy * half).toFixed(1) + ',' + (base.y + ux * half).toFixed(1) +
+        ' L' + (base.x + uy * half).toFixed(1) + ',' + (base.y - ux * half).toFixed(1) + ' z"' +
+        ' fill="' + C.fill + '" stroke="' + C.line + '" stroke-width="1.5" stroke-linejoin="miter"/>');
 }
 
 var LINK_STYLE = {
-    relation: 'stroke="' + C.red + '" stroke-width="1.4" marker-end="url(#ar)"',
+    relation: 'stroke="' + C.line + '" stroke-width="1.3" marker-end="url(#ar)"',
     // only in the condition of 'als ... dan': lighter
-    condition: 'stroke="' + C.red + '" stroke-width="1.1" stroke-opacity="0.45" stroke-dasharray="2 3" marker-end="url(#ar)"',
+    condition: 'stroke="' + C.line + '" stroke-width="1.1" stroke-opacity="0.45" stroke-dasharray="2 3" marker-end="url(#ar)"',
     // beginwaarde of a toestandsvariabele
     initial: 'stroke="' + C.grey + '" stroke-width="1.1" stroke-dasharray="4 3" marker-end="url(#ag)"',
     // voorval changes a toestandsvariabele
-    action: 'stroke="' + C.blue + '" stroke-width="1.4" stroke-dasharray="5 3" marker-end="url(#ab)"'
+    action: 'stroke="' + C.line + '" stroke-width="1.3" stroke-dasharray="5 3" marker-end="url(#ar)"'
 };
 
 function unit(a, b) {
@@ -841,20 +855,20 @@ function toSVG(g, lay, opts) {
         var a = f.from ? pos[f.from] : pos[f.id + ':src'];
         var b = f.to ? pos[f.to] : pos[f.id + ':dst'];
         var u0 = unit(a, v), u1 = unit(v, b);
-        var ra = f.from ? radius(g.elements[f.from], u0.x, u0.y) : 17;
-        var rb = f.to ? radius(g.elements[f.to], -u1.x, -u1.y) + 3 : 20;
+        var ra = f.from ? radius(g.elements[f.from], u0.x, u0.y) - 3 : 0;
+        var rb = f.to ? radius(g.elements[f.to], -u1.x, -u1.y) - 3 : 0;
         var start = {x: a.x + u0.x * ra, y: a.y + u0.y * ra}, end = {x: b.x - u1.x * rb, y: b.y - u1.y * rb};
         var straight = Math.abs(u0.x * u1.y - u0.y * u1.x) < 1e-3 && (u0.x * u1.x + u0.y * u1.y) > 0;
         pipe(straight ? [start, end] : [start, v, end], out);
         var ud = unit(a, b);
         valveDir[f.id] = Math.abs(ud.y) > Math.abs(ud.x) ? 'v' : 'h';
         if (!f.from) {
-            out.push('<g data-id="' + esc(f.id) + ':src">' + cloud(a.x, a.y) + '</g>');
-            grow(a.x, a.y, 22);
+            out.push('<g data-id="' + esc(f.id) + ':src">' + pipeEnd(a.x, a.y) + '</g>');
+            grow(a.x, a.y, 12);
         }
         if (!f.to) {
-            out.push('<g data-id="' + esc(f.id) + ':dst">' + cloud(b.x, b.y) + '</g>');
-            grow(b.x, b.y, 22);
+            out.push('<g data-id="' + esc(f.id) + ':dst">' + pipeEnd(b.x, b.y) + '</g>');
+            grow(b.x, b.y, 12);
         }
     }
 
@@ -885,6 +899,27 @@ function toSVG(g, lay, opts) {
         out.push('<path d="' + d + '" fill="none" ' + LINK_STYLE[lk.kind] + '/>');
     }
 
+    // a relatiepijl leaves or enters a circle at the bottom: its name goes to the right
+    // (otherwise below, as in the exams), so the arrow does not cross the name
+    var bottom = {}, above = {};
+    for (i = 0; i < g.links.length; i++) {
+        var from = pos[g.links[i].from], to = pos[g.links[i].to];
+        if (!from || !to) continue;
+        var dir = unit(from, to);
+        if (dir.y > 0.6) bottom[g.links[i].from] = true;
+        if (dir.y < -0.6) bottom[g.links[i].to] = true;
+        // an arrow between two symbols on the row of stocks and flows: arc from above
+        var row = function(e) { return e.kind == 'stock' || e.kind == 'flow'; };
+        if (dir.y > 0.3 || (row(g.elements[g.links[i].from]) && row(g.elements[g.links[i].to]) &&
+                            Math.abs(to.y - from.y) < 1)) above[g.links[i].to] = true;
+    }
+    var name = function(x, y, r, label, id) {
+        if (bottom[id]) grow(x + r + 4 + 8 * String(label).length, y, 4);
+        return bottom[id] ?
+            '<text x="' + (x + r + 4) + '" y="' + (y + 5) + '" class="name lbl">' + esc(label) + '</text>' :
+            '<text x="' + x + '" y="' + (y + r + 16) + '" text-anchor="middle" class="name lbl">' + esc(label) + '</text>';
+    };
+
     // symbols
     for (i = 0; i < g.order.length; i++) {
         id = g.order[i];
@@ -896,45 +931,42 @@ function toSVG(g, lay, opts) {
         var x = p.x, y = p.y, label = el.name || el.label;
         switch (el.kind) {
             case 'stock':
+                // rectangle, name inside (as in the exams)
                 out.push(tip + '<rect x="' + (x - L.stockW / 2) + '" y="' + (y - L.stockH / 2) + '" width="' + L.stockW +
-                    '" height="' + L.stockH + '" rx="3" fill="' + C.fill + '" stroke="' + C.blue + '" stroke-width="2"/>' +
-                    '<text x="' + x + '" y="' + (y + 5) + '" text-anchor="middle" font-weight="bold">' + esc(label) + '</text>');
+                    '" height="' + L.stockH + '" fill="' + C.fill + '" stroke="' + C.line + '" stroke-width="1.5"/>' +
+                    '<text x="' + x + '" y="' + (y + 6) + '" text-anchor="middle" class="name">' + esc(label) + '</text>');
                 grow(x, y, L.stockW / 2 + 4);
                 break;
             case 'flow':
-                out.push(tip + valve(x, y, valveDir[id]) +
-                    '<text x="' + x + '" y="' + (y + 28) + '" text-anchor="middle" class="small">' + esc(shorten(label)) + '</text>');
+                // ventiel: a circle on the pipe with a tap. An arrow from above: the tap below
+                var flip = above[id] && !bottom[id];
+                out.push(tip + valve(x, y, valveDir[id], flip) +
+                    name(x, flip && valveDir[id] != 'v' ? y + 7 : y, R.valve, shorten(label), id));
                 grow(x, y + 20, 30);
                 break;
             case 'aux':
-                out.push(tip + '<circle cx="' + x + '" cy="' + y + '" r="18" fill="' + C.fill + '" stroke="' + C.blue +
-                    '" stroke-width="2"' + (el.conditional ? ' stroke-dasharray="4 2"' : '') + '/>' +
-                    '<text x="' + x + '" y="' + (y + 34) + '" text-anchor="middle">' + esc(label) + '</text>');
-                grow(x, y + 10, 30);
-                break;
             case 'const':
-                out.push(tip + '<path d="M' + x + ',' + (y - 10) + ' L' + (x + 10) + ',' + y + ' L' + x + ',' + (y + 10) +
-                    ' L' + (x - 10) + ',' + y + ' z" fill="' + C.fill + '" stroke="' + C.blue + '" stroke-width="2"/>' +
-                    '<text x="' + x + '" y="' + (y + 26) + '" text-anchor="middle">' + esc(label) + '</text>');
+                // hulpvariabele and constante: the same circle in the exams, name below
+                out.push(tip + '<circle cx="' + x + '" cy="' + y + '" r="' + R.aux + '" fill="' + C.fill + '" stroke="' + C.line +
+                    '" stroke-width="1.5"' + (el.conditional ? ' stroke-dasharray="4 2"' : '') + '/>' + name(x, y, R.aux, label, id));
                 grow(x, y + 10, 30);
                 break;
             case 'event':
                 out.push(tip + '<path d="M' + (x + 3) + ',' + (y - 15) + ' L' + (x - 9) + ',' + (y + 2) + ' L' + (x - 1) + ',' + (y + 2) +
                     ' L' + (x - 4) + ',' + (y + 15) + ' L' + (x + 9) + ',' + (y - 3) + ' L' + (x + 1) + ',' + (y - 3) + ' z"' +
-                    ' fill="#ffe08a" stroke="#b07d00" stroke-width="1.5"/>' +
-                    '<text x="' + x + '" y="' + (y + 30) + '" text-anchor="middle" class="small">' + esc(shorten(el.condition, 22)) + '</text>');
+                    ' fill="' + C.fill + '" stroke="' + C.line + '" stroke-width="1.5" stroke-linejoin="round"/>' +
+                    '<text x="' + x + '" y="' + (y + 30) + '" text-anchor="middle" class="small lbl">' + esc(shorten(el.condition, 22)) + '</text>');
                 grow(x, y + 10, 40);
                 break;
             case 'time':
-                out.push(tip + '<circle cx="' + x + '" cy="' + y + '" r="16" fill="#fff" stroke="' + C.grey + '" stroke-width="2"/>' +
-                    '<path d="M' + x + ',' + (y - 10) + ' L' + x + ',' + y + ' L' + (x + 7) + ',' + (y + 4) + '" fill="none" stroke="' + C.grey + '" stroke-width="2"/>' +
-                    '<text x="' + x + '" y="' + (y + 32) + '" text-anchor="middle">' + esc(label) + '</text>');
+                out.push(tip + '<circle cx="' + x + '" cy="' + y + '" r="' + R.aux + '" fill="' + C.fill + '" stroke="' + C.line + '" stroke-width="1.5"/>' +
+                    '<path d="M' + x + ',' + (y - 8) + ' L' + x + ',' + y + ' L' + (x + 6) + ',' + (y + 3) + '" fill="none" stroke="' + C.line + '" stroke-width="1.5"/>' + name(x, y, R.aux, label, id));
                 grow(x, y + 10, 30);
                 break;
             default:   // unknown
-                out.push(tip + '<circle cx="' + x + '" cy="' + y + '" r="18" fill="#fdecea" stroke="' + C.red + '" stroke-width="2"/>' +
-                    '<text x="' + x + '" y="' + (y + 6) + '" text-anchor="middle" fill="' + C.red + '" font-weight="bold">?</text>' +
-                    '<text x="' + x + '" y="' + (y + 34) + '" text-anchor="middle">' + esc(label) + '</text>');
+                out.push(tip + '<circle cx="' + x + '" cy="' + y + '" r="' + R.aux + '" fill="' + C.fill + '" stroke="' + C.red + '" stroke-width="1.5"/>' +
+                    '<text x="' + x + '" y="' + (y + 5) + '" text-anchor="middle" fill="' + C.red + '" font-weight="bold">?</text>' +
+                    name(x, y, R.aux, label, id));
                 grow(x, y + 10, 30);
         }
         out.push('</g>');
@@ -958,28 +990,31 @@ function toSVG(g, lay, opts) {
     if (minX == Infinity) { minX = 0; minY = 0; maxX = 100; maxY = 50; }
     opts.used = {minX: minX, minY: minY, maxX: maxX, maxY: maxY};
     var pad = 12, w = maxX - minX + 2 * pad, h = maxY - minY + 2 * pad;
-    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="' + (minX - pad).toFixed(0) + ' ' + (minY - pad).toFixed(0) + ' ' +
+    var vbX = (minX - pad).toFixed(0), vbY = (minY - pad).toFixed(0);
+    // arrow head of a relatiepijl: slender, black (as in the exams)
+    var marker = function(mid, color) {
+        return '<marker id="' + mid + '" viewBox="0 0 12 10" refX="11" refY="5" markerWidth="9" markerHeight="7.5" ' +
+            'orient="auto-start-reverse" markerUnits="userSpaceOnUse"><path d="M0,1 L12,5 L0,9 L2.5,5 z" fill="' + color + '"/></marker>';
+    };
+    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="' + vbX + ' ' + vbY + ' ' +
         w.toFixed(0) + ' ' + h.toFixed(0) + '" width="' + w.toFixed(0) + '" height="' + h.toFixed(0) + '"' +
-        ' font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="13" fill="' + C.text + '">' +
-        '<style>text{paint-order:stroke;stroke:#fff;stroke-width:3px;stroke-linejoin:round}' +
-        '.small{font-size:11px;fill:' + C.grey + '}</style>' +
-        '<defs>' +
-        '<marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">' +
-        '<path d="M0,0 L10,5 L0,10 z" fill="' + C.red + '"/></marker>' +
-        '<marker id="ab" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">' +
-        '<path d="M0,0 L10,5 L0,10 z" fill="' + C.blue + '"/></marker>' +
-        '<marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">' +
-        '<path d="M0,0 L10,5 L0,10 z" fill="' + C.grey + '"/></marker>' +
-        '</defs>' + out.join('') + '</svg>';
+        ' font-family="Times New Roman, Times, serif" font-size="15" fill="' + C.text + '">' +
+        '<style>.name{font-style:italic}' +
+        '.lbl{paint-order:stroke;stroke:' + C.bg + ';stroke-width:3px;stroke-linejoin:round}' +
+        '.small{font-size:12px;fill:' + C.grey + '}</style>' +
+        '<defs>' + marker('ar', C.line) + marker('ag', C.grey) + '</defs>' +
+        '<rect class="bg" x="' + vbX + '" y="' + vbY + '" width="' + w.toFixed(0) + '" height="' + h.toFixed(0) +
+        '" fill="' + C.bg + '"/>' + out.join('') + '</svg>';
 }
 
-function valve(x, y, dir) {
-    // bow tie across the pipe (dir: 'h' horizontal or 'v' vertical pipe)
-    var vertical = dir == 'v';
-    var d = vertical ?
-        'M' + (x - 9) + ',' + (y - 9) + ' L' + (x + 9) + ',' + (y - 9) + ' L' + (x - 9) + ',' + (y + 9) + ' L' + (x + 9) + ',' + (y + 9) + ' z' :
-        'M' + (x - 9) + ',' + (y - 9) + ' L' + (x + 9) + ',' + (y + 9) + ' L' + (x + 9) + ',' + (y - 9) + ' L' + (x - 9) + ',' + (y + 9) + ' z';
-    return '<path d="' + d + '" fill="' + C.fill + '" stroke="' + C.blue + '" stroke-width="2" stroke-linejoin="round"/>';
+function valve(x, y, dir, flip) {
+    // ventiel: circle on the pipe with a tap (dir: 'h' horizontal or 'v' vertical pipe;
+    // tap above or left, flip: below or right)
+    var r = R.valve, t = r + 6, sg = flip ? -1 : 1, d = dir == 'v' ?
+        'M' + (x - sg * r) + ',' + y + ' H' + (x - sg * t) + ' M' + (x - sg * t) + ',' + (y - 4) + ' V' + (y + 4) :
+        'M' + x + ',' + (y - sg * r) + ' V' + (y - sg * t) + ' M' + (x - 4) + ',' + (y - sg * t) + ' H' + (x + 4);
+    return '<circle cx="' + x + '" cy="' + y + '" r="' + r + '" fill="' + C.fill + '" stroke="' + C.line + '" stroke-width="1.5"/>' +
+        '<path d="' + d + '" fill="none" stroke="' + C.line + '" stroke-width="1.5"/>';
 }
 
 function shorten(s, n) {

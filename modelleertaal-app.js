@@ -770,7 +770,7 @@ ModelleertaalApp.prototype.analyse_grafisch_model = function() {
 
 
 ModelleertaalApp.prototype.draw_grafisch_model = function() {
-  // draw the model as a Coach style stock-flow diagram (see grafisch.js)
+  // draw the model as a stock-flow diagram in the style of the exams (see grafisch.js)
   var svg = $(this.dom_grafisch_svg);
   var g;
   try {
