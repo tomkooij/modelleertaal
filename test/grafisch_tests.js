@@ -112,12 +112,18 @@ describe('grafisch.js - tekstmodel naar grafisch model', function() {
         assert.equal(grafisch.toSVG(g, undefined, {stijl: 'examen'}), examen);
         assert.equal(grafisch.toSVG(g, undefined, {stijl: 'onbekend'}), examen, 'onbekende stijl: examen');
         assert.include(examen, 'fill="#d4d4d4"', 'grijze achtergrond');
+        assert.notInclude(examen, 'stroke-dasharray="3 2.5"', 'geen symbool voor buiten het model');
         var kleur = grafisch.toSVG(g, undefined, {stijl: 'kleur'});
-        // kleur: as the System Dynamics Modeler of NetLogo
-        assert.include(kleur, 'fill="#e1e1b6"', 'toestandsvariabele beige');
-        assert.include(kleur, 'fill="#82bcb7"', 'hulpvariabele en constante: ruit, blauwgroen');
-        assert.include(kleur, 'stroke="#c0c0c0"', 'stroom lichtgrijs');
-        assert.include(kleur, 'class="box"', 'naam in een kader');
+        // kleur: colors of Coach 7, blue symbols and red relatiepijlen
+        assert.include(kleur, '#1f5fa8');
+        assert.include(kleur, 'stroke="#c62828"', 'rode relatiepijlen');
+        assert.include(kleur, 'stroke-dasharray="3 2.5"', 'stroom naar buiten: gestippelde cirkel');
+        // Coach 7: hulpvariabele is a circle, constante a circle with a line segment on each side
+        var symbol = function(svg, id) { return svg.split('data-id="' + id + '"')[1].split('</g>')[0]; };
+        assert.include(symbol(kleur, 'F'), '<circle', 'hulpvariabele: cirkel');
+        assert.notInclude(symbol(kleur, 'F'), ' H', 'hulpvariabele: geen streepjes');
+        assert.include(symbol(kleur, 'k'), '<circle', 'constante: cirkel');
+        assert.match(symbol(kleur, 'k'), /<path d="M[^"]* H[^"]* M[^"]* H[^"]*"/, 'constante: streepjes links en rechts');
         // the same elements, in both styles
         ['x', 'k', 'm', 'F', '~f1:dst'].forEach(function(id) {
             assert.include(examen, 'data-id="' + id + '"');

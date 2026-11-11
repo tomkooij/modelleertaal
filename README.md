@@ -53,24 +53,18 @@ circle with a tap), *hulpvariabelen* and *constanten* (circles, name below) and 
 
 <img src="images/webapp-grafisch-kleur.png" alt="The same graphical model in color" width="400" align="right">
 
-Prefer color? The switch **Examen | Kleur** below the diagram draws the same model in the style of the
-[System Dynamics Modeler of NetLogo](https://docs.netlogo.org/systemdynamics.html)
-(Northwestern University): beige *toestandsvariabelen*, *stromen* as gray arrows with a gray valve,
-*hulpvariabelen* and *constanten* as blue-green diamonds with the name in a box, and black arrows for
-"depends on". The colors are taken from the NetLogo source code
-([`netlogo-gui/src/main/sdm/gui`](https://github.com/NetLogo/NetLogo/tree/main/netlogo-gui/src/main/sdm/gui) and
-[`InterfaceColors.scala`](https://github.com/NetLogo/NetLogo/blob/main/netlogo-gui/src/main/theme/InterfaceColors.scala)).
-The webapp remembers your choice, and **Download** saves the diagram in the style you see.
+Prefer color? The switch **Examen | Kleur** below the diagram draws the same model in the colors of
+Coach 7: blue symbols and red arrows for "depends on". In this style *hulpvariabelen* are circles and
+*constanten* are small circles with a line segment on each side, as in Coach 7. A *stroom* from or to
+outside the model starts or ends in a dashed circle. The webapp remembers your choice, and **Download**
+saves the diagram in the style you see.
 
 Sources of the two styles:
 
 | Style | Source |
 |---|---|
 | Examen | Graphical models in the central exams natuurkunde vwo on [examenblad.nl](https://www.examenblad.nl): 2022-I *Vrije worp bij basketbal* (figuur 5), 2023-II *Fietshelm* (figuur 6), 2018-I *Uitrijden van een auto* (figuur 2) |
-| Kleur | NetLogo System Dynamics Modeler: [user guide](https://docs.netlogo.org/systemdynamics.html) and [source code](https://github.com/NetLogo/NetLogo/tree/main/netlogo-gui/src/main/sdm/gui) (stock, converter, rate, reservoir, link) |
-
-Both are drawn by this webapp (no images or code are copied); the shapes of stock (rectangle) and auxiliary
-(circle) also follow the [XMILE standard](https://docs.oasis-open.org/xmile/xmile/v1.0/xmile-v1.0.html) (OASIS, section 5.1.2).
+| Kleur | Coach 7 (CMA), as described in A. Heck, [*Guide on modelling*](https://staff.fnwi.uva.nl/a.j.p.heck/Guide_on_modelling/Text/grafischmodelleren.html) (UvA), Fig 3.10 *A graphical model in Coach 7*: a *hulpvariabele* is "indicated by a circle", a *constante* by "a circle with two extra line segments on each side". The exam 2018-I uses the same symbol for a *constante*. |
 
 - The diagram is drawn from the text of the model, while you type. No Run needed.
 - **Text and diagram are linked.** Click a symbol and its lines in the text are marked. Put the cursor

@@ -22,12 +22,11 @@
   exams (2022-I, 2023-II): black on gray, a stroom is a hollow arrow with a
   valve (circle with a tap), hulpvariabelen and constanten are circles with the
   name below (or to the right, when an arrow leaves at the bottom).
-  The switch "Examen | Kleur" below the diagram draws it in color instead, in
-  the style of the System Dynamics Modeler of NetLogo (beige stocks, gray flow
-  arrows with a gray valve, blue-green diamonds for hulpvariabelen and
-  constanten, names in a box, black arrows; colors from the NetLogo source,
-  see `STIJLEN` in `grafisch.js`). The choice is remembered and used for the
-  SVG download. Works
+  The switch "Examen | Kleur" below the diagram draws it in the colors of
+  Coach 7 instead: blue symbols, red relatiepijlen, a hulpvariabele is a circle
+  and a constante a small circle with a line segment on each side (as in
+  Coach 7, see A. Heck, Guide on modelling, UvA; sources in `STIJLEN` in
+  `grafisch.js`). The choice is remembered and used for the SVG download. Works
   without Run and updates while typing. Elements can be dragged (arrows and
   pipes follow), "Herstel indeling" resets. Download as SVG. New module `grafisch.js`.
 - The graphical model is also input: click a symbol to change its name, formula,
