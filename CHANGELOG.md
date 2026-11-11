@@ -4,6 +4,18 @@
 
 ### Webapp
 
+- "Deel link" is backwards compatible and more robust. New module
+  `deellink.js` (no DOM, tested). New links are `#code=v2.<payload>`: the
+  version is in front of the payload, so a future version can change the
+  encoding and still read all older links. Links of version 1 (webapp 6.0 -
+  6.1, `#code=<payload>`) and `#model=naam&N=...` keep working; frozen links
+  of every version are in `test/deellink_tests.js`. Reading accepts links
+  mangled by chat, mail and documents (standard base64, line breaks,
+  percent-encoding, a period or bracket at the end). A link that cannot be
+  read (cut off, newer version) gives a message instead of silently showing
+  another model.
+- Fix: `N` in a link (`#model=...&N=100`) is no longer overruled by `N` in the
+  model file.
 - New panel "Weergave als grafisch model": the text model is drawn as a
   stock-flow diagram like the graphical mode of Coach 7 (toestandsvariabelen,
   stromen, hulpvariabelen, constanten, voorvallen and relatiepijlen). Works

@@ -1,5 +1,6 @@
 var evaluator_js = require('./evaluator.js');
 var autoplot = require('./autoplot.js');
+var deellink = require('./deellink.js');
 var grafisch = require('./grafisch.js');
 var grafisch_edit = require('./grafisch-edit.js');
 var Blob = require('blob');
@@ -491,14 +492,8 @@ function ModelleertaalApp(params) {
 // Loading / saving models
 //
 ModelleertaalApp.prototype.parse_url_hash = function() {
-  // listen to URL index.html#model=model_naam&N=100 type URL
-  // https://stackoverflow.com/a/44169739/4965175
-  var hash = window.location.hash.substr(1);
-  return hash.split('&').reduce(function(result, item) {
-    var parts = item.split('=');
-    result[parts[0]] = parts[1];
-    return result;
-  }, {});
+  // index.html#model=model_naam&N=100 or index.html#code=... (Deel link, see deellink.js)
+  return deellink.parse_hash(window.location.hash);
 };
 
 
@@ -507,22 +502,25 @@ ModelleertaalApp.prototype.load_model = function() {
   var url_params = this.parse_url_hash();
   if (this.debug) console.log("params passed in URL", url_params);
 
-  if (url_params.N && isFinite(Number(url_params.N))) {
+  // N in the link (#model=...&N=100) wins over N in the model file, for the model of the link
+  this.url_N = undefined;
+  if (url_params.N && isFinite(Number(url_params.N)) && Number(url_params.N) >= 1) {
     this.N_default = Number(url_params.N);
+    this.url_N = Number(url_params.N);
   }
   $(this.dom_nbox).val(this.N_default);
 
   this.dropdown_update();
 
-  if (url_params.code) {
-    // complete model in URL (made with "Deel link")
+  if (url_params.code !== undefined) {
+    // complete model in URL (made with "Deel link"). All versions of the link: see deellink.js
     try {
-      var shared = JSON.parse(decode_base64url(url_params.code));
+      var shared = deellink.decode(url_params.code);
       this.model = new evaluator_js.Model();
-      this.model.modelregels = String(shared.m || '');
-      this.model.startwaarden = String(shared.s || '');
-      if (shared.N) this.model.N = Number(shared.N);
-      this.model_title = shared.t ? String(shared.t) : 'Gedeeld model';
+      this.model.modelregels = shared.modelregels;
+      this.model.startwaarden = shared.startwaarden;
+      if (shared.N) this.model.N = shared.N;
+      this.model_title = shared.title || 'Gedeeld model';
       $(this.dom_model_keuze).find('option[value="shared"]').remove();
       $('<option/>').val('shared').text(this.model_title + ' (uit link)').prependTo(this.dom_model_keuze);
       $(this.dom_model_keuze).val('shared');
@@ -530,13 +528,15 @@ ModelleertaalApp.prototype.load_model = function() {
       this.init_app();
       return;
     } catch (err) {
+      // show why, after the first model of the list is loaded (init_app clears messages)
       console.error('Kan model uit link niet lezen', err);
+      this.link_error = err.deellink ? err.message : 'Het model in deze link kan niet gelezen worden.';
     }
   }
 
   if (url_params.model) {
     // try to load model passed with model=... parameter
-    var model_url = 'modellen/' + decodeURIComponent(url_params.model) + '.xml';
+    var model_url = 'modellen/' + url_params.model + '.xml';
     var index = -1;
     for (var i = 0; i < this.model_index.length; i++) {
       if (this.model_index[i].url == model_url) index = i;
@@ -547,7 +547,7 @@ ModelleertaalApp.prototype.load_model = function() {
       this.dropdown_value = String(index);
       this.model_title = this.model_index[index].title;
     } else {
-      this.model_title = decodeURIComponent(url_params.model);
+      this.model_title = url_params.model;
     }
     this.load_model_xml_from_url(model_url);
   } else {
@@ -1645,11 +1645,12 @@ ModelleertaalApp.prototype.share_url = function() {
     return base + '#model=' + this.model_name_from_url(entry.url);
   }
   this.read_model();
-  var shared = {m: this.model.modelregels, s: this.model.startwaarden};
-  if (title) shared.t = title;
-  var N = Number($(this.dom_nbox).val());
-  if (isFinite(N) && N > 0) shared.N = N;
-  return base + '#code=' + encode_base64url(JSON.stringify(shared));
+  return base + '#code=' + deellink.encode({
+    modelregels: this.model.modelregels,
+    startwaarden: this.model.startwaarden,
+    title: title,
+    N: Number(String($(this.dom_nbox).val()).replace(',', '.'))
+  });
 };
 
 
@@ -2589,7 +2590,8 @@ ModelleertaalApp.prototype.init_app = function() {
     $(this.dom_modelregels).val(this.model.modelregels);
     $(this.dom_startwaarden).val(this.model.startwaarden);
   }
-  $(this.dom_nbox).val(this.model.N ? this.model.N : this.N_default);
+  $(this.dom_nbox).val(this.url_N || this.model.N || this.N_default);
+  this.url_N = undefined;   // only for the model that the link opens
   $(this.dom_titel).val(this.model_title || '');
   this.update_document_title();
 
@@ -2635,6 +2637,12 @@ ModelleertaalApp.prototype.init_app = function() {
   } else if (!this.starting) {
     // another model is loaded: the saved work is no longer needed
     this.autosave();
+  }
+  if (this.link_error && !this.starting) {
+    // the Deel link could not be read: say so (another model is shown instead)
+    this.show_message('error', 'Link niet gelezen', this.link_error + ' Je ziet nu een ander model.');
+    this.print_status('Het model uit de link kon niet geladen worden.');
+    this.link_error = undefined;
   }
   this.grafisch_moved = {};   // other model: forget dragged positions
   this.grafisch_zoom = null;
@@ -2930,20 +2938,6 @@ ModelleertaalApp.prototype.highlight_trace = function(line) {
   this.at_line = line - 1;
   this.modelregels_editor.addLineClass(this.at_line, 'background', 'mt-trace-line');
 };
-
-
-//
-// base64url <--> unicode string. (model in URL)
-//
-function encode_base64url(str) {
-  var bytes = unescape(encodeURIComponent(str));
-  return window.btoa(bytes).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-}
-
-function decode_base64url(str) {
-  var bytes = window.atob(str.replace(/-/g, '+').replace(/_/g, '/'));
-  return decodeURIComponent(escape(bytes));
-}
 
 
 exports.ModelleertaalApp = ModelleertaalApp;
