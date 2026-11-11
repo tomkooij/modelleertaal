@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Documentatie
+
+- README in het Nederlands (de MIT-licentie blijft de officiele Engelse tekst).
+
 ### Webapp
 
 - "Deel link" is backwards compatible and more robust. New module
