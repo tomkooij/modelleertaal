@@ -16,10 +16,6 @@ var title_link = 'https://www.github.com/tomkooij/modelleertaal';
 var full_webapp = [
             {id: "#model_keuze", action: "show"},
             {id: "#permalink", action: "show"},
-            // model blok
-            {id: "#continue_dialog", action: "show"},
-            {id: "#debugger_dialog", action: "show"},
-            // tabel output
           ];
 
 var leerling_versie = [
@@ -27,10 +23,6 @@ var leerling_versie = [
             // bovenste blok
             {id: "#model_keuze", action: "show"},
             {id: "#permalink", action: "show"},
-            // model blok
-            {id: "#continue_dialog", action: "hide"},
-            {id: "#debugger_dialog", action: "hide"},
-            // tabel output
           ];
 
 var profiellen = [leerling_versie, full_webapp];

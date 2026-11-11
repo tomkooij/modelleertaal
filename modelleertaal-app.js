@@ -3,6 +3,9 @@ var autoplot = require('./autoplot.js');
 var deellink = require('./deellink.js');
 var grafisch = require('./grafisch.js');
 var grafisch_edit = require('./grafisch-edit.js');
+var stapper = require('./stapper.js');
+var vergelijk = require('./vergelijk.js');
+var dtcheck = require('./dtcheck.js');
 var Blob = require('blob');
 var FileSaver = require('file-saver');
 // this also depends on:
@@ -63,10 +66,9 @@ function ModelleertaalApp(params) {
   this.dom_results = ".results";
   this.dom_nbox = "#NBox";
   this.dom_endtime_hint = "#endtime_hint";
-  this.dom_nbox_continue = "#NBoxContinue";
   this.dom_run = "#run";
-  this.dom_continue = "#continue";
-  this.dom_trace = "#trace";
+  this.dom_step = "#stap";
+  this.dom_step_line = "#stap_regel";
   this.dom_fileinput = "#fileinput";
   this.dom_download_xml = "#download_xml";
   this.dom_download_pgf = "#download_pgf";
@@ -169,19 +171,21 @@ function ModelleertaalApp(params) {
     self.run();
   });
 
-  $(this.dom_continue).click(function() {
-    self.continue_run();
+  $(this.dom_step).click(function() {
+    self.step();
   });
 
-  $(this.dom_trace).click(function() {
-    self.trace();
-  });
-
-  $(this.dom_nbox + ',' + this.dom_nbox_continue).on('keydown', function(event) {
+  $(this.dom_nbox).on('keydown', function(event) {
     if (event.key == 'Enter') {
       event.preventDefault();
-      $(this.id == 'NBox' ? self.dom_run : self.dom_continue).click();
+      $(self.dom_run).click();
     }
+  });
+
+  // Houd vast: keep the gray line of a run as a reference
+  $(this.dom_graph_note).on('click', 'button.pin', function() {
+    self.pinned = !self.pinned;
+    self.do_plot();
   });
 
   $(this.dom_nbox).on('input', function() {
@@ -478,8 +482,8 @@ function ModelleertaalApp(params) {
   $(this.dom_graph).on("plotclick", function(event, pos, item) {
     if (!item || item.series.mt_previous) return;
     var table = $('<table>').addClass('table');
-    table.append(self.table_header());
-    table.append(self.table_row(self.get_result_rowIndex(item.dataIndex)));
+    table.append(self.table_header(self.allVars));
+    table.append(self.table_row(self.results, self.get_result_rowIndex(item.dataIndex)));
     $(self.dom_clickdata).html($('<div>').addClass('table_scroll').append(table));
   });
 
@@ -687,6 +691,8 @@ ModelleertaalApp.prototype.on_model_edited = function() {
   // called on every change in the editors.
   var self = this;
   this.remove_highlight_error();
+  // typing ends Stap voor stap
+  if (this.stepper) this.end_stepping();
   clearTimeout(this.hint_timer);
   this.hint_timer = setTimeout(function() { self.update_endtime_hint(true); }, 300);
   this.schedule_autosave();
@@ -1837,21 +1843,29 @@ ModelleertaalApp.prototype.run = function() {
   if (N === null) return false;
   this.N = N;
 
+  // Run during Stap voor stap: compute the whole model again
+  this.end_stepping();
   if (!this.setup_run()) return false;
 
   // keep the results of the previous run: plot in gray for comparison
   var previous = null;
-  if (this.results_available()) {
+  if (this.results_available() && this.last_source) {
     previous = {
       vars: this.allVars,
-      rows: this.reduce_rows(this.results, this.max_rows_in_plot)
+      rows: this.reduce_rows(this.results, this.max_rows_in_plot),
+      source: this.last_source
     };
   }
 
   this.new_run = true;
   this.has_run = this.do_run();
   if (this.has_run) {
-    if (previous) this.previous = previous;
+    // Houd vast: the gray line stays (the pinned run), else it is the previous run
+    if (previous && !(this.pinned && this.previous)) this.previous = previous;
+    if (!this.previous) this.pinned = false;
+    this.last_source = vergelijk.source(this.evaluator.startwaarden_ast, this.evaluator.modelregels_ast, N);
+    this.compare_text = this.previous ?
+      vergelijk.describe(vergelijk.differences(this.previous.source, this.last_source)) : '';
     this.after_run();
     // small screen: the graph is below the model.
     this.reveal(this.dom_graph);
@@ -1872,58 +1886,108 @@ ModelleertaalApp.prototype.reveal = function(dom) {
 };
 
 
-ModelleertaalApp.prototype.stopped_by_model = function() {
-  // the last run was stopped by 'stop' (or print): continuing is not possible
-  if (!(this.has_run && this.evaluator && this.evaluator.stopped)) return false;
-  this.show_message('info', 'Het model is gestopt',
-    "Verder rekenen kan niet: het model is gestopt door 'stop'. Druk op Run om opnieuw te beginnen.");
+ModelleertaalApp.prototype.format_text = function(x) {
+  // number in a sentence (Dutch decimal comma): 0,981
+  if (typeof x == 'boolean') return x ? 'waar' : 'onwaar';
+  if (typeof x != 'number' || isNaN(x)) return '?';
+  if (!isFinite(x)) return (x > 0) ? '\u221e' : '-\u221e';
+  return String(Number(x.toPrecision(this.precision))).replace('.', ',');
+};
+
+
+//
+// Stap voor stap: one modelregel per click, with the calculation in numbers (stapper.js)
+//
+ModelleertaalApp.prototype.step = function() {
+  // first click (after loading, after a change, after a Run or at the end): start at the startwaarden
+  if (!this.stepper || this.stepper.finished) {
+    if (!this.start_stepping()) return false;
+  }
+  var step;
+  try {
+    step = this.stepper.step();
+  } catch (err) {
+    this.end_stepping();
+    this.show_error(err);
+    return false;
+  }
+  if (step) this.show_step(step);
   return true;
 };
 
 
-ModelleertaalApp.prototype.continue_run = function() {
-
-  if (this.stopped_by_model()) return false;
-
-  var N = this.read_N(this.dom_nbox_continue);
+ModelleertaalApp.prototype.start_stepping = function() {
+  var self = this;
+  var N = this.read_N(this.dom_nbox);
   if (N === null) return false;
-  this.N = N;
 
-  if (this.has_run) {
-    this.new_run = false;
-    this.tracing = false;
-  } else {
-    if (!this.setup_run()) return false;
-    this.new_run = true;
+  this.end_stepping();
+  this.remove_highlight_error();
+  this.clear_message();
+  this.read_model();
+  try {
+    // check the model (and find the columns of the table) without computing an iteration
+    var evaluator = new evaluator_js.ModelregelsEvaluator(this.model, this.debug);
+    evaluator.set_state(0, true, false);
+    evaluator.run();
+    this.stepper = new stapper.Stepper(evaluator.startwaarden_ast, evaluator.modelregels_ast,
+      evaluator.namespace.varNames, {N: N, format: function(x) { return self.format_text(x); }});
+  } catch (err) {
+    this.stepper = null;
+    this.show_error(err);
+    return false;
   }
-  this.has_run = this.do_run();
-  if (this.has_run) this.after_run();
-  return this.has_run;
+  $(this.dom_datatable).addClass('stepping');
+  return true;
 };
 
 
-ModelleertaalApp.prototype.trace = function() {
-
-  if (this.stopped_by_model()) return false;
-
-  if (this.has_run) {
-    this.new_run = false;
-  } else {
-    if (!this.setup_run()) return false;
-    this.new_run = true;
+ModelleertaalApp.prototype.show_step = function(step) {
+  this.highlight_trace(step.line);
+  if (this.CodeMirrorActive) {
+    this.modelregels_editor.scrollIntoView({line: step.line - 1, ch: 0}, 40);
   }
+  $(this.dom_step_line).text(step.text).prop('hidden', false);
 
-  this.tracing = true;
-  this.has_run = this.do_run();
-  if (this.has_run) this.after_run();
-  return this.has_run;
+  // the table: the cell that changed lights up
+  this.step_mark = {row: step.iteration, column: this.stepper.varNames.indexOf(step.name)};
+  this.print_table();
+
+  var status;
+  if (step.finished && this.stepper.stopped) {
+    status = "Stap voor stap: het model is gestopt in iteratie " + step.iteration + ". Druk op Stap om opnieuw te beginnen.";
+  } else if (step.finished) {
+    status = "Stap voor stap: alle " + step.iteration + " iteraties zijn gedaan. Druk op Stap om opnieuw te beginnen.";
+  } else if (step.end_of_iteration) {
+    status = "Stap voor stap: iteratie " + step.iteration + " is klaar. De volgende stap begint weer bovenaan.";
+  } else {
+    status = "Stap voor stap: iteratie " + step.iteration + ".";
+  }
+  this.print_status(status);
+};
+
+
+ModelleertaalApp.prototype.end_stepping = function() {
+  // back to the results of the last Run
+  if (!this.stepper) return;
+  this.stepper = null;
+  this.step_mark = undefined;
+  this.remove_highlight_trace();
+  $(this.dom_step_line).prop('hidden', true).empty();
+  $(this.dom_datatable).removeClass('stepping');
+  if (this.results_available()) {
+    this.print_table();
+    this.print_status(this.stale ? "Model gewijzigd. Druk op Run." : "Klaar met stap voor stap. Druk op Run of Stap.");
+  } else {
+    $(this.dom_datatable).empty().append(
+      $('<div>').addClass('placeholder').text('Hier komt de tabel met resultaten.'));
+    this.print_status("Druk op Run of Stap.");
+  }
 };
 
 
 ModelleertaalApp.prototype.setup_run = function() {
 
-  // reset the breakpoint pointer:
-  this.tracing = false;
   this.remove_highlight_trace();
   this.remove_highlight_error();
   this.clear_message();
@@ -1942,14 +2006,11 @@ ModelleertaalApp.prototype.setup_run = function() {
 
 ModelleertaalApp.prototype.do_run = function() {
 
-  var run_result;
-
   this.clear_message();
 
   try {
-    this.evaluator.set_state(this.N, this.new_run, this.tracing);
+    this.evaluator.set_state(this.N, this.new_run, false);
     this.evaluator.run();
-    run_result = this.evaluator.get_state();
   } catch (err) {
     this.show_error(err);
     return false;
@@ -1957,13 +2018,6 @@ ModelleertaalApp.prototype.do_run = function() {
 
   this.results = this.evaluator.result;
   this.allVars = this.evaluator.namespace.varNames;
-
-  if (!run_result.tracing) {
-    this.tracing = false;
-    this.remove_highlight_trace();
-  } else {
-    this.highlight_trace(run_result.lineno + 1);
-  }
   return true;
 };
 
@@ -2019,6 +2073,39 @@ ModelleertaalApp.prototype.after_run = function() {
   this.check_results();
   // values in the tooltips of the diagram
   if (this.grafisch_open() && this.grafisch_g) this.render_grafisch_model();
+
+  // is dt small enough? (after the graph is drawn: the student does not wait for this)
+  var self = this;
+  var run_id = this.run_id = (this.run_id || 0) + 1;
+  clearTimeout(this.dtcheck_timer);
+  this.dtcheck_timer = setTimeout(function() {
+    if (run_id == self.run_id && !self.stale && !self.stepper) self.check_dt();
+  }, 30);
+};
+
+
+ModelleertaalApp.prototype.check_dt = function() {
+  // run the model again with dt/2 (dtcheck.js). Different result: dt is too large.
+  if ($(this.dom_message).is(':visible')) return;   // a warning or print() goes first
+  var self = this;
+  var result;
+  try {
+    result = dtcheck.check(this.model, this.N, {
+      results: this.results,
+      varNames: this.allVars,
+      stopped: this.evaluator.stopped,
+      runtime_ms: this.evaluator.runtime_ms,
+      analysis: this.analysis
+    });
+  } catch (err) {
+    if (this.debug) console.log('dtcheck', err);
+    return;
+  }
+  if (result) {
+    this.show_message('info', 'Is dt klein genoeg?', dtcheck.message(result, function(x) {
+      return self.format_text(x);
+    }));
+  }
 };
 
 
@@ -2027,10 +2114,6 @@ ModelleertaalApp.prototype.print_run_status = function() {
   var N_iterations = this.results.length - 1;
   var status;
 
-  if (this.tracing) {
-    this.print_status("Debugger in iteratie " + N_iterations + ".");
-    return;
-  }
   var iterations = N_iterations + (N_iterations == 1 ? " iteratie." : " iteraties.");
   if (this.evaluator.stopped) {
     status = "Model gestopt na " + iterations;
@@ -2196,14 +2279,14 @@ ModelleertaalApp.prototype.format_number = function(x, column) {
 };
 
 
-ModelleertaalApp.prototype.compute_column_scale = function() {
+ModelleertaalApp.prototype.compute_column_scale = function(rows, vars) {
   // largest absolute value in each column
   var scale = [];
   var i, j, val;
-  for (j = 0; j < this.allVars.length; j++) scale.push(0);
-  for (i = 0; i < this.results.length; i++) {
+  for (j = 0; j < vars.length; j++) scale.push(0);
+  for (i = 0; i < rows.length; i++) {
     for (j = 0; j < scale.length; j++) {
-      val = Math.abs(this.results[i][j]);
+      val = Math.abs(rows[i][j]);
       if (val > scale[j] && isFinite(val)) scale[j] = val;
     }
   }
@@ -2211,25 +2294,28 @@ ModelleertaalApp.prototype.compute_column_scale = function() {
 };
 
 
-ModelleertaalApp.prototype.table_header = function() {
+ModelleertaalApp.prototype.table_header = function(vars) {
   var firstrow = $('<tr>');
   firstrow.append($('<th>').text('#'));
 
-  for (var k = 0; k < this.allVars.length; k++) {
-    firstrow.append($('<th>').text(this.allVars[k]));
+  for (var k = 0; k < vars.length; k++) {
+    firstrow.append($('<th>').text(vars[k]));
   }
   return firstrow;
 };
 
 
-ModelleertaalApp.prototype.table_row = function(rowIndex) {
-
+ModelleertaalApp.prototype.table_row = function(rows, rowIndex, mark_column) {
+  // mark_column (optional): the cell that just changed (Stap voor stap)
   var row = $('<tr>');
   row.append($('<td>').text(rowIndex));
 
-  for (var j = 0; j < this.results[rowIndex].length; j++) {
-    row.append($('<td>').text(this.format_number(this.results[rowIndex][j], j)));
+  for (var j = 0; j < rows[rowIndex].length; j++) {
+    var cell = $('<td>').text(this.format_number(rows[rowIndex][j], j));
+    if (j === mark_column) cell.addClass('mt-step-cell');
+    row.append(cell);
   }
+  if (mark_column !== undefined) row.addClass('mt-step-row');
   return row;
 };
 
@@ -2240,32 +2326,37 @@ ModelleertaalApp.prototype.print_table = function(limit) {
 
   var self = this;
 
-  this.compute_column_scale();
+  // Stap voor stap: the rows computed so far. Else: the last Run.
+  var rows = this.stepper ? this.stepper.table() : this.results;
+  var vars = this.stepper ? this.stepper.varNames : this.allVars;
+  var mark = this.stepper ? this.step_mark : undefined;
+
+  this.compute_column_scale(rows, vars);
 
   limit = (limit) ? limit : 10;
-  limit = Math.min(this.results.length, limit);
+  limit = Math.min(rows.length, limit);
 
   var table = $('<table>').addClass('table');
-  table.append($('<thead>').append(this.table_header()));
+  table.append($('<thead>').append(this.table_header(vars)));
   var body = $('<tbody>').appendTo(table);
 
   var show_more = function() {
     self.print_table(limit * 5);
   };
 
-  for (var i = 0; i < this.results.length; i++) {
-    body.append(this.table_row(i));
+  for (var i = 0; i < rows.length; i++) {
+    body.append(this.table_row(rows, i, (mark && mark.row == i) ? mark.column : undefined));
 
-    if (limit != this.results.length && i == Math.floor(limit / 2) - 1) {
-      var hidden = this.results.length - limit;
+    if (limit != rows.length && i == Math.floor(limit / 2) - 1) {
+      var hidden = rows.length - limit;
       var truncrow = $('<tr>').addClass('truncated');
       truncrow.append($('<td>')
-        .attr('colspan', this.allVars.length + 1)
+        .attr('colspan', vars.length + 1)
         .append($('<button type="button">')
           .text('\u22ee  ' + hidden + ' rijen verborgen. Klik voor meer rijen.')
           .click(show_more)));
       body.append(truncrow);
-      i = this.results.length - 1 - Math.ceil(limit / 2);
+      i = rows.length - 1 - Math.ceil(limit / 2);
     }
   }
 
@@ -2328,7 +2419,23 @@ ModelleertaalApp.prototype.do_plot = function() {
   var y_label;
   var note = '';
 
+  var has_previous = false;
+  var push_previous = function(yvar) {
+    var data = (self.previous) ? self.xy_data(self.previous.rows, self.previous.vars, self.xvar, yvar) : null;
+    if (data === null) return;
+    has_previous = true;
+    dataset.push({
+      data: data,
+      color: COLOR_PREVIOUS,
+      mt_previous: true,
+      points: {show: false},
+      hoverable: false,
+      clickable: false
+    });
+  };
+
   if (this.multiplot) {
+    this.multi_yvars.forEach(push_previous);
     this.multi_yvars.forEach(function(name, n) {
       dataset.push({
         data: self.xy_data(rows, self.allVars, self.xvar, name),
@@ -2347,19 +2454,7 @@ ModelleertaalApp.prototype.do_plot = function() {
         .css('display', (n == -1) ? 'none' : 'inline-block');
     });
   } else {
-    var previous = (this.previous) ?
-      this.xy_data(this.previous.rows, this.previous.vars, this.xvar, this.yvar) : null;
-    if (previous !== null) {
-      dataset.push({
-        data: previous,
-        color: COLOR_PREVIOUS,
-        mt_previous: true,
-        points: {show: false},
-        hoverable: false,
-        clickable: false
-      });
-      note = 'Grijze lijn: de vorige run (om te vergelijken).';
-    }
+    push_previous(this.yvar);
     dataset.push({
       data: this.xy_data(rows, this.allVars, this.xvar, this.yvar),
       color: COLOR_PLOT,
@@ -2369,7 +2464,18 @@ ModelleertaalApp.prototype.do_plot = function() {
   }
 
   $(this.dom_clickdata).empty();
-  $(this.dom_graph_note).text(note);
+  var note_box = $(this.dom_graph_note).empty();
+  if (has_previous) {
+    note_box.append($('<span>').text((this.pinned ? 'Grijs: vastgehouden run' : 'Grijs: vorige run') +
+      (this.compare_text ? ' (' + this.compare_text + ')' : '') + '.'));
+    note_box.append($('<button type="button">').addClass('pin small_action')
+      .attr('aria-pressed', String(Boolean(this.pinned)))
+      .attr('title', this.pinned ?
+        'De grijze lijn blijft staan bij volgende runs. Klik om weer de vorige run te tonen.' :
+        'Houd deze grijze lijn vast: hij blijft dan staan bij volgende runs')
+      .text('\ud83d\udccc Houd vast'));
+  }
+  if (note) note_box.append($('<span>').text(' ' + note));
   this.plot_graph(dataset, this.xvar, y_label);
   this.select_thumbnail();
 }; // do_plot
@@ -2627,9 +2733,12 @@ ModelleertaalApp.prototype.init_app = function() {
   this.allVars = [];
   this.graphs = [];
   this.analysis = undefined;
+  this.end_stepping();
   this.previous = null;
+  this.pinned = false;
+  this.last_source = null;
+  this.compare_text = '';
   this.has_run = false;
-  this.tracing = false;
   this.remove_highlight_trace();
   this.remove_highlight_error();
 

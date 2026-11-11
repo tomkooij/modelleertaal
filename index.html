@@ -36,16 +36,6 @@
                     id: "#permalink",
                     action: "show"
                 },
-                // model blok
-                {
-                    id: "#continue_dialog",
-                    action: "show"
-                },
-                {
-                    id: "#debugger_dialog",
-                    action: "show"
-                },
-                // tabel output
             ];
 
             var leerling_versie = [
@@ -59,16 +49,6 @@
                     id: "#permalink",
                     action: "show"
                 },
-                // model blok
-                {
-                    id: "#continue_dialog",
-                    action: "hide"
-                },
-                {
-                    id: "#debugger_dialog",
-                    action: "hide"
-                },
-                // tabel output
             ];
 
             var profiellen = [full_webapp, leerling_versie];
@@ -285,9 +265,24 @@
             box-shadow: 0 0 0 4px #bfdbfe;
         }
 
-        #NBox,
-        #NBoxContinue {
+        #NBox {
             width: 6.5em;
+        }
+
+        /* Stap voor stap: de berekening met ingevulde getallen */
+        #stap_regel {
+            flex-basis: 100%;
+            font-family: ui-monospace, Consolas, "Courier New", monospace;
+            font-size: 0.95rem;
+            background: #eff6ff;
+            border-left: 4px solid var(--primary);
+            padding: 6px 10px;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+        }
+
+        #stap_regel[hidden] {
+            display: none;
         }
 
         #status_bar {
@@ -463,6 +458,20 @@
             background: #dbeafe;
         }
 
+        /* Stap voor stap: de rij van de iteratie en de cel die net veranderde */
+        tr.mt-step-row td {
+            background: #eff6ff;
+        }
+
+        td.mt-step-cell {
+            background: #fde68a !important;
+            font-weight: 700;
+        }
+
+        .results.stale #datatable.stepping {
+            opacity: 1;
+        }
+
         /* grafieken */
         .results.stale #graph,
         .results.stale #graph_tabs,
@@ -556,6 +565,16 @@
             color: var(--muted);
             font-size: 0.85rem;
             min-height: 1.2em;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 4px 8px;
+        }
+
+        #graph_note button.pin[aria-pressed="true"] {
+            background: #fef3c7;
+            border-color: #d97706;
+            color: #92400e;
         }
 
 
@@ -1031,20 +1050,13 @@
     <main>
         <div class="card runbar">
             <button id="run" type="button" title="Run: voer het model uit (Ctrl+Enter)">&#9654; Run</button>
+            <button id="stap" type="button" title="Reken het model regel voor regel door en zie de berekening met getallen">Stap</button>
             <label>Aantal iteraties:
                 <input type="text" id="NBox" value="1000" inputmode="numeric">
                 <span id="endtime_hint" title="Aantal iteraties maal de tijdstap dt: zo lang rekent het model door (als het niet eerder stopt)"></span>
             </label>
-            <span id="continue_dialog">
-                <button id="continue" type="button">Voeg toe:</button>
-                <input type="text" id="NBoxContinue" value="10" inputmode="numeric" aria-label="Aantal extra iteraties">
-                iteraties
-            </span>
-            <span id="debugger_dialog">
-                Debugger:
-                <button id="trace" type="button">Volgende regel</button>
-            </span>
             <span id="status_bar" role="status" aria-live="polite"></span>
+            <div id="stap_regel" aria-live="polite" hidden></div>
         </div>
 
         <div id="message" role="alert"></div>
@@ -1165,9 +1177,6 @@
                     <input type="number" id="max_rows" value="500" min="2" step="100">
                 </div>
                 <div>
-                    <label><input type="checkbox" id="toon_extra"> Toon de knoppen &ldquo;Volgende regel&rdquo; (regel voor regel rekenen) en &ldquo;Voeg toe&rdquo; (iteraties toevoegen)</label>
-                </div>
-                <div>
                     <span>Grafiek voor docenten:</span>
                     <button id="download_svg" type="button" title="De lijn van de grafiek als SVG (zonder assen)">Download als SVG</button>
                     <button id="download_pgf" type="button" title="De grafiek als PGFPlot voor LaTeX, op millimeterpapier">Download als PGFPlot (LaTeX)</button>
@@ -1225,24 +1234,6 @@
             $('#title').text(title);
             $('#title').attr('href', title_link);
             $('#version').text('Modelleertaal webapp ' + (m.version || ''));
-
-            // vinkje in Meer opties: kies het profiel waarin de debugger (Volgende regel) zichtbaar is of niet
-            function toont_debugger(profiel) {
-                return profiel.some(function(item) {
-                    return item.id == '#debugger_dialog' && item.action == 'show';
-                });
-            }
-            $("#toon_extra").prop('checked', toont_debugger(profiellen[actieve_profiel]));
-            $("#toon_extra").change(function() {
-                var gewenst = $(this).prop('checked');
-                for (var i = 0; i < profiellen.length; i++) {
-                    if (toont_debugger(profiellen[i]) == gewenst) {
-                        actieve_profiel = i;
-                        activeer_profiel(profiellen[i]);
-                        return;
-                    }
-                }
-            });
             $("#open_file").click(function() {
                 $("#fileinput").click();
             });
