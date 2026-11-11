@@ -7,7 +7,8 @@
     grijze achtergrond, toestandsvariabele als rechthoek, stroom als holle pijl
     met een ventiel (cirkel met kraantje), hulpvariabelen en constanten als
     cirkels met de naam eronder en zwarte relatiepijlen.
-    Er is ook een stijl in kleur (toSVG(g, lay, {stijl: 'kleur'})), zie STIJLEN.
+    Er is ook een stijl in kleur (toSVG(g, lay, {stijl: 'kleur'})), naar de System
+    Dynamics Modeler van NetLogo (Northwestern University). Bronnen: zie STIJLEN.
 
     Herkenning (Euler-vorm, zoals in de examenmodellen):
 
@@ -763,18 +764,38 @@ function layout(g) {
 
 // ------------------------------------------------------------------ SVG
 
-// Two styles (opts.stijl):
-//   'examen': as the graphical models in the exams: black on white symbols, gray background,
-//             hollow pipe with a valve (circle with a tap), hulpvariabele and constante the same circle
-//   'kleur':  colors: blue symbols, red relatiepijlen, constante as a diamond, a flow from/to
-//             outside the model starts/ends in a dashed circle
+// Two styles (opts.stijl). Both follow a published source:
+//
+//   'examen': the graphical models in the central exams natuurkunde vwo (examenblad.nl),
+//             e.g. 2022-I 'Vrije worp bij basketbal' (figuur 5) and 2023-II 'Fietshelm' (figuur 6):
+//             black on white symbols on a gray background, a hollow pipe with an open arrow head,
+//             ventiel = circle with a tap, hulpvariabele and constante the same circle, name below.
+//
+//   'kleur':  the System Dynamics Modeler of NetLogo (Northwestern University, GPL-2.0):
+//             https://docs.netlogo.org/systemdynamics.html (figures of the tutorial)
+//             and its source code in https://github.com/NetLogo/NetLogo, netlogo-gui/src/main/sdm/gui/
+//               StockFigure.scala       stock: rectangle, fill InterfaceColors.stockBackground
+//                                       = ClassicBeige rgb(225, 225, 182), name bold
+//               ConverterFigure.java    variable: diamond, fill InterfaceColors.converterBackground
+//                                       = ClassicLightGreen rgb(130, 188, 183)
+//               RateConnection.java     flow: arrow filled Color.LIGHT_GRAY with a black outline,
+//                                       valve: Color.GRAY circle with a tap
+//               ReservoirFigure.java    source/sink: not drawn (draw() paints nothing)
+//               BindingConnection.java  link: thin black line with a filled black arrow head
+//               Utils.drawStringInBox   names in a white box with a black border
+//             (colors: netlogo-gui/src/main/theme/InterfaceColors.scala)
+//             NetLogo draws every variable as a diamond, so hulpvariabele and constante are both
+//             diamonds here. Voorval (lightning) and onafhankelijke variabele (clock) are not in
+//             NetLogo: they are drawn as in the exam style, in color.
 var STIJLEN = {
-    examen: {line: '#000', fill: '#fff', bg: '#d4d4d4', red: '#c62828', text: '#000', grey: '#555',
-             arrow: '#000', font: 'Times New Roman, Times, serif', size: 15,
-             aux: 13, constant: 13, valve: 10, gap: 2},
-    kleur: {line: '#1f5fa8', fill: '#dceaf8', bg: '#fff', red: '#c62828', text: '#1d2733', grey: '#6b7785',
-            arrow: '#c62828', font: 'Segoe UI, Helvetica, Arial, sans-serif', size: 13,
-            aux: 18, constant: 10, valve: 9, gap: 3, outside: 10}
+    examen: {line: '#000', bg: '#d4d4d4', text: '#000', grey: '#555', red: '#c62828',
+             stock: '#fff', variable: '#fff', pipe: '#fff', valve: '#fff', tap: '#000',
+             font: 'Times New Roman, Times, serif', size: 15,
+             r: 13, rValve: 10, pipeW: 10, head: 17, half: 10, gap: 2},
+    kleur: {line: '#000', bg: '#fff', text: '#000', grey: '#555', red: '#c62828',
+            stock: '#e1e1b6', variable: '#82bcb7', pipe: '#c0c0c0', valve: '#808080', tap: '#000',
+            font: 'Segoe UI, Helvetica, Arial, sans-serif', size: 13,
+            r: 17, rValve: 9, pipeW: 10, head: 14, half: 12, gap: 2, diamond: true, boxed: true}
 };
 
 function esc(s) {
@@ -783,86 +804,70 @@ function esc(s) {
 
 function radius(el, dx, dy, S) {
     // distance from center to the border of the symbol in direction (dx, dy)
+    var len = Math.sqrt(dx * dx + dy * dy) || 1;
     switch (el.kind) {
         case 'stock':
-            var len = Math.sqrt(dx * dx + dy * dy) || 1;
             var tx = Math.abs(dx) > 1e-9 ? (L.stockW / 2) / Math.abs(dx) : Infinity;
             var ty = Math.abs(dy) > 1e-9 ? (L.stockH / 2) / Math.abs(dy) : Infinity;
             return Math.min(tx, ty) * len + 3;
-        case 'flow': return S.valve + S.gap + 1;
-        case 'const': return S.constant + S.gap;
+        case 'flow': return S.rValve + S.gap + 1;
         case 'event': return 16;
-        default: return S.aux + S.gap;
+        case 'time': return S.r + S.gap;
+        default:
+            // diamond: |x| + |y| = r
+            if (S.diamond) return S.r * len / (Math.abs(dx) + Math.abs(dy) || 1) + S.gap;
+            return S.r + S.gap;
     }
 }
 
-function pipeEnd(x, y, S) {
-    // the open end of a flow from or to outside the model.
-    // examen: not drawn (an invisible area to drag it), kleur: a dashed circle
-    if (!S.outside) {
-        return '<circle class="end" cx="' + x + '" cy="' + y + '" r="12" fill="#000" fill-opacity="0" stroke="none"/>';
-    }
-    return '<circle cx="' + x + '" cy="' + y + '" r="' + S.outside + '" fill="#fff" stroke="' + S.line +
-        '" stroke-width="1.5" stroke-dasharray="3 2.5"/>';
+function pipeEnd(x, y) {
+    // the open end of a flow from or to outside the model: not drawn (as in the exams and in
+    // NetLogo), an invisible area to drag it
+    return '<circle class="end" cx="' + x + '" cy="' + y + '" r="12" fill="#000" fill-opacity="0" stroke="none"/>';
 }
 
 function pipe(points, out, S) {
-    // pipe with an arrow head at the end.
-    // examen: hollow (white with a black border), open arrow head. kleur: blue, filled arrow head.
+    // pipe with a black border and a big arrow head at the end.
+    // examen: white inside (hollow), kleur: light gray inside (NetLogo)
     var n = points.length, p = points[n - 1], q = points[n - 2];
     var ux = p.x - q.x, uy = p.y - q.y, l = Math.sqrt(ux * ux + uy * uy) || 1;
     ux /= l; uy /= l;
-    var d, i;
-    if (S.outside) {
-        d = 'M' + points[0].x + ',' + points[0].y;
-        for (i = 1; i < n; i++) d += ' L' + points[i].x + ',' + points[i].y;
-        out.push('<path d="' + d + '" fill="none" stroke="' + S.line + '" stroke-width="8" stroke-linejoin="round"/>');
-        out.push('<path d="' + d + '" fill="none" stroke="#fff" stroke-width="4" stroke-linejoin="round"/>');
-        out.push('<path d="M' + (p.x + ux * 4) + ',' + (p.y + uy * 4) +
-            ' L' + (p.x - ux * 10 - uy * 9) + ',' + (p.y - uy * 10 + ux * 9) +
-            ' L' + (p.x - ux * 10 + uy * 9) + ',' + (p.y - uy * 10 - ux * 9) + ' z" fill="' + S.line + '"/>');
-        return;
-    }
-    var head = 17, half = 10;
-    var base = {x: p.x - ux * head, y: p.y - uy * head};
-    // closed start: the border goes a little further back than the white inside
+    var base = {x: p.x - ux * S.head, y: p.y - uy * S.head};
+    // closed start: the border goes a little further back than the inside
     var s0 = points[0], s1 = points[1];
     var vx = s1.x - s0.x, vy = s1.y - s0.y, m = Math.sqrt(vx * vx + vy * vy) || 1;
     var path = function(first) {
-        var dd = 'M' + first.x.toFixed(1) + ',' + first.y.toFixed(1);
-        for (var k = 1; k < n - 1; k++) dd += ' L' + points[k].x + ',' + points[k].y;
-        return dd + ' L' + base.x.toFixed(1) + ',' + base.y.toFixed(1);
+        var d = 'M' + first.x.toFixed(1) + ',' + first.y.toFixed(1);
+        for (var k = 1; k < n - 1; k++) d += ' L' + points[k].x + ',' + points[k].y;
+        return d + ' L' + base.x.toFixed(1) + ',' + base.y.toFixed(1);
     };
     out.push('<path d="' + path({x: s0.x - vx / m * 1.5, y: s0.y - vy / m * 1.5}) +
-        '" fill="none" stroke="' + S.line + '" stroke-width="10" stroke-linejoin="round"/>');
-    out.push('<path d="' + path(s0) + '" fill="none" stroke="' + S.fill + '" stroke-width="7" stroke-linejoin="round"/>');
+        '" fill="none" stroke="' + S.line + '" stroke-width="' + S.pipeW + '" stroke-linejoin="round"/>');
+    out.push('<path d="' + path(s0) + '" fill="none" stroke="' + S.pipe + '" stroke-width="' + (S.pipeW - 3) +
+        '" stroke-linejoin="round"/>');
     out.push('<path d="M' + p.x.toFixed(1) + ',' + p.y.toFixed(1) +
-        ' L' + (base.x - uy * half).toFixed(1) + ',' + (base.y + ux * half).toFixed(1) +
-        ' L' + (base.x + uy * half).toFixed(1) + ',' + (base.y - ux * half).toFixed(1) + ' z"' +
-        ' fill="' + S.fill + '" stroke="' + S.line + '" stroke-width="1.5" stroke-linejoin="miter"/>');
+        ' L' + (base.x - uy * S.half).toFixed(1) + ',' + (base.y + ux * S.half).toFixed(1) +
+        ' L' + (base.x + uy * S.half).toFixed(1) + ',' + (base.y - ux * S.half).toFixed(1) + ' z"' +
+        ' fill="' + S.pipe + '" stroke="' + S.line + '" stroke-width="1.5" stroke-linejoin="miter"/>');
 }
 
 function linkStyle(kind, S) {
-    var w = S.outside ? 1.4 : 1.3;
     switch (kind) {
         // only in the condition of 'als ... dan': lighter
-        case 'condition': return 'stroke="' + S.arrow + '" stroke-width="1.1" stroke-opacity="0.45" stroke-dasharray="2 3" marker-end="url(#ar)"';
+        case 'condition': return 'stroke="' + S.line + '" stroke-width="1.1" stroke-opacity="0.45" stroke-dasharray="2 3" marker-end="url(#ar)"';
         // beginwaarde of a toestandsvariabele
         case 'initial': return 'stroke="' + S.grey + '" stroke-width="1.1" stroke-dasharray="4 3" marker-end="url(#ag)"';
         // voorval changes a toestandsvariabele
-        case 'action': return 'stroke="' + S.line + '" stroke-width="' + w + '" stroke-dasharray="5 3" marker-end="url(#ab)"';
-        default: return 'stroke="' + S.arrow + '" stroke-width="' + w + '" marker-end="url(#ar)"';
+        case 'action': return 'stroke="' + S.line + '" stroke-width="1.3" stroke-dasharray="5 3" marker-end="url(#ar)"';
+        default: return 'stroke="' + S.line + '" stroke-width="1.3" marker-end="url(#ar)"';
     }
 }
 
 function marker(id, color, S) {
-    // arrow head of a relatiepijl. examen: slender (as in the exams), kleur: a triangle
-    if (S.outside) {
-        return '<marker id="' + id + '" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">' +
-            '<path d="M0,0 L10,5 L0,10 z" fill="' + color + '"/></marker>';
-    }
+    // arrow head of a relatiepijl. examen: slender (as in the exams), kleur: a triangle (NetLogo)
+    var head = S.diamond ? 'M0,1 L12,5 L0,9 z' : 'M0,1 L12,5 L0,9 L2.5,5 z';
     return '<marker id="' + id + '" viewBox="0 0 12 10" refX="11" refY="5" markerWidth="9" markerHeight="7.5" ' +
-        'orient="auto-start-reverse" markerUnits="userSpaceOnUse"><path d="M0,1 L12,5 L0,9 L2.5,5 z" fill="' + color + '"/></marker>';
+        'orient="auto-start-reverse" markerUnits="userSpaceOnUse"><path d="' + head + '" fill="' + color + '"/></marker>';
 }
 
 function unit(a, b) {
@@ -881,7 +886,6 @@ function toSVG(g, lay, opts) {
     lay = lay || layout(g);
     opts = opts || {};
     var S = STIJLEN.hasOwnProperty(opts.stijl) ? STIJLEN[opts.stijl] : STIJLEN.examen;
-    var exam = !S.outside;
     var pos = lay.pos, out = [], i, el, p, id;
     var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
     if (opts.bounds) {
@@ -899,20 +903,20 @@ function toSVG(g, lay, opts) {
         var a = f.from ? pos[f.from] : pos[f.id + ':src'];
         var b = f.to ? pos[f.to] : pos[f.id + ':dst'];
         var u0 = unit(a, v), u1 = unit(v, b);
-        // examen: the arrow head touches the stock, kleur: a small gap
-        var ra = f.from ? radius(g.elements[f.from], u0.x, u0.y, S) + (exam ? -3 : 0) : (exam ? 0 : S.outside + 1);
-        var rb = f.to ? radius(g.elements[f.to], -u1.x, -u1.y, S) + (exam ? -3 : 3) : (exam ? 0 : S.outside + 5);
+        // the arrow head touches the stock
+        var ra = f.from ? radius(g.elements[f.from], u0.x, u0.y, S) - 3 : 0;
+        var rb = f.to ? radius(g.elements[f.to], -u1.x, -u1.y, S) - 3 : 0;
         var start = {x: a.x + u0.x * ra, y: a.y + u0.y * ra}, end = {x: b.x - u1.x * rb, y: b.y - u1.y * rb};
         var straight = Math.abs(u0.x * u1.y - u0.y * u1.x) < 1e-3 && (u0.x * u1.x + u0.y * u1.y) > 0;
         pipe(straight ? [start, end] : [start, v, end], out, S);
         var ud = unit(a, b);
         valveDir[f.id] = Math.abs(ud.y) > Math.abs(ud.x) ? 'v' : 'h';
         if (!f.from) {
-            out.push('<g data-id="' + esc(f.id) + ':src">' + pipeEnd(a.x, a.y, S) + '</g>');
+            out.push('<g data-id="' + esc(f.id) + ':src">' + pipeEnd(a.x, a.y) + '</g>');
             grow(a.x, a.y, 12);
         }
         if (!f.to) {
-            out.push('<g data-id="' + esc(f.id) + ':dst">' + pipeEnd(b.x, b.y, S) + '</g>');
+            out.push('<g data-id="' + esc(f.id) + ':dst">' + pipeEnd(b.x, b.y) + '</g>');
             grow(b.x, b.y, 12);
         }
     }
@@ -944,7 +948,7 @@ function toSVG(g, lay, opts) {
         out.push('<path d="' + d + '" fill="none" ' + linkStyle(lk.kind, S) + '/>');
     }
 
-    // a relatiepijl leaves or enters a circle at the bottom: its name goes to the right
+    // a relatiepijl leaves or enters a symbol at the bottom: its name goes to the right
     // (otherwise below, as in the exams), so the arrow does not cross the name
     var bottom = {}, above = {};
     for (i = 0; i < g.links.length; i++) {
@@ -958,16 +962,31 @@ function toSVG(g, lay, opts) {
         if (dir.y > 0.3 || (row(g.elements[g.links[i].from]) && row(g.elements[g.links[i].to]) &&
                             Math.abs(to.y - from.y) < 1)) above[g.links[i].to] = true;
     }
-    var name = function(x, y, r, label, id, cls) {
-        cls = (cls || 'name') + ' lbl';
-        if (bottom[id]) grow(x + r + 4 + 8 * String(label).length, y, 4);
-        return bottom[id] ?
-            '<text x="' + (x + r + 4) + '" y="' + (y + 5) + '" class="' + cls + '">' + esc(label) + '</text>' :
-            '<text x="' + x + '" y="' + (y + r + 16) + '" text-anchor="middle" class="' + cls + '">' + esc(label) + '</text>';
+    var box = function(x, y, label, anchor, color) {
+        // kleur: a name in a white box with a border (NetLogo: Utils.drawStringInBox)
+        var w = 7 * String(label).length + 8, left = anchor == 'start' ? x : x - w / 2;
+        grow(left + w / 2, y, w / 2 + 2);
+        return '<rect class="box" x="' + left.toFixed(1) + '" y="' + (y - 9) + '" width="' + w + '" height="17" fill="#fff" stroke="' +
+            (color || S.line) + '" stroke-width="1"/>' +
+            '<text x="' + (left + w / 2).toFixed(1) + '" y="' + (y + 4) + '" text-anchor="middle" class="name"' +
+            (color ? ' fill="' + color + '"' : '') + '>' + esc(label) + '</text>';
     };
-    var circle = function(x, y, r, fill, stroke, extra) {
-        return '<circle cx="' + x + '" cy="' + y + '" r="' + r + '" fill="' + fill + '" stroke="' + stroke +
-            '" stroke-width="' + (exam ? 1.5 : 2) + '"' + (extra || '') + '/>';
+    var name = function(x, y, r, label, id, color) {
+        var right = bottom[id];
+        if (S.boxed) return right ? box(x + r + 4, y, label, 'start', color) : box(x, y + r + 13, label, 'middle', color);
+        if (right) grow(x + r + 4 + 8 * String(label).length, y, 4);
+        return right ?
+            '<text x="' + (x + r + 4) + '" y="' + (y + 5) + '" class="name lbl">' + esc(label) + '</text>' :
+            '<text x="' + x + '" y="' + (y + r + 16) + '" text-anchor="middle" class="name lbl">' + esc(label) + '</text>';
+    };
+    var variable = function(x, y, fill, stroke, extra) {
+        // examen: circle, kleur: diamond (NetLogo)
+        if (S.diamond) {
+            return '<path d="M' + x + ',' + (y - S.r) + ' L' + (x + S.r) + ',' + y + ' L' + x + ',' + (y + S.r) +
+                ' L' + (x - S.r) + ',' + y + ' z" fill="' + fill + '" stroke="' + stroke + '" stroke-width="1.5"' + (extra || '') + '/>';
+        }
+        return '<circle cx="' + x + '" cy="' + y + '" r="' + S.r + '" fill="' + fill + '" stroke="' + stroke +
+            '" stroke-width="1.5"' + (extra || '') + '/>';
     };
 
     // symbols
@@ -983,54 +1002,41 @@ function toSVG(g, lay, opts) {
             case 'stock':
                 // rectangle, name inside
                 out.push(tip + '<rect x="' + (x - L.stockW / 2) + '" y="' + (y - L.stockH / 2) + '" width="' + L.stockW +
-                    '" height="' + L.stockH + '"' + (exam ? '' : ' rx="3"') + ' fill="' + S.fill + '" stroke="' + S.line +
-                    '" stroke-width="' + (exam ? 1.5 : 2) + '"/>' +
-                    '<text x="' + x + '" y="' + (y + (exam ? 6 : 5)) + '" text-anchor="middle" class="name stock">' + esc(label) + '</text>');
+                    '" height="' + L.stockH + '" fill="' + S.stock + '" stroke="' + S.line + '" stroke-width="1.5"/>' +
+                    '<text x="' + x + '" y="' + (y + (S.boxed ? 5 : 6)) + '" text-anchor="middle" class="name stock">' + esc(label) + '</text>');
                 grow(x, y, L.stockW / 2 + 4);
                 break;
             case 'flow':
-                if (exam) {
-                    // ventiel: a circle on the pipe with a tap. An arrow from above: the tap below
-                    var flip = above[id] && !bottom[id];
-                    out.push(tip + valve(x, y, valveDir[id], flip, S) +
-                        name(x, flip && valveDir[id] != 'v' ? y + 7 : y, S.valve, shorten(label), id));
-                } else {
-                    out.push(tip + valve(x, y, valveDir[id], false, S) + name(x, y, 12, shorten(label), id, 'small'));
-                }
+                // ventiel: a circle on the pipe with a tap. An arrow from above: the tap below
+                var flip = above[id] && !bottom[id];
+                out.push(tip + valve(x, y, valveDir[id], flip, S) +
+                    name(x, flip && valveDir[id] != 'v' ? y + 7 : y, S.rValve, shorten(label), id));
                 grow(x, y + 20, 30);
                 break;
             case 'aux':
-                out.push(tip + circle(x, y, S.aux, S.fill, S.line, el.conditional ? ' stroke-dasharray="4 2"' : '') +
-                    name(x, y, S.aux, label, id));
-                grow(x, y + 10, 30);
-                break;
             case 'const':
-                // examen: the same circle as a hulpvariabele, kleur: a diamond
-                out.push(tip + (exam ? circle(x, y, S.constant, S.fill, S.line) :
-                    '<path d="M' + x + ',' + (y - 10) + ' L' + (x + 10) + ',' + y + ' L' + x + ',' + (y + 10) +
-                    ' L' + (x - 10) + ',' + y + ' z" fill="' + S.fill + '" stroke="' + S.line + '" stroke-width="2"/>') +
-                    name(x, y, S.constant, label, id));
+                // examen: circle, kleur: diamond. The same symbol for hulpvariabele and constante.
+                out.push(tip + variable(x, y, S.variable, S.line, el.conditional ? ' stroke-dasharray="4 2"' : '') +
+                    name(x, y, S.r, label, id));
                 grow(x, y + 10, 30);
                 break;
             case 'event':
                 out.push(tip + '<path d="M' + (x + 3) + ',' + (y - 15) + ' L' + (x - 9) + ',' + (y + 2) + ' L' + (x - 1) + ',' + (y + 2) +
                     ' L' + (x - 4) + ',' + (y + 15) + ' L' + (x + 9) + ',' + (y - 3) + ' L' + (x + 1) + ',' + (y - 3) + ' z"' +
-                    (exam ? ' fill="' + S.fill + '" stroke="' + S.line + '" stroke-width="1.5" stroke-linejoin="round"/>' :
-                            ' fill="#ffe08a" stroke="#b07d00" stroke-width="1.5"/>') +
+                    ' fill="' + (S.boxed ? '#ffe08a' : '#fff') + '" stroke="' + S.line + '" stroke-width="1.5" stroke-linejoin="round"/>' +
                     '<text x="' + x + '" y="' + (y + 30) + '" text-anchor="middle" class="small lbl">' + esc(shorten(el.condition, 22)) + '</text>');
                 grow(x, y + 10, 40);
                 break;
             case 'time':
-                var rt = exam ? S.aux : 16, hand = exam ? S.line : S.grey;
-                out.push(tip + circle(x, y, rt, '#fff', hand) +
-                    '<path d="M' + x + ',' + (y - rt + 5) + ' L' + x + ',' + y + ' L' + (x + 6) + ',' + (y + 3) +
-                    '" fill="none" stroke="' + hand + '" stroke-width="' + (exam ? 1.5 : 2) + '"/>' + name(x, y, rt, label, id));
+                out.push(tip + '<circle cx="' + x + '" cy="' + y + '" r="' + S.r + '" fill="#fff" stroke="' + S.line + '" stroke-width="1.5"/>' +
+                    '<path d="M' + x + ',' + (y - S.r + 5) + ' L' + x + ',' + y + ' L' + (x + 6) + ',' + (y + 3) +
+                    '" fill="none" stroke="' + S.line + '" stroke-width="1.5"/>' + name(x, y, S.r, label, id));
                 grow(x, y + 10, 30);
                 break;
-            default:   // unknown
-                out.push(tip + circle(x, y, S.aux, exam ? S.fill : '#fdecea', S.red) +
+            default:   // unknown: red (NetLogo: an incomplete element is red)
+                out.push(tip + variable(x, y, '#fff', S.red) +
                     '<text x="' + x + '" y="' + (y + 5) + '" text-anchor="middle" fill="' + S.red + '" font-weight="bold">?</text>' +
-                    name(x, y, S.aux, label, id));
+                    name(x, y, S.r, label, id, S.boxed ? S.red : undefined));
                 grow(x, y + 10, 30);
         }
         out.push('</g>');
@@ -1058,31 +1064,23 @@ function toSVG(g, lay, opts) {
     return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="' + vbX + ' ' + vbY + ' ' +
         w.toFixed(0) + ' ' + h.toFixed(0) + '" width="' + w.toFixed(0) + '" height="' + h.toFixed(0) + '"' +
         ' font-family="' + S.font + '" font-size="' + S.size + '" fill="' + S.text + '">' +
-        '<style>' + (exam ? '.name{font-style:italic}' : '.stock{font-weight:bold}') +
+        '<style>' + (S.boxed ? '.stock{font-weight:bold}.box+.name{font-size:12px}' : '.name{font-style:italic}') +
         '.lbl{paint-order:stroke;stroke:' + S.bg + ';stroke-width:3px;stroke-linejoin:round}' +
-        '.small{font-size:' + (exam ? 12 : 11) + 'px;fill:' + S.grey + '}</style>' +
-        '<defs>' + marker('ar', S.arrow, S) + marker('ab', S.line, S) + marker('ag', S.grey, S) + '</defs>' +
+        '.small{font-size:12px;fill:' + S.grey + '}</style>' +
+        '<defs>' + marker('ar', S.line, S) + marker('ag', S.grey, S) + '</defs>' +
         '<rect class="bg" x="' + vbX + '" y="' + vbY + '" width="' + w.toFixed(0) + '" height="' + h.toFixed(0) +
         '" fill="' + S.bg + '"/>' + out.join('') + '</svg>';
 }
 
 function valve(x, y, dir, flip, S) {
-    // examen: ventiel, a circle on the pipe with a tap (dir: 'h' horizontal or 'v' vertical pipe;
-    //         tap above or left, flip: below or right)
-    // kleur: bow tie across the pipe
-    var r = S.valve, d;
-    if (S.outside) {
-        d = dir == 'v' ?
-            'M' + (x - r) + ',' + (y - r) + ' L' + (x + r) + ',' + (y - r) + ' L' + (x - r) + ',' + (y + r) + ' L' + (x + r) + ',' + (y + r) + ' z' :
-            'M' + (x - r) + ',' + (y - r) + ' L' + (x + r) + ',' + (y + r) + ' L' + (x + r) + ',' + (y - r) + ' L' + (x - r) + ',' + (y + r) + ' z';
-        return '<path d="' + d + '" fill="' + S.fill + '" stroke="' + S.line + '" stroke-width="2" stroke-linejoin="round"/>';
-    }
-    var t = r + 6, sg = flip ? -1 : 1;
-    d = dir == 'v' ?
+    // ventiel: a circle on the pipe with a tap (dir: 'h' horizontal or 'v' vertical pipe;
+    // tap above or left, flip: below or right). examen: white, kleur: gray (NetLogo)
+    var r = S.rValve, t = r + 6, sg = flip ? -1 : 1;
+    var d = dir == 'v' ?
         'M' + (x - sg * r) + ',' + y + ' H' + (x - sg * t) + ' M' + (x - sg * t) + ',' + (y - 4) + ' V' + (y + 4) :
         'M' + x + ',' + (y - sg * r) + ' V' + (y - sg * t) + ' M' + (x - 4) + ',' + (y - sg * t) + ' H' + (x + 4);
-    return '<circle cx="' + x + '" cy="' + y + '" r="' + r + '" fill="' + S.fill + '" stroke="' + S.line + '" stroke-width="1.5"/>' +
-        '<path d="' + d + '" fill="none" stroke="' + S.line + '" stroke-width="1.5"/>';
+    return '<circle cx="' + x + '" cy="' + y + '" r="' + r + '" fill="' + S.valve + '" stroke="' + S.line + '" stroke-width="1.5"/>' +
+        '<path d="' + d + '" fill="none" stroke="' + S.tap + '" stroke-width="' + (S.boxed ? 2.5 : 1.5) + '"/>';
 }
 
 function shorten(s, n) {

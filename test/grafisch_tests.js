@@ -112,10 +112,12 @@ describe('grafisch.js - tekstmodel naar grafisch model', function() {
         assert.equal(grafisch.toSVG(g, undefined, {stijl: 'examen'}), examen);
         assert.equal(grafisch.toSVG(g, undefined, {stijl: 'onbekend'}), examen, 'onbekende stijl: examen');
         assert.include(examen, 'fill="#d4d4d4"', 'grijze achtergrond');
-        assert.notInclude(examen, 'stroke-dasharray="3 2.5"', 'geen symbool voor buiten het model');
         var kleur = grafisch.toSVG(g, undefined, {stijl: 'kleur'});
-        assert.include(kleur, '#1f5fa8');
-        assert.include(kleur, 'stroke-dasharray="3 2.5"', 'stroom naar buiten: gestippelde cirkel');
+        // kleur: as the System Dynamics Modeler of NetLogo
+        assert.include(kleur, 'fill="#e1e1b6"', 'toestandsvariabele beige');
+        assert.include(kleur, 'fill="#82bcb7"', 'hulpvariabele en constante: ruit, blauwgroen');
+        assert.include(kleur, 'stroke="#c0c0c0"', 'stroom lichtgrijs');
+        assert.include(kleur, 'class="box"', 'naam in een kader');
         // the same elements, in both styles
         ['x', 'k', 'm', 'F', '~f1:dst'].forEach(function(id) {
             assert.include(examen, 'data-id="' + id + '"');

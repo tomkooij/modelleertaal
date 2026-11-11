@@ -53,10 +53,24 @@ circle with a tap), *hulpvariabelen* and *constanten* (circles, name below) and 
 
 <img src="images/webapp-grafisch-kleur.png" alt="The same graphical model in color" width="400" align="right">
 
-Prefer color? The switch **Examen | Kleur** below the diagram draws the same model in color: blue
-*toestandsvariabelen* and *stromen*, *hulpvariabelen* (circles), *constanten* (diamonds), red arrows for
-"depends on" and a dashed circle where a *stroom* comes from or goes to outside the model. The webapp
-remembers your choice, and **Download** saves the diagram in the style you see.
+Prefer color? The switch **Examen | Kleur** below the diagram draws the same model in the style of the
+[System Dynamics Modeler of NetLogo](https://docs.netlogo.org/systemdynamics.html)
+(Northwestern University): beige *toestandsvariabelen*, *stromen* as gray arrows with a gray valve,
+*hulpvariabelen* and *constanten* as blue-green diamonds with the name in a box, and black arrows for
+"depends on". The colors are taken from the NetLogo source code
+([`netlogo-gui/src/main/sdm/gui`](https://github.com/NetLogo/NetLogo/tree/main/netlogo-gui/src/main/sdm/gui) and
+[`InterfaceColors.scala`](https://github.com/NetLogo/NetLogo/blob/main/netlogo-gui/src/main/theme/InterfaceColors.scala)).
+The webapp remembers your choice, and **Download** saves the diagram in the style you see.
+
+Sources of the two styles:
+
+| Style | Source |
+|---|---|
+| Examen | Graphical models in the central exams natuurkunde vwo on [examenblad.nl](https://www.examenblad.nl): 2022-I *Vrije worp bij basketbal* (figuur 5), 2023-II *Fietshelm* (figuur 6), 2018-I *Uitrijden van een auto* (figuur 2) |
+| Kleur | NetLogo System Dynamics Modeler: [user guide](https://docs.netlogo.org/systemdynamics.html) and [source code](https://github.com/NetLogo/NetLogo/tree/main/netlogo-gui/src/main/sdm/gui) (stock, converter, rate, reservoir, link) |
+
+Both are drawn by this webapp (no images or code are copied); the shapes of stock (rectangle) and auxiliary
+(circle) also follow the [XMILE standard](https://docs.oasis-open.org/xmile/xmile/v1.0/xmile-v1.0.html) (OASIS, section 5.1.2).
 
 - The diagram is drawn from the text of the model, while you type. No Run needed.
 - **Text and diagram are linked.** Click a symbol and its lines in the text are marked. Put the cursor
