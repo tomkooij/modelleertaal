@@ -9,7 +9,7 @@
 
       #model=examenvwo2005&N=100     a model from modellen/ (and optionally N)
 
-      #code=<payload>                version 1 (webapp 6.0 - 6.1). payload is
+      #code=<payload>                version 1 (webapp 6.0).    payload is
                                      base64url(utf-8(JSON)) without '=' padding,
                                      JSON: {"m": modelregels, "s": startwaarden,
                                             "t": titel (optional), "N": iteraties (optional)}

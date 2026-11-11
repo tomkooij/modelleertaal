@@ -1,18 +1,26 @@
 # Changelog
 
-## [Unreleased]
+## [6.1]
+
+11 nov 2026
 
 ### Documentatie
 
 - README in het Nederlands (de MIT-licentie blijft de officiele Engelse tekst).
+- README: "Probeer de webapp" bovenaan, nieuwe secties over de webapp, het
+  grafische model en gebruik op een telefoon, met screenshots in `images/`.
+
+### Ontwikkeling
+
+- Grunt minimaal 1.5.3 (twee Dependabot-meldingen: race condition en path traversal).
 
 ### Webapp
 
 - "Deel link" is backwards compatible and more robust. New module
   `deellink.js` (no DOM, tested). New links are `#code=v2.<payload>`: the
   version is in front of the payload, so a future version can change the
-  encoding and still read all older links. Links of version 1 (webapp 6.0 -
-  6.1, `#code=<payload>`) and `#model=naam&N=...` keep working; frozen links
+  encoding and still read all older links. Links of version 1 (webapp 6.0,
+  `#code=<payload>`) and `#model=naam&N=...` keep working; frozen links
   of every version are in `test/deellink_tests.js`. Reading accepts links
   mangled by chat, mail and documents (standard base64, line breaks,
   percent-encoding, a period or bracket at the end). A link that cannot be

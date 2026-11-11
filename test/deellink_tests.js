@@ -18,7 +18,7 @@ var UNICODE_M = "// slinger, θ in graden\nα = -g/L * sin(θ)\nω = ω + α*dt\
 var UNICODE_S = "θ = 10\nω = 0\ng = 9,81\nL = 1,5 // m\nρ = 1,293\ndt = 0,01\nt = 0";
 
 var FROZEN = {
-    // version 1: webapp 6.0 - 6.1 (#code=<payload>, made with btoa(unescape(encodeURIComponent(json))))
+    // version 1: webapp 6.0 (#code=<payload>, made with btoa(unescape(encodeURIComponent(json))))
     v1_champignon: "eyJtIjoiJ0V4YW1lbiBWV08gMjAwNS1JIENoYW1waWdub25cclxuRnogPSBtICogOSw4MVxyXG5GdyA9IGsgKiBPcH" +
         "AgKiB2XjJcclxuRnIgPSBGeiAtIEZ3XHJcbmEgPSBGci9tXHJcbnYgPSB2ICsgYSpkdFxyXG54ID0geCArIHYqZHRc" +
         "clxuYWxzIHQgPiAxMyBkYW5cclxuICAgIE9wcCA9IE9wcCArIGRPcHBcclxuZWluZGFsc1xyXG5hbHMgT3BwID4gND" +
@@ -45,7 +45,7 @@ var FROZEN = {
 
 describe('deellink.js - oude links blijven werken (backwards compatible)', function() {
 
-    it('versie 1 (webapp 6.0/6.1): champignon met titel en N', function() {
+    it('versie 1 (webapp 6.0): champignon met titel en N', function() {
         var model = deellink.decode(FROZEN.v1_champignon);
         assert.equal(model.version, 1);
         assert.equal(model.modelregels, CHAMPIGNON_M);
