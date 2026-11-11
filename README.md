@@ -1,41 +1,90 @@
 Simple compiler and webapp for *Modelleertaal*
 ==========================================
 
-[![test](https://github.com/tomkooij/modelleertaal/actions/workflows/test.yml/badge.svg)](https://github.com/tomkooij/modelleertaal/actions/workflows/test.yml)
+### [▶ Try the webapp!](https://tomkooij.github.io/modelleertaal)
 
-*Modelleertaal* to javascript compiler in javascript/jison. A simple demo webapp is included that can run most (all?)
-of the models used in high school physics in NL.
+It runs in your browser (computer, tablet or phone). Nothing to install, no account.
 
 > **Prefer the old layout? Use [Modelleertaal classic](https://www.tomkooij.nl/modelleertaal-classic).**
 >
-> Version 6 of the webapp has a new layout: after Run the relevant graphs are shown automatically,
-> error messages appear in the page and the webapp also works on phones. If you are used to the previous
-> version (5.4.2), for example because your lesson material or instructions are based on it, you can keep using
-> it at [www.tomkooij.nl/modelleertaal-classic](https://www.tomkooij.nl/modelleertaal-classic). This is an
+> Version 6 of the webapp has a new layout. If you are used to the previous version (5.4.2), for example
+> because your lesson material or instructions are based on it, you can keep using it at
+> [www.tomkooij.nl/modelleertaal-classic](https://www.tomkooij.nl/modelleertaal-classic). This is an
 > archived copy: it stays available, but it will not be updated.
+
+[![test](https://github.com/tomkooij/modelleertaal/actions/workflows/test.yml/badge.svg)](https://github.com/tomkooij/modelleertaal/actions/workflows/test.yml)
+
+*Modelleertaal* is the language of *natuurkundig modelleren*: the numerical (dynamic) models in Dutch high
+school physics and in the central exams (vwo). This repository contains a fast *Modelleertaal* to javascript
+compiler and a webapp that runs all models used in Dutch high school physics. The webapp is in Dutch.
 
 ## Webapp
 
-[![Webapp screenshot](/screenshot.png)](https://tomkooij.github.io/modelleertaal)
+[![The webapp: text model, automatic graphs and the previous run in gray](images/webapp-tekst.png)](https://tomkooij.github.io/modelleertaal)
 
-[Try the webapp!](https://tomkooij.github.io/modelleertaal)
+The webapp is made for students: you should be able to use it without a manual.
 
-The webapp (HTML/Javascript) should run on Windows/MacOS/Android/iOS in any browser. It was designed for and tested on Chrome.
-The webapp is very limited, but it should be easy to use *and* it should run all models used in Dutch High School Physics classes.
-If it doesn't work or isn't easy to use: Please provide feedback.
+- **Model and Run.** Choose an exam model or start with an empty model. Type the *modelregels* and
+  *startwaarden* and press **Run** (or Ctrl+Enter).
+- **Automatic graphs.** After Run the webapp chooses the relevant graphs from the model: (x,t), (v,t),
+  (a,t), the trajectory (y,x), ... Click a thumbnail to show it large. Click a point to read its values.
+- **Compare runs.** The previous run stays visible as a gray line. Change a startwaarde (for example `k`),
+  press Run and see what changed.
+- **Error messages in Dutch,** in the page, with the line marked in the editor and suggestions for typos
+  (*Bedoel je 'Fres'?*). A warning if a value is no longer a valid number (division by zero, *dt* too large).
+- **Help while modelling.** Next to the number of iterations the webapp shows how long the model runs
+  (`× dt = 50`). If the model has a `stop` that is not reached, it says so and offers to double the
+  number of iterations.
+- **Table** with all values, and downloads: the table for Excel (TSV) and the graph as an image (PNG).
+- **Your work is not lost.** Unsaved work is kept in the browser: on your next visit you can continue.
+  **Bewaar** saves the model as a file, **Open** opens it again.
+- **Deel link** copies a link that contains the (changed) model and its title: share it with a student,
+  a colleague or in your lesson material.
+
+### Graphical model
+
+[![The graphical model (stock-flow diagram) next to the text of the model](images/webapp-grafisch.png)](https://tomkooij.github.io/modelleertaal)
+
+Switch to **Tekst + grafisch** to see the model as a stock-flow diagram, like the graphical mode of Coach 7:
+*toestandsvariabelen* (rectangles), *stromen* (pipes with a valve), *hulpvariabelen* (circles),
+*constanten* (diamonds), *voorvallen* (lightning) and red arrows for "depends on".
+
+- The diagram is drawn from the text of the model, while you type. No Run needed.
+- **Text and diagram are linked.** Click a symbol and its lines in the text are marked. Put the cursor
+  in a line of the text and its symbol lights up. After Run, hover over a symbol to see its first and last value.
+- **The diagram is also input.** Click a symbol to change its name or formula, add *toestandsvariabelen*,
+  *stromen*, *hulpvariabelen* and *constanten* (the **+** buttons on a selected *toestandsvariabele* add a
+  flow in or out), or remove them. Every change is a small change in the text of the model: the text stays
+  the model, as in the exams. Names of variables can be inserted with a click, so there are no typos.
+- Drag symbols, zoom and pan. *Herkende elementen* lists how each line of the text was recognised.
+  Download the diagram as SVG.
+
+### On a phone or tablet
+
+<img src="images/webapp-telefoon.png" alt="The webapp on a phone: the graph after Run" width="260" align="right">
+
+The layout adapts to the screen. On a phone the model, the graph and the table are below each other;
+after Run the page scrolls to the graph. The graphical model fits the width of the screen and you zoom
+with two fingers.
+
+The webapp (HTML/Javascript) runs in any modern browser on Windows, macOS, ChromeOS, Android and iOS. It is
+developed and tested on Chrome. If it doesn't work or isn't easy to use: please
+[provide feedback](https://github.com/tomkooij/modelleertaal/issues).
+
+<br clear="right">
 
 ## Using the webapp in your own website
 
 (please do!)
 
 Only `index.html` and the folders `scripts/` and `modellen/` are needed to run the webapp in a browser or in a website. However
-you need the browserified file `scripts/modelleertaal-app.browser.js`which is not included in the `master` branch.
+you need the browserified file `scripts/modelleertaal-app.browser.js` which is not included in the `master` branch.
 You can build it yourself (see below) or download a zip or tarball from the [release page](https://github.com/tomkooij/modelleertaal/releases).
 
-Optionally change the models in `modellen/` and edit `modellen/models.js` accordingly. Put it on a website somewhere. 
+Optionally change the models in `modellen/` and edit `modellen/models.js` accordingly. Put it on a website somewhere.
 All code runs in the browser, so a server is not needed.
 
-The webapp can be easily customized (button/options turned off and on) but documentation is lacking. See `index.html`.
+The webapp can be customized (buttons and options turned off and on) in `config.js`.
 
 ## About *Modelleertaal*
 
