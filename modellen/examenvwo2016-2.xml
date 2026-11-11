@@ -1,0 +1,30 @@
+<modelleertaal>
+N = 10000
+<startwaarden>
+G = 6,67*10^-11
+M = 1,9*10^27
+vx = 1,44*10^4
+vy = 2,49*10^4
+x = -6,7034*10^7
+y = -2,234*10^8
+xj = 0
+vj = -1,3*10^4
+t = 0
+dt = 5
+</startwaarden>
+<modelregels>
+// Examen VWO 2016-II
+// Jupiter Fly-by
+r = ((x - xj)^2+ y^2)^0,5
+a = G*M/r^2
+ax = -a*(x - xj)/r
+ay = -a*y/r
+vx = vx + ax*dt
+vy = vy + ay*dt
+x = x + vx*dt
+y = y + vy*dt
+xj = xj + vj*dt
+t = t + dt
+
+</modelregels>
+</modelleertaal>

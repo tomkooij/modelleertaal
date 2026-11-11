@@ -1,0 +1,22 @@
+<modelleertaal>
+N=10000
+<modelregels>
+'Examen VWO 2022-I
+dx = vx * dt
+x = x + dx
+dvy = g * dt
+vy = vy + dvy
+dy = vy * dt
+y = y + dy
+t = t + dt
+</modelregels>
+<startwaarden>
+x = 0,35 'm
+y = 2,32 'm
+vx = 4,6 'm/s
+vy = 5,4 'm/s
+g = -9,81 'm/s2
+t = 0 's
+dt = 0,0001 's
+</startwaarden>
+</modelleertaal>

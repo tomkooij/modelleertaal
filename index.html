@@ -1,0 +1,1248 @@
+<!DOCTYPE html>
+<html lang="nl">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Modelleertaal webapp</title>
+
+    <script src="config.js"></script>
+    <!--
+
+    Note to self:
+    Do not edit below this line: Change config.js above!
+
+    -->
+    <script>
+        //
+        // WebApp configuration / customisation
+        //
+
+        if (typeof config_js_loaded === 'undefined') {
+            console.log('config.js not loaded: Using default configuration profiles.');
+            var N_default = 1000; // default waarde voor N (aantal iteraties)
+            var base_url = 'https://www.tomkooij.nl/modelleertaal';
+
+            // titelbalk bovenaan
+            var title = 'Modelleertaal';
+            var title_link = 'https://www.github.com/tomkooij/modelleertaal';
+
+            // definitie van het "profiel", welke knoppen staan aan enz.
+            var full_webapp = [{
+                    id: "#model_keuze",
+                    action: "show"
+                },
+                {
+                    id: "#permalink",
+                    action: "show"
+                },
+            ];
+
+            var leerling_versie = [
+                // Uitgekleede webapp met zo min mogelijk afleiding
+                // bovenste blok
+                {
+                    id: "#model_keuze",
+                    action: "show"
+                },
+                {
+                    id: "#permalink",
+                    action: "show"
+                },
+            ];
+
+            var profiellen = [full_webapp, leerling_versie];
+            var actieve_profiel = 0;
+        };
+    </script>
+
+    <link rel="stylesheet" href="scripts/codemirror.css">
+    <style>
+        :root {
+            --bg: #f3f4f6;
+            --card: #ffffff;
+            --border: #d1d5db;
+            --text: #111827;
+            --muted: #4b5563;
+            --primary: #1d4ed8;
+            --primary-dark: #1e3a8a;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            font-family: system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+            font-size: 100%;
+            color: var(--text);
+            background: var(--bg);
+        }
+
+        body {
+            margin: 0 auto;
+            padding: 12px 16px 32px;
+            max-width: 1400px;
+        }
+
+        h1 {
+            font-size: 1.35rem;
+            margin: 0;
+        }
+
+        h1 a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        h1 a:hover {
+            text-decoration: underline;
+        }
+
+        h2 {
+            font-size: 0.95rem;
+            margin: 0 0 6px;
+            color: var(--muted);
+            font-weight: 600;
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px 14px;
+            margin-top: 12px;
+            min-width: 0;
+        }
+
+        /* titel van het model, boven de editors: ziet eruit als een kop, klik om te typen */
+        #model_titel {
+            display: block;
+            width: 100%;
+            margin: -4px 0 8px;
+            padding: 3px 6px;
+            min-height: 0;
+            border: 1px solid transparent;
+            border-radius: 6px;
+            background: transparent;
+            font-size: 1.1rem;
+            font-weight: 650;
+            text-overflow: ellipsis;
+        }
+
+        #model_titel:hover {
+            border-color: var(--border);
+        }
+
+        #model_titel:focus {
+            border-color: #9ca3af;
+            background: #fff;
+        }
+
+        /* kop van een kaart met een kleine knop rechts */
+        .card_head {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        button.small_action {
+            min-height: 0;
+            padding: 3px 10px;
+            font-size: 0.85rem;
+            color: var(--muted);
+        }
+
+        button.small_action:hover {
+            color: var(--text);
+        }
+
+        button.small_action[hidden] {
+            display: none;
+        }
+
+        .plot_dialog #download_png {
+            margin-left: auto;
+        }
+
+        /* Deel link: bevestiging in de knop zelf */
+        #permalink.done {
+            border-color: #16a34a;
+            color: #166534;
+        }
+
+        /* knoppen en invoervelden */
+        button,
+        input,
+        select {
+            font: inherit;
+        }
+
+        button,
+        select,
+        input[type="text"],
+        input[type="number"] {
+            border: 1px solid #9ca3af;
+            border-radius: 6px;
+            background: #fff;
+            color: var(--text);
+            padding: 6px 10px;
+            min-height: 36px;
+        }
+
+        button {
+            cursor: pointer;
+            background: #f9fafb;
+        }
+
+        button:hover {
+            background: #e5e7eb;
+        }
+
+        button:focus-visible,
+        select:focus-visible,
+        input:focus-visible,
+        summary:focus-visible {
+            outline: 3px solid #93c5fd;
+            outline-offset: 1px;
+        }
+
+        select {
+            max-width: 100%;
+        }
+
+        /* bovenste balk: titel en modelkeuze */
+        .topbar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px 20px;
+        }
+
+        .brand {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: baseline;
+            gap: 4px 12px;
+        }
+
+        .model_select {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px;
+            min-width: 0;
+        }
+
+        /* run balk */
+        .runbar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px 18px;
+        }
+
+        .runbar label,
+        .runbar span {
+            white-space: nowrap;
+        }
+
+        #run {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: #fff;
+            font-weight: 700;
+            font-size: 1.05rem;
+            padding: 8px 26px;
+        }
+
+        #run:hover {
+            background: var(--primary-dark);
+        }
+
+        #run.attention {
+            box-shadow: 0 0 0 4px #bfdbfe;
+        }
+
+        #NBox {
+            width: 6.5em;
+        }
+
+        /* Stap voor stap: de berekening met ingevulde getallen */
+        #stap_regel {
+            flex-basis: 100%;
+            font-family: ui-monospace, Consolas, "Courier New", monospace;
+            font-size: 0.95rem;
+            background: #eff6ff;
+            border-left: 4px solid var(--primary);
+            padding: 6px 10px;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+        }
+
+        #stap_regel[hidden] {
+            display: none;
+        }
+
+        #status_bar {
+            color: var(--muted);
+            white-space: normal;
+        }
+
+        #endtime_hint {
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+
+        /* knop in een melding of in de statusregel */
+        button.inline_action {
+            min-height: 0;
+            padding: 2px 10px;
+            margin-left: 8px;
+        }
+
+        kbd {
+            font: inherit;
+            font-size: 0.8rem;
+            color: var(--muted);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 1px 5px;
+        }
+
+        /* (fout)meldingen */
+        #message {
+            display: none;
+            margin-top: 12px;
+            padding: 10px 14px;
+            border-radius: 8px;
+            border: 1px solid;
+            border-left-width: 6px;
+            line-height: 1.45;
+        }
+
+        #message strong {
+            margin-right: 8px;
+        }
+
+        #message.error {
+            background: #fef2f2;
+            border-color: #dc2626;
+        }
+
+        #message.warning {
+            background: #fffbeb;
+            border-color: #d97706;
+        }
+
+        #message.info {
+            background: #eff6ff;
+            border-color: #2563eb;
+        }
+
+        /* werkblad: model links, grafiek rechts */
+        .workspace {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+            grid-template-rows: auto 1fr;
+            grid-template-areas: "model graph" "table graph";
+            column-gap: 12px;
+            align-items: start;
+        }
+
+        .area_model {
+            grid-area: model;
+        }
+
+        .area_graph {
+            grid-area: graph;
+        }
+
+        .area_table {
+            grid-area: table;
+        }
+
+        .editors {
+            display: grid;
+            grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+            gap: 12px;
+        }
+
+        /* Tekst + grafisch: the model (diagram and text) gets the whole width,
+           graph and table below it, next to each other */
+        @media (min-width: 961px) {
+            .workspace.met_grafisch {
+                grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+                grid-template-rows: auto auto;
+                grid-template-areas: "model model" "graph table";
+            }
+
+            .workspace.met_grafisch .area_graph {
+                position: static;
+            }
+        }
+
+        /* wide screen: diagram left, text right, in the same card */
+        @media (min-width: 1200px) {
+            .met_grafisch .area_model {
+                display: grid;
+                grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+                grid-template-areas: "head head" "diagram text";
+                column-gap: 16px;
+                align-items: start;
+            }
+
+            .met_grafisch .model_head {
+                grid-area: head;
+            }
+
+            .met_grafisch #grafisch_model {
+                grid-area: diagram;
+                margin-bottom: 0;
+            }
+
+            .met_grafisch .area_model .editors {
+                grid-area: text;
+            }
+        }
+
+        @media (max-width: 960px) {
+            .workspace {
+                grid-template-columns: minmax(0, 1fr);
+                grid-template-rows: auto;
+                grid-template-areas: "model" "graph" "table";
+            }
+        }
+
+        @media (max-width: 520px) {
+            .editors {
+                grid-template-columns: minmax(0, 1fr);
+            }
+        }
+
+        textarea {
+            width: 100%;
+            font-family: monospace;
+        }
+
+        .CodeMirror {
+            height: auto;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .CodeMirror-scroll {
+            min-height: 14em;
+        }
+
+        .CodeMirror pre {
+            padding-left: 7px;
+            line-height: 1.3;
+        }
+
+        .mt-error-line {
+            background: #fecaca;
+        }
+
+        .mt-error-gutter {
+            background: #dc2626;
+        }
+
+        .mt-error-gutter .CodeMirror-linenumber {
+            color: #fff;
+        }
+
+        .mt-trace-line {
+            background: #dbeafe;
+        }
+
+        /* Stap voor stap: de rij van de iteratie en de cel die net veranderde */
+        tr.mt-step-row td {
+            background: #eff6ff;
+        }
+
+        td.mt-step-cell {
+            background: #fde68a !important;
+            font-weight: 700;
+        }
+
+        .results.stale #datatable.stepping {
+            opacity: 1;
+        }
+
+        /* grafieken */
+        .results.stale #graph,
+        .results.stale #graph_tabs,
+        .results.stale #datatable,
+        .results.stale #clickdata {
+            opacity: 0.4;
+        }
+
+        #graph {
+            width: 100%;
+            height: 360px;
+            font-family: sans-serif;
+        }
+
+        .placeholder {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            min-height: 3em;
+            color: var(--muted);
+            text-align: center;
+        }
+
+        #graph_tabs {
+            display: none;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 10px;
+        }
+
+        #graph_tabs:not(:empty) {
+            display: flex;
+        }
+
+        #graph_tabs button {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 3px 3px 4px;
+            background: #fff;
+            border: 2px solid var(--border);
+            font-size: 0.85rem;
+            line-height: 1.2;
+        }
+
+        #graph_tabs button:hover {
+            border-color: #6b7280;
+        }
+
+        #graph_tabs button.selected {
+            border-color: var(--primary);
+            background: #eff6ff;
+            font-weight: 600;
+        }
+
+        .plot_dialog {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-start;
+            gap: 8px 18px;
+            margin-top: 10px;
+        }
+
+        .plot_dialog {
+            align-items: center;
+        }
+
+        .plot_dialog label,
+        .plot_dialog .axis {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        #y_checks {
+            display: none;
+            flex-wrap: wrap;
+            gap: 4px 14px;
+            padding: 6px 0;
+        }
+
+        #y_checks .swatch {
+            display: none;
+            width: 14px;
+            height: 4px;
+            border-radius: 2px;
+        }
+
+        #graph_note {
+            color: var(--muted);
+            font-size: 0.85rem;
+            min-height: 1.2em;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 4px 8px;
+        }
+
+        #graph_note button.pin[aria-pressed="true"] {
+            background: #fef3c7;
+            border-color: #d97706;
+            color: #92400e;
+        }
+
+
+        /* tabel */
+        .table_scroll {
+            overflow-x: auto;
+            max-width: 100%;
+        }
+
+        table.table {
+            border-collapse: collapse;
+            font-variant-numeric: tabular-nums;
+        }
+
+        table.table th,
+        table.table td {
+            text-align: right;
+            border: 1px solid var(--border);
+            padding: 4px 10px;
+            white-space: nowrap;
+        }
+
+        table.table th {
+            background: #f3f4f6;
+            text-align: center;
+        }
+
+        table.table tr.truncated td {
+            text-align: left;
+            padding: 2px;
+        }
+
+        table.table tr.truncated button {
+            border: none;
+            background: none;
+            color: var(--primary);
+            min-height: 30px;
+        }
+
+        table.table tr.truncated button:hover {
+            text-decoration: underline;
+        }
+
+        #clickdata {
+            margin-top: 8px;
+        }
+
+        /* kop van de modelkaart: titel en de keuze Tekst | Tekst + grafisch */
+        .model_head {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 6px 12px;
+            margin: -4px 0 8px;
+        }
+
+        .model_head #model_titel {
+            flex: 1 1 14em;
+            width: auto;
+            min-width: 0;
+            margin: 0;
+        }
+
+        .view_switch, .stijl_switch {
+            display: inline-flex;
+            border: 1px solid #9ca3af;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .view_switch button, .stijl_switch button {
+            border: 0;
+            border-radius: 0;
+            min-height: 30px;
+            padding: 3px 12px;
+            font-size: 0.9rem;
+            background: #fff;
+            color: var(--muted);
+        }
+
+        .view_switch button + button, .stijl_switch button + button {
+            border-left: 1px solid #9ca3af;
+        }
+
+        .view_switch button[aria-pressed="true"], .stijl_switch button[aria-pressed="true"] {
+            background: var(--primary);
+            color: #fff;
+            font-weight: 600;
+        }
+
+        /* grafisch model: in de modelkaart, boven de editors */
+        #grafisch_model {
+            margin-bottom: 12px;
+        }
+
+        #grafisch_model[hidden] {
+            display: none;
+        }
+
+        #grafisch_model > div + div {
+            margin-top: 8px;
+        }
+
+        #grafisch_knoppen button {
+            min-height: 30px;
+            padding: 3px 9px;
+            font-size: 0.9rem;
+        }
+
+        /* legenda: een vaste strook onder het diagram */
+        .grafisch_strook {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px 16px;
+            color: var(--muted);
+            font-size: 0.8rem;
+        }
+
+        .grafisch_strook span {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .grafisch_strook svg {
+            display: block;
+        }
+
+        /* Herkende elementen: how the text was read, as a list (click a row: select it) */
+        .grafisch_lijst {
+            margin-top: 8px;
+        }
+
+        .grafisch_lijst summary {
+            font-size: 0.85rem;
+        }
+
+        #grafisch_tabel {
+            overflow-x: auto;
+            margin-top: 6px;
+        }
+
+        #grafisch_tabel table {
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        #grafisch_tabel td {
+            border-top: 1px solid var(--border);
+            padding: 3px 8px;
+            vertical-align: top;
+        }
+
+        #grafisch_tabel tr[data-id] {
+            cursor: pointer;
+        }
+
+        #grafisch_tabel tr[data-id]:hover {
+            background: #eff6ff;
+        }
+
+        #grafisch_tabel tr.selected {
+            background: #fef3c7;
+        }
+
+        /* graph stays in view while scrolling through a long model (wide, high screens) */
+        @media (min-width: 961px) and (min-height: 700px) {
+            .area_graph {
+                position: sticky;
+                top: 8px;
+            }
+        }
+
+        #grafisch_view {
+            position: relative;
+        }
+
+        #grafisch_svg {
+            overflow: auto;
+            max-height: 75vh;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            /* grey, as the graphical models in the exams (and the background of the drawing) */
+            background: #d4d4d4;
+            cursor: grab;
+            /* pinch to zoom is done by the webapp, not by the browser */
+            touch-action: pan-x pan-y;
+        }
+
+        #grafisch_svg[data-stijl="kleur"] {
+            background: #fff;
+        }
+
+        /* below the diagram: the legend and Examen | Kleur (style of the diagram).
+           The legend of the other style is hidden */
+        .grafisch_onder {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 6px 16px;
+        }
+
+        .grafisch_onder .stijl_switch {
+            margin-left: auto;
+        }
+
+        .grafisch_onder .stijl_switch button {
+            min-height: 26px;
+            padding: 1px 9px;
+            font-size: 0.8rem;
+        }
+
+        .grafisch_strook[hidden] {
+            display: none;
+        }
+
+        #grafisch_svg .placeholder {
+            cursor: default;
+        }
+
+        .grafisch_zoom {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin-left: auto;
+        }
+
+        #grafisch_zoom_waarde {
+            min-width: 3em;
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--muted);
+        }
+
+        /* form of the selected element: a small window next to it */
+        #grafisch_eigenschappen {
+            position: absolute;
+            z-index: 5;
+            width: min(340px, calc(100% - 16px));
+        }
+
+        #grafisch_eigenschappen:empty {
+            display: none;
+        }
+
+        @media (max-width: 600px) {
+            #grafisch_eigenschappen {
+                position: static;
+                width: auto;
+                margin-top: 10px;
+            }
+        }
+
+        #grafisch_svg svg {
+            display: block;
+            max-width: none;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        #grafisch_svg [data-id] {
+            cursor: move;
+            touch-action: none;
+        }
+
+        /* you can click a symbol: it gets a thicker border under the mouse */
+        #grafisch_svg [data-id]:hover > rect,
+        #grafisch_svg [data-id]:hover > circle,
+        #grafisch_svg [data-id]:hover > path:first-of-type {
+            stroke-width: 3;
+        }
+
+        /* the open end of a flow (from or to outside the model) can be dragged, but is not drawn */
+        #grafisch_svg circle.end {
+            stroke: none !important;
+        }
+
+        /* the symbol of the line with the cursor in the editor */
+        #grafisch_svg .linked > rect,
+        #grafisch_svg .linked > circle,
+        #grafisch_svg .linked > path {
+            stroke: #2563eb;
+            stroke-width: 3.5;
+        }
+
+        #grafisch_svg .selected > rect,
+        #grafisch_svg .selected > circle,
+        #grafisch_svg .selected > path {
+            stroke: #d97706;
+            stroke-width: 3.5;
+        }
+
+        /* + buttons on the selected toestandsvariabele: new flow in / out */
+        #grafisch_svg [data-action] {
+            cursor: pointer;
+        }
+
+        #grafisch_svg [data-action]:hover circle {
+            fill: #fef3c7;
+        }
+
+        /* lines in the editors that belong to the selected symbol */
+        .mt-link-line {
+            background: #fef3c7;
+        }
+
+        #grafisch_knoppen {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px;
+        }
+
+        #grafisch_melding:not(:empty) {
+            margin-top: 10px;
+            padding: 8px 12px;
+            border-radius: 6px;
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        #grafisch_model > #grafisch_melding:empty {
+            margin-top: 0;
+        }
+
+        .grafisch_form {
+            display: grid;
+            gap: 8px;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-left: 4px solid #d97706;
+            border-radius: 6px;
+            background: var(--card);
+            box-shadow: 0 6px 20px rgba(17, 24, 39, 0.18);
+        }
+
+        .grafisch_form h2 {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            color: var(--text);
+        }
+
+        button.grafisch_sluit {
+            border: 0;
+            background: none;
+            padding: 0 4px;
+            font-size: 1.2rem;
+            line-height: 1;
+            color: var(--muted);
+            min-height: 0;
+        }
+
+        .grafisch_form_melding:not(:empty) {
+            padding: 6px 10px;
+            border-radius: 6px;
+            background: #fee2e2;
+            color: #991b1b;
+            font-size: 0.9rem;
+        }
+
+        .grafisch_form h2,
+        .grafisch_form p {
+            margin: 0;
+        }
+
+        .grafisch_form label {
+            display: grid;
+            grid-template-columns: minmax(90px, 11em) minmax(0, 1fr);
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+        }
+
+        .grafisch_form input[type="text"] {
+            font-family: ui-monospace, Consolas, monospace;
+            min-width: 0;
+        }
+
+        .grafisch_form_knoppen {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .grafisch_legenda {
+            color: var(--muted);
+            font-size: 0.85rem;
+        }
+
+        .grafisch_form input.invalid {
+            border-color: #dc2626;
+            box-shadow: 0 0 0 2px #fecaca;
+        }
+
+        /* names of the variables: click to put the name in the formula */
+        .grafisch_chips {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.8rem;
+            color: var(--muted);
+        }
+
+        .grafisch_chips button {
+            min-height: 0;
+            padding: 1px 7px;
+            border-color: var(--border);
+            border-radius: 10px;
+            font-family: ui-monospace, Consolas, monospace;
+            font-size: 0.85rem;
+            background: #eff6ff;
+        }
+
+        /* meer opties */
+        details summary {
+            cursor: pointer;
+            color: var(--muted);
+        }
+
+        .options {
+            display: grid;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .options input[type="number"] {
+            width: 5.5em;
+        }
+
+        .options > div {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px;
+        }
+
+        footer {
+            margin-top: 14px;
+            color: var(--muted);
+            font-size: 0.85rem;
+        }
+
+        footer a {
+            color: inherit;
+        }
+    </style>
+    <script src="scripts/jquery-3.2.1.min.js"></script>
+    <script src="scripts/jquery.flot.js"></script>
+    <script src="scripts/jquery.flot.tooltip.js"></script>
+</head>
+
+
+<body>
+    <header class="topbar">
+        <div class="brand">
+            <h1><a id="title" href="https://github.com/tomkooij/modelleertaal">Modelleertaal</a></h1>
+        </div>
+        <div class="model_select">
+            <label for="model_keuze">Kies model:</label>
+            <select id="model_keuze">
+                <option value="0">models.js niet geladen!</option>
+            </select>
+            <input id="fileinput" type="file" accept=".xml,.txt" hidden>
+            <button id="open_file" type="button" title="Open een model (.xml) dat op je computer staat">Open</button>
+            <button id="download_xml" type="button" title="Sla dit model op je computer op (.xml). De naam van het bestand is de titel van het model.">Bewaar</button>
+            <button id="permalink" type="button" title="Kopieer een link naar dit model (met jouw wijzigingen)">Deel link</button>
+        </div>
+    </header>
+
+    <main>
+        <div class="card runbar">
+            <button id="run" type="button" title="Run: voer het model uit (Ctrl+Enter)">&#9654; Run</button>
+            <button id="stap" type="button" title="Reken het model regel voor regel door en zie de berekening met getallen">Stap</button>
+            <label>Aantal iteraties:
+                <input type="text" id="NBox" value="1000" inputmode="numeric">
+                <span id="endtime_hint" title="Aantal iteraties maal de tijdstap dt: zo lang rekent het model door (als het niet eerder stopt)"></span>
+            </label>
+            <span id="status_bar" role="status" aria-live="polite"></span>
+            <div id="stap_regel" aria-live="polite" hidden></div>
+        </div>
+
+        <div id="message" role="alert"></div>
+
+        <div class="workspace">
+            <section class="card area_model" aria-label="Model">
+                <div class="model_head">
+                    <input id="model_titel" class="model_title" type="text" maxlength="120" spellcheck="false"
+                        placeholder="Naam van het model" aria-label="Titel van het model"
+                        title="Klik om de titel te veranderen. De titel gaat mee in Deel link en is de naam van het bestand bij Bewaar.">
+                    <div class="view_switch" role="group" aria-label="Weergave van het model">
+                        <button type="button" data-weergave="tekst" aria-pressed="true" title="Alleen de tekst van het model">Tekst</button>
+                        <button type="button" data-weergave="grafisch" aria-pressed="false" title="Het model ook als diagram: toestanden, stromen en pijlen">Tekst + grafisch</button>
+                    </div>
+                </div>
+
+                <div id="grafisch_model" hidden>
+                    <div id="grafisch_knoppen">
+                        <button id="grafisch_nieuw_toestand" type="button" title="Een grootheid die elke stap een beetje verandert, zoals x of v">+ Toestandsvariabele</button>
+                        <button id="grafisch_nieuw_hulp" type="button" title="Een grootheid die elke stap met een formule wordt uitgerekend, zoals Fres">+ Hulpvariabele</button>
+                        <button id="grafisch_nieuw_constante" type="button" title="Een grootheid die niet verandert, zoals de massa m">+ Constante</button>
+                        <button id="grafisch_undo" type="button" disabled title="Maak de laatste wijziging in het diagram ongedaan (Ctrl+Z)" aria-label="Ongedaan maken">&#8630;</button>
+                        <span class="grafisch_zoom">
+                            <button id="grafisch_zoom_uit" type="button" title="Uitzoomen (Ctrl + muiswiel)" aria-label="Uitzoomen">&minus;</button>
+                            <span id="grafisch_zoom_waarde">100%</span>
+                            <button id="grafisch_zoom_in" type="button" title="Inzoomen (Ctrl + muiswiel)" aria-label="Inzoomen">+</button>
+                            <button id="grafisch_zoom_passend" type="button" title="Maak het hele model zichtbaar">Passend</button>
+                            <button id="grafisch_herstel" type="button" title="Zet alle symbolen terug op hun eigen plek" aria-label="Herstel indeling">&#8634;</button>
+                            <button id="download_grafisch" type="button" title="Sla het diagram op als plaatje (SVG)" aria-label="Download diagram">&#10515;</button>
+                        </span>
+                    </div>
+                    <div id="grafisch_view">
+                        <div id="grafisch_svg"></div>
+                        <div id="grafisch_eigenschappen"></div>
+                    </div>
+                    <div class="grafisch_onder">
+                        <!-- kleur: colors and symbols of Coach 7 (see grafisch.js, STIJLEN) -->
+                        <div class="grafisch_strook" data-stijl="kleur" aria-hidden="true" hidden>
+                            <span><svg width="22" height="14"><rect x="1" y="1" width="20" height="12" rx="2" fill="#dceaf8" stroke="#1f5fa8" stroke-width="1.5"/></svg>toestandsvariabele</span>
+                            <span><svg width="38" height="16"><circle cx="7" cy="8" r="5.5" fill="#fff" stroke="#1f5fa8" stroke-width="1.2" stroke-dasharray="2.5 2"/><path d="M13,8 H38" stroke="#1f5fa8" stroke-width="5"/><path d="M13,8 H38" stroke="#fff" stroke-width="2"/><path d="M19,2 L31,14 L31,2 L19,14 z" fill="#dceaf8" stroke="#1f5fa8" stroke-width="1.5" stroke-linejoin="round"/></svg>stroom</span>
+                            <span><svg width="16" height="16"><circle cx="8" cy="8" r="6.5" fill="#dceaf8" stroke="#1f5fa8" stroke-width="1.5"/></svg>hulpvariabele</span>
+                            <span><svg width="22" height="14"><circle cx="11" cy="7" r="5" fill="#dceaf8" stroke="#1f5fa8" stroke-width="1.5"/><path d="M1,7 H6 M16,7 H21" stroke="#1f5fa8" stroke-width="1.5"/></svg>constante</span>
+                            <span><svg width="24" height="10"><path d="M1,5 H19" stroke="#c62828" stroke-width="1.4"/><path d="M17,1 L23,5 L17,9 z" fill="#c62828"/></svg>hangt af van</span>
+                        </div>
+                        <div class="grafisch_strook" data-stijl="examen" aria-hidden="true">
+                            <span><svg width="22" height="14"><rect x="1" y="1" width="20" height="12" fill="#fff" stroke="#000" stroke-width="1.2"/></svg>toestandsvariabele</span>
+                            <span><svg width="34" height="18"><path d="M0.5,11 H24" stroke="#000" stroke-width="6"/><path d="M1.5,11 H24" stroke="#fff" stroke-width="3.6"/><path d="M33,11 L24,5.5 L24,16.5 z" fill="#fff" stroke="#000" stroke-width="1.1"/><circle cx="12" cy="11" r="5" fill="#fff" stroke="#000" stroke-width="1.1"/><path d="M12,6 V2 M9.5,2 H14.5" stroke="#000" stroke-width="1.1"/></svg>stroom</span>
+                            <span><svg width="16" height="16"><circle cx="8" cy="8" r="6.5" fill="#fff" stroke="#000" stroke-width="1.2"/></svg>hulpvariabele of constante</span>
+                            <span><svg width="24" height="10"><path d="M1,5 H19" stroke="#000" stroke-width="1.3"/><path d="M14,1.5 L23,5 L14,8.5 L16,5 z" fill="#000"/></svg>hangt af van</span>
+                        </div>
+                        <span class="stijl_switch" role="group" aria-label="Stijl van het diagram">
+                            <button type="button" data-stijl="examen" aria-pressed="true" title="Zwart-wit, zoals de grafische modellen in het examen">Examen</button>
+                            <button type="button" data-stijl="kleur" aria-pressed="false" title="In kleur, met de kleuren en symbolen van Coach 7">Kleur</button>
+                        </span>
+                    </div>
+                    <div id="grafisch_melding" role="alert"></div>
+                    <details class="grafisch_lijst">
+                        <summary>Herkende elementen</summary>
+                        <div id="grafisch_tabel"></div>
+                    </details>
+                </div>
+
+                <div class="editors">
+                    <div>
+                        <h2>Modelregels</h2>
+                        <textarea id="modelregels" rows="15" cols="30" spellcheck="false">//Modelregels:</textarea>
+                    </div>
+                    <div>
+                        <h2>Startwaarden</h2>
+                        <textarea id="startwaarden" rows="15" cols="20" spellcheck="false">//Startwaarden:</textarea>
+                    </div>
+                </div>
+            </section>
+
+            <section class="card results area_graph" aria-label="Grafiek">
+                <div id="graph" class="graph"></div>
+                <div id="graph_note"></div>
+                <div id="graph_tabs" aria-label="Automatische grafieken"></div>
+                <div class="plot_dialog">
+                    <div class="axis" id="select_graph">
+                        <label for="y_var">verticaal:</label>
+                        <select id="y_var">
+                            <option value="">auto</option>
+                        </select>
+                        <div id="y_checks"></div>
+                    </div>
+                    <div class="axis">
+                        <label for="x_var">horizontaal:</label>
+                        <select id="x_var">
+                            <option value="">auto</option>
+                        </select>
+                    </div>
+                    <label><input type="checkbox" id="multiplot"> meerdere grafieken in één figuur</label>
+                    <label title="Uit: de verticale as wordt automatisch geschaald"><input type="checkbox" id="yaxis_zero" checked> verticale as vanaf 0</label>
+                    <button id="download_png" type="button" class="small_action" hidden title="Sla deze grafiek op als plaatje (PNG), bijvoorbeeld voor een verslag">Download grafiek</button>
+                </div>
+                <div id="clickdata"></div>
+            </section>
+
+            <section class="card results area_table" aria-label="Tabel">
+                <div class="card_head">
+                    <h2>Tabel</h2>
+                    <button id="download_tsv" type="button" class="small_action" hidden title="Sla de hele tabel op als bestand dat je in Excel kunt openen (TSV)">Download tabel (Excel)</button>
+                </div>
+                <div id="datatable"></div>
+            </section>
+        </div>
+
+        <details class="card" id="meer_opties">
+            <summary>Meer opties…</summary>
+            <div class="options">
+                <div>
+                    <label for="precision">Aantal significante cijfers in tabel:</label>
+                    <input type="number" id="precision" value="4" min="1" max="15" step="1">
+                </div>
+                <div>
+                    <label for="max_rows">Maximaal aantal punten in grafiek:</label>
+                    <input type="number" id="max_rows" value="500" min="2" step="100">
+                </div>
+                <div>
+                    <span>Grafiek voor docenten:</span>
+                    <button id="download_svg" type="button" title="De lijn van de grafiek als SVG (zonder assen)">Download als SVG</button>
+                    <button id="download_pgf" type="button" title="De grafiek als PGFPlot voor LaTeX, op millimeterpapier">Download als PGFPlot (LaTeX)</button>
+                </div>
+            </div>
+        </details>
+    </main>
+
+    <footer>
+        <span id="version"></span>
+        <span id="classic_link">&middot; Liever de oude indeling? Gebruik <a href="https://www.tomkooij.nl/modelleertaal-classic" title="De vorige versie van deze webapp, met de oude indeling">Modelleertaal classic</a>.</span>
+    </footer>
+
+    <!-- jQuery is included in head section -->
+    <!-- config.js included at the top of this file -->
+    <script src="modellen/models.js"></script>
+    <script src="scripts/modelleertaal-app.browser.js"></script>
+    <script src="scripts/codemirror.js"></script>
+    <script src="scripts/codemirror-mode-modelleertaal.js"></script>
+
+    <script type="text/javascript">
+        if (typeof modelleertaalapp_js == 'undefined') {
+            alert('modelleertaal-app.browser.js not found or not loaded!');
+        }
+
+        function activeer_profiel(profiel) {
+            // zet knoppen/divs/span (id) aan/uit enz.
+            profiel.forEach(function(item) {
+                switch (item.action) {
+                    case 'hide': {
+                        $(item.id).hide();
+                        break;
+                    }
+                    case 'show': {
+                        $(item.id).show();
+                        break;
+                    }
+                }
+            });
+        }
+
+        // Laadt het profiel (defintie in config.js)
+        // (voordat het model geladen wordt: zo verspringt de pagina niet)
+        activeer_profiel(profiellen[actieve_profiel]);
+
+        var m = new modelleertaalapp_js.ModelleertaalApp({
+            // debug uitvoer in console: index.html#debug
+            debug: /(^#|&)debug\b/.test(window.location.hash),
+            model_index: model_index,
+            N_default: N_default
+        });
+
+        $(document).ready(function() {
+            // customize titel
+            $('#title').text(title);
+            $('#title').attr('href', title_link);
+            $('#version').text('Modelleertaal webapp ' + (m.version || ''));
+            $("#open_file").click(function() {
+                $("#fileinput").click();
+            });
+        });
+    </script>
+
+    <!-- Goat Counter -->
+    <script data-goatcounter="https://tomkooij.goatcounter.com/count"
+        async src="//gc.zgo.at/count.js"></script>
+</body>
+
+</html>
