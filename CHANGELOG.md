@@ -1,6 +1,8 @@
 # Changelog
 
-## [Unreleased]
+## [6.2]
+
+11 nov 2026
 
 ### Webapp
 
