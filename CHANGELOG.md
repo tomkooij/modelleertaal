@@ -1,5 +1,14 @@
 # Changelog
 
+## [6.1.1]
+
+11 nov 2026
+
+### Webapp
+
+- The model card always starts with "Tekst" (not "Tekst + grafisch"). The
+  choice "Tekst | Tekst + grafisch" is no longer remembered in the browser.
+
 ## [6.1]
 
 11 nov 2026

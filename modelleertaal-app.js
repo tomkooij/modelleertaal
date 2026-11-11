@@ -21,7 +21,7 @@ var FileSaver = require('file-saver');
 /* globals $, CodeMirror */
 
 /* version history: CHANGELOG.md */
-var version = "v6.1";
+var version = "v6.1.1";
 
 var COLOR_PLOT = '#1d4ed8';
 var COLOR_PREVIOUS = '#c3c8d1';
@@ -1548,13 +1548,14 @@ ModelleertaalApp.prototype.load_settings = function() {
   $(this.dom_precision).val(this.precision);
   $(this.dom_yaxis_zero).prop('checked', !this.yaxis_autoscale);
   this.set_grafisch_stijl(settings.grafisch_stijl, false);
-  this.set_weergave(settings.weergave, false);
+  // Tekst | Tekst + grafisch is not remembered: every visit starts with Tekst
+  this.set_weergave('tekst', false);
 };
 
 
 ModelleertaalApp.prototype.save_settings = function() {
   storage('set', JSON.stringify({precision: this.precision, yaxis_zero: !this.yaxis_autoscale,
-                                 weergave: this.weergave, grafisch_stijl: this.grafisch_stijl}), SETTINGS_KEY);
+                                 grafisch_stijl: this.grafisch_stijl}), SETTINGS_KEY);
 };
 
 
