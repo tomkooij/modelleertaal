@@ -23,6 +23,9 @@ Bij P2-2 staat ook een gewijzigd aantal iteraties in de notitie ("iteraties 500 
 Afwijking bij P1-6 (v6.4): geen eigen voorbeeldmodellen, maar de verzamelingen B1, C2 en C3 met
 een groep Basismodellen (twee keuzelijsten: verzameling en model). Bij P2-6 hebben de basismodellen
 eenheden gekregen; de eenheid van `dt` staat ook achter de eindtijd (`× dt = 50 s`).
+Bij P3-1 sleept de app de rechthoek zelf: de Flot-bundel mist `jquery.event.drag`, waardoor de
+selection-plugin niet werkt. Bij P3-4 ligt een onzichtbaar keuzemenu over het aslabel van Flot, zodat
+het label ook in de PNG staat.
 
 ## Uitgangspunten (gelden voor elk punt)
 
@@ -310,7 +313,7 @@ veranderen niet.
 
 ## Prioriteit 3: verfijning
 
-### P3-1 Inzoomen in de grafiek
+### P3-1 Inzoomen in de grafiek (gebouwd)
 
 Sleep een rechthoek in de grafiek om in te zoomen (Flot selection-plugin); dubbelklik of de knop
 **Hele grafiek**, die alleen zichtbaar is als er is ingezoomd, zet het terug. Op een aanraakscherm
@@ -329,7 +332,7 @@ Als P3-2 er is: toon bij het aangeklikte punt in de tooltip ook de helling
 (`Δv/Δt = 9,81`), berekend uit de twee buurpunten, en teken een korte raaklijn. Sluit aan op de
 examenvaardigheid "bepaal de versnelling uit het (v,t)-diagram". Alleen bij een enkele grafiek.
 
-### P3-4 Assen kiezen op de assen zelf
+### P3-4 Assen kiezen op de assen zelf (gebouwd)
 
 De keuzelijsten "verticaal" en "horizontaal" staan onder de miniaturen. Zet ze op de plek van de
 aslabels (links-midden en onder-midden van de grafiek, vormgegeven als label met een klein

@@ -24,6 +24,18 @@
   (with tests).
 - The table keeps the number of rows shown when it is drawn again.
 
+### Grafiek
+
+- Zoom in: drag a rectangle in the graph (the cursor is a cross). **Hele grafiek** (only
+  visible when zoomed in) or a double click shows the whole graph again. Not on a touch
+  screen, where dragging scrolls the page. Another graph: not zoomed in.
+- The variables on the axes are chosen on the axis labels themselves (a small arrow next to
+  the label; the menus show the units). The menus "verticaal" and "horizontaal" under the
+  graph are gone.
+- Several graphs in one figure: when the ranges differ more than a factor 20, the small ones
+  get a second axis on the right ("(as rechts)" next to the checkbox). New module `assen.js`
+  (with tests).
+
 ## [6.4.1]
 
 14 nov 2026

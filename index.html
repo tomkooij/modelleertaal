@@ -498,6 +498,89 @@
             font-family: sans-serif;
         }
 
+        /* inzoomen: sleep een rechthoek */
+        #graph.zoomable {
+            cursor: crosshair;
+        }
+
+        .graph_wrap {
+            position: relative;
+        }
+
+        .zoom_box {
+            position: absolute;
+            z-index: 2;
+            border: 1px dashed #1d4ed8;
+            background: rgba(29, 78, 216, 0.08);
+            pointer-events: none;
+        }
+
+        #zoom_reset {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            z-index: 3;
+        }
+
+        /* assen kiezen op de as zelf: een onzichtbaar keuzemenu over het aslabel */
+        .axis_pick {
+            position: absolute;
+            z-index: 3;
+            display: block;
+            border: 1px dashed transparent;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .axis_pick[hidden] {
+            display: none;
+        }
+
+        .axis_pick:hover,
+        .axis_pick:focus-within {
+            border-color: var(--primary);
+            background: rgba(29, 78, 216, 0.06);
+        }
+
+        .axis_pick select {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            min-height: 0;
+            margin: 0;
+            padding: 0;
+            border: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .axis_pick::after {
+            content: "\25be";
+            position: absolute;
+            right: -13px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--primary);
+            font-size: 12px;
+            line-height: 1;
+            pointer-events: none;
+        }
+
+        #y_pick::after {
+            right: auto;
+            top: auto;
+            left: 50%;
+            bottom: -15px;
+            transform: translateX(-50%);
+        }
+
+        #y_checks .as_rechts {
+            color: var(--muted);
+            font-size: 0.85em;
+        }
+
         .placeholder {
             display: flex;
             align-items: center;
@@ -1219,23 +1302,20 @@
             </section>
 
             <section class="card results area_graph" aria-label="Grafiek">
-                <div id="graph" class="graph"></div>
+                <div class="graph_wrap">
+                    <div id="graph" class="graph"></div>
+                    <label class="axis_pick" id="y_pick" hidden title="Kies wat er op de verticale as staat">
+                        <select id="y_var" aria-label="Verticale as"><option value="">auto</option></select>
+                    </label>
+                    <label class="axis_pick" id="x_pick" hidden title="Kies wat er op de horizontale as staat">
+                        <select id="x_var" aria-label="Horizontale as"><option value="">auto</option></select>
+                    </label>
+                    <button type="button" id="zoom_reset" class="small_action" hidden title="Laat de hele grafiek weer zien (of dubbelklik in de grafiek)">Hele grafiek</button>
+                </div>
                 <div id="graph_note"></div>
                 <div id="graph_tabs" aria-label="Automatische grafieken"></div>
                 <div class="plot_dialog">
-                    <div class="axis" id="select_graph">
-                        <label for="y_var">verticaal:</label>
-                        <select id="y_var">
-                            <option value="">auto</option>
-                        </select>
-                        <div id="y_checks"></div>
-                    </div>
-                    <div class="axis">
-                        <label for="x_var">horizontaal:</label>
-                        <select id="x_var">
-                            <option value="">auto</option>
-                        </select>
-                    </div>
+                    <div id="y_checks"></div>
                     <label><input type="checkbox" id="multiplot"> meerdere grafieken in één figuur</label>
                     <label title="Uit: de verticale as wordt automatisch geschaald"><input type="checkbox" id="yaxis_zero" checked> verticale as vanaf 0</label>
                     <button id="download_png" type="button" class="small_action" hidden title="Sla deze grafiek op als plaatje (PNG), bijvoorbeeld voor een verslag">Download grafiek</button>

@@ -9,6 +9,7 @@ var dtcheck = require('./dtcheck.js');
 var modelkeuze = require('./modelkeuze.js');
 var eenheden = require('./eenheden.js');
 var aflezen = require('./aflezen.js');
+var assen = require('./assen.js');
 var Blob = require('blob');
 var FileSaver = require('file-saver');
 // this also depends on:
@@ -84,6 +85,9 @@ function ModelleertaalApp(params) {
   this.dom_x_var = "#x_var";
   this.dom_y_var = "#y_var";
   this.dom_y_checks = "#y_checks";
+  this.dom_x_pick = "#x_pick";
+  this.dom_y_pick = "#y_pick";
+  this.dom_zoom_reset = "#zoom_reset";
   this.dom_multiplot = "#multiplot";
   this.dom_yaxis_zero = "#yaxis_zero";
   this.dom_model_keuze = "#model_keuze";
@@ -501,7 +505,60 @@ function ModelleertaalApp(params) {
 
   // Aflezen: a click on a point shows it with lines to the axes, and its row in the table.
   // A click next to the graph line removes it.
+  // Inzoomen: drag a rectangle in the graph. Double click or Hele grafiek: back.
+  // Not on a touch screen (dragging there scrolls the page).
+  this.zoom_enabled = !(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+  this.zoom = null;
+  var zoom_drag = null;
+  $(this.dom_graph).on('mousedown', function(event) {
+    if (!self.zoom_enabled || event.button !== 0 || !self.plot_object || !self.results_available()) return;
+    var p = self.zoom_position(event);
+    if (!p.inside) return;
+    zoom_drag = {x0: p.x, y0: p.y, x1: p.x, y1: p.y, box: null};
+    event.preventDefault();
+  });
+  $(window).on('mousemove', function(event) {
+    if (!zoom_drag) return;
+    var p = self.zoom_position(event);
+    zoom_drag.x1 = p.x;
+    zoom_drag.y1 = p.y;
+    if (!zoom_drag.box && Math.abs(p.x - zoom_drag.x0) + Math.abs(p.y - zoom_drag.y0) < 6) return;
+    if (!zoom_drag.box) zoom_drag.box = $('<div class="zoom_box">').appendTo(self.dom_graph);
+    var off = self.plot_object.getPlotOffset();
+    zoom_drag.box.css({
+      left: off.left + Math.min(zoom_drag.x0, p.x) + 'px',
+      top: off.top + Math.min(zoom_drag.y0, p.y) + 'px',
+      width: Math.abs(p.x - zoom_drag.x0) + 'px',
+      height: Math.abs(p.y - zoom_drag.y0) + 'px'
+    });
+  });
+  $(window).on('mouseup', function() {
+    if (!zoom_drag) return;
+    var d = zoom_drag;
+    zoom_drag = null;
+    if (!d.box) return;   // a click, not a rectangle
+    d.box.remove();
+    if (Math.abs(d.x1 - d.x0) < 6 || Math.abs(d.y1 - d.y0) < 6) return;
+    var ranges = {};
+    $.each(self.plot_object.getAxes(), function(name, axis) {
+      if (!axis.used) return;
+      var a = axis.c2p(axis.direction == 'x' ? d.x0 : d.y0), b = axis.c2p(axis.direction == 'x' ? d.x1 : d.y1);
+      ranges[name] = {from: Math.min(a, b), to: Math.max(a, b)};
+    });
+    self.zoom = {key: self.zoom_key(), ranges: ranges};
+    self.zoom_time = Date.now();
+    self.do_plot();
+  });
+  $(this.dom_graph).on('dblclick', function() {
+    self.set_zoom(null);
+  });
+  $(this.dom_zoom_reset).click(function() {
+    self.set_zoom(null);
+  });
+
   $(this.dom_graph).on("plotclick", function(event, pos, item) {
+    // the end of dragging a rectangle (zoom) is not a click
+    if (self.zoom_time && Date.now() - self.zoom_time < 400) return;
     if (item && item.series.mt_read) return;
     if (!item || item.series.mt_previous || !item.series.mt_yvar) {
       self.set_read(null);
@@ -2352,8 +2409,8 @@ ModelleertaalApp.prototype.update_axis_controls = function() {
   } else {
     for (i = 0; i < this.allVars.length; i++) {
       name = this.allVars[i];
-      $('<option/>').val(name).text(name).appendTo(this.dom_x_var);
-      $('<option/>').val(name).text(name).appendTo(this.dom_y_var);
+      $('<option/>').val(name).text(eenheden.label(name, this.units)).appendTo(this.dom_x_var);
+      $('<option/>').val(name).text(eenheden.label(name, this.units)).appendTo(this.dom_y_var);
       $('<label/>').append(
         $('<input type="checkbox">').val(name)
           .prop('checked', this.multi_yvars.indexOf(name) != -1)
@@ -2535,6 +2592,23 @@ ModelleertaalApp.prototype.do_plot = function() {
   var y_names = [];
   var note = '';
 
+  // another graph: not zoomed in anymore
+  if (this.zoom && this.zoom.key != this.zoom_key()) this.zoom = null;
+  $(this.dom_zoom_reset).prop('hidden', !this.zoom);
+
+  // several graphs with a very different range: the small ones on a second axis (right)
+  var split = {left: this.multiplot ? this.multi_yvars : [this.yvar], right: []};
+  if (this.multiplot) {
+    var ranges = {};
+    this.multi_yvars.forEach(function(name) {
+      ranges[name] = assen.data_range(self.xy_data(rows, self.allVars, self.xvar, name));
+    });
+    split = assen.split(this.multi_yvars, ranges);
+  }
+  this.axis_of = function(name) {
+    return (split.right.indexOf(name) != -1) ? 2 : 1;
+  };
+
   var has_previous = false;
   var push_previous = function(yvar) {
     var data = (self.previous) ? self.xy_data(self.previous.rows, self.previous.vars, self.xvar, yvar) : null;
@@ -2543,6 +2617,7 @@ ModelleertaalApp.prototype.do_plot = function() {
     dataset.push({
       data: data,
       color: COLOR_PREVIOUS,
+      yaxis: self.axis_of(yvar),
       mt_previous: true,
       points: {show: false},
       hoverable: false,
@@ -2558,17 +2633,21 @@ ModelleertaalApp.prototype.do_plot = function() {
         color: COLORS_MULTIPLOT[n % COLORS_MULTIPLOT.length],
         label: name,
         mt_yvar: name,
+        yaxis: self.axis_of(name),
         points: {show: show_points}
       });
     });
-    y_names = this.multi_yvars;
+    y_names = split.left;
     if (dataset.length === 0) note = 'Vink hieronder aan welke variabelen je wilt zien.';
-    // legend: colour next to the checkbox
+    // legend: colour next to the checkbox, and which graphs use the axis on the right
     $(this.dom_y_checks).find('label').each(function() {
-      var n = self.multi_yvars.indexOf($(this).find('input').val());
+      var name = $(this).find('input').val();
+      var n = self.multi_yvars.indexOf(name);
       $(this).find('.swatch')
         .css('background-color', COLORS_MULTIPLOT[Math.max(n, 0) % COLORS_MULTIPLOT.length])
         .css('display', (n == -1) ? 'none' : 'inline-block');
+      $(this).find('.as_rechts').remove();
+      if (split.right.indexOf(name) != -1) $(this).append($('<span class="as_rechts">').text(' (as rechts)'));
     });
   } else {
     push_previous(this.yvar);
@@ -2594,7 +2673,7 @@ ModelleertaalApp.prototype.do_plot = function() {
       .text('\ud83d\udccc Houd vast'));
   }
   if (note) note_box.append($('<span>').text(' ' + note));
-  this.plot_graph(dataset, this.xvar, y_names);
+  this.plot_graph(dataset, this.xvar, y_names, split.right);
   this.show_read_label(read_text);
   this.select_thumbnail();
 }; // do_plot
@@ -2610,6 +2689,30 @@ ModelleertaalApp.prototype.set_read = function(read) {
   if (!this.results_available()) return;
   this.do_plot();
   if (!this.stepper) this.print_table();
+};
+
+
+ModelleertaalApp.prototype.zoom_key = function() {
+  // the graph that is shown: zooming in belongs to this graph
+  return [this.xvar, this.multiplot ? this.multi_yvars.join(',') : this.yvar, this.multiplot].join('|');
+};
+
+
+ModelleertaalApp.prototype.zoom_position = function(event) {
+  // mouse position in the plot area (pixels), limited to the plot area
+  var off = this.plot_object.getPlotOffset();
+  var g = $(this.dom_graph).offset();
+  var x = event.pageX - g.left - off.left, y = event.pageY - g.top - off.top;
+  var w = this.plot_object.width(), h = this.plot_object.height();
+  return {inside: x >= 0 && y >= 0 && x <= w && y <= h,
+          x: Math.max(0, Math.min(w, x)), y: Math.max(0, Math.min(h, y))};
+};
+
+
+ModelleertaalApp.prototype.set_zoom = function(zoom) {
+  if (!zoom && !this.zoom) return;
+  this.zoom = zoom;
+  if (this.results_available()) this.do_plot();
 };
 
 
@@ -2631,6 +2734,7 @@ ModelleertaalApp.prototype.read_point = function(dataset) {
     return name + ' = ' + self.format_text(val) + unit;
   }
   var text = [value(this.xvar, x), value(read.yvar, y)];
+  var axis = this.axis_of ? this.axis_of(read.yvar) : 1;
 
   // the slope, with a short tangent (only with one graph: which line would it be?)
   if (!this.multiplot) {
@@ -2648,7 +2752,7 @@ ModelleertaalApp.prototype.read_point = function(dataset) {
       });
       var line = aflezen.tangent([x, y], slope, range);
       if (line) {
-        dataset.push({data: line, color: COLOR_READ, lines: {show: true, lineWidth: 2},
+        dataset.push({data: line, color: COLOR_READ, lines: {show: true, lineWidth: 2}, yaxis: axis,
                       points: {show: false}, mt_read: true, hoverable: false, clickable: false});
       }
       var unit = aflezen.slope_unit(this.units[read.yvar], this.units[this.xvar]);
@@ -2656,10 +2760,11 @@ ModelleertaalApp.prototype.read_point = function(dataset) {
                 (unit ? ' ' + unit : ''));
     }
   }
-  dataset.push({data: [[x, y]], color: COLOR_READ, lines: {show: false},
+  dataset.push({data: [[x, y]], color: COLOR_READ, lines: {show: false}, yaxis: axis,
                 points: {show: true, radius: 5, fill: true, fillColor: COLOR_READ},
                 mt_read: true, hoverable: false, clickable: false});
   this.read_xy = [x, y];
+  this.read_axis = axis;
   return text;
 };
 
@@ -2668,7 +2773,11 @@ ModelleertaalApp.prototype.show_read_label = function(text) {
   // the values of the point that is read, next to the point in the graph
   if (!text || !this.plot_object || !this.read_xy) return;
   var graph = $(this.dom_graph);
-  var off = this.plot_object.pointOffset({x: this.read_xy[0], y: this.read_xy[1]});
+  var off = this.plot_object.pointOffset({x: this.read_xy[0], y: this.read_xy[1], yaxis: this.read_axis || 1});
+  // zoomed in: the point can be outside the graph
+  var box = this.plot_object.getPlotOffset();
+  if (off.left < box.left || off.left > box.left + this.plot_object.width() ||
+      off.top < box.top || off.top > box.top + this.plot_object.height()) return;
   var label = $('<div class="read_label">').appendTo(graph);
   text.forEach(function(line) { label.append($('<div>').text(line)); });
   var w = label.outerWidth(), h = label.outerHeight();
@@ -2680,29 +2789,39 @@ ModelleertaalApp.prototype.show_read_label = function(text) {
 };
 
 
-ModelleertaalApp.prototype.plot_graph = function(dataset, x_name, y_names) {
-  // y_names: the variables on the vertical axis. The axes show the units (eenheden.js)
+ModelleertaalApp.prototype.plot_graph = function(dataset, x_name, y_names, y2_names) {
+  // y_names: the variables on the vertical axis, y2_names (optional): on the second axis (right).
+  // The axes show the units (eenheden.js)
 
   var self = this;
+  y2_names = y2_names || [];
   var x_label = eenheden.label(x_name, this.units);
   var y_label = eenheden.labels(y_names, this.units);
+  var y2_label = eenheden.labels(y2_names, this.units);
+  var zoom = this.zoom ? this.zoom.ranges : null;
 
   if ($(this.dom_graph).width() === 0 || $(this.dom_graph).height() === 0) return;
 
-  // plot the y-axis from 0, unless autoscale
-  var yaxis_min, yaxis_max;
-  if (!this.yaxis_autoscale) {
+  // plot the y-axis from 0, unless autoscale. Zoomed in: the rectangle.
+  function y_range(n, zoomed) {
+    if (zoomed) return {min: zoomed.from, max: zoomed.to, autoScale: 'none'};
+    var range = {};
+    if (self.yaxis_autoscale) return range;
     var min = Infinity, max = -Infinity;
     dataset.forEach(function(series) {
+      if ((series.yaxis || 1) != n) return;
       series.data.forEach(function(point) {
         if (point === null) return;
         if (point[1] < min) min = point[1];
         if (point[1] > max) max = point[1];
       });
     });
-    if (min >= 0) yaxis_min = 0;
-    if (max <= 0) yaxis_max = 0;
+    if (min >= 0) range.min = 0;
+    if (max <= 0) range.max = 0;
+    return range;
   }
+  var y1 = y_range(1, zoom && zoom.yaxis);
+  var y2 = y_range(2, zoom && zoom.y2axis);
 
   function sciFormatter(val, axis) {
     // format large numbers in scientific notation: 1e6
@@ -2731,8 +2850,14 @@ ModelleertaalApp.prototype.plot_graph = function(dataset, x_name, y_names) {
     // Aflezen: from the point to both axes, as on paper
     if (self.read_xy) {
       var x = self.read_xy[0], y = self.read_xy[1];
-      lines.push({xaxis: {from: x, to: x}, yaxis: {from: axes.yaxis.min, to: y}, color: COLOR_READ, lineWidth: 1});
-      lines.push({yaxis: {from: y, to: y}, xaxis: {from: axes.xaxis.min, to: x}, color: COLOR_READ, lineWidth: 1});
+      if (self.read_axis == 2 && axes.y2axis) {
+        // a graph on the right axis: the line goes to the right
+        lines.push({xaxis: {from: x, to: x}, y2axis: {from: axes.y2axis.min, to: y}, color: COLOR_READ, lineWidth: 1});
+        lines.push({y2axis: {from: y, to: y}, xaxis: {from: x, to: axes.xaxis.max}, color: COLOR_READ, lineWidth: 1});
+      } else {
+        lines.push({xaxis: {from: x, to: x}, yaxis: {from: axes.yaxis.min, to: y}, color: COLOR_READ, lineWidth: 1});
+        lines.push({yaxis: {from: y, to: y}, xaxis: {from: axes.xaxis.min, to: x}, color: COLOR_READ, lineWidth: 1});
+      }
     }
     return lines;
   }
@@ -2744,7 +2869,30 @@ ModelleertaalApp.prototype.plot_graph = function(dataset, x_name, y_names) {
     color: "#4b5563"
   };
 
-  $(this.dom_graph).empty();
+  $(this.dom_graph).empty().toggleClass('zoomable', this.zoom_enabled);
+
+  var yaxes = [{
+      font: axis_font,
+      showTicks: false,
+      position: 'left',
+      tickFormatter: sciFormatter,
+      min: y1.min,
+      max: y1.max,
+      autoScale: y1.autoScale,
+      axisLabel: y_label
+    }];
+  if (y2_names.length) {
+    yaxes.push({
+      font: axis_font,
+      showTicks: false,
+      position: 'right',
+      tickFormatter: sciFormatter,
+      min: y2.min,
+      max: y2.max,
+      autoScale: y2.autoScale,
+      axisLabel: y2_label
+    });
+  }
 
   this.plot_object = $.plot($(this.dom_graph), dataset, {
     series: {
@@ -2772,17 +2920,12 @@ ModelleertaalApp.prototype.plot_graph = function(dataset, x_name, y_names) {
       font: axis_font,
       showTicks: false,
       tickFormatter: sciFormatter,
+      min: zoom ? zoom.xaxis.from : undefined,
+      max: zoom ? zoom.xaxis.to : undefined,
+      autoScale: zoom ? 'none' : undefined,
       axisLabel: x_label
     },
-    yaxis: {
-      font: axis_font,
-      showTicks: false,
-      position: 'left',
-      tickFormatter: sciFormatter,
-      min: yaxis_min,
-      max: yaxis_max,
-      axisLabel: y_label
-    },
+    yaxes: yaxes,
     legend: {
       show: false
     },
@@ -2793,7 +2936,35 @@ ModelleertaalApp.prototype.plot_graph = function(dataset, x_name, y_names) {
       }
     }
   }); // $.plot()
+  this.place_axis_picks();
 }; // plot_graph()
+
+
+ModelleertaalApp.prototype.place_axis_picks = function() {
+  // choose the variables on the axes on the axis labels themselves: an invisible menu
+  // on top of the label (the label is part of the graph, also in the PNG)
+  var self = this;
+  var wrap = $(this.dom_graph).parent()[0];
+  var base = wrap.getBoundingClientRect();
+  var ok = this.results_available() && this.plot_object;
+  function place(pick, label_class, show) {
+    var label = $(self.dom_graph).find('.' + label_class)[0];
+    if (!show || !label || !label.getBoundingClientRect) {
+      $(pick).prop('hidden', true);
+      return;
+    }
+    var r = label.getBoundingClientRect();
+    var w = Math.max(r.width + 8, 26), h = Math.max(r.height + 6, 26);
+    $(pick).prop('hidden', false).css({
+      left: Math.round(r.left - base.left + r.width / 2 - w / 2) + 'px',
+      top: Math.round(r.top - base.top + r.height / 2 - h / 2) + 'px',
+      width: Math.round(w) + 'px',
+      height: Math.round(h) + 'px'
+    });
+  }
+  place(this.dom_x_pick, 'x1Label', ok);
+  place(this.dom_y_pick, 'y1Label', ok && !this.multiplot);
+};
 
 
 //
@@ -2958,6 +3129,7 @@ ModelleertaalApp.prototype.init_app = function() {
   this.units = {};
   this.read = null;
   this.table_limit = 10;
+  this.zoom = null;
   this.graphs = [];
   this.analysis = undefined;
   this.end_stepping();
@@ -2987,6 +3159,8 @@ ModelleertaalApp.prototype.init_app = function() {
     $('<div>').addClass('placeholder').text('Druk op Run om het model door te rekenen.'));
   $(this.dom_graph_tabs).empty();
   $(this.dom_graph_note).empty();
+  $(this.dom_zoom_reset).prop('hidden', true);
+  this.place_axis_picks();
   $(this.dom_download_tsv + ',' + this.dom_download_png).prop('hidden', true);
   $(this.dom_datatable).empty().append(
     $('<div>').addClass('placeholder').text('Hier komt de tabel met resultaten.'));
