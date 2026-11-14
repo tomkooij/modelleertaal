@@ -1,28 +1,28 @@
 ﻿<modelleertaal>
 N = 1000
 <startwaarden>
-G = 6,674e-11
-x = 7,58e6
-y = 0
+G = 6,674e-11 '[N m^2/kg^2]
+x = 7,58e6 '[m]
+y = 0 '[m]
 
-vx = 0
-vy = 8000
+vx = 0 '[m/s]
+vy = 8000 '[m/s]
 
-M = 5,97e24
-m = 1
+M = 5,97e24 '[kg]
+m = 1 '[kg]
   
-t = 0
-dt = 10
+t = 0 '[s]
+dt = 10 '[s]
 </startwaarden>
 <modelregels>
-r = sqrt(x^2 + y^2)
-Fg = G * M * m / r^2
+r = sqrt(x^2 + y^2) '[m]
+Fg = G * M * m / r^2 '[N]
 
-Fr = -Fg      
-a = Fr/m  
+Fr = -Fg '[N]
+a = Fr/m '[m/s^2]
 
-ay = a * y/r
-ax = a * x/r
+ay = a * y/r '[m/s^2]
+ax = a * x/r '[m/s^2]
 
 vx = vx + ax * dt
 vy = vy + ay * dt

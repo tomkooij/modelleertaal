@@ -7,6 +7,7 @@ var stapper = require('./stapper.js');
 var vergelijk = require('./vergelijk.js');
 var dtcheck = require('./dtcheck.js');
 var modelkeuze = require('./modelkeuze.js');
+var eenheden = require('./eenheden.js');
 var Blob = require('blob');
 var FileSaver = require('file-saver');
 // this also depends on:
@@ -105,6 +106,7 @@ function ModelleertaalApp(params) {
   this.grafisch_selected = undefined;   // id of the selected element
   this.grafisch_moved = {};   // positions of elements dragged by the user
   this.model_title = '';
+  this.units = {};   // name --> unit, from the comments of the model (eenheden.js)
 
   this.read_model();
   this.fill_functies();
@@ -798,6 +800,10 @@ ModelleertaalApp.prototype.update_endtime_hint = function(model_changed) {
   var text = '';
   if (this.hint_dt !== null && isFinite(N) && N >= 1) {
     text = '× dt = ' + Number((Math.round(N) * this.hint_dt).toPrecision(this.precision));
+    // with the unit of dt, if the model has one: × dt = 50 s
+    var text_now = this.current_text();
+    var unit = eenheden.units(text_now.startwaarden, text_now.modelregels).dt;
+    if (unit) text += ' ' + unit;
   }
   $(this.dom_endtime_hint).text(text);
 };
@@ -2004,6 +2010,7 @@ ModelleertaalApp.prototype.start_stepping = function() {
   this.remove_highlight_error();
   this.clear_message();
   this.read_model();
+  this.units = eenheden.units(this.model.startwaarden, this.model.modelregels);
   try {
     // check the model (and find the columns of the table) without computing an iteration
     var evaluator = new evaluator_js.ModelregelsEvaluator(this.model, this.debug);
@@ -2072,6 +2079,7 @@ ModelleertaalApp.prototype.setup_run = function() {
   this.clear_message();
 
   this.read_model();
+  this.units = eenheden.units(this.model.startwaarden, this.model.modelregels);
 
   try {
     this.evaluator = new evaluator_js.ModelregelsEvaluator(this.model, this.debug);
@@ -2202,7 +2210,8 @@ ModelleertaalApp.prototype.print_run_status = function() {
   if (this.analysis.time !== null) {
     var t = this.results[this.results.length - 1][this.allVars.indexOf(this.analysis.time)];
     if (typeof t == 'number' && isFinite(t)) {
-      status += " Eindtijd: " + this.analysis.time + " = " + Number(t.toPrecision(this.precision)) + ".";
+      var unit = this.units.hasOwnProperty(this.analysis.time) ? ' ' + this.units[this.analysis.time] : '';
+      status += " Eindtijd: " + this.analysis.time + " = " + Number(t.toPrecision(this.precision)) + unit + ".";
     }
   }
   this.print_status(status);
@@ -2378,7 +2387,7 @@ ModelleertaalApp.prototype.table_header = function(vars) {
   firstrow.append($('<th>').text('#'));
 
   for (var k = 0; k < vars.length; k++) {
-    firstrow.append($('<th>').text(vars[k]));
+    firstrow.append($('<th>').text(eenheden.label(vars[k], this.units)));
   }
   return firstrow;
 };
@@ -2495,7 +2504,7 @@ ModelleertaalApp.prototype.do_plot = function() {
 
   var show_points = (rows.length <= 60);
   var dataset = [];
-  var y_label;
+  var y_names = [];
   var note = '';
 
   var has_previous = false;
@@ -2523,7 +2532,7 @@ ModelleertaalApp.prototype.do_plot = function() {
         points: {show: show_points}
       });
     });
-    y_label = this.multi_yvars.join(', ');
+    y_names = this.multi_yvars;
     if (dataset.length === 0) note = 'Vink hieronder aan welke variabelen je wilt zien.';
     // legend: colour next to the checkbox
     $(this.dom_y_checks).find('label').each(function() {
@@ -2539,7 +2548,7 @@ ModelleertaalApp.prototype.do_plot = function() {
       color: COLOR_PLOT,
       points: {show: show_points}
     });
-    y_label = this.yvar;
+    y_names = [this.yvar];
   }
 
   $(this.dom_clickdata).empty();
@@ -2555,14 +2564,17 @@ ModelleertaalApp.prototype.do_plot = function() {
       .text('\ud83d\udccc Houd vast'));
   }
   if (note) note_box.append($('<span>').text(' ' + note));
-  this.plot_graph(dataset, this.xvar, y_label);
+  this.plot_graph(dataset, this.xvar, y_names);
   this.select_thumbnail();
 }; // do_plot
 
 
-ModelleertaalApp.prototype.plot_graph = function(dataset, x_label, y_label) {
+ModelleertaalApp.prototype.plot_graph = function(dataset, x_name, y_names) {
+  // y_names: the variables on the vertical axis. The axes show the units (eenheden.js)
 
   var self = this;
+  var x_label = eenheden.label(x_name, this.units);
+  var y_label = eenheden.labels(y_names, this.units);
 
   if ($(this.dom_graph).width() === 0 || $(this.dom_graph).height() === 0) return;
 
@@ -2591,6 +2603,12 @@ ModelleertaalApp.prototype.plot_graph = function(dataset, x_label, y_label) {
 
   function short(val) {
     return String(Number(Number(val).toPrecision(self.precision)));
+  }
+
+  function value(name, val) {
+    // 'v = 3.2 m/s'
+    var unit = self.units.hasOwnProperty(name) ? ' ' + self.units[name] : '';
+    return name + ' = ' + short(val) + unit;
   }
 
   function axis_lines(axes) {
@@ -2654,7 +2672,7 @@ ModelleertaalApp.prototype.plot_graph = function(dataset, x_label, y_label) {
     tooltip: {
       show: true,
       content: function(label, x, y) {
-        return x_label + " = " + short(x) + ", " + (label || y_label) + " = " + short(y);
+        return value(x_name, x) + ", " + value(label || y_names[0], y);
       }
     }
   }); // $.plot()
@@ -2820,6 +2838,7 @@ ModelleertaalApp.prototype.init_app = function() {
 
   this.results = [];
   this.allVars = [];
+  this.units = {};
   this.graphs = [];
   this.analysis = undefined;
   this.end_stepping();
@@ -2886,7 +2905,9 @@ ModelleertaalApp.prototype.create_tsv = function() {
   var self = this;
   var tsv = '';
 
-  tsv += this.allVars.join('\t'); //header row
+  tsv += this.allVars.map(function(name) {   // header row, with units: v (m/s)
+    return eenheden.label(name, self.units);
+  }).join('\t');
   tsv += "\n";
 
   tsv += this.results.map(function(row) {
@@ -2947,21 +2968,13 @@ ModelleertaalApp.prototype.create_pgfplot_header = function(scatter_plot) {
     return 10 * power_of_ten;
   }
 
-  function get_units_by_variable_name(var_name) {
-    var units = {
-      "x": "\\meter", "y": "\\meter", "h": "\\meter", "u": "\\meter",
-      "s": "\\meter", "t": "\\second",
-      "v": "\\meter\\per\\second",
-      "a": "\\meter\\per\\second",
-      "Fres": "\\Newton", "Fr": "\\Newton", "Fw": "\\Newton"
-    };
-    return (units[var_name]) ? units[var_name] : "unknown";
-  }
-
   var x_var = this.xvar;
   var y_var = this.yvar;
-  var x_unit = get_units_by_variable_name(x_var);
-  var y_unit = get_units_by_variable_name(y_var);
+  var units = this.units;
+  function axis_label(name) {
+    // unit from the comments of the model (eenheden.js): {$v$ [\si{m/s}]}
+    return "{$" + name + "$" + (units.hasOwnProperty(name) ? " [\\si{" + units[name] + "}]" : "") + "}";
+  }
 
   // and back to columns again ...
   var x = [];
@@ -2986,8 +2999,8 @@ ModelleertaalApp.prototype.create_pgfplot_header = function(scatter_plot) {
     "\\begin{axis}[x=1cm\/" + x_scale + ", y=1cm\/" + y_scale + ",\n" +
     "axis y line=left, axis x line=middle,\n" +
     "enlargelimits=false, tick align=outside,\n " +
-    "xlabel={$" + x_var + "$ [\\si{" + x_unit + "}]},\n" +
-    "ylabel={$" + y_var + "$ [\\si{" + y_unit + "}]},\n" +
+    "xlabel=" + axis_label(x_var) + ",\n" +
+    "ylabel=" + axis_label(y_var) + ",\n" +
     "% xtick={0, 1, 2, ..., 10},\n" +
     "% ytick={0, 2, 4, ..., 20},\n" +
     "xmin=" + x_min + ", xmax=" + x_max + ", ymin=" + y_min + ", ymax=" + y_max + "]\n";

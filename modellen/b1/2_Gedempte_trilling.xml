@@ -1,20 +1,20 @@
 ﻿<modelleertaal>
 N=3000
 <startwaarden>
-C = 10
-l = 0,1
-m = 0,1
-v = 3
-u = 0
-t = 0
-dt = 0,001
+C = 10 '[N/m]
+l = 0,1 '[kg/s]
+m = 0,1 '[kg]
+v = 3 '[m/s]
+u = 0 '[m]
+t = 0 '[s]
+dt = 0,001 '[s]
 </startwaarden>
 <modelregels>
-Fveer = -C * u
-Fdemp = -l * v
-Fres = Fveer + Fdemp
+Fveer = -C * u '[N]
+Fdemp = -l * v '[N]
+Fres = Fveer + Fdemp '[N]
 
-a = Fres / m
+a = Fres / m '[m/s^2]
 v = v + a * dt
 u = u + v * dt
 t = t + dt

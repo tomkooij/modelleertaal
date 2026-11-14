@@ -1,5 +1,18 @@
 # Changelog
 
+## [Unreleased]
+
+### Eenheden
+
+- A unit in square brackets in the comment after a startwaarde is recognised:
+  `m = 91 '[kg]` or `v = 0 // [m/s]`. For a variable without a startwaarde: in the comment
+  after its modelregel. The unit is shown on the axes (`v (m/s)`), in the table header, in the
+  tooltip of the graph, in the TSV header, in the PGFPlot labels, in the end time next to the
+  number of iterations (`× dt = 50 s`) and in the status line. Models without brackets do not
+  change. New module `eenheden.js` (with tests).
+- PGFPlot no longer uses a fixed list of units (in which `a` was m/s).
+- The basic models (Basismodellen) have units.
+
 ## [6.4.1]
 
 14 nov 2026

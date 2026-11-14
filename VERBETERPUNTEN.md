@@ -20,6 +20,10 @@ van de breakpoints van `evaluator.js` (die code blijft staan maar wordt niet mee
 stopt na N iteraties. De grafiek blijft tijdens het stappen die van de laatste Run.
 Bij P2-2 staat ook een gewijzigd aantal iteraties in de notitie ("iteraties 500 → nu 1000").
 
+Afwijking bij P1-6 (v6.4): geen eigen voorbeeldmodellen, maar de verzamelingen B1, C2 en C3 met
+een groep Basismodellen (twee keuzelijsten: verzameling en model). Bij P2-6 hebben de basismodellen
+eenheden gekregen; de eenheid van `dt` staat ook achter de eindtijd (`× dt = 50 s`).
+
 ## Uitgangspunten (gelden voor elk punt)
 
 - **Geen knoppencursus.** Een leerling uit 5 vwo moet zonder uitleg kunnen werken. Liever een
@@ -132,7 +136,7 @@ statusregel: "Het model is niet gestopt door 'stop': verhoog het aantal iteratie
 **Klaar als.** De bovenbalk bevat: naam webapp, modelkeuze, Open, Bewaar, Deel link. Titel wijzigen
 werkt zonder uitklappen en komt in de deellink en de bestandsnaam.
 
-### P1-6 Modelkeuze: eerst eenvoudige voorbeelden, dan examens
+### P1-6 Modelkeuze: eerst eenvoudige voorbeelden, dan examens (gebouwd)
 
 **Probleem.** De lijst bevat alleen examenmodellen; "Leeg model" staat onderaan. Er is geen
 opbouw voor een leerling die begint met modelleren.
@@ -284,7 +288,7 @@ als SVG-elementen met `data-action`), `index.html`.
 **Klaar als.** Een leeg model kan zonder leestekst worden opgebouwd tot val met luchtweerstand
 (v, x, a, Fz, Fw, m, k) met alleen klikken en het typen van getallen en operatoren.
 
-### P2-6 Eenheden op de assen en in de tabel
+### P2-6 Eenheden op de assen en in de tabel (gebouwd)
 
 **Probleem.** Assen en tabelkoppen tonen alleen de naam van de variabele. Bij natuurkunde hoort
 een grootheid een eenheid te hebben; in een verslag is een grafiek zonder eenheden fout.

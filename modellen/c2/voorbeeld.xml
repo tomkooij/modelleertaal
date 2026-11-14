@@ -7,8 +7,8 @@ t = t + dt
 </modelregels>
 <startwaarden>
 'startwaarden
-x = 2 
-t = 0
-dt = 1
+x = 2 '[m]
+t = 0 '[s]
+dt = 1 '[s]
 </startwaarden>
 </modelleertaal>
