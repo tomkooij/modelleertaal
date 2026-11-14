@@ -33,10 +33,12 @@
       Relatiepijl          van elke variabele in een formule naar de variabele
                            die met die formule berekend wordt
       Onbekend (?)         variabele die nergens een waarde krijgt
+      In te vullen (...)   Fres = ... heeft geen pijlen; de sectie <grafisch> van het model
+                           geeft ze (Fres: Fz, Fp), zoals in de examenfiguur (2023-II)
 
     usage:
       var grafisch = require('./grafisch.js');
-      var g = grafisch.analyse(startwaarden_ast, modelregels_ast);
+      var g = grafisch.analyse(startwaarden_ast, modelregels_ast, {hints: model.grafisch});
       grafisch.toSVG(g)      --> '<svg ...>'
       grafisch.table(g)      --> [{kind: 'Toestandsvariabele', name: 'x', definition: '...'}, ...]
 */
@@ -206,7 +208,29 @@ function without(list, remove) {
 
 // ------------------------------------------------------------------ analyse
 
-function analyse(startwaarden_ast, modelregels_ast) {
+function parseHints(text) {
+    // <grafisch> section of a model: 'Fres: Fz, Fp' (one line per variable, ' or // comment)
+    //   --> {Fres: ['Fz', 'Fp']}
+    var hints = {}, lines = String(text || '').split(/\r?\n/);
+    for (var i = 0; i < lines.length; i++) {
+        var m = /^\s*([^\s:]+)\s*:\s*(.*)$/.exec(lines[i].replace(/('|\/\/).*$/, ''));
+        if (!m) continue;
+        var deps = m[2].split(/[\s,;]+/), out = [];
+        for (var j = 0; j < deps.length; j++) if (deps[j] && out.indexOf(deps[j]) == -1) out.push(deps[j]);
+        hints[m[1]] = out;
+    }
+    return hints;
+}
+
+function hasBlank(expr) {
+    var found = false;
+    walk(expr, function(node) { if (node.type == 'Blank') found = true; });
+    return found;
+}
+
+function analyse(startwaarden_ast, modelregels_ast, options) {
+    // options.hints: the <grafisch> section of the model (text, or {name: [deps]}):
+    //   the arrows of a line with ... (in te vullen), as in the exam figure
     var i, j, a, name, key;
     var init = {}, initOrder = [];
     var start = collect(startwaarden_ast || [], [], {assign: [], stops: []});
@@ -446,6 +470,26 @@ function analyse(startwaarden_ast, modelregels_ast) {
         // vx = v0 * cos(alfa): relation arrows from v0 and alfa
         add({id: name, kind: 'const', name: name, definition: fmt(init[name]), code: code(init[name]),
              deps: without(variables(init[name]), [name, dt, time])});
+    }
+
+    // --- lines with ... (in te vullen): the arrows from options.hints (the exam figure shows them)
+    var hints = options && options.hints ? (typeof options.hints == 'string' ? parseHints(options.hints) : options.hints) : {};
+    var blank = {}, known = {};
+    for (i = 0; i < start.assign.length; i++) {
+        known[start.assign[i].name] = true;
+        if (hasBlank(start.assign[i].expr)) blank[start.assign[i].name] = true;
+    }
+    for (i = 0; i < regels.assign.length; i++) {
+        known[regels.assign[i].name] = true;
+        if (hasBlank(regels.assign[i].expr)) blank[regels.assign[i].name] = true;
+    }
+    for (name in hints) {
+        if (!hints.hasOwnProperty(name) || !blank[name]) continue;
+        var hid = flowOfVar[name] && !elements[name] ? flowOfVar[name].id : name;
+        if (!elements.hasOwnProperty(hid) || !elements[hid].deps) continue;
+        for (j = 0; j < hints[name].length; j++) {
+            if (known[hints[name][j]] && hints[name][j] != name) addAll(elements[hid].deps, [hints[name][j]]);
+        }
     }
 
     // --- relatiepijlen
@@ -1292,6 +1336,7 @@ function tooltip(g, el) {
 }
 
 exports.analyse = analyse;
+exports.parseHints = parseHints;
 exports.layout = layout;
 exports.toSVG = toSVG;
 exports.STIJLEN = STIJLEN;

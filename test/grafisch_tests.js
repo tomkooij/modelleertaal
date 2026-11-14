@@ -262,6 +262,29 @@ describe('grafisch.js - tekstmodel naar grafisch model', function() {
         assert.isBelow(p1.C.y, p0.C.y, 'meer ruimte tussen de lagen');
     });
 
+    it('<grafisch>: pijlen bij een regel met ... (examen 2023-II, figuur 6)', function() {
+        assert.deepEqual(grafisch.parseHints("' commentaar\nFres: Fz, Fp\n  a : Fres m  // ook zo\n\nfout"),
+                         {Fres: ['Fz', 'Fp'], a: ['Fres', 'm']});
+        var model = new evaluator_js.Model();
+        model.startwaarden = "m=1\ng=9.81\nC=...\nx=0\nv=5\nt=0\ndt=0.001";
+        model.modelregels = "Fp = C*x\nFz = m*g\nFres = ...\na = Fres/m\nv = v + a*dt\nx = x + v*dt\nt = t + dt";
+        var ev = new evaluator_js.ModelregelsEvaluator(model, false);
+        var link = function(g, from, to) { return g.links.some(function(l) { return l.from == from && l.to == to; }); };
+        var g = grafisch.analyse(ev.startwaarden_ast, ev.modelregels_ast);
+        assert.isFalse(link(g, 'Fz', 'Fres'), 'zonder <grafisch>: geen pijl');
+        g = grafisch.analyse(ev.startwaarden_ast, ev.modelregels_ast, {hints: "Fres: Fz, Fp, onbekend\nFz: x"});
+        assert.isTrue(link(g, 'Fz', 'Fres'));
+        assert.isTrue(link(g, 'Fp', 'Fres'));
+        assert.isUndefined(g.elements.onbekend, 'een naam die niet in het model staat: geen vraagteken');
+        assert.isFalse(link(g, 'x', 'Fz'), 'Fz = m*g heeft geen ...: de tekst telt');
+        assert.equal(g.elements.Fres.definition, '...');
+        // filled in by the student: the text counts
+        model.modelregels = model.modelregels.replace('Fres = ...', 'Fres = Fz');
+        ev = new evaluator_js.ModelregelsEvaluator(model, false);
+        g = grafisch.analyse(ev.startwaarden_ast, ev.modelregels_ast, {hints: "Fres: Fz, Fp"});
+        assert.isFalse(link(g, 'Fp', 'Fres'));
+    });
+
     it('alle voorbeeldmodellen geven een SVG', function() {
         fs.readdirSync('modellen').filter(function(f) {
             return /\.xml$/.test(f) && f != 'leeg.xml';

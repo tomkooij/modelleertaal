@@ -55,11 +55,14 @@ Model.prototype.readBogusXMLFile = function(filename) {
 
 Model.prototype.parseBogusXMLString = function(xmlString) {
 
-    var action = 0; // 0 = do nothing, 1 = modelregels, 2 = startwaarden
+    var action = 0; // 0 = do nothing, 1 = modelregels, 2 = startwaarden, 3 = grafisch
     var equationRe = /([A-Za-z])[ ]*\=[ ]*(\d*)/g;  // Match N = 1000
 
     this.startwaarden = '';
     this.modelregels = '';
+    // <grafisch>: for the graphical model, which variables a line with ... depends on,
+    // e.g. 'Fres: Fz, Fp' (see grafisch.js, parseHints). Optional.
+    this.grafisch = '';
 
     // strip BOM and Windows line endings (\r confuses the line numbers in error messages)
     if (xmlString.charCodeAt(0) === 0xFEFF) xmlString = xmlString.slice(1);
@@ -83,9 +86,12 @@ Model.prototype.parseBogusXMLString = function(xmlString) {
             case '</modelregels>': { action = 0; continue; }
             case '<startwaarden>': { action = 2; continue; }
             case '</startwaarden>': { action = 0; continue; }
+            case '<grafisch>': { action = 3; continue; }
+            case '</grafisch>': { action = 0; continue; }
         }
         if (action==1) this.modelregels += lines[line]+'\n';
         if (action==2) this.startwaarden += lines[line]+'\n';
+        if (action==3) this.grafisch += lines[line]+'\n';
     }
     //console.log('DEBUG: in model.js parseBogusXMLString endresult this.modelregels:');
     //console.log(this.modelregels);
@@ -106,7 +112,9 @@ Model.prototype.createBogusXMLString = function() {
             this.startwaarden +
             '\n</startwaarden>\n<modelregels>\n' +
             this.modelregels +
-            '\n</modelregels>\n</modelleertaal>\n';
+            '\n</modelregels>\n' +
+            (this.grafisch ? '<grafisch>\n' + this.grafisch.replace(/\n+$/, '') + '\n</grafisch>\n' : '') +
+            '</modelleertaal>\n';
 };
 
 

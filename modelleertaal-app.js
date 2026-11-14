@@ -659,8 +659,10 @@ ModelleertaalApp.prototype.dropdown_load_model = function() {
 
 
 ModelleertaalApp.prototype.read_model = function() {
-  // read model from textarea/CodeMirror
+  // read model from textarea/CodeMirror. The <grafisch> section of the loaded file stays
+  var grafisch = this.model ? this.model.grafisch : undefined;
   this.model = new evaluator_js.Model();
+  if (grafisch) this.model.grafisch = grafisch;
   if (this.CodeMirrorActive) {
     this.model.modelregels = this.modelregels_editor.getValue();
     this.model.startwaarden = this.startwaarden_editor.getValue();
@@ -807,7 +809,8 @@ ModelleertaalApp.prototype.analyse_grafisch_model = function() {
   // Also: which lines of the text belong to which symbol (this.grafisch_lines)
   this.read_model();
   var ev = new evaluator_js.ModelregelsEvaluator(this.model, false);
-  var g = grafisch.analyse(ev.startwaarden_ast, ev.modelregels_ast);
+  // <grafisch> in the model file: the arrows of the lines with ... (as in the exam figure)
+  var g = grafisch.analyse(ev.startwaarden_ast, ev.modelregels_ast, {hints: this.model.grafisch});
   this.grafisch_lines = grafisch.lines(g, ev.startwaarden_ast, ev.modelregels_ast);
   return g;
 };

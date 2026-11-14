@@ -21,6 +21,11 @@ Closer to the graphical models in the exams (2018-I, 2026-II):
   room for the boxes. Remembered for the next visit.
 - `x = x + v*dt` with `v` a toestandsvariabele: in the exam style the valve has
   no name (exams 2015-I, 2023-II), only the arrow from `v`.
+- A line with `...` (to be filled in) has no arrows, but the exam figure does.
+  New optional section `<grafisch>` in the model file gives them, one line per
+  variable: `Fres: Fz, Fp`. Only used while the line still has `...`; the
+  formula itself is not in it. Kept when the model is saved. Added to
+  2023-II Fietshelm (figuur 6).
 
 ### Modellen
 
