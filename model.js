@@ -55,7 +55,7 @@ Model.prototype.readBogusXMLFile = function(filename) {
 
 Model.prototype.parseBogusXMLString = function(xmlString) {
 
-    var action = 0; // 0 = do nothing, 1 = modelregels, 2 = startwaarden, 3 = grafisch
+    var action = 0; // 0 = do nothing, 1 = modelregels, 2 = startwaarden, 3 = grafisch, 4 = opdracht, 5 = indeling
     // N = 1000 (outside the sections): the number of iterations. Not global (/g): a global regexp
     // keeps lastIndex between the lines, so N could be missed after a longer line with =
     var equationRe = /^\s*N\s*=\s*(\d+)/;
@@ -65,6 +65,10 @@ Model.prototype.parseBogusXMLString = function(xmlString) {
     // <grafisch>: for the graphical model, which variables a line with ... depends on,
     // e.g. 'Fres: Fz, Fp' (see grafisch.js, parseHints). Optional.
     this.grafisch = '';
+    // <opdracht>: a question or assignment with the model (shown above the model). Optional.
+    this.opdracht = '';
+    // <indeling>: positions of dragged symbols in the graphical model, as JSON. Optional.
+    this.indeling = '';
 
     // strip BOM and Windows line endings (\r confuses the line numbers in error messages)
     if (xmlString.charCodeAt(0) === 0xFEFF) xmlString = xmlString.slice(1);
@@ -89,11 +93,19 @@ Model.prototype.parseBogusXMLString = function(xmlString) {
             case '</startwaarden>': { action = 0; continue; }
             case '<grafisch>': { action = 3; continue; }
             case '</grafisch>': { action = 0; continue; }
+            case '<opdracht>': { action = 4; continue; }
+            case '</opdracht>': { action = 0; continue; }
+            case '<indeling>': { action = 5; continue; }
+            case '</indeling>': { action = 0; continue; }
         }
         if (action==1) this.modelregels += lines[line]+'\n';
         if (action==2) this.startwaarden += lines[line]+'\n';
         if (action==3) this.grafisch += lines[line]+'\n';
+        if (action==4) this.opdracht += lines[line]+'\n';
+        if (action==5) this.indeling += lines[line]+'\n';
     }
+    this.opdracht = this.opdracht.replace(/\s+$/, '');
+    this.indeling = this.indeling.replace(/\s+$/, '');
     //console.log('DEBUG: in model.js parseBogusXMLString endresult this.modelregels:');
     //console.log(this.modelregels);
     //console.log('DEBUG: in model.js parseBogusXMLString endresult this.startwaarden:');
@@ -115,9 +127,11 @@ Model.prototype.createBogusXMLString = function() {
     };
     return '<modelleertaal>\n' +
             Nstring +
+            (this.opdracht ? section('opdracht', this.opdracht) : '') +
             section('startwaarden', this.startwaarden) +
             section('modelregels', this.modelregels) +
             (this.grafisch ? section('grafisch', this.grafisch) : '') +
+            (this.indeling ? section('indeling', this.indeling) : '') +
             '</modelleertaal>\n';
 };
 

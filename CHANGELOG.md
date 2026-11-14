@@ -47,6 +47,17 @@
   that is not used, and a startwaarde that is overwritten in the modelregels before it is
   used. New module `hints.js` (with tests).
 
+### Opdracht en indeling
+
+- Opdracht bij een model (for teachers): in **Meer opties** a text box "Opdracht bij dit
+  model". The text is shown in a small card above the model, and goes along in Deel link
+  (field `o`), Bewaar (section `<opdracht>`) and the autosave. A teacher can share a model
+  with puntjes and a question in one link.
+- The layout of the graphical model is kept: dragged symbols keep their place in Deel link
+  (field `p`), Bewaar (section `<indeling>`, JSON) and the autosave. Herstel indeling clears it.
+  Changing the opdracht or the layout counts as a change of the model (warning before it is lost).
+- `BogusXML.md` describes the new sections.
+
 ## [6.4.1]
 
 14 nov 2026

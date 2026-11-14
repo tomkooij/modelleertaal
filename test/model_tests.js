@@ -33,6 +33,26 @@ describe('model.js - Read model from XML', function(){
         assert.equal(m2.createBogusXMLString().indexOf('grafisch'), -1);
     });
 
+    it('<opdracht> en <indeling> worden gelezen en weer geschreven', function() {
+        var m = new modelclass();
+        m.parseBogusXMLString('<modelleertaal>\nN = 50\n<opdracht>\nVul de puntjes in.\nN = 3 is geen N.\n</opdracht>\n' +
+                              '<startwaarden>\nx=1\n</startwaarden>\n<modelregels>\nx=x+1\n</modelregels>\n' +
+                              '<indeling>\n{"x":[10,20]}\n</indeling>\n</modelleertaal>\n');
+        assert.equal(m.opdracht, 'Vul de puntjes in.\nN = 3 is geen N.');
+        assert.equal(m.indeling, '{"x":[10,20]}');
+        assert.equal(m.N, 50);
+        var m2 = new modelclass();
+        m2.parseBogusXMLString(m.createBogusXMLString());
+        assert.equal(m2.opdracht, m.opdracht);
+        assert.equal(m2.indeling, m.indeling);
+        assert.equal(m2.modelregels, 'x=x+1\n');
+        // without: nothing extra in the file
+        m2.opdracht = '';
+        m2.indeling = '';
+        assert.equal(m2.createBogusXMLString().indexOf('opdracht'), -1);
+        assert.equal(m2.createBogusXMLString().indexOf('indeling'), -1);
+    });
+
     it('parseBogusXMLString parses N = ... line', function() {
         testmodel.parseBogusXMLString(bogusModel);
         assert.equal(testmodel.N, 1000);

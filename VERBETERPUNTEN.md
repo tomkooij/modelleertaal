@@ -355,14 +355,14 @@ Na Run, als informatie (nooit blokkerend), hoogstens één hint tegelijk:
 
 Logica in een eigen module `hints.js` op de AST, met tests.
 
-### P3-7 Opdracht bij een model (voor docenten)
+### P3-7 Opdracht bij een model (voor docenten) (gebouwd)
 
 Een optioneel blok `<opdracht>...</opdracht>` in de XML en een veld `o` in de deellink. Is het
 gevuld, dan staat de tekst in een smalle kaart boven het model. Bewerken: in "Meer opties" een
 tekstvak "Opdracht bij dit model (gaat mee in Deel link)". Zo kan een docent een model met puntjes
 en een vraag in één link delen, zonder aparte handleiding.
 
-### P3-8 Indeling van het diagram bewaren
+### P3-8 Indeling van het diagram bewaren (gebouwd)
 
 Versleepte posities (`grafisch_moved`) gaan verloren bij herladen. Neem ze mee in de deellink
 (veld `p`) en in de XML (`<indeling>` met JSON), en in het automatisch bewaren van P1-1.

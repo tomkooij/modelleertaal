@@ -95,6 +95,10 @@ function ModelleertaalApp(params) {
   this.dom_model_groep = "#model_groep";
   this.dom_permalink = "#permalink";
   this.dom_titel = "#model_titel";
+  this.dom_opdracht = "#opdracht";
+  this.dom_opdracht_tekst = "#opdracht_tekst";
+  this.dom_opdracht_invoer = "#opdracht_invoer";
+  this.opdracht = '';   // the assignment with the model (shown above the model)
   this.dom_grafisch = "#grafisch_model";
   this.dom_grafisch_svg = "#grafisch_svg";
   this.dom_view_switch = ".view_switch";
@@ -243,6 +247,12 @@ function ModelleertaalApp(params) {
     self.schedule_autosave();
   });
 
+  // Opdracht bij dit model (Meer opties): shown above the model, goes into Deel link
+  $(this.dom_opdracht_invoer).on('input', function() {
+    self.set_opdracht($(this).val(), false);
+    self.schedule_autosave();
+  });
+
   $(this.dom_permalink).click(function(event) {
     event.preventDefault();
     self.copy_share_url();
@@ -299,6 +309,7 @@ function ModelleertaalApp(params) {
   $(this.dom_grafisch_reset).click(function() {
     self.grafisch_moved = {};
     self.draw_grafisch_model();
+    self.schedule_autosave();
   });
 
   // drag elements of the grafisch model. Arrows and pipes are drawn again from the new positions.
@@ -346,6 +357,8 @@ function ModelleertaalApp(params) {
       // click: select the element (a cloud: its flow) and show its properties
       self.grafisch_select(drag.id.replace(/:(src|dst)$/, ''));
     }
+    // the new layout is kept (autosave, Bewaar, Deel link)
+    if (drag && drag.moved) self.schedule_autosave();
     drag = null;
   });
 
@@ -624,6 +637,8 @@ ModelleertaalApp.prototype.load_model = function() {
       this.model.modelregels = shared.modelregels;
       this.model.startwaarden = shared.startwaarden;
       if (shared.N) this.model.N = shared.N;
+      this.model.opdracht = shared.opdracht;
+      this.model.indeling = JSON.stringify(shared.indeling);
       this.model_title = shared.title || 'Gedeeld model';
       this.dropdown_extra('shared', this.model_title + ' (uit link)');
       this.init_app();
@@ -799,6 +814,8 @@ ModelleertaalApp.prototype.read_model = function() {
   var grafisch = this.model ? this.model.grafisch : undefined;
   this.model = new evaluator_js.Model();
   if (grafisch) this.model.grafisch = grafisch;
+  this.model.opdracht = this.opdracht;
+  this.model.indeling = this.indeling_text();
   if (this.CodeMirrorActive) {
     this.model.modelregels = this.modelregels_editor.getValue();
     this.model.startwaarden = this.startwaarden_editor.getValue();
@@ -827,7 +844,46 @@ ModelleertaalApp.prototype.is_modified = function() {
     return String(s).replace(/\r/g, '').replace(/\s+$/, '');
   }
   return normalize(current.modelregels) != normalize(this.loaded.modelregels) ||
-         normalize(current.startwaarden) != normalize(this.loaded.startwaarden);
+         normalize(current.startwaarden) != normalize(this.loaded.startwaarden) ||
+         normalize(this.opdracht) != normalize(this.loaded.opdracht || '') ||
+         this.indeling_text() != (this.loaded.indeling || '');
+};
+
+
+ModelleertaalApp.prototype.indeling_text = function() {
+  // the positions of the dragged symbols as JSON ({"id": [x, y]}), '' if none
+  var out = {}, any = false;
+  for (var id in this.grafisch_moved) {
+    if (this.grafisch_moved.hasOwnProperty(id)) {
+      out[id] = [this.grafisch_moved[id].x, this.grafisch_moved[id].y];
+      any = true;
+    }
+  }
+  return any ? JSON.stringify(out) : '';
+};
+
+
+ModelleertaalApp.prototype.set_indeling = function(text) {
+  // positions from a file, link or autosave (see indeling_text)
+  var parsed = {};
+  try {
+    parsed = deellink.positions(typeof text == 'string' ? (text ? JSON.parse(text) : {}) : text);
+  } catch (err) {
+    parsed = {};
+  }
+  this.grafisch_moved = {};
+  for (var id in parsed) {
+    if (parsed.hasOwnProperty(id)) this.grafisch_moved[id] = {x: parsed[id][0], y: parsed[id][1]};
+  }
+};
+
+
+ModelleertaalApp.prototype.set_opdracht = function(text, update_input) {
+  // the assignment above the model. Empty: no card.
+  this.opdracht = String(text || '').replace(/\s+$/, '');
+  $(this.dom_opdracht_tekst).text(this.opdracht);
+  $(this.dom_opdracht).prop('hidden', !this.opdracht);
+  if (update_input) $(this.dom_opdracht_invoer).val(this.opdracht);
 };
 
 
@@ -1710,7 +1766,8 @@ ModelleertaalApp.prototype.download_model = function() {
 
   this.save_string(this.model.createBogusXMLString(), filename);
   // model is saved: do not warn for unsaved changes
-  this.loaded = {modelregels: this.model.modelregels, startwaarden: this.model.startwaarden};
+  this.loaded = {modelregels: this.model.modelregels, startwaarden: this.model.startwaarden,
+                 opdracht: this.opdracht, indeling: this.indeling_text()};
   this.autosave();
 };
 
@@ -1781,6 +1838,8 @@ ModelleertaalApp.prototype.autosave = function() {
       m: text.modelregels,
       s: text.startwaarden,
       N: String($(this.dom_nbox).val()),
+      o: this.opdracht,
+      p: this.indeling_text(),
       time: Date.now()
     }));
     this.restore_pending = false;
@@ -1846,6 +1905,8 @@ ModelleertaalApp.prototype.restore_autosave = function(saved) {
   this.model.startwaarden = saved.s;
   var N = Number(saved.N);
   if (isFinite(N) && N >= 1) this.model.N = N;
+  this.model.opdracht = saved.o ? String(saved.o) : '';
+  this.model.indeling = saved.p ? String(saved.p) : '';
   this.model_title = saved.t ? String(saved.t) : '';
 
   // in the menu, like a model from a shared link
@@ -1856,7 +1917,7 @@ ModelleertaalApp.prototype.restore_autosave = function(saved) {
 
   this.init_app();
   // the restored model is not saved in a file: still warn before it is lost
-  this.loaded = {modelregels: '', startwaarden: ''};
+  this.loaded = {modelregels: '', startwaarden: '', opdracht: '', indeling: ''};
   this.restore_pending = false;
   this.autosave();
   this.print_status('Model van de vorige keer teruggezet. Druk op Run.');
@@ -1873,11 +1934,19 @@ ModelleertaalApp.prototype.share_url = function() {
     return base + '#model=' + this.model_name_from_url(entry.url);
   }
   this.read_model();
+  var indeling = {};
+  try {
+    indeling = JSON.parse(this.indeling_text() || '{}');
+  } catch (err) {
+    indeling = {};
+  }
   return base + '#code=' + deellink.encode({
     modelregels: this.model.modelregels,
     startwaarden: this.model.startwaarden,
     title: title,
-    N: Number(String($(this.dom_nbox).val()).replace(',', '.'))
+    N: Number(String($(this.dom_nbox).val()).replace(',', '.')),
+    opdracht: this.opdracht,
+    indeling: indeling
   });
 };
 
@@ -3178,7 +3247,11 @@ ModelleertaalApp.prototype.init_app = function() {
   $(this.dom_titel).val(this.model_title || '');
   this.update_document_title();
 
-  this.loaded ={modelregels: this.model.modelregels, startwaarden: this.model.startwaarden};
+  this.set_opdracht(this.model.opdracht || '', true);
+  // other model: the dragged positions of its file (or none)
+  this.set_indeling(this.model.indeling || '');
+  this.loaded = {modelregels: this.model.modelregels, startwaarden: this.model.startwaarden,
+                 opdracht: this.opdracht, indeling: this.indeling_text()};
 
   this.results = [];
   this.allVars = [];
@@ -3237,7 +3310,6 @@ ModelleertaalApp.prototype.init_app = function() {
     this.print_status('Het model uit de link kon niet geladen worden.');
     this.link_error = undefined;
   }
-  this.grafisch_moved = {};   // other model: forget dragged positions
   this.grafisch_zoom = null;
   this.grafisch_history = [];
   this.grafisch_selected = undefined;

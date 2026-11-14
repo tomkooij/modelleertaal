@@ -312,6 +312,40 @@
         }
 
         /* (fout)meldingen */
+        /* opdracht bij het model (voor docenten: Meer opties) */
+        #opdracht {
+            margin-bottom: 12px;
+            padding-top: 10px;
+            padding-bottom: 10px;
+            border-left: 6px solid #d97706;
+        }
+
+        #opdracht[hidden] {
+            display: none;
+        }
+
+        #opdracht h2 {
+            margin: 0 0 4px;
+            font-size: 1rem;
+        }
+
+        #opdracht_tekst {
+            white-space: pre-wrap;
+            line-height: 1.45;
+        }
+
+        .opdracht_optie {
+            flex-direction: column;
+            align-items: stretch !important;
+            width: 100%;
+        }
+
+        .opdracht_optie textarea {
+            width: 100%;
+            max-width: 40em;
+            font: inherit;
+        }
+
         #message {
             display: none;
             margin-top: 12px;
@@ -1221,6 +1255,11 @@
     </header>
 
     <main>
+        <section class="card" id="opdracht" aria-label="Opdracht" hidden>
+            <h2>Opdracht</h2>
+            <div id="opdracht_tekst"></div>
+        </section>
+
         <div class="card runbar">
             <button id="run" type="button" title="Run: voer het model uit (Ctrl+Enter)">&#9654; Run</button>
             <button id="stap" type="button" title="Reken het model regel voor regel door en zie de berekening met getallen">Stap</button>
@@ -1350,6 +1389,10 @@
                 <div>
                     <label for="max_rows">Maximaal aantal punten in grafiek:</label>
                     <input type="number" id="max_rows" value="500" min="2" step="100">
+                </div>
+                <div class="opdracht_optie">
+                    <label for="opdracht_invoer">Opdracht bij dit model (gaat mee in Deel link en Bewaar):</label>
+                    <textarea id="opdracht_invoer" rows="3" spellcheck="true" placeholder="Bijvoorbeeld: vul de puntjes in en bepaal de eindsnelheid."></textarea>
                 </div>
                 <div>
                     <span>Grafiek voor docenten:</span>

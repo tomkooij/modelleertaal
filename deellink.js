@@ -12,7 +12,10 @@
       #code=<payload>                version 1 (webapp 6.0).    payload is
                                      base64url(utf-8(JSON)) without '=' padding,
                                      JSON: {"m": modelregels, "s": startwaarden,
-                                            "t": titel (optional), "N": iteraties (optional)}
+                                            "t": titel (optional), "N": iteraties (optional),
+                                            "o": opdracht (optional, since 6.5),
+                                            "p": indeling (optional, since 6.5): positions of
+                                                 dragged symbols, {"id": [x, y], ...}}
 
       #code=v2.<payload>             version 2: the same JSON and encoding, with a version
                                      in front. '.' never occurs in base64url, so a link
@@ -125,11 +128,14 @@ function link_error(message, props) {
 // ------------------------------------------------------------------ links
 
 function encode(model) {
-    // model: {modelregels, startwaarden, title (optional), N (optional)} --> 'v2.<payload>'
+    // model: {modelregels, startwaarden, title, N, opdracht, indeling (all optional but the first two)}
+    //   --> 'v2.<payload>'
     var json = {m: String(model.modelregels || ''), s: String(model.startwaarden || '')};
     if (model.title) json.t = String(model.title);
     var N = Number(model.N);
     if (isFinite(N) && N > 0) json.N = N;
+    if (model.opdracht) json.o = String(model.opdracht);
+    if (model.indeling && typeof model.indeling == 'object' && !is_empty(model.indeling)) json.p = model.indeling;
     return 'v' + VERSION + '.' + base64url_encode(utf8_bytes(JSON.stringify(json)));
 }
 
@@ -185,8 +191,38 @@ function decode(code) {
         startwaarden: String(json.s === undefined || json.s === null ? '' : json.s),
         title: json.t ? String(json.t) : '',
         N: (isFinite(N) && N > 0) ? N : undefined,
+        opdracht: json.o ? String(json.o) : '',
+        indeling: positions(json.p),
         version: version
     };
+}
+
+
+function is_empty(obj) {
+    for (var key in obj) {
+        if (obj.hasOwnProperty(key)) return false;
+    }
+    return true;
+}
+
+
+function positions(value) {
+    // the positions of dragged symbols: {"id": [x, y]} (also {x, y}). Anything else is left out.
+    var out = {};
+    if (!value || typeof value != 'object') return out;
+    for (var id in value) {
+        if (!value.hasOwnProperty(id)) continue;
+        var v = value[id], x, y;
+        if (v && typeof v == 'object' && v.length == 2) {
+            x = Number(v[0]);
+            y = Number(v[1]);
+        } else if (v && typeof v == 'object') {
+            x = Number(v.x);
+            y = Number(v.y);
+        }
+        if (isFinite(x) && isFinite(y)) out[id] = [x, y];
+    }
+    return out;
 }
 
 
@@ -217,3 +253,4 @@ exports.VERSION = VERSION;
 exports.encode = encode;
 exports.decode = decode;
 exports.parse_hash = parse_hash;
+exports.positions = positions;
