@@ -163,13 +163,12 @@ Examen vwo 2005-I Champignon:
 
 ## Over de compiler
 
-`evaluator.js` bevat een compiler van *Modelleertaal* naar javascript. Met een moderne javascript-engine zoals
-Node.js/Chrome V8 is die erg snel. `run.js` bevat een benchmark. Vergeleken met andere interpreters en compilers
-voor modelleertaal is hij vele ordes van grootte sneller.
-
-De parser is gebouwd met [jison](https://github.com/zaach/jison). Modelleertaal wordt gecompileerd naar
-javascript, dat wordt uitgevoerd met `eval()`. De `eval()` zit in een anonieme functie, zodat de optimaliserende
-compiler van V8 niet afhaakt.
+`evaluator.js` bevat een compiler van *Modelleertaal* naar javascript.mDe parser is gebouwd met
+[jison](https://github.com/zaach/jison). Modelleertaal wordt gecompileerd naar
+javascript, dat wordt uitgevoerd met `eval()`. (De `eval()` zit in een anonieme functie, zodat de optimaliserende
+compiler van V8 niet afhaakt. Dit was relevant in 2015 toen Chrome V8 Crankshaft nog the state-of-the-art was, nu
+is dat waarschijnlijk niet meer nodig. Zelfs de meest eenvoudige telefoon is ruim snel genoeg om niet meer te hoeven
+nadenken over optimalisaties.)
 
 Gebruik:
 ```javascript
@@ -182,8 +181,12 @@ var evaluator = new evaluator_js.ModelregelsEvaluator(model);
 results = evaluator.run(N);
 ```
 
+## Modelsyntax BogusXML
+
 `model.js` leest en schrijft modellen. Modellen worden opgeslagen in `BogusXML`: een syntax die op XML lijkt,
 maar waarin `<` en `>` mogen voorkomen.
+
+Opdracht voor Claude: Beschrijf BogusXML hier en zet alle features erin als je ze bouwt.
 
 ## Installatie voor ontwikkeling
 
