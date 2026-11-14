@@ -11,6 +11,7 @@ var eenheden = require('./eenheden.js');
 var aflezen = require('./aflezen.js');
 var assen = require('./assen.js');
 var hints = require('./hints.js');
+var oorzaak = require('./oorzaak.js');
 var Blob = require('blob');
 var FileSaver = require('file-saver');
 // this also depends on:
@@ -228,9 +229,12 @@ function ModelleertaalApp(params) {
   });
 
   $(window).on('hashchange', function() {
-    // user opens another link (#model=...) in the same tab
+    // user opens another link (#model=...) in the same tab. Changed model: ask first, as with the menu.
     var url_params = self.parse_url_hash();
-    if ((url_params.model || url_params.code) && !self.is_modified()) self.load_model();
+    if (!url_params.model && !url_params.code) return;
+    if (self.is_modified() && !window.confirm('Je hebt dit model aangepast.\n' +
+        'Als je de nieuwe link opent, gaan je wijzigingen verloren.\n\nNieuwe link openen?')) return;
+    self.load_model();
   });
 
   $(window).on('beforeunload', function(event) {
@@ -571,8 +575,9 @@ function ModelleertaalApp(params) {
   });
 
   $(this.dom_graph).on("plotclick", function(event, pos, item) {
-    // the end of dragging a rectangle (zoom) is not a click
+    // the end of dragging a rectangle (zoom) is not a click. Stap voor stap: no reading off.
     if (self.zoom_time && Date.now() - self.zoom_time < 400) return;
+    if (self.stepper) return;
     if (item && item.series.mt_read) return;
     if (!item || item.series.mt_previous || !item.series.mt_yvar) {
       self.set_read(null);
@@ -940,6 +945,30 @@ ModelleertaalApp.prototype.remove_lint = function() {
   if (!this.lint) return;
   this.lint.editor.setGutterMarker(this.lint.handle, 'mt-error-markers', null);
   this.lint = undefined;
+};
+
+
+ModelleertaalApp.prototype.constant_values = function(names) {
+  // values of startwaarden that stay constant (they are not in the table): name --> value
+  var out = {};
+  names = (names || []).filter(function(name) { return /^[^\s=]+$/.test(name); });
+  if (!names.length) return out;
+  var model = new evaluator_js.Model();
+  model.startwaarden = this.model.startwaarden;
+  model.modelregels = names.map(function(name) { return name + ' = ' + name; }).join('\n');
+  try {
+    var evaluator = new evaluator_js.ModelregelsEvaluator(model, false);
+    evaluator.set_state(0, true, false);
+    evaluator.run();
+    var varNames = evaluator.namespace.varNames;
+    names.forEach(function(name) {
+      var j = varNames.indexOf(name);
+      if (j != -1) out[name] = evaluator.result[0][j];
+    });
+  } catch (err) {
+    // no values: the general message
+  }
+  return out;
 };
 
 
@@ -2219,6 +2248,7 @@ ModelleertaalApp.prototype.show_step = function(step) {
   // the table: the cell that changed lights up
   this.step_mark = {row: step.iteration, column: this.stepper.varNames.indexOf(step.name)};
   this.print_table();
+  this.plot_steps();
 
   var status;
   if (step.finished && this.stepper.stopped) {
@@ -2242,14 +2272,65 @@ ModelleertaalApp.prototype.end_stepping = function() {
   this.remove_highlight_trace();
   $(this.dom_step_line).prop('hidden', true).empty();
   $(this.dom_datatable).removeClass('stepping');
+  $(this.dom_graph).removeClass('stepping');
   if (this.results_available()) {
     this.print_table();
+    this.do_plot();
     this.print_status(this.stale ? "Model gewijzigd. Druk op Run." : "Klaar met stap voor stap. Druk op Run of Stap.");
   } else {
     $(this.dom_datatable).empty().append(
       $('<div>').addClass('placeholder').text('Hier komt de tabel met resultaten.'));
+    if (this.plot_object) {
+      this.plot_object.shutdown();
+      this.plot_object = undefined;
+    }
+    $(this.dom_graph).empty().append(
+      $('<div>').addClass('placeholder').text('Druk op Run om het model door te rekenen.'));
+    $(this.dom_graph_note).empty();
+    this.place_axis_picks();
     this.print_status("Druk op Run of Stap.");
   }
+};
+
+
+ModelleertaalApp.prototype.plot_steps = function() {
+  // Stap voor stap: the graph of the last Run in gray (fixed axes), with the iterations
+  // computed so far on top and a dot at the current point
+  var self = this;
+  if (!this.stepper) return;
+  var rows = this.stepper.table(), vars = this.stepper.varNames;
+  var x = this.xvar, ys = this.multiplot ? this.multi_yvars.slice() : [this.yvar];
+  if (vars.indexOf(x) == -1) x = (vars.indexOf('t') != -1) ? 't' : vars[0];
+  ys = ys.filter(function(name) { return vars.indexOf(name) != -1; });
+  if (ys.length === 0) {
+    var other = vars.filter(function(name) { return name != x; });
+    if (other.length === 0) return;
+    ys = [other[0]];
+  }
+  var last_run = this.results_available() ? this.reduce_rows(this.results, this.max_rows_in_plot) : null;
+  var dataset = [], gray = false;
+  ys.forEach(function(name, n) {
+    var color = ys.length > 1 ? COLORS_MULTIPLOT[n % COLORS_MULTIPLOT.length] : COLOR_PLOT;
+    var previous = last_run ? self.xy_data(last_run, self.allVars, x, name) : null;
+    if (previous) {
+      gray = true;
+      dataset.push({data: previous, color: COLOR_PREVIOUS, points: {show: false}, hoverable: false, clickable: false});
+    }
+    var data = self.xy_data(rows, vars, x, name) || [];
+    dataset.push({data: data, color: color, label: ys.length > 1 ? name : undefined, points: {show: data.length <= 60}});
+    var now = null;
+    for (var i = data.length - 1; i >= 0 && now === null; i--) now = data[i];
+    if (now) {
+      dataset.push({data: [now], color: COLOR_READ, lines: {show: false},
+                    points: {show: true, radius: 5, fill: true, fillColor: COLOR_READ},
+                    hoverable: false, clickable: false});
+    }
+  });
+  this.read_xy = null;
+  $(this.dom_graph_note).empty().append($('<span>').text(gray ?
+    'Stap voor stap: de punten tot nu toe, grijs is de laatste Run.' : 'Stap voor stap: de punten tot nu toe.'));
+  this.plot_graph(dataset, x, ys);
+  $(this.dom_graph).addClass('stepping');
 };
 
 
@@ -2480,10 +2561,15 @@ ModelleertaalApp.prototype.check_results = function() {
   }
 
   if (bad_var !== undefined) {
-    this.show_message('warning', 'Let op',
-      "Vanaf iteratie " + first_bad_row + " heeft '" + bad_var + "' geen geldige waarde meer. " +
-      "Wordt er gedeeld door nul, de wortel getrokken uit een negatief getal of wordt een getal te groot? " +
-      "Controleer de modelregels en startwaarden (is dt klein genoeg?).");
+    // name the most probable cause (oorzaak.js), not three questions at once
+    var cause = null;
+    try {
+      cause = oorzaak.find(this.evaluator.modelregels_ast, this.allVars, this.results, first_bad_row,
+                           this.constant_values(this.evaluator.namespace.constNames));
+    } catch (err) {
+      cause = null;
+    }
+    this.show_message('warning', 'Let op', oorzaak.message(cause, first_bad_row, bad_var));
   } else if (this.evaluator.messages.length > 0) {
     this.show_message('info', 'print', this.evaluator.messages.join(' '));
   }

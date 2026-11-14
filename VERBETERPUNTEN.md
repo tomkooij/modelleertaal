@@ -367,7 +367,7 @@ en een vraag in één link delen, zonder aparte handleiding.
 Versleepte posities (`grafisch_moved`) gaan verloren bij herladen. Neem ze mee in de deellink
 (veld `p`) en in de XML (`<indeling>` met JSON), en in het automatisch bewaren van P1-1.
 
-### P3-9 Kleine punten
+### P3-9 Kleine punten (gebouwd)
 
 - `hashchange` met een gewijzigd model negeert de nieuwe link stilzwijgend: vraag net als bij de
   modelkeuze of de wijzigingen weg mogen.
