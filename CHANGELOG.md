@@ -1,6 +1,8 @@
 # Changelog
 
-## [Unreleased]
+## [6.4]
+
+14 nov 2026
 
 ### Modelkeuze
 
