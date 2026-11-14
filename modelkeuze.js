@@ -17,7 +17,7 @@
           // [{sectie: 'Basismodellen', modellen: [{index: 21, title: '0 Horizontale worp'}, ...]}, ...]
       modelkeuze.groep_van(model_index[i])     // 'C3 Gravitatie'
       modelkeuze.naam_van_url('modellen/c2/Bungeejumper.xml')   // 'c2/Bungeejumper'
-      modelkeuze.zoek_url(model_index, 'modellen/leeg.xml')     // index of the first match, or -1
+      modelkeuze.zoek_url(model_index, 'modellen/c3/kogelbaan.xml')   // index in groep C3 (or first match), or -1
 */
 
 //jshint node:true
@@ -68,11 +68,18 @@ function naam_van_url(url) {
 
 
 function zoek_url(model_index, url) {
-    // the first model with this url (an empty model is in more than one groep)
+    // the model with this url. A model can be in more than one groep (Basismodellen and its
+    // module). A model in a submap (modellen/c3/...) is found in the groep of its module (the
+    // groep that starts with the name of the submap: 'C3 Gravitatie'), else the first one.
+    var match = /modellen\/([^\/]+)\/[^\/]+$/.exec(String(url || ''));
+    var module = match ? match[1].toLowerCase() + ' ' : null;
+    var first = -1;
     for (var i = 0; i < model_index.length; i++) {
-        if (model_index[i].url == url) return i;
+        if (model_index[i].url != url) continue;
+        if (first == -1) first = i;
+        if (module && groep_van(model_index[i]).toLowerCase().indexOf(module) === 0) return i;
     }
-    return -1;
+    return first;
 }
 
 

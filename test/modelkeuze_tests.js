@@ -67,6 +67,17 @@ describe('modelkeuze.js: gelaagde modelkeuze', function() {
         assert.equal(modelkeuze.zoek_url(INDEX, "modellen/c2/Bungeejumper.xml"), 3);
         assert.equal(modelkeuze.zoek_url(INDEX, "modellen/onbekend.xml"), -1);
     });
+
+    it('zoek_url: een model uit een submap in de groep van zijn module', function() {
+        var index = [
+            {title: "Kogelbaan", url: "modellen/c3/kogelbaan.xml", groep: "Basismodellen"},
+            {title: "1 Kogelbaan", url: "modellen/c3/kogelbaan.xml", groep: "C3 Gravitatie", sectie: "Basismodellen"},
+            {title: "Slinger", url: "modellen/b1/3_Slinger.xml", groep: "Basismodellen"}
+        ];
+        assert.equal(modelkeuze.zoek_url(index, "modellen/c3/kogelbaan.xml"), 1);
+        // no groep of the module: the first one
+        assert.equal(modelkeuze.zoek_url(index, "modellen/b1/3_Slinger.xml"), 2);
+    });
 });
 
 
@@ -89,10 +100,13 @@ describe('modellen/models.js', function() {
         });
     });
 
-    it('een #model=... link vindt elk model terug', function() {
+    it('een #model=... link vindt elk model terug, een model van een module in zijn eigen module', function() {
         index.forEach(function(entry) {
             var name = modelkeuze.naam_van_url(entry.url);
-            assert.equal(index[modelkeuze.zoek_url(index, 'modellen/' + name + '.xml')].url, entry.url);
+            var found = index[modelkeuze.zoek_url(index, 'modellen/' + name + '.xml')];
+            assert.equal(found.url, entry.url);
+            var map = name.split('/');
+            if (map.length > 1) assert.match(found.groep, new RegExp('^' + map[0] + ' ', 'i'), name);
         });
     });
 
