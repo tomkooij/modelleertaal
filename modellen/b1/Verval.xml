@@ -1,0 +1,14 @@
+﻿<modelleertaal>
+<startwaarden>
+N = 1000
+λ = ...
+t = 0
+dt = 0,1
+</startwaarden>
+<modelregels>
+A = λ * N
+dN = -A * dt
+N = N + dN
+t = t + dt
+</modelregels>
+</modelleertaal>

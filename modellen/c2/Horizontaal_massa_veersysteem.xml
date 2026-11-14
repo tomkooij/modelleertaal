@@ -1,0 +1,24 @@
+﻿<modelleertaal>
+<startwaarden>
+m = 0,050
+C = 6,0
+k = 0
+v = 1,0
+u = - 0,05
+t = 0
+dt = 0,001
+</startwaarden>
+<modelregels>
+Fv = - C * u
+Fw = - k * v
+Fres = Fv + Fw
+a = Fres / m
+dv = a * dt
+v = v + dv
+du = v * dt
+u = u + du
+t = t + dt
+als t > 1 dan 
+   stop eindals
+</modelregels>
+</modelleertaal>

@@ -1,0 +1,28 @@
+﻿<modelleertaal>
+N = 3000
+<startwaarden>
+k = 0,387
+Fm = 600 'N
+Fwrol = - 250 'N
+m = 1200 'kg
+v = 0 'm/s
+x = 0 'm
+t = 0 's
+dt = 0,1 's
+</startwaarden>
+<modelregels>
+Fwl = -k * v^2
+Fres = Fm + Fwrol + Fwl
+a = Fres / m
+
+dv = a * dt
+v = v + dv
+dx = v * dt
+x = x + dx
+t = t + dt
+
+Pm = Fm * v
+Pw = (Fwrol + Fwl) * v
+Pres = Pm + Pw
+</modelregels>
+</modelleertaal>

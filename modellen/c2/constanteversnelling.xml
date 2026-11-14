@@ -1,0 +1,18 @@
+<modelleertaal>
+N=10
+<modelregels>
+'Constante versnellingsmodel
+dv = a * dt
+v = v + dv
+dx = v * dt
+x = x + dx
+t = t + dt
+</modelregels>
+<startwaarden>
+a = 2,5
+v = 0
+x = 0
+t = 0
+dt = 1
+</startwaarden>
+</modelleertaal>

@@ -1,0 +1,25 @@
+<modelleertaal>
+<startwaarden>
+m = 80
+k = 0,30
+v = 0
+x = 0
+t = 0
+dt = 0,1
+Fvoorwaarts = 50
+
+</startwaarden>
+<modelregels>
+'Kracht-versnellingsmodel
+'Opgave fietser
+
+Fw = k * v^2
+Fres = Fvoorwaarts - Fw
+a = Fres / m
+
+v = v + a * dt
+x = x + v * dt
+t = t + dt
+
+</modelregels>
+</modelleertaal>

@@ -1,0 +1,25 @@
+﻿<modelleertaal>
+N=200
+<startwaarden>
+C = 100 'N/m
+m = 0,30 'kg
+
+v = 0,20
+u = 0
+t = 0
+dt = 0,005
+
+
+</startwaarden>
+<modelregels>
+Fveer = -C * u
+Fres = Fveer
+
+a = Fres / m
+v = v + a * dt
+u = u + v * dt
+t = t + dt
+
+
+</modelregels>
+</modelleertaal>

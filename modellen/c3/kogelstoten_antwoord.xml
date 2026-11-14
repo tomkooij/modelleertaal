@@ -1,0 +1,28 @@
+﻿<modelleertaal>
+N = 1000
+<startwaarden>
+v = 12
+alpha = 45
+
+vy = v*sin(alpha)
+vx = v*cos(alpha)
+
+x = 0
+y = 0
+
+g = 9,81
+t = 0
+dt = 0,01
+</startwaarden>
+<modelregels>
+'kogelbaan model
+v = sqrt(vx^2 + vy^2)
+
+vy = vy - g * dt
+y = y + vy * dt
+x = x + vx * dt
+t = t + dt
+
+als y < 0 dan stop eindals
+</modelregels>
+</modelleertaal>

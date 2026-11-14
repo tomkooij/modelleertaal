@@ -1,0 +1,14 @@
+<modelleertaal>
+N=10
+<modelregels>
+'modelregels
+x = x
+t = t + dt
+</modelregels>
+<startwaarden>
+'startwaarden
+x = 2 
+t = 0
+dt = 1
+</startwaarden>
+</modelleertaal>

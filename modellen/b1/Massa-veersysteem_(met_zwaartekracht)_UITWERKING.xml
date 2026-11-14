@@ -1,0 +1,28 @@
+﻿<modelleertaal>
+<startwaarden>
+C = 100
+m = 0,50
+g = 9,81
+Fz = - m * g
+
+v = 1
+u = 0
+t = 0
+dt = 0,01
+
+
+
+</startwaarden>
+<modelregels>
+Fveer = -C * u
+Fres = Fveer + Fz
+
+a = Fres / m
+v = v + a * dt
+u = u + v * dt
+t = t + dt
+
+
+
+</modelregels>
+</modelleertaal>

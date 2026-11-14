@@ -1,0 +1,24 @@
+﻿<modelleertaal>
+<startwaarden>
+m = 2,3
+g = 9,81
+v = 0
+s = 0
+t = 0
+dt = 0,01
+beginhoogte = 5,0
+
+Fz = m * g
+</startwaarden>
+<modelregels>
+Fr = Fz
+a = Fr/m
+dv = a * dt
+v = v + dv
+ds = v * dt
+s = s + ds
+t = t + dt
+h = …
+als h < 0 dan stop eindals
+</modelregels>
+</modelleertaal>

@@ -1093,8 +1093,9 @@
             <h1><a id="title" href="https://github.com/tomkooij/modelleertaal">Modelleertaal</a></h1>
         </div>
         <div class="model_select">
-            <label for="model_keuze">Kies model:</label>
-            <select id="model_keuze">
+            <label for="model_groep">Kies model:</label>
+            <select id="model_groep" aria-label="Verzameling modellen" title="Kies een verzameling: examens of een module"></select>
+            <select id="model_keuze" aria-label="Model" title="Kies een model uit deze verzameling">
                 <option value="0">models.js niet geladen!</option>
             </select>
             <input id="fileinput" type="file" accept=".xml,.txt" hidden>

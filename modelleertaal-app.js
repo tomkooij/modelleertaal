@@ -6,6 +6,7 @@ var grafisch_edit = require('./grafisch-edit.js');
 var stapper = require('./stapper.js');
 var vergelijk = require('./vergelijk.js');
 var dtcheck = require('./dtcheck.js');
+var modelkeuze = require('./modelkeuze.js');
 var Blob = require('blob');
 var FileSaver = require('file-saver');
 // this also depends on:
@@ -84,6 +85,7 @@ function ModelleertaalApp(params) {
   this.dom_multiplot = "#multiplot";
   this.dom_yaxis_zero = "#yaxis_zero";
   this.dom_model_keuze = "#model_keuze";
+  this.dom_model_groep = "#model_groep";
   this.dom_permalink = "#permalink";
   this.dom_titel = "#model_titel";
   this.dom_grafisch = "#grafisch_model";
@@ -198,10 +200,16 @@ function ModelleertaalApp(params) {
     self.schedule_autosave();
   });
 
+  // first menu: another groep shows its models. A model is loaded when it is chosen in the second menu.
+  $(this.dom_model_groep).change(function() {
+    self.dropdown_fill($(this).val());
+  });
+
   $(this.dom_model_keuze).change(function() {
+    if ($(this).val() === '') return;   // "Kies een model..."
     if (self.is_modified() && !window.confirm('Je hebt dit model aangepast.\n' +
         'Als je een ander model kiest, gaan je wijzigingen verloren.\n\nAnder model laden?')) {
-      $(this).val(self.dropdown_value);
+      self.dropdown_fill(self.dropdown_groep);
       return;
     }
     self.dropdown_load_model();
@@ -539,10 +547,7 @@ ModelleertaalApp.prototype.load_model = function() {
       this.model.startwaarden = shared.startwaarden;
       if (shared.N) this.model.N = shared.N;
       this.model_title = shared.title || 'Gedeeld model';
-      $(this.dom_model_keuze).find('option[value="shared"]').remove();
-      $('<option/>').val('shared').text(this.model_title + ' (uit link)').prependTo(this.dom_model_keuze);
-      $(this.dom_model_keuze).val('shared');
-      this.dropdown_value = 'shared';
+      this.dropdown_extra('shared', this.model_title + ' (uit link)');
       this.init_app();
       return;
     } catch (err) {
@@ -555,14 +560,10 @@ ModelleertaalApp.prototype.load_model = function() {
   if (url_params.model) {
     // try to load model passed with model=... parameter
     var model_url = 'modellen/' + url_params.model + '.xml';
-    var index = -1;
-    for (var i = 0; i < this.model_index.length; i++) {
-      if (this.model_index[i].url == model_url) index = i;
-    }
+    var index = modelkeuze.zoek_url(this.model_index, model_url);
     if (index != -1) {
-      // set dropdown to selected model
-      $(this.dom_model_keuze).val(index);
-      this.dropdown_value = String(index);
+      // set dropdowns (groep and model) to selected model
+      this.dropdown_select(index);
       this.model_title = this.model_index[index].title;
     } else {
       this.model_title = url_params.model;
@@ -621,26 +622,80 @@ ModelleertaalApp.prototype.load_model_xml_from_url = function(url) {
 
 
 ModelleertaalApp.prototype.dropdown_update = function() {
-  // maak het drop-down modelkeuze menu uit model.js
-  $(this.dom_model_keuze).empty();
-  for (var i = 0; i < this.model_index.length; i++) {
-    $('<option/>').val(i).text(this.model_index[i].title).appendTo(this.dom_model_keuze);
+  // maak de keuzemenu's uit models.js: verzameling (groep) en model (see modelkeuze.js)
+  var groepen = modelkeuze.groepen(this.model_index);
+  var groep_menu = $(this.dom_model_groep).empty();
+  groepen.forEach(function(groep) {
+    $('<option/>').val(groep).text(groep).appendTo(groep_menu);
+  });
+  // only one groep: no need to choose
+  groep_menu.toggle(groepen.length > 1);
+
+  var entry = this.model_index[this.dropdown_value];
+  var groep = entry ? modelkeuze.groep_van(entry) : (this.dropdown_groep || groepen[0]);
+  this.dropdown_fill(groep, this.dropdown_value === undefined);
+};
+
+
+ModelleertaalApp.prototype.dropdown_fill = function(groep, select_first) {
+  // fill the model menu with the models of one groep, with a heading (optgroup) per sectie.
+  // The current model is selected. If it is not in this groep: "Kies een model"
+  // (or the first model, select_first).
+  var self = this;
+  var menu = $(this.dom_model_keuze).empty();
+  this.dropdown_groep = groep;
+  $(this.dom_model_groep).val(groep);
+
+  modelkeuze.secties(this.model_index, groep).forEach(function(s) {
+    var parent = s.sectie ? $('<optgroup/>').attr('label', s.sectie).appendTo(menu) : menu;
+    s.modellen.forEach(function(m) {
+      $('<option/>').val(m.index).text(m.title).appendTo(parent);
+    });
+  });
+
+  var current = String(this.dropdown_value);
+  if (menu.find('option').filter(function() { return this.value === current; }).length) {
+    menu.val(current);
+  } else if (this.dropdown_extra_option && this.dropdown_extra_option.value === current) {
+    // a model from a link or the browser (not in models.js)
+    $('<option/>').val(current).text(this.dropdown_extra_option.text).prependTo(menu);
+    menu.val(current);
+  } else if (select_first) {
+    menu.prop('selectedIndex', 0);
+  } else {
+    $('<option/>').val('').text('Kies een model…').prependTo(menu);
+    menu.val('');
   }
 };
 
 
+ModelleertaalApp.prototype.dropdown_select = function(index) {
+  // show model index in the menus (its groep in the first menu)
+  this.dropdown_value = String(index);
+  this.dropdown_fill(modelkeuze.groep_van(this.model_index[index]));
+};
+
+
+ModelleertaalApp.prototype.dropdown_extra = function(value, text) {
+  // a model that is not in models.js ('shared': from a link, 'restored': from the browser)
+  this.dropdown_extra_option = {value: value, text: text};
+  this.dropdown_value = value;
+  this.dropdown_fill(this.dropdown_groep || modelkeuze.groepen(this.model_index)[0]);
+};
+
+
 ModelleertaalApp.prototype.model_name_from_url = function(url) {
-  // modellen/naam.xml --> naam
-  var match = /\/([^.\/]+)\.xml$/.exec(url);
-  return match ? match[1] : null;
+  // modellen/naam.xml --> naam, modellen/c2/naam.xml --> c2/naam
+  return modelkeuze.naam_van_url(url);
 };
 
 
 ModelleertaalApp.prototype.dropdown_load_model = function() {
 
   var model_keuze = $(this.dom_model_keuze).val();
-  this.dropdown_value = model_keuze;
   if (!this.model_index[model_keuze]) return;
+  this.dropdown_value = model_keuze;
+  this.dropdown_fill(this.dropdown_groep);   // without "Kies een model..."
 
   var url = this.model_index[model_keuze].url;
   var name = this.model_name_from_url(url);
@@ -1676,10 +1731,7 @@ ModelleertaalApp.prototype.restore_autosave = function(saved) {
   this.model_title = saved.t ? String(saved.t) : '';
 
   // in the menu, like a model from a shared link
-  $(this.dom_model_keuze).find('option[value="restored"]').remove();
-  $('<option/>').val('restored').text((this.model_title || 'Model') + ' (bewaard)').prependTo(this.dom_model_keuze);
-  $(this.dom_model_keuze).val('restored');
-  this.dropdown_value = 'restored';
+  this.dropdown_extra('restored', (this.model_title || 'Model') + ' (bewaard)');
   if (window.history.replaceState) {
     window.history.replaceState('', document.title, window.location.pathname + window.location.search);
   }

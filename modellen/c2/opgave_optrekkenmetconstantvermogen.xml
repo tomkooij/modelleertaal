@@ -1,0 +1,26 @@
+<modelleertaal>
+<modelregels>
+# Opgave optrekken met constante vermogen
+Fwl = - k * v^2
+Fm = …
+Fres = …
+a = Fres / m
+dv = a * dt
+v = v + dv
+dx = v * dt
+x = x + dx
+t = t + dt
+Pw = (Fwrol+Fwl) * v
+Pres = Pm + Pw
+</modelregels>
+<startwaarden>
+k = 0,387
+Pm = 30E3 'W
+Fwrol = -250 'N
+m = 1200 'kg
+v = 1 'm/s
+x = 0 'm
+t = 0 's
+dt = 0,1 's
+</startwaarden>
+</modelleertaal>

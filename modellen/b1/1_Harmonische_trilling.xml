@@ -1,0 +1,17 @@
+<modelleertaal>
+<modelregels>
+Fres = -C * u
+a = Fres / m
+v = v + a * dt
+u = u + v * dt
+t = t + dt
+</modelregels>
+<startwaarden>
+C = 10
+m = 0,1
+v = 3
+u = 0
+t = 0
+dt = 0,001
+</startwaarden>
+</modelleertaal>

@@ -1,0 +1,25 @@
+﻿<modelleertaal>
+<startwaarden>
+Fw = 2*10
+m = 70
+v = 1.0
+x = 0
+t = 0
+dt = 0.1
+
+</startwaarden>
+<modelregels>
+'Kracht-versnellingsmodel
+'Opgave Schaatser
+Fres = -Fw
+a = Fres / m
+v = v + a * dt
+x = x + v * dt
+t = t + dt
+
+' automatisch stoppen is niet
+' nodig maar maakt de analyse
+' veel makkelijker
+als v < 0 dan stop eindals
+</modelregels>
+</modelleertaal>
