@@ -8,6 +8,7 @@ var vergelijk = require('./vergelijk.js');
 var dtcheck = require('./dtcheck.js');
 var modelkeuze = require('./modelkeuze.js');
 var eenheden = require('./eenheden.js');
+var aflezen = require('./aflezen.js');
 var Blob = require('blob');
 var FileSaver = require('file-saver');
 // this also depends on:
@@ -30,6 +31,7 @@ var version = "v6.4.1";
 
 var COLOR_PLOT = '#1d4ed8';
 var COLOR_PREVIOUS = '#c3c8d1';
+var COLOR_READ = '#d97706';   // Aflezen: the point that was clicked, its lines and the tangent
 // qualitative colour scheme that is colour-blind safe.
 // https://personal.sron.nl/~pault/#sec:qualitative
 // blue, cyan, green, yellow, red, purple, grey
@@ -79,7 +81,6 @@ function ModelleertaalApp(params) {
   this.dom_download_png = "#download_png";
   this.dom_precision = "#precision";
   this.dom_max_rows = "#max_rows";
-  this.dom_clickdata = "#clickdata";
   this.dom_x_var = "#x_var";
   this.dom_y_var = "#y_var";
   this.dom_y_checks = "#y_checks";
@@ -498,12 +499,29 @@ function ModelleertaalApp(params) {
     self.do_plot();
   });
 
+  // Aflezen: a click on a point shows it with lines to the axes, and its row in the table.
+  // A click next to the graph line removes it.
   $(this.dom_graph).on("plotclick", function(event, pos, item) {
-    if (!item || item.series.mt_previous) return;
-    var table = $('<table>').addClass('table');
-    table.append(self.table_header(self.allVars));
-    table.append(self.table_row(self.results, self.get_result_rowIndex(item.dataIndex)));
-    $(self.dom_clickdata).html($('<div>').addClass('table_scroll').append(table));
+    if (item && item.series.mt_read) return;
+    if (!item || item.series.mt_previous || !item.series.mt_yvar) {
+      self.set_read(null);
+      return;
+    }
+    var row = self.get_result_rowIndex(item.dataIndex, item.series.data.length);
+    var same = self.read && self.read.row == row && self.read.yvar == item.series.mt_yvar;
+    self.set_read(same ? null : {row: row, yvar: item.series.mt_yvar});
+  });
+
+  // and the other way around: a click on a row of the table puts the point in the graph
+  $(this.dom_datatable).on('click', 'tbody tr[data-row]', function() {
+    if (self.stepper || !self.results_available()) return;
+    var row = Number($(this).attr('data-row'));
+    var yvar = self.yvar;
+    if (self.multiplot) {
+      yvar = (self.read && self.multi_yvars.indexOf(self.read.yvar) != -1) ? self.read.yvar : self.multi_yvars[0];
+    }
+    if (!yvar) return;
+    self.set_read((self.read && self.read.row == row) ? null : {row: row, yvar: yvar});
   });
 
   var resize_timer;
@@ -2152,7 +2170,8 @@ ModelleertaalApp.prototype.after_run = function() {
   this.choose_axes();
   this.update_axis_controls();
 
-  this.print_table();
+  this.read = null;
+  this.print_table(10);
   this.do_plot();
   this.draw_thumbnails();
 
@@ -2395,8 +2414,9 @@ ModelleertaalApp.prototype.table_header = function(vars) {
 
 ModelleertaalApp.prototype.table_row = function(rows, rowIndex, mark_column) {
   // mark_column (optional): the cell that just changed (Stap voor stap)
-  var row = $('<tr>');
+  var row = $('<tr>').attr('data-row', rowIndex);
   row.append($('<td>').text(rowIndex));
+  if (!this.stepper && this.read && this.read.row == rowIndex) row.addClass('mt-read-row');
 
   for (var j = 0; j < rows[rowIndex].length; j++) {
     var cell = $('<td>').text(this.format_number(rows[rowIndex][j], j));
@@ -2421,8 +2441,15 @@ ModelleertaalApp.prototype.print_table = function(limit) {
 
   this.compute_column_scale(rows, vars);
 
-  limit = (limit) ? limit : 10;
-  limit = Math.min(rows.length, limit);
+  // the number of rows shown stays (also after a click on a row)
+  if (limit) this.table_limit = limit;
+  limit = Math.min(rows.length, this.table_limit || 10);
+  // this row is always shown: the step, or the point that is read in the graph
+  var focus = mark ? mark.row : (this.read ? this.read.row : undefined);
+  var shown = function(i) {
+    return limit >= rows.length || i < Math.floor(limit / 2) || i >= rows.length - Math.ceil(limit / 2) ||
+           (focus !== undefined && Math.abs(i - focus) <= 2);
+  };
 
   var table = $('<table>').addClass('table');
   table.append($('<thead>').append(this.table_header(vars)));
@@ -2433,19 +2460,20 @@ ModelleertaalApp.prototype.print_table = function(limit) {
   };
 
   for (var i = 0; i < rows.length; i++) {
-    body.append(this.table_row(rows, i, (mark && mark.row == i) ? mark.column : undefined));
-
-    if (limit != rows.length && i == Math.floor(limit / 2) - 1) {
-      var hidden = rows.length - limit;
-      var truncrow = $('<tr>').addClass('truncated');
-      truncrow.append($('<td>')
-        .attr('colspan', vars.length + 1)
-        .append($('<button type="button">')
-          .text('\u22ee  ' + hidden + ' rijen verborgen. Klik voor meer rijen.')
-          .click(show_more)));
-      body.append(truncrow);
-      i = rows.length - 1 - Math.ceil(limit / 2);
+    if (shown(i)) {
+      body.append(this.table_row(rows, i, (mark && mark.row == i) ? mark.column : undefined));
+      continue;
     }
+    var j = i;
+    while (j < rows.length && !shown(j)) j++;
+    var truncrow = $('<tr>').addClass('truncated');
+    truncrow.append($('<td>')
+      .attr('colspan', vars.length + 1)
+      .append($('<button type="button">')
+        .text('\u22ee  ' + (j - i) + (j - i == 1 ? ' rij' : ' rijen') + ' verborgen. Klik voor meer rijen.')
+        .click(show_more)));
+    body.append(truncrow);
+    i = j - 1;
   }
 
   $(self.dom_datatable).empty().append($('<div>').addClass('table_scroll').append(table));
@@ -2529,6 +2557,7 @@ ModelleertaalApp.prototype.do_plot = function() {
         data: self.xy_data(rows, self.allVars, self.xvar, name),
         color: COLORS_MULTIPLOT[n % COLORS_MULTIPLOT.length],
         label: name,
+        mt_yvar: name,
         points: {show: show_points}
       });
     });
@@ -2546,12 +2575,13 @@ ModelleertaalApp.prototype.do_plot = function() {
     dataset.push({
       data: this.xy_data(rows, this.allVars, this.xvar, this.yvar),
       color: COLOR_PLOT,
+      mt_yvar: this.yvar,
       points: {show: show_points}
     });
     y_names = [this.yvar];
   }
 
-  $(this.dom_clickdata).empty();
+  var read_text = this.read_point(dataset);
   var note_box = $(this.dom_graph_note).empty();
   if (has_previous) {
     note_box.append($('<span>').text((this.pinned ? 'Grijs: vastgehouden run' : 'Grijs: vorige run') +
@@ -2565,8 +2595,89 @@ ModelleertaalApp.prototype.do_plot = function() {
   }
   if (note) note_box.append($('<span>').text(' ' + note));
   this.plot_graph(dataset, this.xvar, y_names);
+  this.show_read_label(read_text);
   this.select_thumbnail();
 }; // do_plot
+
+
+//
+// Aflezen: the point that was clicked in the graph (or the row in the table)
+//
+ModelleertaalApp.prototype.set_read = function(read) {
+  // read: {row (in this.results), yvar}, or null
+  if (!read && !this.read) return;
+  this.read = read;
+  if (!this.results_available()) return;
+  this.do_plot();
+  if (!this.stepper) this.print_table();
+};
+
+
+ModelleertaalApp.prototype.read_point = function(dataset) {
+  // adds the point (and the tangent) to dataset. Returns the text next to the point, or null.
+  var self = this;
+  var read = this.read;
+  this.read_xy = null;
+  if (!read || !this.results_available() || !this.results[read.row]) return null;
+  var shown = this.multiplot ? this.multi_yvars : [this.yvar];
+  if (shown.indexOf(read.yvar) == -1) return null;
+  var xi = this.allVars.indexOf(this.xvar), yi = this.allVars.indexOf(read.yvar);
+  if (xi == -1 || yi == -1) return null;
+  var x = this.results[read.row][xi], y = this.results[read.row][yi];
+  if (typeof x != 'number' || typeof y != 'number' || !isFinite(x) || !isFinite(y)) return null;
+
+  function value(name, val) {
+    var unit = self.units.hasOwnProperty(name) ? ' ' + self.units[name] : '';
+    return name + ' = ' + self.format_text(val) + unit;
+  }
+  var text = [value(this.xvar, x), value(read.yvar, y)];
+
+  // the slope, with a short tangent (only with one graph: which line would it be?)
+  if (!this.multiplot) {
+    var slope = aflezen.slope(this.results, xi, yi, read.row);
+    if (slope !== null) {
+      var range = {xmin: Infinity, xmax: -Infinity, ymin: Infinity, ymax: -Infinity};
+      dataset.forEach(function(series) {
+        series.data.forEach(function(p) {
+          if (p === null) return;
+          range.xmin = Math.min(range.xmin, p[0]);
+          range.xmax = Math.max(range.xmax, p[0]);
+          range.ymin = Math.min(range.ymin, p[1]);
+          range.ymax = Math.max(range.ymax, p[1]);
+        });
+      });
+      var line = aflezen.tangent([x, y], slope, range);
+      if (line) {
+        dataset.push({data: line, color: COLOR_READ, lines: {show: true, lineWidth: 2},
+                      points: {show: false}, mt_read: true, hoverable: false, clickable: false});
+      }
+      var unit = aflezen.slope_unit(this.units[read.yvar], this.units[this.xvar]);
+      text.push('helling \u0394' + read.yvar + '/\u0394' + this.xvar + ' = ' + this.format_text(slope) +
+                (unit ? ' ' + unit : ''));
+    }
+  }
+  dataset.push({data: [[x, y]], color: COLOR_READ, lines: {show: false},
+                points: {show: true, radius: 5, fill: true, fillColor: COLOR_READ},
+                mt_read: true, hoverable: false, clickable: false});
+  this.read_xy = [x, y];
+  return text;
+};
+
+
+ModelleertaalApp.prototype.show_read_label = function(text) {
+  // the values of the point that is read, next to the point in the graph
+  if (!text || !this.plot_object || !this.read_xy) return;
+  var graph = $(this.dom_graph);
+  var off = this.plot_object.pointOffset({x: this.read_xy[0], y: this.read_xy[1]});
+  var label = $('<div class="read_label">').appendTo(graph);
+  text.forEach(function(line) { label.append($('<div>').text(line)); });
+  var w = label.outerWidth(), h = label.outerHeight();
+  var left = off.left + 12, top = off.top - h - 10;
+  if (left + w > graph.width()) left = off.left - w - 12;
+  if (left < 0) left = 0;
+  if (top < 0) top = off.top + 12;
+  label.css({left: left + 'px', top: top + 'px'});
+};
 
 
 ModelleertaalApp.prototype.plot_graph = function(dataset, x_name, y_names) {
@@ -2617,6 +2728,12 @@ ModelleertaalApp.prototype.plot_graph = function(dataset, x_name, y_names) {
     function inside(axis) { return axis.min < 0 && axis.max > 0; }
     if (inside(axes.yaxis)) lines.push({yaxis: {from: 0, to: 0}, color: '#4b5563', lineWidth: 1});
     if (inside(axes.xaxis)) lines.push({xaxis: {from: 0, to: 0}, color: '#4b5563', lineWidth: 1});
+    // Aflezen: from the point to both axes, as on paper
+    if (self.read_xy) {
+      var x = self.read_xy[0], y = self.read_xy[1];
+      lines.push({xaxis: {from: x, to: x}, yaxis: {from: axes.yaxis.min, to: y}, color: COLOR_READ, lineWidth: 1});
+      lines.push({yaxis: {from: y, to: y}, xaxis: {from: axes.xaxis.min, to: x}, color: COLOR_READ, lineWidth: 1});
+    }
     return lines;
   }
 
@@ -2839,6 +2956,8 @@ ModelleertaalApp.prototype.init_app = function() {
   this.results = [];
   this.allVars = [];
   this.units = {};
+  this.read = null;
+  this.table_limit = 10;
   this.graphs = [];
   this.analysis = undefined;
   this.end_stepping();
@@ -2868,7 +2987,6 @@ ModelleertaalApp.prototype.init_app = function() {
     $('<div>').addClass('placeholder').text('Druk op Run om het model door te rekenen.'));
   $(this.dom_graph_tabs).empty();
   $(this.dom_graph_note).empty();
-  $(this.dom_clickdata).empty();
   $(this.dom_download_tsv + ',' + this.dom_download_png).prop('hidden', true);
   $(this.dom_datatable).empty().append(
     $('<div>').addClass('placeholder').text('Hier komt de tabel met resultaten.'));
@@ -3102,10 +3220,11 @@ ModelleertaalApp.prototype.reduce_rows = function(rows, Nresults) {
 };
 
 
-ModelleertaalApp.prototype.get_result_rowIndex = function(rowIndex_plot) {
+ModelleertaalApp.prototype.get_result_rowIndex = function(rowIndex_plot, length_plot) {
   // map row index from plot (reduced number of rows)
-  // back to this.results
+  // back to this.results. The last point of the plot is the last row (see reduce_rows).
 
+  if (length_plot !== undefined && rowIndex_plot == length_plot - 1) return this.results.length - 1;
   var rowIndex = this.rowinc * rowIndex_plot;
   if (rowIndex < this.results.length) {
     return rowIndex;

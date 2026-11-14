@@ -316,14 +316,14 @@ Sleep een rechthoek in de grafiek om in te zoomen (Flot selection-plugin); dubbe
 **Hele grafiek**, die alleen zichtbaar is als er is ingezoomd, zet het terug. Op een aanraakscherm
 niet inschakelen (botst met scrollen). De cursor is een kruisje boven de grafiek.
 
-### P3-2 Aflezen: punt in de grafiek en rij in de tabel horen bij elkaar
+### P3-2 Aflezen: punt in de grafiek en rij in de tabel horen bij elkaar (gebouwd)
 
 Een klik op een punt toont nu een losse minitabel onder de grafiekinstellingen. Beter: het punt
 krijgt een stip met hulplijnen naar beide assen (aflezen zoals op papier) en de tabel springt naar
 die rij en markeert hem. Andersom: een klik op een rij in de tabel zet de stip in de grafiek.
 `#clickdata` vervalt.
 
-### P3-3 Helling aflezen (raaklijn)
+### P3-3 Helling aflezen (raaklijn) (gebouwd)
 
 Als P3-2 er is: toon bij het aangeklikte punt in de tooltip ook de helling
 (`Δv/Δt = 9,81`), berekend uit de twee buurpunten, en teken een korte raaklijn. Sluit aan op de

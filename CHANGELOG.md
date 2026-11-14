@@ -13,6 +13,17 @@
 - PGFPlot no longer uses a fixed list of units (in which `a` was m/s).
 - The basic models (Basismodellen) have units.
 
+### Aflezen in de grafiek
+
+- A click on a point of the graph shows it as a dot with lines to both axes (reading off,
+  as on paper) and a label with its values. The table shows that row and marks it.
+  The other way around: a click on a row of the table puts the dot in the graph. A click
+  next to the line removes it. The separate mini table under the graph (`#clickdata`) is gone.
+- With one graph the label also shows the slope at that point (`helling Δv/Δt = 9,81`, with
+  its unit), from the points before and after, with a short tangent. New module `aflezen.js`
+  (with tests).
+- The table keeps the number of rows shown when it is drawn again.
+
 ## [6.4.1]
 
 14 nov 2026

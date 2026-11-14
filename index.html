@@ -488,8 +488,7 @@
         /* grafieken */
         .results.stale #graph,
         .results.stale #graph_tabs,
-        .results.stale #datatable,
-        .results.stale #clickdata {
+        .results.stale #datatable {
             opacity: 0.4;
         }
 
@@ -631,8 +630,32 @@
             text-decoration: underline;
         }
 
-        #clickdata {
-            margin-top: 8px;
+        /* Aflezen: de waarden bij het aangeklikte punt, en de rij in de tabel */
+        .read_label {
+            position: absolute;
+            z-index: 2;
+            padding: 3px 7px;
+            background: rgba(255, 255, 255, 0.92);
+            border: 1px solid #d97706;
+            border-radius: 4px;
+            color: #111827;
+            font-size: 0.85rem;
+            line-height: 1.35;
+            white-space: nowrap;
+            pointer-events: none;
+        }
+
+        #datatable tbody tr[data-row] {
+            cursor: pointer;
+        }
+
+        #datatable tbody tr[data-row]:hover td {
+            background: #f9fafb;
+        }
+
+        tr.mt-read-row td,
+        #datatable tbody tr.mt-read-row:hover td {
+            background: #fef3c7;
         }
 
         /* kop van de modelkaart: titel en de keuze Tekst | Tekst + grafisch */
@@ -1217,7 +1240,6 @@
                     <label title="Uit: de verticale as wordt automatisch geschaald"><input type="checkbox" id="yaxis_zero" checked> verticale as vanaf 0</label>
                     <button id="download_png" type="button" class="small_action" hidden title="Sla deze grafiek op als plaatje (PNG), bijvoorbeeld voor een verslag">Download grafiek</button>
                 </div>
-                <div id="clickdata"></div>
             </section>
 
             <section class="card results area_table" aria-label="Tabel">
