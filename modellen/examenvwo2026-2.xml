@@ -1,0 +1,25 @@
+<modelleertaal>
+N = 100000
+<modelregels>
+'Examen vwo 2026-II Phobos (model 2)
+v = sqrt(2*Ek / m)
+Fmpz = m*v^2 / R
+FN = Fz - Fmpz
+Fw = f*FN
+dEk = -Fw*ds
+Ek = Ek + dEk
+s = s + ds
+als Ek < 0 dan stop eindals
+</modelregels>
+<startwaarden>
+s = 0 'm
+ds = 10 'm
+f = 0,25
+m = 1,0E4 'kg
+R = 1,11E4 'm
+g = 5,7E-3 'm/s2
+Fz = m*g 'N
+v = 7,5 'm/s
+Ek = 1/2*m*v^2 'J
+</startwaarden>
+</modelleertaal>

@@ -1,5 +1,15 @@
 # Changelog
 
+## [Unreleased]
+
+### Modellen
+
+- Add Examen vwo 2023-II *Fietshelm* (with answer) and 2026-II *Sporen op
+  Phobos* (model 2). Checked against all natuurkunde havo/vwo exams on
+  examenblad.nl from 2021 to 2026 (no exams in 2020): these were the only
+  missing exams with modelregels. Havo has no modelling questions; 2022-II
+  (vwo) describes a computermodel but does not print it.
+
 ## [6.2]
 
 11 nov 2026

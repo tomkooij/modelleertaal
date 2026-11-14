@@ -82,7 +82,9 @@ describe('autoplot.js - kies automatisch relevante grafieken', function() {
             if (/\.\.\.|…/.test(model.modelregels + model.startwaarden)) return; // in te vullen door leerling
             var analysis = run_model(model, 500);
             assert.isAbove(analysis.graphs.length, 0, fn);
-            assert.isNotNull(analysis.time, fn);
+            // examen 2026-II Phobos loopt over de afstand s (stapjes ds), zonder tijd
+            if (fn == 'examenvwo2026-2.xml') assert.equal(analysis.graphs[0].x, 's', fn);
+            else assert.isNotNull(analysis.time, fn);
             count += 1;
         });
         assert.isAbove(count, 5);
