@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [6.3]
+
+14 nov 2026
+
 ### Grafisch model
 
 Closer to the graphical models in the exams (2018-I, 2026-II):
