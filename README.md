@@ -23,7 +23,9 @@ middelbare school kan doorrekenen.
 
 [![De webapp: tekstmodel, automatische grafieken en de vorige run in grijs](images/webapp-tekst.png)](https://tomkooij.github.io/modelleertaal)
 
-De webapp is gemaakt voor leerlingen: je moet hem zonder handleiding kunnen gebruiken.
+De webapp is gemaakt voor leerlingen: je moet hem zonder handleiding kunnen gebruiken. De belangrijkste ontwerpeis voor
+de UI is: Geen knoppencursus nodig! Deze eis komt voort uit mijn aanleiding om dit ooit te bouwen: Ik snapte zelf niet
+hoe je een grafiek kon maken in de software die ik op school gebruikte voor numerieke modellen. Laat staan leerlingen.
 
 - **Model en Run.** Kies een examenmodel of begin met een leeg model. Typ de *modelregels* en
   *startwaarden* en druk op **Run** (of Ctrl+Enter).
