@@ -27,13 +27,23 @@ De webapp is gemaakt voor leerlingen: je moet hem zonder handleiding kunnen gebr
 de UI is: Geen knoppencursus nodig! Deze eis komt voort uit mijn aanleiding om dit ooit te bouwen: Ik snapte zelf niet
 hoe je een grafiek kon maken in de software die ik op school gebruikte voor numerieke modellen. Laat staan leerlingen.
 
+Waarom de webapp werkt zoals hij werkt (de didactische uitgangspunten, en per onderdeel de overweging erachter)
+staat in **[DIDACTIEK.md](DIDACTIEK.md)**.
+
 - **Model en Run.** Kies een examenmodel of begin met een leeg model. Typ de *modelregels* en
   *startwaarden* en druk op **Run** (of Ctrl+Enter).
 - **Automatische grafieken.** Na Run kiest de webapp zelf de grafieken die bij het model passen: (x,t), (v,t),
-  (a,t), de baan (y,x), ... Klik op een miniatuur om die groot te zien. Klik op een punt om de waarden af te lezen.
+  (a,t), de baan (y,x), ... Klik op een miniatuur om die groot te zien. Een andere grootheid kies je op de as zelf.
+- **Grafieken aflezen.** Klik op een punt in de grafiek: een stip met hulplijnen naar beide assen, zoals je op
+  papier afleest, en de rij in de tabel licht op (en andersom: klik op een rij). Bij één grafiek staat ook de
+  helling erbij, met een korte raaklijn (`helling Δv/Δt = 9,81`): zo bepaal je bijvoorbeeld de versnelling uit
+  het (v,t)-diagram.
+- **Eenheden.** Schrijf een eenheid tussen rechte haken in het commentaar achter een startwaarde
+  (`v = 0 '[m/s]`) en hij staat op de assen (`v (m/s)`), in de tabel en in de downloads.
 - **Stap voor stap.** Met **Stap** reken je het model regel voor regel door. Onder de runbalk staat de
   berekening met ingevulde getallen (`v = v + a*dt  →  v = 0,981 + 9,78 × 0,1 = 1,959`), de regel licht op
-  in de editor en de waarde die net veranderde in de tabel. Zo zie je hoe de rekenlus werkt.
+  in de editor en de waarde die net veranderde in de tabel. In de grafiek groeien de punten mee over de
+  laatste run. Zo zie je hoe de rekenlus werkt.
 - **Runs vergelijken.** De vorige run blijft zichtbaar als grijze lijn. Verander een startwaarde (bijvoorbeeld `k`),
   druk op Run en zie wat er veranderd is; onder de grafiek staat wat er anders is (`k = 0,37 → nu 0,50`).
   Met **Houd vast** blijft een grijze lijn staan als referentie.
@@ -41,14 +51,17 @@ hoe je een grafiek kon maken in de software die ik op school gebruikte voor nume
   typefouten (*Bedoel je 'Fres'?*). Een waarschuwing als een waarde geen geldig getal meer is (delen door nul,
   *dt* te groot).
 - **Hulp bij het modelleren.** Naast het aantal iteraties laat de webapp zien hoe lang het model loopt
-  (`× dt = 50`). Heeft het model een `stop` die niet bereikt wordt, dan meldt de webapp dat en biedt aan om het
+  (`× dt = 50 s`). Heeft het model een `stop` die niet bereikt wordt, dan meldt de webapp dat en biedt aan om het
   aantal iteraties te verdubbelen. Na Run rekent de webapp het model ook door met de halve tijdstap; hangt de
-  uitkomst daarvan af, dan krijg je de melding dat *dt* te groot is.
+  uitkomst daarvan af, dan krijg je de melding dat *dt* te groot is. Een tip wijst veelgemaakte fouten aan,
+  zoals een tijd die niet loopt (`t = t + dt` vergeten) of een startwaarde die nergens gebruikt wordt.
 - **Tabel** met alle waarden, en downloads: de tabel voor Excel (TSV) en de grafiek als plaatje (PNG).
 - **Je werk raakt niet kwijt.** Werk dat niet bewaard is, blijft in de browser staan: bij je volgende bezoek kun
   je verder. **Bewaar** slaat het model op als bestand, **Open** opent het weer.
 - **Deel link** kopieert een link met het (aangepaste) model en de titel erin: deel die met een leerling,
   een collega of in je lesmateriaal.
+- **Opdracht bij een model** (voor docenten). Schrijf in *Meer opties* een opdracht bij het model; die staat
+  boven het model en gaat mee in Deel link en Bewaar. Zo deel je een model met puntjes en een vraag in één link.
 
 ### Grafisch model
 
@@ -216,6 +229,8 @@ Fres: Fz, Fw
 - `N = ...` (buiten de secties) is het aantal iteraties.
 - `<grafisch>` (optioneel, sinds 6.3) geeft aanwijzingen voor het grafische model, bijvoorbeeld de pijlen van
   een regel met `...` zoals in de figuur van het examen.
+- `<opdracht>` (optioneel) is de opdracht bij het model; `<indeling>` (optioneel) bewaart de posities van
+  versleepte symbolen in het grafische model.
 - De titel staat niet in het bestand, maar in `modellen/models.js` (of is de bestandsnaam).
 
 De exacte specificatie, met alle regels en eigenaardigheden van de parser, staat in **[BogusXML.md](BogusXML.md)**.

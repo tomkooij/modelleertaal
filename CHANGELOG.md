@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+### Documentatie
+
+- New `DIDACTIEK.md`: the didactic principles of the webapp and, per part, the reason behind
+  it. The README links to it and describes the new features that matter for teaching
+  (reading off and slope, units, tips, opdracht bij een model).
+
 ### Eenheden
 
 - A unit in square brackets in the comment after a startwaarde is recognised:

@@ -29,6 +29,8 @@ het label ook in de PNG staat.
 
 ## Uitgangspunten (gelden voor elk punt)
 
+De uitgewerkte versie, met per onderdeel de didactische overweging, staat in [DIDACTIEK.md](DIDACTIEK.md).
+
 - **Geen knoppencursus.** Een leerling uit 5 vwo moet zonder uitleg kunnen werken. Liever een
   knop weghalen dan een knop toevoegen. Nieuwe functies zitten op de plek waar je kijkt
   (in de grafiek, in het diagram, in de editor) en niet in een menu.
