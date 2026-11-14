@@ -1,5 +1,13 @@
 # Changelog
 
+## [6.4.1]
+
+14 nov 2026
+
+- The version at the bottom of the webapp was still v6.2; it is now the version of
+  `package.json`. `npm version` keeps them equal (`tools/sync-version.js`), a test and
+  the release workflow check it.
+
 ## [6.4]
 
 14 nov 2026
