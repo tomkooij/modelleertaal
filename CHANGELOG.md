@@ -46,6 +46,20 @@ Closer to the graphical models in the exams (2018-I, 2026-II):
   examenblad.nl from 2021 to 2026 (no exams in 2020): these were the only
   missing exams with modelregels. Havo has no modelling questions; 2022-II
   (vwo) describes a computermodel but does not print it.
+### Webapp
+
+- Error in the model: a cross (✕) next to the line number of the line with the
+  error; hover over it to see the message (gh-42). It stays until the model is
+  edited or run, like the red line.
+- "Functies" under the modelregels: a list of all functions (sin, sinr, wortel,
+  ln, log, entier, teken, min/max, ...) with an explanation and an example
+  (gh-54). "Onbekende functie" points to this list. The list is
+  `FUNCTIONS` in `evaluator.js`; a test checks that it matches the code
+  generator and that every example is correct.
+- Graph: a line for x = 0 and y = 0 when it lies inside the graph (gh-37),
+  also in the PNG of "Download grafiek".
+- Closed: gh-38 (custom Flot, see `README.CUSTOM-FLOT.md`) and gh-49 (empty PNG
+  with "Opslaan als": replaced by "Download grafiek" in 6.2).
 
 ## [6.2]
 

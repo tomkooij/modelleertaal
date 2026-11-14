@@ -394,7 +394,7 @@ CodeGenerator.prototype.parseNode = function(node) {
                     case 'max': return "Math.max("+this.parseNode(node.expr)+")";
 
                     default:
-                        var err1 = new SyntaxError("Onbekende functie '" + node.func + "(...)'. Bedoel je een vermenigvuldiging? Schrijf dan: " + node.func + " * (...)");
+                        var err1 = new SyntaxError("Onbekende functie '" + node.func + "(...)'. Bedoel je een vermenigvuldiging? Schrijf dan: " + node.func + " * (...). Kijk bij 'Functies' onder de modelregels welke functies er zijn.");
                         throw_custom_error(err1, node.astName, node.lineNo);
                     }
                 break;
@@ -750,6 +750,27 @@ function throw_custom_error(err, ast_name, line_number) {
     throw err;
 }
 
+// The functions that can be used in the modelregels and startwaarden
+// (see CodeGenerator.parseNode, case 'Function'). Shown in the app ("Functies").
+// [name, example, explanation]; names that do the same are on one row.
+var FUNCTIONS = [
+    [['sin', 'cos', 'tan'], 'sin(30) = 0,5', 'sinus, cosinus, tangens van een hoek in graden'],
+    [['sinr', 'cosr', 'tanr'], 'sinr(pi/6) = 0,5', 'sinus, cosinus, tangens van een hoek in radialen'],
+    [['arcsin', 'arccos', 'arctan'], 'arcsin(0,5) = 30', 'inverse sinus, cosinus, tangens; de hoek in graden'],
+    [['arcsinr', 'arccosr', 'arctanr'], 'arcsinr(0,5) = 0,52', 'inverse sinus, cosinus, tangens; de hoek in radialen'],
+    [['sqrt', 'wortel'], 'sqrt(9) = 3', 'wortel'],
+    [['sqr'], 'sqr(3) = 9', 'kwadraat (hetzelfde als 3^2)'],
+    [['exp'], 'exp(1) = 2,718', 'e-macht: e^x'],
+    [['ln'], 'ln(exp(2)) = 2', 'natuurlijke logaritme (grondtal e)'],
+    [['log'], 'log(1000) = 3', 'logaritme met grondtal 10'],
+    [['abs'], 'abs(-2) = 2', 'absolute waarde: het getal zonder minteken'],
+    [['sign', 'teken'], 'sign(-2) = -1', 'teken: -1 als negatief, 0 als nul, 1 als positief'],
+    [['round'], 'round(2,5) = 3', 'afronden op een geheel getal'],
+    [['entier'], 'entier(2,7) = 2', 'afronden naar beneden (het gehele getal eronder)'],
+    [['min', 'max'], 'max(2; 5) = 5', 'kleinste / grootste van twee of meer getallen']
+];
+
+exports.FUNCTIONS = FUNCTIONS;
 exports.Model = modelmodule.Model; // from model.js
 exports.ModelregelsEvaluator = ModelregelsEvaluator;
 exports.CodeGenerator = CodeGenerator;
