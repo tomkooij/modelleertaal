@@ -36,6 +36,17 @@
   get a second axis on the right ("(as rechts)" next to the checkbox). New module `assen.js`
   (with tests).
 
+### Controle van het model
+
+- Quiet check while typing: 1 s after the last key the model is parsed. A syntax error gives
+  only a red dot next to the line number, with the message as title (hover). No message bar,
+  the cursor does not move. The full message comes with Run, as before. Lines with `...`
+  are not an error.
+- Hints after Run for common mistakes, as information and only when there is no other
+  message (one at a time): the time does not run (`t = t + dt` is missing), a startwaarde
+  that is not used, and a startwaarde that is overwritten in the modelregels before it is
+  used. New module `hints.js` (with tests).
+
 ## [6.4.1]
 
 14 nov 2026

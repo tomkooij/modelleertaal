@@ -339,13 +339,13 @@ aslabels (links-midden en onder-midden van de grafiek, vormgegeven als label met
 pijltje). "Meerdere grafieken in één figuur" blijft een vinkje; hebben de gekozen grootheden
 een bereik dat meer dan een factor 20 verschilt, gebruik dan automatisch een tweede as rechts.
 
-### P3-5 Stille controle tijdens het typen
+### P3-5 Stille controle tijdens het typen (gebouwd)
 
 Controleer 1 s na de laatste toetsaanslag de syntax (alleen parsen). Bij een fout: alleen een rode
 stip in de regelnummerkolom met de melding als `title`; geen meldingsbalk en geen cursorsprong.
 De volledige melding komt zoals nu bij Run. Regels met `...` zijn geen fout.
 
-### P3-6 Hints bij veelgemaakte modelfouten
+### P3-6 Hints bij veelgemaakte modelfouten (gebouwd)
 
 Na Run, als informatie (nooit blokkerend), hoogstens één hint tegelijk:
 - een startwaarde die nergens wordt gebruikt: "'k' wordt niet gebruikt in de modelregels";
