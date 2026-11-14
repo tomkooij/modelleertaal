@@ -454,6 +454,19 @@
             color: #fff;
         }
 
+        /* gh-42: a cross next to the line with the error; hover for the message */
+        .mt-error-markers {
+            width: 16px;
+        }
+
+        .mt-error-marker {
+            display: block;
+            color: #fff;
+            font-weight: bold;
+            text-align: center;
+            cursor: help;
+        }
+
         .mt-trace-line {
             background: #dbeafe;
         }
@@ -991,6 +1004,37 @@
             background: #eff6ff;
         }
 
+        /* Functies: list of the functions under the modelregels (gh-54) */
+        .functies {
+            margin-top: 6px;
+            font-size: 0.85rem;
+        }
+
+        #functies_tabel table {
+            border-collapse: collapse;
+            margin-top: 4px;
+            width: 100%;
+        }
+
+        #functies_tabel td {
+            padding: 2px 8px 2px 0;
+            vertical-align: top;
+        }
+
+        #functies_tabel td:first-child {
+            font-family: monospace;
+            width: 38%;
+        }
+
+        #functies_tabel tr + tr td {
+            border-top: 1px solid #e5e7eb;
+        }
+
+        #functies_tabel .voorbeeld {
+            font-family: monospace;
+            color: var(--muted);
+        }
+
         /* meer opties */
         details summary {
             cursor: pointer;
@@ -1123,6 +1167,10 @@
                     <div>
                         <h2>Modelregels</h2>
                         <textarea id="modelregels" rows="15" cols="30" spellcheck="false">//Modelregels:</textarea>
+                        <details class="functies" id="functies">
+                            <summary>Functies</summary>
+                            <div id="functies_tabel"></div>
+                        </details>
                     </div>
                     <div>
                         <h2>Startwaarden</h2>

@@ -91,6 +91,7 @@ function ModelleertaalApp(params) {
   this.dom_view_switch = ".view_switch";
   this.dom_workspace = ".workspace";
   this.dom_grafisch_tabel = "#grafisch_tabel";
+  this.dom_functies_tabel = "#functies_tabel";
   this.weergave = 'tekst';   // 'tekst' or 'grafisch' (text and diagram)
   this.grafisch_stijl = 'examen';   // style of the diagram: 'examen' or 'kleur' (see grafisch.js)
   this.dom_download_grafisch = "#download_grafisch";
@@ -102,6 +103,7 @@ function ModelleertaalApp(params) {
   this.model_title = '';
 
   this.read_model();
+  this.fill_functies();
 
   function run_from_keyboard() {
     $(self.dom_run).click();
@@ -110,6 +112,7 @@ function ModelleertaalApp(params) {
   if ((this.CodeMirror) && (typeof(CodeMirror) == 'function')) {
     var codemirror_options = {
       lineNumbers: true,
+      gutters: ['CodeMirror-linenumbers', 'mt-error-markers'],
       lineWrapping: true,
       viewportMargin: Infinity,
       mode: "modelleertaal",
@@ -2046,7 +2049,7 @@ ModelleertaalApp.prototype.show_error = function(err) {
   }
   this.show_message(type, title, err.message);
   this.print_status(type == 'error' ? "Fout in het model." : "Model niet uitgevoerd.");
-  this.highlight_error(line, name);
+  this.highlight_error(line, name, err.message);
   this.reveal(this.dom_message);
   if (this.results_available()) this.set_stale(true);
 };
@@ -2514,6 +2517,15 @@ ModelleertaalApp.prototype.plot_graph = function(dataset, x_label, y_label) {
     return String(Number(Number(val).toPrecision(self.precision)));
   }
 
+  function axis_lines(axes) {
+    // the lines x = 0 and y = 0 when they are inside the graph (gh-37)
+    var lines = [];
+    function inside(axis) { return axis.min < 0 && axis.max > 0; }
+    if (inside(axes.yaxis)) lines.push({yaxis: {from: 0, to: 0}, color: '#4b5563', lineWidth: 1});
+    if (inside(axes.xaxis)) lines.push({xaxis: {from: 0, to: 0}, color: '#4b5563', lineWidth: 1});
+    return lines;
+  }
+
   var axis_font = {
     size: 13,
     lineHeight: 14,
@@ -2539,7 +2551,8 @@ ModelleertaalApp.prototype.plot_graph = function(dataset, x_label, y_label) {
       hoverable: true,
       clickable: true,
       borderWidth: 1,
-      borderColor: '#9ca3af'
+      borderColor: '#9ca3af',
+      markings: axis_lines
     },
     axisLabels: {
       show: true
@@ -3021,8 +3034,22 @@ ModelleertaalApp.prototype.get_editor = function(editor_name) {
 };
 
 
-ModelleertaalApp.prototype.highlight_error = function(line, editor_name) {
+ModelleertaalApp.prototype.fill_functies = function() {
+  // "Functies" under the modelregels: the functions that can be used (gh-54)
+  var table = $('<table>');
+  evaluator_js.FUNCTIONS.forEach(function(row) {
+    table.append($('<tr>').append(
+      $('<td>').text(row[0].map(function(name) { return name + '()'; }).join(' ')),
+      $('<td>').text(row[2]).append($('<br>'), $('<span class="voorbeeld">').text(row[1]))
+    ));
+  });
+  $(this.dom_functies_tabel).empty().append(table);
+};
+
+
+ModelleertaalApp.prototype.highlight_error = function(line, editor_name, message) {
   // highlight line with error, until the model is edited or run.
+  // A cross in the gutter shows the message on hover (gh-42).
 
   var editor = this.get_editor(editor_name);
   if (editor === null) return false;
@@ -3039,6 +3066,9 @@ ModelleertaalApp.prototype.highlight_error = function(line, editor_name) {
     handle: editor.addLineClass(line - 1, 'background', 'mt-error-line')
   };
   editor.addLineClass(this.error_highlight.handle, 'gutter', 'mt-error-gutter');
+  var marker = $('<span class="mt-error-marker" role="img">').text('✕')
+    .attr({'title': message || 'Fout in deze regel', 'aria-label': message || 'Fout in deze regel'});
+  editor.setGutterMarker(this.error_highlight.handle, 'mt-error-markers', marker[0]);
   editor.setCursor({line: line - 1, ch: editor.getLine(line - 1).length});
   editor.focus();
 };
@@ -3050,6 +3080,7 @@ ModelleertaalApp.prototype.remove_highlight_error = function() {
   this.error_highlight = undefined;
   highlight.editor.removeLineClass(highlight.handle, 'background', 'mt-error-line');
   highlight.editor.removeLineClass(highlight.handle, 'gutter', 'mt-error-gutter');
+  highlight.editor.setGutterMarker(highlight.handle, 'mt-error-markers', null);
 };
 
 
