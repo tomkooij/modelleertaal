@@ -93,6 +93,8 @@ function ModelleertaalApp(params) {
   this.dom_grafisch_tabel = "#grafisch_tabel";
   this.weergave = 'tekst';   // 'tekst' or 'grafisch' (text and diagram)
   this.grafisch_stijl = 'examen';   // style of the diagram: 'examen' or 'kleur' (see grafisch.js)
+  this.grafisch_formules = false;   // a box with the formula next to every symbol (exams 2015, 2016)
+  this.dom_grafisch_formules = "#grafisch_formules";
   this.dom_download_grafisch = "#download_grafisch";
   this.dom_grafisch_reset = "#grafisch_herstel";
   this.dom_grafisch_form = "#grafisch_eigenschappen";
@@ -258,6 +260,10 @@ function ModelleertaalApp(params) {
   // Examen | Kleur: style of the diagram
   $('.stijl_switch').on('click', 'button', function() {
     self.set_grafisch_stijl($(this).attr('data-stijl'), true);
+  });
+  // Formules: a box with the formula or beginwaarde next to every symbol
+  $(this.dom_grafisch_formules).on('change', function() {
+    self.set_grafisch_formules($(this).prop('checked'), true);
   });
   // Herkende elementen: a click on a row selects the element in the diagram
   $(this.dom_grafisch_tabel).on('click', 'tr[data-id]', function() {
@@ -760,6 +766,16 @@ ModelleertaalApp.prototype.set_grafisch_stijl = function(stijl, save) {
 };
 
 
+ModelleertaalApp.prototype.set_grafisch_formules = function(on, save) {
+  // the formulas next to the symbols, as in the exams 2015-I and 2016-I
+  this.grafisch_formules = !!on;
+  $(this.dom_grafisch_formules).prop('checked', this.grafisch_formules);
+  // the boxes need more room: a new layout
+  if (this.grafisch_open() && this.grafisch_g) this.draw_grafisch_model();
+  if (save) this.save_settings();
+};
+
+
 ModelleertaalApp.prototype.set_weergave = function(weergave, save) {
   // 'tekst': only the text. 'grafisch': the diagram above the text, in the same card.
   var self = this;
@@ -815,7 +831,7 @@ ModelleertaalApp.prototype.draw_grafisch_model = function() {
     return;
   }
   this.grafisch_g = g;
-  this.grafisch_layout = grafisch.layout(g, {stijl: this.grafisch_stijl});
+  this.grafisch_layout = grafisch.layout(g, {stijl: this.grafisch_stijl, formules: this.grafisch_formules});
   // keep the positions the user dragged (while editing the same model)
   var pos = this.grafisch_layout.pos;
   for (var id in this.grafisch_moved) {
@@ -864,6 +880,7 @@ ModelleertaalApp.prototype.render_grafisch_model = function() {
   // The drawing only grows while dragging, so it does not jump under the mouse.
   var self = this;
   var opts = {bounds: this.grafisch_bounds, values: this.grafisch_values(), stijl: this.grafisch_stijl,
+              formules: this.grafisch_formules,
               selected: this.grafisch_form_new ? undefined : this.grafisch_selected};
   var view = $(this.dom_grafisch_svg);
   view.html(grafisch.toSVG(this.grafisch_g, this.grafisch_layout, opts));
@@ -1466,7 +1483,7 @@ ModelleertaalApp.prototype.download_grafisch_model = function() {
     }
     lay = undefined;
   }
-  this.save_string('<?xml version="1.0" encoding="UTF-8"?>\n' + grafisch.toSVG(g, lay, {stijl: this.grafisch_stijl}), this.file_name('.svg', 'grafisch model'));
+  this.save_string('<?xml version="1.0" encoding="UTF-8"?>\n' + grafisch.toSVG(g, lay, {stijl: this.grafisch_stijl, formules: this.grafisch_formules}), this.file_name('.svg', 'grafisch model'));
 };
 
 
@@ -1555,6 +1572,7 @@ ModelleertaalApp.prototype.load_settings = function() {
   $(this.dom_precision).val(this.precision);
   $(this.dom_yaxis_zero).prop('checked', !this.yaxis_autoscale);
   this.set_grafisch_stijl(settings.grafisch_stijl, false);
+  this.set_grafisch_formules(settings.grafisch_formules === true, false);
   // Tekst | Tekst + grafisch is not remembered: every visit starts with Tekst
   this.set_weergave('tekst', false);
 };
@@ -1562,7 +1580,8 @@ ModelleertaalApp.prototype.load_settings = function() {
 
 ModelleertaalApp.prototype.save_settings = function() {
   storage('set', JSON.stringify({precision: this.precision, yaxis_zero: !this.yaxis_autoscale,
-                                 grafisch_stijl: this.grafisch_stijl}), SETTINGS_KEY);
+                                 grafisch_stijl: this.grafisch_stijl,
+                                 grafisch_formules: this.grafisch_formules}), SETTINGS_KEY);
 };
 
 

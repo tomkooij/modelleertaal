@@ -15,6 +15,12 @@ Closer to the graphical models in the exams (2018-I, 2026-II):
   style Kleur still shows them. Switching the style makes a new layout.
 - The stopvoorwaarde is a diamond with its condition, top left, without
   arrows (exam 2026-II). Click it to see the condition.
+- New checkbox **formules** next to Examen | Kleur: a box with the formula or
+  beginwaarde next to every symbol, as in the exams 2015-I and 2016-I
+  (`a = Fres/m`, `y = 0,68`; `als ... dan ...` on more lines). The layout makes
+  room for the boxes. Remembered for the next visit.
+- `x = x + v*dt` with `v` a toestandsvariabele: in the exam style the valve has
+  no name (exams 2015-I, 2023-II), only the arrow from `v`.
 
 ### Modellen
 

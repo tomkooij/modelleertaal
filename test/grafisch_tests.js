@@ -232,6 +232,36 @@ describe('grafisch.js - tekstmodel naar grafisch model', function() {
         assert.deepEqual(ln.byElement['~s1'].modelregels, [5]);
     });
 
+    it('x = x + v*dt met v een toestand: ventiel zonder naam in de examenstijl (2015-I)', function() {
+        var g = analyse("m=2\nk=0.5\nv=1\nx=0\nt=0\ndt=0.1", "F = -k*x\na = F/m\nv = v + a*dt\nx = x + v*dt\nt = t + dt");
+        var flow = g.elements[g.elements.x.inflows[0]];
+        assert.isTrue(flow.stockRate);
+        assert.isFalse(!!g.elements.a.stockRate, 'a is geen toestand');
+        var symbol = function(svg, id) { return svg.split('data-id="' + id + '"')[1].split('</g>')[0]; };
+        assert.notInclude(symbol(grafisch.toSVG(g), flow.id), '<text', 'examen: geen naam');
+        assert.include(symbol(grafisch.toSVG(g, undefined, {stijl: 'kleur'}), flow.id), '>v<', 'kleur: wel');
+    });
+
+    it('formules bij de symbolen (examens 2015-I en 2016-I)', function() {
+        var g = analyse("m=2\nC=8600\nyB=1,12\nv=0\ny=0,68\nt=0\ndt=0,001",
+            "als y < yB dan F = C*(yB - y) anders F = 0 eindals\na = F/m\nv = v + a*dt\ny = y + v*dt\nt = t + dt");
+        var zonder = grafisch.toSVG(g);
+        assert.notInclude(zonder, 'class="formula"', 'standaard geen formules');
+        var met = grafisch.toSVG(g, grafisch.layout(g, {formules: true}), {formules: true});
+        assert.include(met, '>m = 2<');
+        assert.include(met, '>y = 0,68<', 'beginwaarde van een toestand');
+        assert.include(met, '>a = F/m<');
+        assert.include(met, '>F = als y &lt; yB dan C·(yB − y)<', 'als ... dan: eerste regel');
+        assert.include(met, '>als niet (y &lt; yB) dan 0<', 'tweede regel');
+        var flow = g.elements.y.inflows[0];
+        assert.notInclude(met.split('data-id="' + flow + '"')[1].split('</g>')[0], 'formula',
+                          'y = y + v*dt: geen kader, zoals in 2015-I');
+        // the layout makes room for the boxes
+        var p0 = grafisch.layout(g).pos, p1 = grafisch.layout(g, {formules: true}).pos;
+        assert.isAbove(Math.abs(p1.C.x - p1.yB.x), Math.abs(p0.C.x - p0.yB.x) - 1);
+        assert.isBelow(p1.C.y, p0.C.y, 'meer ruimte tussen de lagen');
+    });
+
     it('alle voorbeeldmodellen geven een SVG', function() {
         fs.readdirSync('modellen').filter(function(f) {
             return /\.xml$/.test(f) && f != 'leeg.xml';
@@ -242,6 +272,9 @@ describe('grafisch.js - tekstmodel naar grafisch model', function() {
             var svg = grafisch.toSVG(grafisch.analyse(ev.startwaarden_ast, ev.modelregels_ast));
             assert.match(svg, /^<svg[^>]*viewBox="-?\d+ -?\d+ \d+ \d+"/, f);
             assert.notMatch(svg, /NaN|undefined/, f);
+            var g = grafisch.analyse(ev.startwaarden_ast, ev.modelregels_ast);
+            var met = grafisch.toSVG(g, grafisch.layout(g, {formules: true}), {formules: true});
+            assert.notMatch(met, /NaN|undefined|null/, f + ' met formules');
         });
     });
 });

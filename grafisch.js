@@ -377,6 +377,9 @@ function analyse(startwaarden_ast, modelregels_ast) {
                          from: term.sign < 0 ? name : null, to: term.sign > 0 ? name : null,
                          term: code(term.expr, 4, true), code: code(term.expr),
                          definition: fmt(term.expr), rate: r ? label : null,
+                         // x = x + v * dt with v a toestandsvariabele: in the exams a valve
+                         // without a name, with an arrow from v (2015-I, 2023-II)
+                         stockRate: !!(r && isVar(r) && isStock[r.name] && r.name != time),
                          deps: without(variables(term.expr), [dt])};
                     flows.push(add(f));
                 }
@@ -620,6 +623,7 @@ function view(g, opts) {
 
 function layout(g, opts) {
     // opts.stijl: 'examen' (default) or 'kleur': the exam style leaves out some elements (see view)
+    // opts.formules: room for the boxes with formulas (see toSVG)
     var vw = view(g, opts);
     var pos = {}, i, j, f, s, el, chain, links;
     var flowGeom = {};
@@ -810,7 +814,17 @@ function layout(g, opts) {
         layers[maxUp] = (layers[maxUp] || []).concat(unused);
     }
 
-    var belowY = L.stockH / 2 + (below == 2 ? 150 : below == 1 ? 110 : 60);
+    // with formulas (opts.formules): room for the boxes below the names
+    var layerH = L.layerH + (opts && opts.formules ? 30 : 0);
+    var boxW = function(id) {
+        var t = opts && opts.formules ? formulaText(g.elements[id]) : null;
+        if (t === null) return 0;
+        var parts = String(t).split('; '), w = 0;
+        for (var m = 0; m < parts.length && m < 4; m++) w = Math.max(w, 6.4 * Math.min(parts[m].length, 34) + 8);
+        return w;
+    };
+    var need = function(a, b) { return Math.max(L.gap, (boxW(a) + boxW(b)) / 2 + 14); };
+    var belowY = L.stockH / 2 + (below == 2 ? 150 : below == 1 ? 110 : 60) + (layerH - L.layerH);
     function place(layer, y, neighbours) {
         var wanted = [];
         for (var k = 0; k < layer.length; k++) {
@@ -827,7 +841,7 @@ function layout(g, opts) {
         for (var it = 0; it < 200; it++) {
             var moved = false;
             for (k = 0; k + 1 < wanted.length; k++) {
-                var over = L.gap - (wanted[k + 1].x - wanted[k].x);
+                var over = need(wanted[k].id, wanted[k + 1].id) - (wanted[k + 1].x - wanted[k].x);
                 if (over > 0.5) { wanted[k].x -= over / 2; wanted[k + 1].x += over / 2; moved = true; }
             }
             if (!moved) break;
@@ -835,10 +849,10 @@ function layout(g, opts) {
         for (k = 0; k < wanted.length; k++) pos[wanted[k].id] = {x: wanted[k].x, y: y};
     }
     for (var up = 1; up <= maxUp; up++) {
-        if (layers[up]) place(layers[up], -up * L.layerH, function(id) { return targets[id].length ? targets[id] : sources[id]; });
+        if (layers[up]) place(layers[up], -up * layerH, function(id) { return targets[id].length ? targets[id] : sources[id]; });
     }
     for (var down = 1; layers[-down]; down++) {
-        place(layers[-down], belowY + (down - 1) * L.layerH, function(id) { return sources[id].length ? sources[id] : targets[id]; });
+        place(layers[-down], belowY + (down - 1) * layerH, function(id) { return sources[id].length ? sources[id] : targets[id]; });
     }
     // a few sweeps: move every element towards all its neighbours (fewer long, crossing arrows)
     var both = function(id) { return sources[id].concat(targets[id]); };
@@ -989,6 +1003,7 @@ function toSVG(g, lay, opts) {
     // opts.used: filled with the bounds of this drawing
     // opts.selected: id of the selected element (a toestandsvariabele gets + buttons for new flows)
     // opts.values: name --> {first, last}: values after a run, in the tooltip
+    // opts.formules: a box with the formula or beginwaarde next to every symbol (exams 2015-I, 2016-I)
     opts = opts || {};
     lay = lay || layout(g, opts);
     var vw = view(g, opts);
@@ -1104,8 +1119,8 @@ function toSVG(g, lay, opts) {
                 if (exam) {
                     // ventiel: a circle on the pipe with a tap. An arrow from above: the tap below
                     var flip = above[id] && !bottom[id];
-                    out.push(tip + valve(x, y, valveDir[id], flip, S) +
-                        name(x, flip && valveDir[id] != 'v' ? y + 7 : y, S.valve, shorten(label), id));
+                    out.push(tip + valve(x, y, valveDir[id], flip, S) + (el.stockRate ? '' :
+                        name(x, flip && valveDir[id] != 'v' ? y + 7 : y, S.valve, shorten(label), id)));
                 } else {
                     out.push(tip + valve(x, y, valveDir[id], false, S) + name(x, y, 12, shorten(label), id, 'small'));
                 }
@@ -1156,6 +1171,17 @@ function toSVG(g, lay, opts) {
                     name(x, y, S.aux, label, id));
                 grow(x, y + 10, 30);
         }
+        if (opts.formules) {
+            // a box with the formula or beginwaarde (exams 2015-I and 2016-I): above a stock,
+            // otherwise below the name
+            var ftext = formulaText(el);
+            if (ftext !== null) {
+                var fr = el.kind == 'flow' ? S.valve : el.kind == 'const' ? S.constant : S.aux;
+                var named = !(el.kind == 'flow' && exam && el.stockRate) && !bottom[id];
+                var ftop = el.kind == 'stock' ? y - L.stockH / 2 - 24 : y + fr + (named ? 22 : 6);
+                out.push(formulaBox(x, ftop, ftext, S, grow));
+            }
+        }
         out.push('</g>');
     }
 
@@ -1183,7 +1209,8 @@ function toSVG(g, lay, opts) {
         ' font-family="' + S.font + '" font-size="' + S.size + '" fill="' + S.text + '">' +
         '<style>' + (exam ? '.name{font-style:italic}' : '.stock{font-weight:bold}') +
         '.lbl{paint-order:stroke;stroke:' + S.bg + ';stroke-width:3px;stroke-linejoin:round}' +
-        '.small{font-size:' + (exam ? 12 : 11) + 'px;fill:' + S.grey + '}</style>' +
+        '.small{font-size:' + (exam ? 12 : 11) + 'px;fill:' + S.grey + '}' +
+        'text.formula{font-size:12px;font-style:normal}</style>' +
         '<defs>' + marker('ar', S.arrow, S) + marker('ab', S.line, S) + marker('ag', S.grey, S) + '</defs>' +
         '<rect class="bg" x="' + vbX + '" y="' + vbY + '" width="' + w.toFixed(0) + '" height="' + h.toFixed(0) +
         '" fill="' + S.bg + '"/>' + out.join('') + '</svg>';
@@ -1206,6 +1233,38 @@ function valve(x, y, dir, flip, S) {
         'M' + x + ',' + (y - sg * r) + ' V' + (y - sg * t) + ' M' + (x - 4) + ',' + (y - sg * t) + ' H' + (x + 4);
     return '<circle cx="' + x + '" cy="' + y + '" r="' + r + '" fill="' + S.fill + '" stroke="' + S.line + '" stroke-width="1.5"/>' +
         '<path d="' + d + '" fill="none" stroke="' + S.line + '" stroke-width="1.5"/>';
+}
+
+function formulaText(el) {
+    // the text in the box next to a symbol (opts.formules)
+    switch (el.kind) {
+        case 'stock': return el.name + ' = ' + el.initial;
+        // x = x + v * dt with v a toestandsvariabele: no name and no box (2015-I)
+        case 'flow': return el.stockRate ? null : el.name ? el.name + ' = ' + el.definition : el.definition;
+        case 'aux':
+        case 'const': return el.name + ' = ' + el.definition;
+        default: return null;
+    }
+}
+
+function formulaBox(x, top, text, S, grow) {
+    // a white box with a black border, centered at x (as in the exams 2015-I and 2016-I).
+    // 'als ... dan ...; anders ...': one line per part, as in the exam 2015-I
+    var parts = String(text).split('; '), lines = [], i, w = 0;
+    for (i = 0; i < parts.length && i < 4; i++) {
+        lines.push(shorten(parts[i], 34));
+        w = Math.max(w, Math.round(6.4 * lines[i].length + 8));
+    }
+    var h = 4 + 15 * lines.length, left = x - w / 2;
+    grow(left, top, 0);
+    grow(left + w, top + h, 0);
+    var out = '<rect class="formula" x="' + left + '" y="' + top + '" width="' + w + '" height="' + h +
+        '" fill="#fff" stroke="' + S.line + '" stroke-width="0.8"/>';
+    for (i = 0; i < lines.length; i++) {
+        out += '<text class="formula" x="' + x + '" y="' + (top + 14 + 15 * i) + '" text-anchor="middle">' +
+            esc(lines[i]) + '</text>';
+    }
+    return out;
 }
 
 function shorten(s, n) {
