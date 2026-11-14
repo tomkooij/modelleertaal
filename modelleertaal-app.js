@@ -754,10 +754,8 @@ ModelleertaalApp.prototype.set_grafisch_stijl = function(stijl, save) {
     $(this).prop('hidden', $(this).attr('data-stijl') != now);
   });
   $(this.dom_grafisch_svg).attr('data-stijl', now);
-  if (this.grafisch_open() && this.grafisch_g) {
-    this.grafisch_bounds = null;
-    this.render_grafisch_model();
-  }
+  // the exam style leaves out some elements (formulas in the startwaarden): a new layout
+  if (this.grafisch_open() && this.grafisch_g) this.draw_grafisch_model();
   if (save) this.save_settings();
 };
 
@@ -817,7 +815,7 @@ ModelleertaalApp.prototype.draw_grafisch_model = function() {
     return;
   }
   this.grafisch_g = g;
-  this.grafisch_layout = grafisch.layout(g);
+  this.grafisch_layout = grafisch.layout(g, {stijl: this.grafisch_stijl});
   // keep the positions the user dragged (while editing the same model)
   var pos = this.grafisch_layout.pos;
   for (var id in this.grafisch_moved) {
@@ -1436,6 +1434,9 @@ ModelleertaalApp.prototype.grafisch_select = function(id) {
       break;
     case 'event':
       this.grafisch_form('Voorval', 'als ' + el.condition + ' dan ' + el.actions.join('; ') + '. ' + manual, [], []);
+      break;
+    case 'stop':
+      this.grafisch_form('Stopvoorwaarde', 'Het model stopt als ' + el.condition + '. ' + manual, [], []);
       break;
     default:
       this.grafisch_form(el.name, el.definition + '. ' + manual, [], []);

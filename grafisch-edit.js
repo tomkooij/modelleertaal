@@ -479,6 +479,12 @@ function removeFlows(c, flows, goneStock) {
         // dx = v * dt goes too, unless something else uses it or it still flows somewhere.
         // a = Fres / m (used as a * dt) stays as a hulpvariabele
         var flow = flows[i], used = false;
+        if (flow.step) {
+            // a is the flow of  dv = a * dt ; v = v + dv : dv goes, a stays as a hulpvariabele
+            var sl = c.regelLine(flow.step, 'def');
+            if (sl != -1) c.regels.splice(sl, 1);
+            continue;
+        }
         if (!flow.name || flow.isRate) continue;
         for (j = 0; j < c.g.links.length; j++) if (c.g.links[j].from == flow.id) used = true;
         var line = c.regelLine(flow.name, 'def');

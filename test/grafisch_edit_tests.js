@@ -55,9 +55,10 @@ describe('grafisch-edit.js - grafisch model als invoer', function() {
         assert.equal(lines(m.startwaarden)[2], 'v = 12');
     });
 
-    it('formule van een stroom: benoemd (dv = ...) en als term (x = x + v*dt)', function() {
-        var m = edit.apply(VAL, {op: 'setDefinition', id: 'dv', text: '(a - 1) * dt'});
-        assert.include(m.modelregels, 'dv = (a - 1) * dt');
+    it('formule van een stroom: benoemd (dv = a*dt: a) en als term (x = x + v*dt)', function() {
+        var m = edit.apply(VAL, {op: 'setDefinition', id: 'a', text: 'Fres/m - 1'});
+        assert.include(m.modelregels, 'a = Fres/m - 1');
+        assert.include(m.modelregels, 'dv = a*dt');
         var id = analyse(m).elements.x.inflows[0];
         m = edit.apply(m, {op: 'setDefinition', id: id, text: '2 * v * dt'});
         assert.include(m.modelregels, 'x = x + 2 * v * dt');

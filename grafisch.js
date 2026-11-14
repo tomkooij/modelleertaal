@@ -18,12 +18,18 @@
                                                    (+ is ingaand, - is uitgaand);
                                                    dezelfde stroom als - bij A en + bij B
                                                    is een stroom van A naar B
+                           dv = a * dt; v = v + dv met a een hulpvariabele: a is de stroom
+                                                   (ventiel a, zoals in de examens 2018-I en 2026-II)
       Onafhankelijke var.  t = t + dt              alleen getekend als t gebruikt wordt
+                           s = s + ds              zonder t, met ds een constante (examen 2026-II)
       Hulpvariabele        Fres = Fz - Fw          overige variabelen uit de modelregels
       Constante            m = 80                  alleen in de startwaarden
+                                                   Examen-stijl: geen pijlen uit formules in de
+                                                   startwaarden (Fz = m * g) en geen constante die
+                                                   alleen daar gebruikt wordt (g), zoals 2026-II
       Voorval              als h < 0 dan v = -v eindals
                                                    (toestandsvariabele verandert sprongsgewijs)
-      Stopvoorwaarde       als ... dan stop eindals (modelinstelling, geen element)
+      Stopvoorwaarde       als ... dan stop eindals (ruit linksboven, zonder pijlen)
       Relatiepijl          van elke variabele in een formule naar de variabele
                            die met die formule berekend wordt
       Onbekend (?)         variabele die nergens een waarde krijgt
@@ -160,7 +166,9 @@ function collect(ast, conds, out) {
             collect(stmt.then, conds.concat([{cond: stmt.cond, neg: false}]), out);
             if (stmt.elsestmt) collect(stmt.elsestmt, conds.concat([{cond: stmt.cond, neg: true}]), out);
         } else if (stmt.type == 'Stop') {
-            out.stops.push(conds);
+            var stop = conds.slice();
+            stop.line = stmt.lineNo;
+            out.stops.push(stop);
         }
     }
     return out;
@@ -245,6 +253,18 @@ function analyse(startwaarden_ast, modelregels_ast) {
             if (isVar(step)) dt = step.name;
         }
     }
+    // no time: s = s + ds with ds a constant (only in the startwaarden) is the independent
+    // variable, ds its step (examen 2026-II Phobos: the model counts in steps of the distance)
+    for (i = 0; i < stockOrder.length && time === null; i++) {
+        name = stockOrder[i];
+        if (assigned[name].uncond.length != 1 || assigned[name].cond.length) continue;
+        var st = signedTerms(assigned[name].uncond[0].expr, 1, []);
+        if (st.length != 2 || !isVar(st[0].expr, name) || st[0].sign != 1 || st[1].sign != 1) continue;
+        if (isVar(st[1].expr, 'd' + name) && init.hasOwnProperty('d' + name) && !assigned.hasOwnProperty('d' + name)) {
+            time = name;
+            dt = 'd' + name;
+        }
+    }
 
     var elements = {};      // id --> element
     var order = [];
@@ -262,6 +282,26 @@ function analyse(startwaarden_ast, modelregels_ast) {
         // v can be drawn as a (named) flow: computed once, unconditionally, from other variables
         return assigned.hasOwnProperty(v) && !isStock[v] && v != dt &&
             assigned[v].uncond.length == 1;
+    }
+
+    function onlyInStocks(v) {
+        // v is only used in the update lines of toestandsvariabelen (x = x + v)
+        for (var m = 0; m < regels.assign.length; m++) {
+            var as = regels.assign[m];
+            if (condVars(as.conds).indexOf(v) != -1) return false;
+            if (!isStock[as.name] && variables(as.expr).indexOf(v) != -1) return false;
+        }
+        for (m = 0; m < regels.stops.length; m++) if (condVars(regels.stops[m]).indexOf(v) != -1) return false;
+        return true;
+    }
+
+    function rateVar(v) {
+        // dv = a * dt  or  dv = -a * dt, a a hulpvariabele, dv only used in x = x + dv: a. Otherwise null
+        var rate = stripDt(assigned[v].uncond[0].expr, dt);
+        if (rate && rate.type == 'Unary' && rate.operator == '-') rate = rate.right;
+        if (!rate || !isVar(rate) || rate.name == v || !flowCandidate(rate.name) ||
+            flowOfVar[rate.name] || !onlyInStocks(v)) return null;
+        return rate.name;
     }
 
     for (i = 0; i < stockOrder.length; i++) {
@@ -295,6 +335,18 @@ function analyse(startwaarden_ast, modelregels_ast) {
                     f = flowOfVar[v];
                     if (f && ((term.sign > 0 && f.to === null) || (term.sign < 0 && f.from === null))) {
                         if (term.sign > 0) f.to = name; else f.from = name;
+                    } else if (!f && (r = rateVar(v)) !== null) {
+                        // dv = a * dt ; v = v + dv ; a = Fres / m  --> a is the flow, as in the exams
+                        // (2018-I: ventiel a; 2026-II: dEk = -Fw * ds, ventiel Fw)
+                        var sdef = assigned[v].uncond[0].expr, vdef = assigned[r].uncond[0].expr;
+                        f = {id: r, kind: 'flow', name: r, label: r,
+                             from: term.sign < 0 ? name : null, to: term.sign > 0 ? name : null,
+                             term: v, code: code(vdef), definition: fmt(vdef), rate: fmt(vdef), isRate: true,
+                             step: v, stepDefinition: fmt(sdef),
+                             deps: without(variables(vdef), [dt])};
+                        flowOfVar[v] = f;
+                        flowOfVar[r] = f;
+                        flows.push(add(f));
                     } else {
                         var def = assigned[v].uncond[0].expr;
                         var rate = stripDt(def, dt);
@@ -358,8 +410,12 @@ function analyse(startwaarden_ast, modelregels_ast) {
             events[key].deps = without(events[key].deps, events[key].targets.concat([dt]));
         }
     }
+    // stopvoorwaarde: a diamond without arrows, as in Coach and the exam 2026-II (Ek < 0)
     var stops = [];
-    for (i = 0; i < regels.stops.length; i++) stops.push(fmtConds(regels.stops[i]));
+    for (i = 0; i < regels.stops.length; i++) {
+        stops.push(fmtConds(regels.stops[i]));
+        add({id: '~s' + (i + 1), kind: 'stop', name: null, label: 'stop', condition: stops[i]});
+    }
 
     // --- hulpvariabelen
     for (i = 0; i < assignOrder.length; i++) {
@@ -399,7 +455,7 @@ function analyse(startwaarden_ast, modelregels_ast) {
             // beginwaarde as a formula: vx = v0 * cos(alfa)
             var ideps = without(variables(init[el.id]), [el.id, dt, time]);
             for (j = 0; j < ideps.length; j++) {
-                if (elements.hasOwnProperty(idOf(ideps[j]))) links.push({from: idOf(ideps[j]), to: el.id, kind: 'initial'});
+                if (elements.hasOwnProperty(idOf(ideps[j]))) links.push({from: idOf(ideps[j]), to: el.id, kind: 'initial', start: true});
             }
         }
         if (!el.deps) continue;
@@ -415,8 +471,10 @@ function analyse(startwaarden_ast, modelregels_ast) {
             if (!seen[lk]) {
                 seen[lk] = true;
                 // condition: only used in 'als ... dan' of a hulpvariabele (drawn lighter)
+                // start: from a formula in the startwaarden (Fz = m * g), not drawn in the exam style
                 links.push({from: idOf(d), to: el.id,
-                            kind: el.condDeps && el.condDeps.indexOf(d) != -1 ? 'condition' : 'relation'});
+                            kind: el.condDeps && el.condDeps.indexOf(d) != -1 ? 'condition' : 'relation',
+                            start: el.kind == 'const'});
             }
         }
         if (el.kind == 'event') {
@@ -447,7 +505,8 @@ function lines(g, startwaarden_ast, modelregels_ast) {
     function idOf(name) {
         if (g.elements.hasOwnProperty(name)) return name;
         for (var k = 0; k < g.flows.length; k++) {
-            if (g.flows[k].name == name) return g.flows[k].id;
+            // step: dv in dv = a * dt, when a is the flow
+            if (g.flows[k].name == name || g.flows[k].step == name) return g.flows[k].id;
         }
         return null;
     }
@@ -482,6 +541,10 @@ function lines(g, startwaarden_ast, modelregels_ast) {
         }
         put(id, 'modelregels', a.line, true);
     }
+    var stops = collect(modelregels_ast || [], [], {assign: [], stops: []}).stops;
+    for (i = 0; i < stops.length; i++) {
+        if (g.elements.hasOwnProperty('~s' + (i + 1))) put('~s' + (i + 1), 'modelregels', stops[i].line, true);
+    }
     return {byElement: byElement, byLine: byLine};
 }
 
@@ -508,6 +571,7 @@ function table(g) {
                 def = (el.name ? el.name + ' = ' : '') + el.definition +
                     (el.isRate ? '  (per ' + g.dt + ')' :
                      el.rate !== null ? '  (per ' + g.dt + ': ' + el.rate + ')' : '  (per stap)') +
+                    (el.step ? '; ' + el.step + ' = ' + el.stepDefinition : '') +
                     '; van ' + (el.from || 'buiten') + ' naar ' + (el.to || 'buiten');
             } else if (el.kind == 'event') {
                 def = 'als ' + el.condition + ' dan ' + el.actions.join('; ');
@@ -517,7 +581,10 @@ function table(g) {
             rows.push({kind: KIND_NAMES[el.kind], name: el.name || el.label, definition: def, id: el.id});
         }
     }
-    for (i = 0; i < g.stops.length; i++) rows.push({kind: 'Stopvoorwaarde', name: '', definition: g.stops[i]});
+    for (i = 0; i < g.stops.length; i++) {
+        rows.push({kind: 'Stopvoorwaarde', name: '', definition: g.stops[i],
+                   id: g.elements.hasOwnProperty('~s' + (i + 1)) ? '~s' + (i + 1) : undefined});
+    }
     return rows;
 }
 
@@ -532,7 +599,28 @@ function mean(list) {
     return s / list.length;
 }
 
-function layout(g) {
+function view(g, opts) {
+    // what is drawn. Exam style: no arrows from formulas in the startwaarden (Fz = m * g,
+    // Ek = 1/2 * m * v^2) and no constante that is only used there (g), as in the exam 2026-II
+    var exam = !(opts && opts.stijl == 'kleur');
+    var links = [], hidden = {}, used = {}, i, lk;
+    for (i = 0; i < g.links.length; i++) {
+        lk = g.links[i];
+        if (exam && lk.start) continue;
+        links.push(lk);
+        used[lk.from] = true;
+        used[lk.to] = true;
+    }
+    for (i = 0; i < g.links.length && exam; i++) {
+        lk = g.links[i];
+        if (lk.start && !used[lk.from] && g.elements[lk.from].kind == 'const') hidden[lk.from] = true;
+    }
+    return {links: links, hidden: hidden};
+}
+
+function layout(g, opts) {
+    // opts.stijl: 'examen' (default) or 'kleur': the exam style leaves out some elements (see view)
+    var vw = view(g, opts);
     var pos = {}, i, j, f, s, el, chain, links;
     var flowGeom = {};
     var stocks = [];
@@ -658,16 +746,16 @@ function layout(g) {
         var id = g.order[i];
         targets[id] = [];
         sources[id] = [];
-        if (!isRow(id)) others.push(id);
+        if (!isRow(id) && !vw.hidden[id] && g.elements[id].kind != 'stop') others.push(id);
     }
     // beginwaarde arrows only position elements that have no other arrows (alfa in vx = v0*cos(alfa))
     var other = {}, lk;
-    for (i = 0; i < g.links.length; i++) {
-        lk = g.links[i];
+    for (i = 0; i < vw.links.length; i++) {
+        lk = vw.links[i];
         if (lk.kind != 'initial') { other[lk.from] = true; other[lk.to] = true; }
     }
-    for (i = 0; i < g.links.length; i++) {
-        lk = g.links[i];
+    for (i = 0; i < vw.links.length; i++) {
+        lk = vw.links[i];
         if (lk.kind == 'initial' && other[lk.from]) continue;
         targets[lk.from].push(lk.to);
         sources[lk.to].push(lk.from);
@@ -759,6 +847,14 @@ function layout(g) {
             if (layers.hasOwnProperty(key)) place(layers[key], pos[layers[key][0]].y, both);
         }
     }
+    // stopvoorwaarden: top left, left of everything else, as in the exam 2026-II
+    var stops = [], minX = Infinity, minY = Infinity;
+    for (var pid in pos) {
+        if (pos.hasOwnProperty(pid)) { minX = Math.min(minX, pos[pid].x); minY = Math.min(minY, pos[pid].y); }
+    }
+    if (minX == Infinity) { minX = 0; minY = 0; }
+    for (i = 0; i < g.order.length; i++) if (g.elements[g.order[i]].kind == 'stop') stops.push(g.order[i]);
+    for (i = 0; i < stops.length; i++) pos[stops[i]] = {x: minX - 0.8 * L.gap, y: minY + i * 0.8 * L.layerH};
     return {pos: pos, flows: flowGeom};
 }
 
@@ -806,6 +902,7 @@ function radius(el, dx, dy, S) {
         case 'flow': return S.valve + S.gap + 1;
         case 'const': return S.constant + S.gap;
         case 'event': return 16;
+        case 'stop': return 15;
         default: return S.aux + S.gap;
     }
 }
@@ -892,8 +989,9 @@ function toSVG(g, lay, opts) {
     // opts.used: filled with the bounds of this drawing
     // opts.selected: id of the selected element (a toestandsvariabele gets + buttons for new flows)
     // opts.values: name --> {first, last}: values after a run, in the tooltip
-    lay = lay || layout(g);
     opts = opts || {};
+    lay = lay || layout(g, opts);
+    var vw = view(g, opts);
     var S = STIJLEN.hasOwnProperty(opts.stijl) ? STIJLEN[opts.stijl] : STIJLEN.examen;
     var exam = !S.outside;
     var pos = lay.pos, out = [], i, el, p, id;
@@ -932,9 +1030,9 @@ function toSVG(g, lay, opts) {
     }
 
     // relation arrows
-    for (i = 0; i < g.links.length; i++) {
-        var lk = g.links[i], s = pos[lk.from], t = pos[lk.to];
-        if (!s || !t) continue;
+    for (i = 0; i < vw.links.length; i++) {
+        var lk = vw.links[i], s = pos[lk.from], t = pos[lk.to];
+        if (!s || !t || vw.hidden[lk.from] || vw.hidden[lk.to]) continue;
         var dx = t.x - s.x, dy = t.y - s.y, len = Math.sqrt(dx * dx + dy * dy) || 1, d;
         var onRow = function(e) { return e.kind == 'stock' || e.kind == 'flow'; };
         if (onRow(g.elements[lk.from]) && onRow(g.elements[lk.to]) && Math.abs(dy) < 1) {
@@ -961,16 +1059,16 @@ function toSVG(g, lay, opts) {
     // a relatiepijl leaves or enters a circle at the bottom: its name goes to the right
     // (otherwise below, as in the exams), so the arrow does not cross the name
     var bottom = {}, above = {};
-    for (i = 0; i < g.links.length; i++) {
-        var from = pos[g.links[i].from], to = pos[g.links[i].to];
+    for (i = 0; i < vw.links.length; i++) {
+        var from = pos[vw.links[i].from], to = pos[vw.links[i].to];
         if (!from || !to) continue;
         var dir = unit(from, to);
-        if (dir.y > 0.6) bottom[g.links[i].from] = true;
-        if (dir.y < -0.6) bottom[g.links[i].to] = true;
+        if (dir.y > 0.6) bottom[vw.links[i].from] = true;
+        if (dir.y < -0.6) bottom[vw.links[i].to] = true;
         // an arrow between two symbols on the row of stocks and flows: arc from above
         var row = function(e) { return e.kind == 'stock' || e.kind == 'flow'; };
-        if (dir.y > 0.3 || (row(g.elements[g.links[i].from]) && row(g.elements[g.links[i].to]) &&
-                            Math.abs(to.y - from.y) < 1)) above[g.links[i].to] = true;
+        if (dir.y > 0.3 || (row(g.elements[vw.links[i].from]) && row(g.elements[vw.links[i].to]) &&
+                            Math.abs(to.y - from.y) < 1)) above[vw.links[i].to] = true;
     }
     var name = function(x, y, r, label, id, cls) {
         cls = (cls || 'name') + ' lbl';
@@ -989,7 +1087,7 @@ function toSVG(g, lay, opts) {
         id = g.order[i];
         el = g.elements[id];
         p = pos[id];
-        if (!p) continue;
+        if (!p || vw.hidden[id]) continue;
         var tip = '<title>' + esc(tooltip(g, el) + valueText(el, opts.values)) + '</title>';
         out.push('<g data-id="' + esc(id) + '">');
         var x = p.x, y = p.y, label = el.name || el.label;
@@ -1034,6 +1132,15 @@ function toSVG(g, lay, opts) {
                     (exam ? ' fill="' + S.fill + '" stroke="' + S.line + '" stroke-width="1.5" stroke-linejoin="round"/>' :
                             ' fill="#ffe08a" stroke="#b07d00" stroke-width="1.5"/>') +
                     '<text x="' + x + '" y="' + (y + 30) + '" text-anchor="middle" class="small lbl">' + esc(shorten(el.condition, 22)) + '</text>');
+                grow(x, y + 10, 40);
+                break;
+            case 'stop':
+                // stopvoorwaarde: a diamond, the condition below (Coach; exam 2026-II)
+                out.push(tip + '<path d="M' + x + ',' + (y - 14) + ' L' + (x + 14) + ',' + y + ' L' + x + ',' + (y + 14) +
+                    ' L' + (x - 14) + ',' + y + ' z" fill="' + S.fill + '" stroke="' + (exam ? S.line : S.red) +
+                    '" stroke-width="' + (exam ? 1.5 : 2) + '" stroke-linejoin="miter"/>' +
+                    '<text x="' + x + '" y="' + (y + 31) + '" text-anchor="middle" class="name lbl">' +
+                    esc(shorten(el.condition, 22)) + '</text>');
                 grow(x, y + 10, 40);
                 break;
             case 'time':
@@ -1117,8 +1224,10 @@ function valueText(el, values) {
 function tooltip(g, el) {
     switch (el.kind) {
         case 'stock': return el.name + ' (toestandsvariabele), beginwaarde ' + el.initial;
-        case 'flow': return (el.name ? el.name + ' = ' : '') + el.definition + ' (stroom)';
+        case 'flow': return (el.name ? el.name + ' = ' : '') + el.definition + ' (stroom)' +
+            (el.step ? '\n' + el.step + ' = ' + el.stepDefinition : '');
         case 'event': return 'als ' + el.condition + ' dan ' + el.actions.join('; ');
+        case 'stop': return 'stop als ' + el.condition + ' (stopvoorwaarde)';
         default: return el.name + ' = ' + el.definition;
     }
 }

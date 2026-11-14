@@ -31,13 +31,16 @@ describe('grafisch.js - tekstmodel naar grafisch model', function() {
         assert.equal(g.time, 't');
         assert.equal(g.dt, 'dt');
         assert.deepEqual(k.stock, ['v', 'x']);
-        assert.deepEqual(k.flow, ['dv', 'v']);
-        assert.deepEqual(k.aux, ['Fz', 'Fw', 'Fres', 'a']);
+        // dv = a*dt ; v = v + dv: a is the flow (ventiel a, as in the exam 2018-I)
+        assert.deepEqual(k.flow, ['a', 'v']);
+        assert.deepEqual(k.aux, ['Fz', 'Fw', 'Fres']);
         assert.deepEqual(k['const'], ['m', 'k']);
         assert.isUndefined(k.time, 't wordt niet gebruikt: niet tekenen');
-        assert.equal(g.elements.dv.to, 'v');
-        assert.equal(g.elements.dv.rate, 'a');
-        assert.isTrue(g.links.some(function(l) { return l.from == 'a' && l.to == 'dv'; }));
+        assert.equal(g.elements.a.to, 'v');
+        assert.equal(g.elements.a.step, 'dv');
+        assert.equal(g.elements.a.definition, 'Fres/m');
+        assert.isUndefined(g.elements.dv);
+        assert.isTrue(g.links.some(function(l) { return l.from == 'Fres' && l.to == 'a'; }));
         assert.isTrue(g.links.some(function(l) { return l.from == 'v' && l.to == 'Fw'; }));
     });
 
@@ -163,7 +166,9 @@ describe('grafisch.js - tekstmodel naar grafisch model', function() {
         assert.equal(v.id, 'v');
         assert.equal(rows.filter(function(r) { return r.name == 'a'; })[0].id, 'a');
         var stop = rows.filter(function(r) { return r.kind == 'Stopvoorwaarde'; })[0];
-        assert.isUndefined(stop.id, 'een stopvoorwaarde is geen symbool');
+        assert.equal(stop.definition, 'v > 5');
+        assert.equal(stop.id, '~s1', 'stopvoorwaarde: ruit in het diagram');
+        assert.equal(rows.filter(function(r) { return r.name == 'a'; })[0].kind, 'Stroomvariabele');
     });
 
     it('waarden na een run in de tooltip, + knoppen bij geselecteerde toestand', function() {
@@ -174,6 +179,57 @@ describe('grafisch.js - tekstmodel naar grafisch model', function() {
         assert.include(svg, 'data-action="flow-out" data-stock="x"');
         assert.notInclude(grafisch.toSVG(g, null, {selected: 'v'}), 'data-stock="x"');
         assert.notInclude(grafisch.toSVG(g), 'data-action');
+    });
+
+    it('dv = a*dt alleen samen als a een hulpvariabele is en dv nergens anders staat', function() {
+        // dv also in Ek: stays a named flow dv
+        var g = analyse("m=1\nF=2\nv=0\nt=0\ndt=0.1", "a = F/m\ndv = a*dt\nv = v + dv\nP = dv/dt\nt = t + dt");
+        assert.equal(g.elements.dv.kind, 'flow');
+        assert.equal(g.elements.a.kind, 'aux');
+        // g a constante: dv stays (ventiel dv, a relatiepijl from g)
+        g = analyse("g=9.81\nv=0\nt=0\ndt=0.1", "dv = g*dt\nv = v + dv\nt = t + dt");
+        assert.equal(g.elements.dv.kind, 'flow');
+    });
+
+    it('s = s + ds zonder t: s is de onafhankelijke variabele (examen 2026-II Phobos)', function() {
+        var g = analyse("s=0\nds=10\nf=0,25\nm=1E4\nR=1,11E4\ng=5,7E-3\nFz=m*g\nv=7,5\nEk=1/2*m*v^2",
+            "v = sqrt(2*Ek/m)\nFmpz = m*v^2/R\nFN = Fz - Fmpz\nFw = f*FN\ndEk = -Fw*ds\nEk = Ek + dEk\n" +
+            "s = s + ds\nals Ek < 0 dan stop eindals");
+        var k = kinds(g);
+        assert.equal(g.time, 's');
+        assert.equal(g.dt, 'ds');
+        assert.deepEqual(k.stock, ['Ek'], 's is geen toestandsvariabele');
+        assert.deepEqual(k.flow, ['Fw'], 'dEk = -Fw*ds: ventiel Fw');
+        assert.equal(g.elements.Fw.to, 'Ek');
+        assert.equal(g.elements.Fw.step, 'dEk');
+        assert.isUndefined(k.time, 's wordt niet gebruikt');
+        assert.deepEqual(k.stop, ['stop']);
+        assert.equal(g.elements['~s1'].condition, 'Ek < 0');
+        // examen: no arrows from the startwaarden (Fz = m*g, Ek = 1/2*m*v^2), no g
+        var examen = grafisch.toSVG(g);
+        assert.notInclude(examen, 'data-id="g"');
+        assert.include(examen, 'data-id="Fz"');
+        assert.include(examen, 'data-id="~s1"');
+        assert.include(examen, '>Ek &lt; 0<');
+        assert.notInclude(examen, 'stroke-dasharray="4 3"', 'geen gestippelde beginwaarde-pijlen');
+        var lay = grafisch.layout(g);
+        assert.isUndefined(lay.pos.g);
+        // kleur: everything
+        var kleur = grafisch.toSVG(g, grafisch.layout(g, {stijl: 'kleur'}), {stijl: 'kleur'});
+        assert.include(kleur, 'data-id="g"');
+        assert.include(kleur, 'stroke-dasharray="4 3"');
+    });
+
+    it('regels bij stroom met tussenstap en bij de stopvoorwaarde', function() {
+        var model = new evaluator_js.Model();
+        model.startwaarden = "m=1\nF=2\nv=0\nt=0\ndt=0.1";
+        model.modelregels = "a = F/m\ndv = a*dt\nv = v + dv\nals v > 5 dan\n  stop\neindals\nt = t + dt";
+        var ev = new evaluator_js.ModelregelsEvaluator(model, false);
+        var g = grafisch.analyse(ev.startwaarden_ast, ev.modelregels_ast);
+        var ln = grafisch.lines(g, ev.startwaarden_ast, ev.modelregels_ast);
+        assert.deepEqual(ln.byElement.a.modelregels, [1, 2, 3]);
+        assert.equal(ln.byLine['modelregels:2'], 'a');
+        assert.deepEqual(ln.byElement['~s1'].modelregels, [5]);
     });
 
     it('alle voorbeeldmodellen geven een SVG', function() {

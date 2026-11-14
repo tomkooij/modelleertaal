@@ -2,6 +2,20 @@
 
 ## [Unreleased]
 
+### Grafisch model
+
+Closer to the graphical models in the exams (2018-I, 2026-II):
+
+- `dv = a*dt; v = v + dv` with `a` a hulpvariabele: the valve is `a`, not
+  `dv` (exam 2018-I). Also with a minus sign: `dEk = -Fw*ds` gives valve `Fw`.
+- Without `t`: `s = s + ds` with `ds` a constant is the independent variable,
+  like `t` (exam 2026-II Phobos). `s` and `ds` are not drawn.
+- Exam style: no arrows from formulas in the startwaarden (`Fz = m*g`,
+  `Ek = 1/2*m*v^2`), and no constante that is only used there (`g`). The
+  style Kleur still shows them. Switching the style makes a new layout.
+- The stopvoorwaarde is a diamond with its condition, top left, without
+  arrows (exam 2026-II). Click it to see the condition.
+
 ### Modellen
 
 - Add Examen vwo 2023-II *Fietshelm* (with answer) and 2026-II *Sporen op
