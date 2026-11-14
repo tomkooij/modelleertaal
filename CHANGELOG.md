@@ -9,7 +9,8 @@
   and `modellen/b1`. Links: `#model=c2/Bungeejumper`.
 - Choosing a model has two menus: the collection (Examens vwo, Basismodellen, B1, C2, C3)
   and the model, with headings (Opgaven, ...). Basismodellen has the empty model and the
-  basic models of B1, C2 and C3 (each model once). `models.js` has `groep` and `sectie` per
+  basic models of B1, C2 and C3 (each model once), by subject (beweging, worp en baan,
+  trillingen) and from simple to complex. `models.js` has `groep` and `sectie` per
   model (see `modelkeuze.js`); `update_models_js.py` reads the subfolders.
 
 ### Modelbestand (BogusXML)
