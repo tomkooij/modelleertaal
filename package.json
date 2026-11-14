@@ -5,7 +5,8 @@
   "description": "Javascript implementatie van modelregels",
   "repository": "https://github.com/tomkooij/modelleertaal.git",
   "scripts": {
-    "test": "grunt test"
+    "test": "grunt test",
+    "screenshots": "node tools/screenshots.mjs"
   },
    "main": "evaluator.js",
    "devDependencies": {

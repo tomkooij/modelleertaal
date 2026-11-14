@@ -165,7 +165,7 @@ Examen vwo 2005-I Champignon:
 
 ## Over de compiler
 
-`evaluator.js` bevat een compiler van *Modelleertaal* naar javascript.mDe parser is gebouwd met
+`evaluator.js` bevat een compiler van *Modelleertaal* naar javascript. De parser is gebouwd met
 [jison](https://github.com/zaach/jison). Modelleertaal wordt gecompileerd naar
 javascript, dat wordt uitgevoerd met `eval()`. (De `eval()` zit in een anonieme functie, zodat de optimaliserende
 compiler van V8 niet afhaakt. Dit was relevant in 2015 toen Chrome V8 Crankshaft nog the state-of-the-art was, nu
@@ -185,10 +185,38 @@ results = evaluator.run(N);
 
 ## Modelsyntax BogusXML
 
-`model.js` leest en schrijft modellen. Modellen worden opgeslagen in `BogusXML`: een syntax die op XML lijkt,
-maar waarin `<` en `>` mogen voorkomen.
+`model.js` leest en schrijft modellen. Een model is een tekstbestand (`.xml`) in *BogusXML*: het lijkt op XML,
+maar is het niet. De modelregels staan er letterlijk in, met `<` en `>` (`als h < 0 dan`) en zonder `&lt;`.
+Zo kun je een model in Kladblok openen, lezen en aanpassen, precies zoals het in de webapp staat. Een
+XML-parser kan het bestand daardoor niet lezen; `model.js` leest het regel voor regel en gebruikt de tags
+alleen als scheidingsregels.
 
-Opdracht voor Claude: Beschrijf BogusXML hier en zet alle features erin als je ze bouwt.
+```
+<modelleertaal>
+N = 500
+<startwaarden>
+m = 91 'kg
+dt = 0,1 's
+</startwaarden>
+<modelregels>
+a = Fres/m
+v = v + a*dt
+</modelregels>
+<grafisch>
+Fres: Fz, Fw
+</grafisch>
+</modelleertaal>
+```
+
+- `<startwaarden>` en `<modelregels>` bevatten de tekst van het model, letterlijk.
+- `N = ...` (buiten de secties) is het aantal iteraties.
+- `<grafisch>` (optioneel, sinds 6.3) geeft aanwijzingen voor het grafische model, bijvoorbeeld de pijlen van
+  een regel met `...` zoals in de figuur van het examen.
+- De titel staat niet in het bestand, maar in `modellen/models.js` (of is de bestandsnaam).
+
+De exacte specificatie, met alle regels en eigenaardigheden van de parser, staat in **[BogusXML.md](BogusXML.md)**.
+Verander je iets aan het lezen of schrijven van modellen (een nieuwe sectie, een nieuwe instelling, ander gedrag
+van `model.js`), werk dan ook [BogusXML.md](BogusXML.md) bij, in dezelfde commit.
 
 ## Installatie voor ontwikkeling
 
@@ -200,6 +228,18 @@ npm install -g grunt-cli
 npm install
 grunt
 ```
+
+### Screenshots voor de README
+
+De screenshots in `images/` worden gemaakt met [`tools/screenshots.mjs`](tools/screenshots.mjs). Dat script
+start een eigen webserver, opent de webapp in Chrome headless en klikt zelf door de webapp (model laden, Run,
+startwaarde veranderen, grafisch model). Nodig: Node.js 22 of nieuwer en Google Chrome. Na `grunt build`:
+
+```
+npm run screenshots
+```
+
+Verandert de webapp zichtbaar, draai het dan opnieuw.
 
 ## De webapp offline gebruiken
 
