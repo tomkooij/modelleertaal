@@ -6,7 +6,8 @@
   "repository": "https://github.com/tomkooij/modelleertaal.git",
   "scripts": {
     "test": "grunt test",
-    "screenshots": "node tools/screenshots.mjs"
+    "screenshots": "node tools/screenshots.mjs",
+    "version": "node tools/sync-version.js && git add modelleertaal-app.js"
   },
    "main": "evaluator.js",
    "devDependencies": {

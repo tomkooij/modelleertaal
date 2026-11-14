@@ -50,6 +50,11 @@ jobs:
       - run: npm install
       - run: npx grunt build
       - run: npx grunt test
+      - name: Tag moet gelijk zijn aan de versie in package.json
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          V="v$(node -p "require('./package.json').version")"
+          [ "$V" = "$GITHUB_REF_NAME" ] || { echo "Tag $GITHUB_REF_NAME != package.json $V (gebruik: npm version <nieuw>)"; exit 1; }
 
       - name: Maak de map met de webapp
         run: |
