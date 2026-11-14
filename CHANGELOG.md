@@ -2,6 +2,18 @@
 
 ## [Unreleased]
 
+### Modelkeuze
+
+- The models of c2modellen (C2 Energie en arbeid), c3modellen (C3 Gravitatie) and
+  b1modellen (B1 Trillingen en golven) are in the webapp, in `modellen/c2`, `modellen/c3`
+  and `modellen/b1`. Links: `#model=c2/Bungeejumper`.
+- Choosing a model has two menus: the collection (Examens vwo, Basismodellen, B1, C2, C3)
+  and the model, with headings (Opgaven, ...). Basismodellen has the empty model and the
+  basic models of B1, C2 and C3 (each model once), by subject (beweging, worp en baan,
+  trillingen) and from simple to complex. B1, C2 and C3 also have their own basic
+  models, under the heading Basismodellen. `models.js` has `groep` and `sectie` per
+  model (see `modelkeuze.js`); `update_models_js.py` reads the subfolders.
+
 ### Modelbestand (BogusXML)
 
 - `N = ...` is always found: the regexp no longer has the `g` flag, whose `lastIndex`

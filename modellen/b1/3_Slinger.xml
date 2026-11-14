@@ -1,0 +1,24 @@
+﻿<modelleertaal>
+<startwaarden>
+m = 1
+g = 9,81
+Fz = m * g
+
+L = 1
+θ = 30
+ω = 0
+
+t = 0
+dt = 0,1
+
+</startwaarden>
+<modelregels>
+Fres = -Fz * sin(θ)
+α = Fres / (m * L)
+
+ω = ω + α * dt
+θ = θ + ω * dt
+t = t + dt
+
+</modelregels>
+</modelleertaal>

@@ -1,0 +1,25 @@
+﻿<modelleertaal>
+<startwaarden>
+C = 1
+m = 1
+
+v = 3
+u = 0
+t = 0
+dt = 0,01
+</startwaarden>
+<modelregels>
+als u > 0 dan
+  Ftegen = -C
+anders
+  Ftegen = C
+eindals
+
+Fres = Ftegen
+
+a = Fres / m
+v = v + a * dt
+u = u + v * dt
+t = t + dt
+</modelregels>
+</modelleertaal>

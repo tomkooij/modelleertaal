@@ -1,0 +1,24 @@
+﻿<modelleertaal>
+<startwaarden>
+m = 70
+k = 0,4
+g = 9,81
+v = 0
+x = 0
+t = 0
+dt = 0,1
+Fz = m*g
+
+</startwaarden>
+<modelregels>
+'Kracht-versnellingsmodel
+'Opgave skydiver
+Fw = k * v^2
+Fres = Fz - Fw
+a = Fres / m
+v = v + a * dt
+x = x + v * dt
+t = t + dt
+
+</modelregels>
+</modelleertaal>

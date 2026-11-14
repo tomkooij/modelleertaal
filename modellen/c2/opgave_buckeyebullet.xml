@@ -1,0 +1,46 @@
+﻿<modelleertaal>
+<startwaarden>
+m = 1740
+g = 9,81
+c1 = 0,1
+Frem1 = 0
+c2 = 1,2
+Frem2 = 2500
+Pmax = 3,75e5
+Fmax = (m*g)/3
+vgrens = Pmax/Fmax
+t = 0
+dt = 0,01
+x = 0
+v = 0
+
+</startwaarden>
+<modelregels>
+'Opgave buckey bullet
+'Voorbeeldexamen 2016
+
+'motorkracht:
+als v<vgrens dan Fmotor = Fmax
+anders Fmotor = Pmax/v
+eindals
+
+'tijdens de race
+als t<90 dan
+c = c1
+Frem = Frem1
+'tijdens het remmen
+anders
+Fmotor = ...
+c = ...
+Frem = ...
+eindals
+
+Flucht = c*v^2
+Fweerstand = Flucht + Frem
+Fres = ...
+a = Fres/m
+x = x + v*dt
+v = v + a*dt
+t = t + dt als v<0 dan stop eindals
+</modelregels>
+</modelleertaal>

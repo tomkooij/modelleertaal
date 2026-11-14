@@ -1,0 +1,45 @@
+﻿<modelleertaal>
+N = 1000
+<startwaarden>
+k = 0,1
+v = 12
+m = 1
+alpha = 30
+
+vy = v*sin(alpha)
+vx = v*cos(alpha)
+
+x = 0
+y = 0
+
+g = 9,81
+t = 0
+dt = 0,01
+
+Fz = -m * g
+</startwaarden>
+<modelregels>
+'kogelbaan model met weerstand
+v = sqrt(vx^2 + vy^2)
+
+Fw = -k * v^2
+Fw_x = Fw * vx/v
+Fw_y = Fw * vy/v
+
+
+Fres_x = Fw_x
+a_x = Fres_x / m
+
+Fres_y = Fw_y + Fz
+a_y = Fres_y / m
+
+vy = vy + a_y * dt
+y = y + vy * dt
+
+vx = vx + a_x * dt
+x = x + vx * dt
+t = t + dt
+
+als y < 0 dan stop eindals
+</modelregels>
+</modelleertaal>

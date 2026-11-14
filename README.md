@@ -112,7 +112,11 @@ website te draaien. Je hebt wel het gebrowserifyde bestand `scripts/modelleertaa
 niet in de `master` branch staat. Je kunt het zelf bouwen (zie hieronder) of een zip of tarball downloaden van
 de [releasepagina](https://github.com/tomkooij/modelleertaal/releases).
 
-Pas eventueel de modellen in `modellen/` aan en wijzig `modellen/models.js` op dezelfde manier. Zet het
+Pas eventueel de modellen in `modellen/` aan en wijzig `modellen/models.js` op dezelfde manier. De modellen
+staan in verzamelingen: de examens in `modellen/`, de modules in submappen (`modellen/b1`, `c2`, `c3`). In
+`models.js` heeft elk model een `groep` (de eerste keuzelijst: de verzameling) en een `sectie` (een kopje in
+de tweede keuzelijst, zoals Basismodellen of Opgaven). `python update_models_js.py` (in de map `modellen`)
+zet nieuwe bestanden achteraan in hun groep en haalt verwijderde bestanden weg. Zet het
 geheel ergens op een website. Alle code draait in de browser, dus een server is niet nodig.
 
 In `config.js` kun je de webapp aanpassen (knoppen en opties aan- en uitzetten).

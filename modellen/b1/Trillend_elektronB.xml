@@ -1,0 +1,26 @@
+﻿<modelleertaal>
+N=200
+<startwaarden>
+U = 0,1 '(spanning tussen de platen in V)
+q = 1,6E-19 '(lading elektron in C)
+dx = 0,10 '(afstand tussen de platen in m)
+Fel = q * U / dx '(Elektrische kracht in N)
+
+m = 9,1E-31 '(massa elektron in kg)
+
+v = 0
+u = 0,08
+t = 0
+dt = 1E-8
+
+</startwaarden>
+<modelregels>
+Fres = - Fel * u / (u^2)^0,5
+
+a = Fres / m
+v = v + a * dt
+u = u + v * dt
+t = t + dt
+
+</modelregels>
+</modelleertaal>

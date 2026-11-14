@@ -1,0 +1,25 @@
+﻿<modelleertaal>
+<startwaarden>
+m = 0,010
+g = 9,81
+alfa = 27
+Fz = m * g
+Fzx = Fz * sin(alfa)
+
+v = 0
+u = 0,30
+t = 0
+dt = 0,01
+</startwaarden>
+<modelregels>
+Als u > 0
+	dan Fres = - Fzx
+	anders Fres = Fzx
+	Eindals
+
+a = Fres / m
+v = v + a * dt
+u = u + v * dt
+t = t + dt
+</modelregels>
+</modelleertaal>

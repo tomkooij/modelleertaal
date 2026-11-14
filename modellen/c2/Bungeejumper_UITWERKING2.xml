@@ -1,0 +1,54 @@
+﻿<modelleertaal>
+<startwaarden>
+'jumper
+m = 85
+g = 9,81
+Fz = m * g
+
+'bungeekoord
+L_koord = 28
+C = 40
+k = 10
+
+v = 0
+s = 0
+t = 0
+dt = 0,01
+
+beginhoogte = 96
+
+Q = 0
+</startwaarden>
+<modelregels>
+' s: afstand
+' u: uitrekking
+' h: hoogte
+
+als s <  L_koord  dan
+  u = 0
+  Fw = 0
+  Fv = 0
+anders 
+  u = s - L_koord
+  Fv = - C * u
+  Fw = - k * v
+eindals
+
+Fres = Fz + Fv + Fw
+a = Fres / m
+dv = a * dt
+v = v + dv
+ds = v * dt
+s = s + ds
+t = t + dt
+h =  beginhoogte - s
+
+Ek = 0,5 * m * v^2
+Ez = m * g * h
+Ev = 0,5 * C * u^2
+dQ = - Fw * ds
+Q = Q + dQ
+
+Etot = Ek + Ez + Ev + Q
+</modelregels>
+</modelleertaal>

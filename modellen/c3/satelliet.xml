@@ -1,0 +1,36 @@
+﻿<modelleertaal>
+N = 1000
+<startwaarden>
+G = 6,674e-11
+x = 7,58e6
+y = 0
+
+vx = 0
+vy = 8000
+
+M = 5,97e24
+m = 1
+  
+t = 0
+dt = 10
+</startwaarden>
+<modelregels>
+r = sqrt(x^2 + y^2)
+Fg = G * M * m / r^2
+
+Fr = -Fg      
+a = Fr/m  
+
+ay = a * y/r
+ax = a * x/r
+
+vx = vx + ax * dt
+vy = vy + ay * dt
+
+x = x + vx * dt
+y = y + vy * dt
+
+t = t + dt
+
+</modelregels>
+</modelleertaal>

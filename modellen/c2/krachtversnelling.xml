@@ -1,0 +1,19 @@
+<modelleertaal>
+N=10
+<modelregels>
+'Kracht-versnellingsmodel
+Fres = F
+a = Fres / m
+v = v + a * dt
+x = x + v * dt
+t = t + dt
+</modelregels>
+<startwaarden>
+F = 100
+m = 25
+v = 0
+x = 0
+t = 0
+dt = 1
+</startwaarden>
+</modelleertaal>
