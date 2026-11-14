@@ -34,7 +34,10 @@
                            die met die formule berekend wordt
       Onbekend (?)         variabele die nergens een waarde krijgt
       In te vullen (...)   Fres = ... heeft geen pijlen; de sectie <grafisch> van het model
-                           geeft ze (Fres: Fz, Fp), zoals in de examenfiguur (2023-II)
+                           geeft ze (Fres: Fz, Fp), zoals in de examenfiguur (2023-II).
+                           vy = ... met een startwaarde: toestandsvariabele zonder stromen (2014-II)
+                           'startwaarden: tonen' in <grafisch>: de examenstijl tekent ook de
+                           pijlen uit formules in de startwaarden, gestippeld (2014-II)
 
     usage:
       var grafisch = require('./grafisch.js');
@@ -210,7 +213,7 @@ function without(list, remove) {
 
 function parseHints(text) {
     // <grafisch> section of a model: 'Fres: Fz, Fp' (one line per variable, ' or // comment)
-    //   --> {Fres: ['Fz', 'Fp']}
+    //   --> {Fres: ['Fz', 'Fp']}. 'startwaarden: tonen' is a setting (see view)
     var hints = {}, lines = String(text || '').split(/\r?\n/);
     for (var i = 0; i < lines.length; i++) {
         var m = /^\s*([^\s:]+)\s*:\s*(.*)$/.exec(lines[i].replace(/('|\/\/).*$/, ''));
@@ -253,11 +256,22 @@ function analyse(startwaarden_ast, modelregels_ast, options) {
     }
 
     // --- toestandsvariabelen: verwijzen naar zichzelf
-    var isStock = {}, stockOrder = [];
+    var isStock = {}, stockOrder = [], blankStock = {};
     for (i = 0; i < regels.assign.length; i++) {
         a = regels.assign[i];
         if (!isStock[a.name] && variables(a.expr).indexOf(a.name) != -1) {
             isStock[a.name] = true;
+            stockOrder.push(a.name);
+        }
+    }
+    // vy = ... (in te vullen) with a startwaarde: in the answer vy = vy - g * dt. A toestandsvariabele
+    // without flows, as in the exam 2014-II (figuur 3)
+    for (i = 0; i < regels.assign.length; i++) {
+        a = regels.assign[i];
+        if (!isStock[a.name] && a.expr.type == 'Blank' && init.hasOwnProperty(a.name) &&
+            assigned[a.name].uncond.length == 1 && !assigned[a.name].cond.length) {
+            isStock[a.name] = true;
+            blankStock[a.name] = true;
             stockOrder.push(a.name);
         }
     }
@@ -336,8 +350,10 @@ function analyse(startwaarden_ast, modelregels_ast, options) {
                          initial: init.hasOwnProperty(name) ? fmt(init[name]) : '?',
                          initialCode: init.hasOwnProperty(name) ? code(init[name]) : '',
                          inflows: [], outflows: [], general: null,
-                         updates: assigned[name].uncond.length, conditional: assigned[name].cond.length > 0});
-        var updates = assigned[name].uncond;
+                         // vy = ...: no + buttons for new flows (fill in the text first)
+                         updates: blankStock[name] ? 0 : assigned[name].uncond.length,
+                         conditional: assigned[name].cond.length > 0, blank: !!blankStock[name]});
+        var updates = blankStock[name] ? [] : assigned[name].uncond;
         for (j = 0; j < updates.length; j++) {
             var terms = signedTerms(updates[j].expr, 1, []);
             var self = -1;
@@ -401,9 +417,10 @@ function analyse(startwaarden_ast, modelregels_ast, options) {
                          from: term.sign < 0 ? name : null, to: term.sign > 0 ? name : null,
                          term: code(term.expr, 4, true), code: code(term.expr),
                          definition: fmt(term.expr), rate: r ? label : null,
-                         // x = x + v * dt with v a toestandsvariabele: in the exams a valve
-                         // without a name, with an arrow from v (2015-I, 2023-II)
-                         stockRate: !!(r && isVar(r) && isStock[r.name] && r.name != time),
+                         // x = x + v * dt with v a variable that has its own symbol (a toestandsvariabele
+                         // or a constante): in the exams a valve without a name, with an arrow from v
+                         // (2014-II, 2015-I, 2022-I, 2023-II)
+                         varRate: !!(r && isVar(r) && r.name != time),
                          deps: without(variables(term.expr), [dt])};
                     flows.push(add(f));
                 }
@@ -536,7 +553,10 @@ function analyse(startwaarden_ast, modelregels_ast, options) {
     return {elements: elements, order: order, flows: flows, links: links,
             time: time, dt: dt, dtValue: init.hasOwnProperty(dt) ? fmt(init[dt]) : null,
             timeStart: time && init.hasOwnProperty(time) ? fmt(init[time]) : null,
-            stops: stops};
+            stops: stops,
+            // <grafisch> 'startwaarden: tonen': the exam style also draws the arrows from the
+            // formulas in the startwaarden (dashed), as in the exam 2014-II
+            showStart: !!(hints.startwaarden && hints.startwaarden.indexOf('tonen') != -1)};
 }
 
 
@@ -613,7 +633,8 @@ function table(g) {
                 var change = [];
                 for (var j = 0; j < el.inflows.length; j++) change.push('+ ' + g.elements[el.inflows[j]].label);
                 for (j = 0; j < el.outflows.length; j++) change.push('− ' + g.elements[el.outflows[j]].label);
-                def = 'beginwaarde ' + el.initial + (change.length ? '; verandering: ' + change.join(' ') : '');
+                def = 'beginwaarde ' + el.initial + (change.length ? '; verandering: ' + change.join(' ') :
+                                                     el.blank ? '; verandering: ...' : '');
             } else if (el.kind == 'flow') {
                 def = (el.name ? el.name + ' = ' : '') + el.definition +
                     (el.isRate ? '  (per ' + g.dt + ')' :
@@ -648,8 +669,9 @@ function mean(list) {
 
 function view(g, opts) {
     // what is drawn. Exam style: no arrows from formulas in the startwaarden (Fz = m * g,
-    // Ek = 1/2 * m * v^2) and no constante that is only used there (g), as in the exam 2026-II
-    var exam = !(opts && opts.stijl == 'kleur');
+    // Ek = 1/2 * m * v^2) and no constante that is only used there (g), as in the exam 2026-II.
+    // Unless the model says 'startwaarden: tonen' in <grafisch> (g.showStart, exam 2014-II)
+    var exam = !(opts && opts.stijl == 'kleur') && !g.showStart;
     var links = [], hidden = {}, used = {}, i, lk;
     for (i = 0; i < g.links.length; i++) {
         lk = g.links[i];
@@ -1112,7 +1134,8 @@ function toSVG(g, lay, opts) {
             d = 'M' + sx.toFixed(1) + ',' + sy.toFixed(1) + ' Q' + cx.toFixed(1) + ',' + cy.toFixed(1) +
                 ' ' + ex.toFixed(1) + ',' + ey.toFixed(1);
         }
-        out.push('<path d="' + d + '" fill="none" ' + linkStyle(lk.kind, S) + '/>');
+        // exam style: a formula in the startwaarden (vx = v0 * cos(alfa)) dashed, as in 2014-II
+        out.push('<path d="' + d + '" fill="none" ' + linkStyle(exam && lk.start ? 'initial' : lk.kind, S) + '/>');
     }
 
     // a relatiepijl leaves or enters a circle at the bottom: its name goes to the right
@@ -1163,7 +1186,7 @@ function toSVG(g, lay, opts) {
                 if (exam) {
                     // ventiel: a circle on the pipe with a tap. An arrow from above: the tap below
                     var flip = above[id] && !bottom[id];
-                    out.push(tip + valve(x, y, valveDir[id], flip, S) + (el.stockRate ? '' :
+                    out.push(tip + valve(x, y, valveDir[id], flip, S) + (el.varRate ? '' :
                         name(x, flip && valveDir[id] != 'v' ? y + 7 : y, S.valve, shorten(label), id)));
                 } else {
                     out.push(tip + valve(x, y, valveDir[id], false, S) + name(x, y, 12, shorten(label), id, 'small'));
@@ -1221,7 +1244,7 @@ function toSVG(g, lay, opts) {
             var ftext = formulaText(el);
             if (ftext !== null) {
                 var fr = el.kind == 'flow' ? S.valve : el.kind == 'const' ? S.constant : S.aux;
-                var named = !(el.kind == 'flow' && exam && el.stockRate) && !bottom[id];
+                var named = !(el.kind == 'flow' && exam && el.varRate) && !bottom[id];
                 var ftop = el.kind == 'stock' ? y - L.stockH / 2 - 24 : y + fr + (named ? 22 : 6);
                 out.push(formulaBox(x, ftop, ftext, S, grow));
             }
@@ -1283,8 +1306,8 @@ function formulaText(el) {
     // the text in the box next to a symbol (opts.formules)
     switch (el.kind) {
         case 'stock': return el.name + ' = ' + el.initial;
-        // x = x + v * dt with v a toestandsvariabele: no name and no box (2015-I)
-        case 'flow': return el.stockRate ? null : el.name ? el.name + ' = ' + el.definition : el.definition;
+        // x = x + v * dt: no name and no box (2015-I)
+        case 'flow': return el.varRate ? null : el.name ? el.name + ' = ' + el.definition : el.definition;
         case 'aux':
         case 'const': return el.name + ' = ' + el.definition;
         default: return null;

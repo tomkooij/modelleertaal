@@ -235,8 +235,8 @@ describe('grafisch.js - tekstmodel naar grafisch model', function() {
     it('x = x + v*dt met v een toestand: ventiel zonder naam in de examenstijl (2015-I)', function() {
         var g = analyse("m=2\nk=0.5\nv=1\nx=0\nt=0\ndt=0.1", "F = -k*x\na = F/m\nv = v + a*dt\nx = x + v*dt\nt = t + dt");
         var flow = g.elements[g.elements.x.inflows[0]];
-        assert.isTrue(flow.stockRate);
-        assert.isFalse(!!g.elements.a.stockRate, 'a is geen toestand');
+        assert.isTrue(flow.varRate);
+        assert.isFalse(!!g.elements.a.varRate, 'a is zelf de stroom');
         var symbol = function(svg, id) { return svg.split('data-id="' + id + '"')[1].split('</g>')[0]; };
         assert.notInclude(symbol(grafisch.toSVG(g), flow.id), '<text', 'examen: geen naam');
         assert.include(symbol(grafisch.toSVG(g, undefined, {stijl: 'kleur'}), flow.id), '>v<', 'kleur: wel');
@@ -283,6 +283,38 @@ describe('grafisch.js - tekstmodel naar grafisch model', function() {
         ev = new evaluator_js.ModelregelsEvaluator(model, false);
         g = grafisch.analyse(ev.startwaarden_ast, ev.modelregels_ast, {hints: "Fres: Fz, Fp"});
         assert.isFalse(link(g, 'Fp', 'Fres'));
+    });
+
+    it('examen 2014-II: vy = ... is een toestand, klep zonder naam, startwaarden: tonen', function() {
+        var start = "dt=0,01\nx=0\ny=2,5\ng=9,81\nalfa=45\nv0=12\nvx=v0*cos(alfa)\nvy=v0*sin(alfa)";
+        var g = analyse(start, "x = x + vx*dt\ny = y + vy*dt\nvy = ...\nt = t + dt\nAls ...\nDan stop\neindals");
+        var k = kinds(g);
+        assert.deepEqual(k.stock, ['x', 'y', 'vy'], 'vy = ... met een startwaarde: toestandsvariabele');
+        assert.isTrue(g.elements.vy.blank);
+        assert.deepEqual(g.elements.vy.inflows, []);
+        assert.equal(g.elements.vy.updates, 0, 'geen + knoppen');
+        assert.include(grafisch.table(g).filter(function(r) { return r.name == 'vy'; })[0].definition, 'verandering: ...');
+        // x = x + vx*dt with vx a constante: the valve has no name
+        var fx = g.elements[g.elements.x.inflows[0]];
+        assert.isTrue(fx.varRate);
+        var symbol = function(svg, id) { return svg.split('data-id="' + id + '"')[1].split('</g>')[0]; };
+        assert.notInclude(symbol(grafisch.toSVG(g), fx.id), '<text');
+        // without startwaarden: tonen: v0 and alfa are left out in the exam style
+        var svg = grafisch.toSVG(g);
+        assert.notInclude(svg, 'data-id="v0"');
+        // with: dashed arrows from v0 and alfa to vx and vy, as in figuur 3
+        var model = new evaluator_js.Model();
+        model.startwaarden = start;
+        model.modelregels = "x = x + vx*dt\ny = y + vy*dt\nvy = vy - g*dt\nt = t + dt";
+        var ev = new evaluator_js.ModelregelsEvaluator(model, false);
+        g = grafisch.analyse(ev.startwaarden_ast, ev.modelregels_ast, {hints: "startwaarden: tonen"});
+        assert.isTrue(g.showStart);
+        svg = grafisch.toSVG(g);
+        assert.include(svg, 'data-id="v0"');
+        assert.include(svg, 'data-id="alfa"');
+        assert.equal(svg.match(/stroke-dasharray="4 3"/g).length, 4, 'v0 en alfa naar vx en vy, gestippeld');
+        // vy = vy + ... is a normal toestandsvariabele again
+        assert.isFalse(g.elements.vy.blank);
     });
 
     it('alle voorbeeldmodellen geven een SVG', function() {

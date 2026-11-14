@@ -26,8 +26,20 @@ Closer to the graphical models in the exams (2018-I, 2026-II):
   variable: `Fres: Fz, Fp`. Only used while the line still has `...`; the
   formula itself is not in it. Kept when the model is saved. Added to
   2023-II Fietshelm (figuur 6).
+- Valve without a name also when the flow is one constante (`x = x + vx*dt`,
+  exams 2014-II and 2022-I): the name is already on the symbol it comes from.
+- `vy = ...` with a startwaarde is a toestandsvariabele without flows (exam
+  2014-II, figuur 3); in the answer it is `vy = vy - g*dt`.
+- `startwaarden: tonen` in `<grafisch>`: the exam style also draws the arrows
+  from formulas in the startwaarden, dashed (exam 2014-II: `v0` and `alfa` to
+  `vx` and `vy`). Without it, as before (exam 2026-II). Added to both 2014-II
+  models.
 
 ### Modellen
+
+- Examen vwo 2014-II *Kogelstoten* as in the exam, with `vy = ...` and
+  `Als ... Dan stop` (figuur 3), and the answer from the correctievoorschrift
+  as `examenvwo2014-antwoord.xml` (the model that was there before).
 
 - Add Examen vwo 2023-II *Fietshelm* (with answer) and 2026-II *Sporen op
   Phobos* (model 2). Checked against all natuurkunde havo/vwo exams on
