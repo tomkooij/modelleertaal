@@ -169,6 +169,21 @@ describe('grafisch.js - tekstmodel naar grafisch model', function() {
         assert.equal(stop.definition, 'v > 5');
         assert.equal(stop.id, '~s1', 'stopvoorwaarde: ruit in het diagram');
         assert.equal(rows.filter(function(r) { return r.name == 'a'; })[0].kind, 'Stroomvariabele');
+        // t not used: not drawn, but listed (without id)
+        var t = rows.filter(function(r) { return r.name == 't'; })[0];
+        assert.equal(t.kind, 'Onafhankelijke variabele');
+        assert.isUndefined(t.id);
+        assert.include(t.definition, 'stap dt = 0.1');
+        // s = s + ds (2026-II Phobos)
+        rows = grafisch.table(analyse("s=0\nds=10\nEk=5", "dEk = -2*ds\nEk = Ek + dEk\ns = s + ds"));
+        var s = rows.filter(function(r) { return r.name == 's'; })[0];
+        assert.equal(s.kind, 'Onafhankelijke variabele');
+        assert.include(s.definition, 'stap ds = 10');
+        // t used: one row, with id
+        rows = grafisch.table(analyse("v=0\nt=0\ndt=0.1", "a = 2*t\nv = v + a*dt\nt = t + dt"));
+        t = rows.filter(function(r) { return r.name == 't'; });
+        assert.lengthOf(t, 1);
+        assert.equal(t[0].id, 't');
     });
 
     it('waarden na een run in de tooltip, + knoppen bij geselecteerde toestand', function() {

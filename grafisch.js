@@ -648,6 +648,14 @@ function table(g) {
             }
             rows.push({kind: KIND_NAMES[el.kind], name: el.name || el.label, definition: def, id: el.id});
         }
+        // the independent variable (t = t + dt, s = s + ds) is only drawn when a formula uses it,
+        // but always listed: otherwise s in s = s + ds seems not to be recognised (2026-II)
+        if (KIND_ORDER[k] == 'time' && g.time !== null && !g.elements.hasOwnProperty(g.time)) {
+            rows.push({kind: KIND_NAMES.time, name: g.time,
+                       definition: 'stap ' + g.dt + (g.dtValue !== null ? ' = ' + g.dtValue : '') +
+                                   '; niet getekend, want geen formule gebruikt ' + g.time,
+                       id: undefined});
+        }
     }
     for (i = 0; i < g.stops.length; i++) {
         rows.push({kind: 'Stopvoorwaarde', name: '', definition: g.stops[i],
