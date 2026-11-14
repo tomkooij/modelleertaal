@@ -56,7 +56,9 @@ Model.prototype.readBogusXMLFile = function(filename) {
 Model.prototype.parseBogusXMLString = function(xmlString) {
 
     var action = 0; // 0 = do nothing, 1 = modelregels, 2 = startwaarden, 3 = grafisch
-    var equationRe = /([A-Za-z])[ ]*\=[ ]*(\d*)/g;  // Match N = 1000
+    // N = 1000 (outside the sections): the number of iterations. Not global (/g): a global regexp
+    // keeps lastIndex between the lines, so N could be missed after a longer line with =
+    var equationRe = /^\s*N\s*=\s*(\d+)/;
 
     this.startwaarden = '';
     this.modelregels = '';
@@ -75,9 +77,8 @@ Model.prototype.parseBogusXMLString = function(xmlString) {
         if (action === 0) {
           var matches = equationRe.exec(lines[line]);
           if (matches !== null) {
-            if (matches[1] == 'N')
-              this.N = parseInt(matches[2], 10);
-              if (this.debug) console.log('Found N = '+this.N+' in model.xml');
+            this.N = parseInt(matches[1], 10);
+            if (this.debug) console.log('Found N = '+this.N+' in model.xml');
           }
         }
         switch(lines[line].replace('\r','')) {
@@ -106,14 +107,17 @@ Model.prototype.createBogusXMLString = function() {
     var Nstring = '';
     if (this.N !== undefined)
             Nstring = 'N = ' + this.N + '\n';
+    // the text of a section, one \n after each line. Without empty lines at the end: a model that
+    // was read ends with \n, and Open + Bewaar must not add an empty line each time
+    var section = function(name, text) {
+        text = String(text || '').replace(/(\r?\n)+$/, '');
+        return '<' + name + '>\n' + (text ? text + '\n' : '') + '</' + name + '>\n';
+    };
     return '<modelleertaal>\n' +
             Nstring +
-            '<startwaarden>\n' +
-            this.startwaarden +
-            '\n</startwaarden>\n<modelregels>\n' +
-            this.modelregels +
-            '\n</modelregels>\n' +
-            (this.grafisch ? '<grafisch>\n' + this.grafisch.replace(/\n+$/, '') + '\n</grafisch>\n' : '') +
+            section('startwaarden', this.startwaarden) +
+            section('modelregels', this.modelregels) +
+            (this.grafisch ? section('grafisch', this.grafisch) : '') +
             '</modelleertaal>\n';
 };
 

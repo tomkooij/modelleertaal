@@ -37,4 +37,45 @@ describe('model.js - Read model from XML', function(){
         testmodel.parseBogusXMLString(bogusModel);
         assert.equal(testmodel.N, 1000);
     })
+
+    it('N = ... wordt ook gevonden na een langere regel met =', function() {
+        // vroeger: de regexp had /g, en lastIndex van de vorige regel liet N missen
+        var m = new modelclass();
+        m.parseBogusXMLString('<modelleertaal>\nabcdefghijkl = 1\nN = 500\n<startwaarden>\nx=1\n</startwaarden>\n');
+        assert.equal(m.N, 500);
+        m = new modelclass();
+        m.parseBogusXMLString('<modelleertaal>\nN=10000\n');
+        assert.equal(m.N, 10000);
+    });
+
+    it('alleen N = ... telt, geen andere naam die op N eindigt', function() {
+        var m = new modelclass();
+        m.parseBogusXMLString('<modelleertaal>\nAN = 5\nn = 7\n<startwaarden>\nN = 3\n</startwaarden>\n');
+        assert.equal(m.N, undefined);
+    });
+
+    it('Open + Bewaar geeft geen extra lege regels', function() {
+        var xml = '<modelleertaal>\nN = 500\n<startwaarden>\nx = 1\n\ny = 2\n</startwaarden>\n' +
+                  '<modelregels>\nx = x + 1\n</modelregels>\n<grafisch>\nFres: Fz\n</grafisch>\n</modelleertaal>\n';
+        var m = new modelclass();
+        m.parseBogusXMLString(xml);
+        assert.equal(m.createBogusXMLString(), xml);
+        // tekst uit de editor zonder regeleinde aan het eind: hetzelfde bestand
+        m.startwaarden = 'x = 1\n\ny = 2';
+        m.modelregels = 'x = x + 1';
+        assert.equal(m.createBogusXMLString(), xml);
+        // twee keer lezen en schrijven: niets erbij
+        var m2 = new modelclass();
+        m2.parseBogusXMLString(m.createBogusXMLString());
+        assert.equal(m2.createBogusXMLString(), xml);
+    });
+
+    it('lege secties worden geschreven zonder lege regel', function() {
+        var m = new modelclass();
+        assert.equal(m.createBogusXMLString(),
+            '<modelleertaal>\n<startwaarden>\n</startwaarden>\n<modelregels>\n</modelregels>\n</modelleertaal>\n');
+        m.parseBogusXMLString(m.createBogusXMLString());
+        assert.equal(m.startwaarden, '');
+        assert.equal(m.modelregels, '');
+    });
 });

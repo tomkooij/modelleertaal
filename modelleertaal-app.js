@@ -1833,7 +1833,8 @@ ModelleertaalApp.prototype.save_string = function(data, filename) {
 
   // mime text/plain expects CRLF \r\n instead of \n
   // this should work on both Windows and Mac/Linux
-  var blob = new Blob([data.replace(/([^\r])\n/g, "$1\r\n")], {
+  // (every \n, also the \n of an empty line)
+  var blob = new Blob([data.replace(/\r?\n/g, "\r\n")], {
     type: "text/plain;charset=utf-8"
   });
   FileSaver.saveAs(blob, filename);

@@ -116,17 +116,16 @@ Buiten de secties staat alleen het **aantal iteraties**:
 N = 1000
 ```
 
-- `N` is een hoofdletter; `n = 1000` wordt genegeerd.
+- De regel begint met `N` (spaties ervoor mogen). `N` is een hoofdletter; `n = 1000` en `AN = 5` worden genegeerd.
 - Alleen cijfers: `N = 1e4` wordt gelezen als `N = 1`, `N = 1000.5` als `N = 1000`.
-- Spaties rond `=` mogen.
+- Spaties rond `=` mogen; na het getal mag nog tekst staan (`N = 500 'iteraties`).
 - Ontbreekt `N`, dan gebruikt de webapp de standaardwaarde (of de `N` uit de link, `#model=...&N=100`, die gaat
   altijd voor).
 - Alle andere regels buiten de secties worden genegeerd. Je kunt daar dus tekst neerzetten, maar de webapp schrijft
   die bij Bewaar niet terug.
 
-Het lezen gebeurt met de reguliere expressie `/([A-Za-z])[ ]*\=[ ]*(\d*)/g`: de eerste letter direct (op spaties
-na) vóór een `=`. Zie [Eigenaardigheden](#eigenaardigheden) voor de gevolgen. **Zet `N = ...` daarom direct op de
-regel na `<modelleertaal>`**, zoals de webapp zelf doet.
+Het lezen gebeurt met de reguliere expressie `/^\s*N\s*=\s*(\d+)/` (zonder de vlag `g`), op elke regel buiten de
+secties. De webapp schrijft `N = ...` direct op de regel na `<modelleertaal>`.
 
 ### De sectie `<grafisch>`
 
@@ -175,22 +174,22 @@ N = <N>                      ← alleen als N bekend is
 <modelregels-tekst>
 </modelregels>
 <grafisch>                   ← alleen als de sectie niet leeg is
-<grafisch-tekst>             ← zonder lege regels aan het eind
+<grafisch-tekst>
 </grafisch>
 </modelleertaal>
 ```
 
-Na de tekst van `<startwaarden>` en `<modelregels>` komt altijd een `\n` vóór de eindtag, ook als de tekst al op een
-regeleinde eindigt. Een model dat net geopend is, eindigt op een regeleinde (bij het lezen krijgt elke regel er een),
-dus bij **Bewaar** komt er een lege regel bij vóór `</startwaarden>` en `</modelregels>` (zie
-[Eigenaardigheden](#eigenaardigheden)).
+Elke sectie wordt op dezelfde manier geschreven: lege regels (en regeleinden) aan het **eind** van de tekst worden
+weggehaald, daarna krijgt elke regel één `\n`. Lege regels midden in de tekst blijven staan. Een lege sectie wordt
+`<startwaarden>` direct gevolgd door `</startwaarden>`, zonder lege regel ertussen. Zo geeft Open + Bewaar
+precies hetzelfde bestand, hoe vaak je het ook doet (na 6.3; daarvoor kwam er telkens een lege regel bij).
 
 `createBogusXMLString` maakt `\n`-regeleinden. Bij het opslaan als bestand (`save_string` in
-[`modelleertaal-app.js`](modelleertaal-app.js)) worden die vervangen door `\r\n`, met de expressie
-`/([^\r])\n/g`: een `\n` direct na een andere `\n` (een lege regel) blijft daardoor `\n`.
+[`modelleertaal-app.js`](modelleertaal-app.js)) wordt elk regeleinde `\r\n`, ook dat van een lege regel.
 
 Lezen en daarna schrijven geeft dus een **genormaliseerd** bestand: `N` direct na `<modelleertaal>`, vaste volgorde
-van de secties, en tekst buiten de secties (behalve `N`) verdwenen.
+van de secties, `\r\n` als regeleinde, geen lege regels aan het eind van een sectie, en tekst buiten de secties
+(behalve `N`) verdwenen.
 
 ## Andere plaatsen waar een model staat
 
@@ -208,25 +207,17 @@ Dit is hoe de huidige code werkt. Het is geen ontwerp, maar wie een model schrij
 het weten.
 
 1. **De eerste regel wordt overgeslagen,** ook als het geen `<modelleertaal>` is.
-2. **`N` kan gemist worden.** De reguliere expressie heeft de vlag `g` en wordt voor elke regel opnieuw gebruikt:
-   na een treffer zoekt de volgende regel pas verder vanaf de positie van die treffer (`lastIndex`). Staat er buiten
-   de secties vóór `N = 500` een langere regel met een `=` (bijvoorbeeld `abcdefghijkl = 1`), dan wordt `N` niet
-   gevonden.
-3. **`N` kan uit een andere naam komen.** De expressie kijkt naar de letter direct vóór `=`: buiten de secties
-   wordt `AN = 5` gelezen als `N = 5`.
-4. **Alleen cijfers:** `N = 1e4` geeft `N = 1`.
-5. **`N` mag overal buiten de secties staan,** ook na `</modelleertaal>`. De laatste telt.
-6. **Een ingesprongen tag is geen tag** en wordt inhoud van de sectie waar hij in staat.
-7. **Elke keer Open + Bewaar geeft een extra lege regel** aan het eind van `<startwaarden>` en `<modelregels>`
-   (zie [Schrijven](#schrijven-bewaar)).
-8. **Gemengde regeleinden na Bewaar:** lege regels krijgen `\n`, de andere regels `\r\n`. Lezen gaat goed.
-9. **Lege regel aan het eind van een sectie zonder eindtag:** loopt een sectie door tot het einde van het bestand,
-   dan komt de lege "regel" na het laatste regeleinde er ook in (`"y\n\n"`).
+2. **Alleen cijfers in `N`:** `N = 1e4` geeft `N = 1`.
+3. **`N` mag overal buiten de secties staan,** ook na `</modelleertaal>`. De laatste telt.
+4. **Een ingesprongen tag is geen tag** en wordt inhoud van de sectie waar hij in staat.
+5. **Lege regel aan het eind van een sectie zonder eindtag:** loopt een sectie door tot het einde van het bestand,
+   dan komt de lege "regel" na het laatste regeleinde er bij het lezen ook in (`"y\n\n"`). Bij Bewaar verdwijnt hij.
 
 ## Wijzigingsgeschiedenis
 
 | Versie | Wijziging |
 |---|---|
+| na 6.3 | `N`: alleen een regel die met `N =` begint (ook na een langere regel met `=`; `AN = 5` telt niet meer). Schrijven: geen lege regels aan het eind van een sectie, dus Open + Bewaar verandert het bestand niet meer; overal `\r\n`. |
 | 6.3 | Sectie `<grafisch>` (aanwijzingen `naam: ...` en de instelling `startwaarden: tonen`). Wordt gelezen en weer geschreven. |
 | 6.0 | BOM wordt genegeerd; `\r\n` wordt correct gelezen (geen `\r` meer in de tekst, regelnummers in foutmeldingen kloppen). |
 | 2019 | `N = ...` buiten de secties: het aantal iteraties. |

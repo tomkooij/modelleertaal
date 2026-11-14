@@ -2,6 +2,16 @@
 
 ## [Unreleased]
 
+### Modelbestand (BogusXML)
+
+- `N = ...` is always found: the regexp no longer has the `g` flag, whose `lastIndex`
+  made it miss `N` after a longer line with `=`. Only a line that starts with `N =`
+  counts (`AN = 5` is no longer read as `N = 5`).
+- Bewaar no longer adds an empty line at the end of `<startwaarden>` and `<modelregels>`
+  each time a model is opened and saved again, and writes `\r\n` for every line
+  (empty lines were `\n`).
+- The file format is specified in `BogusXML.md`.
+
 ## [6.3]
 
 14 nov 2026
