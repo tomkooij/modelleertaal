@@ -10,6 +10,7 @@ var modelkeuze = require('./modelkeuze.js');
 var eenheden = require('./eenheden.js');
 var aflezen = require('./aflezen.js');
 var assen = require('./assen.js');
+var hints = require('./hints.js');
 var Blob = require('blob');
 var FileSaver = require('file-saver');
 // this also depends on:
@@ -838,6 +839,9 @@ ModelleertaalApp.prototype.on_model_edited = function() {
   if (this.stepper) this.end_stepping();
   clearTimeout(this.hint_timer);
   this.hint_timer = setTimeout(function() { self.update_endtime_hint(true); }, 300);
+  // 1 s after the last key: check the syntax, quietly (a red dot next to the line)
+  clearTimeout(this.lint_timer);
+  this.lint_timer = setTimeout(function() { self.silent_check(); }, 1000);
   this.schedule_autosave();
   if (this.grafisch_open()) {
     clearTimeout(this.grafisch_timer);
@@ -847,6 +851,39 @@ ModelleertaalApp.prototype.on_model_edited = function() {
     this.set_stale(true);
     this.print_status("Model gewijzigd. Druk op Run.");
   }
+};
+
+
+ModelleertaalApp.prototype.silent_check = function() {
+  // only parse the model. A syntax error: a red dot in the line numbers, with the message
+  // as title. No message bar and the cursor does not move: the full message comes with Run.
+  this.remove_lint();
+  if (!this.CodeMirrorActive) return;
+  var model = new evaluator_js.Model();
+  var text = this.current_text();
+  model.startwaarden = text.startwaarden;
+  model.modelregels = text.modelregels;
+  try {
+    // jshint nonew:false
+    new evaluator_js.ModelregelsEvaluator(model, false);
+  } catch (err) {
+    // ... (to be filled in) or an empty model is not an error
+    if (err.blank || err.empty) return;
+    var editor = this.get_editor(err.parser_name);
+    var line = err.parser_line;
+    if (!editor || !line || line < 1) return;
+    line = Math.min(line, editor.lineCount());
+    var marker = $('<span class="mt-lint-marker" role="img">').text('\u25cf')
+      .attr({'title': err.message || 'Fout in deze regel', 'aria-label': err.message || 'Fout in deze regel'});
+    this.lint = {editor: editor, handle: editor.setGutterMarker(line - 1, 'mt-error-markers', marker[0])};
+  }
+};
+
+
+ModelleertaalApp.prototype.remove_lint = function() {
+  if (!this.lint) return;
+  this.lint.editor.setGutterMarker(this.lint.handle, 'mt-error-markers', null);
+  this.lint = undefined;
 };
 
 
@@ -2151,6 +2188,8 @@ ModelleertaalApp.prototype.setup_run = function() {
 
   this.remove_highlight_trace();
   this.remove_highlight_error();
+  this.remove_lint();
+  clearTimeout(this.lint_timer);
   this.clear_message();
 
   this.read_model();
@@ -2242,7 +2281,10 @@ ModelleertaalApp.prototype.after_run = function() {
   var run_id = this.run_id = (this.run_id || 0) + 1;
   clearTimeout(this.dtcheck_timer);
   this.dtcheck_timer = setTimeout(function() {
-    if (run_id == self.run_id && !self.stale && !self.stepper) self.check_dt();
+    if (run_id == self.run_id && !self.stale && !self.stepper) {
+      self.check_dt();
+      self.show_hint();
+    }
   }, 30);
 };
 
@@ -2269,6 +2311,20 @@ ModelleertaalApp.prototype.check_dt = function() {
       return self.format_text(x);
     }));
   }
+};
+
+
+ModelleertaalApp.prototype.show_hint = function() {
+  // a common mistake in the model (hints.js): one hint, as information, only if there is no
+  // other message
+  if ($(this.dom_message).is(':visible') || !this.evaluator) return;
+  var list;
+  try {
+    list = hints.find(this.evaluator.startwaarden_ast, this.evaluator.modelregels_ast);
+  } catch (err) {
+    return;
+  }
+  if (list.length) this.show_message('info', 'Tip', list[0].text);
 };
 
 
@@ -3140,6 +3196,8 @@ ModelleertaalApp.prototype.init_app = function() {
   this.has_run = false;
   this.remove_highlight_trace();
   this.remove_highlight_error();
+  clearTimeout(this.lint_timer);
+  this.remove_lint();
 
   // (re)set graph menu
   this.multiplot = false;
@@ -3443,6 +3501,7 @@ ModelleertaalApp.prototype.highlight_error = function(line, editor_name, message
   line = Math.min(line, editor.lineCount());
 
   this.remove_highlight_error();
+  this.remove_lint();
   this.error_highlight = {
     editor: editor,
     handle: editor.addLineClass(line - 1, 'background', 'mt-error-line')
