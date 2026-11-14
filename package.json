@@ -1,6 +1,6 @@
 {
   "name": "evaluator",
-  "version": "6.4",
+  "version": "6.4.1",
   "author": "Tom Kooij",
   "description": "Javascript implementatie van modelregels",
   "repository": "https://github.com/tomkooij/modelleertaal.git",
@@ -9,8 +9,8 @@
     "screenshots": "node tools/screenshots.mjs",
     "version": "node tools/sync-version.js && git add modelleertaal-app.js"
   },
-   "main": "evaluator.js",
-   "devDependencies": {
+  "main": "evaluator.js",
+  "devDependencies": {
     "chai": "^2.3.0",
     "grunt": ">=1.5.3",
     "grunt-browserify": "^3.8.0",
