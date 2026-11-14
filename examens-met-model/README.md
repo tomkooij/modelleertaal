@@ -12,11 +12,8 @@ uitwerkbijlagen.
 | Jaar | Tijdvak | Bestand |
 |---|---|---|
 | 2005 | 1 | `2005_tijdvak1_vwo_natuurkunde12_opgaven.pdf` |
-| 2005 | 1 | `2005_tijdvak1_vwo_moderne-natuurkunde_opgaven.pdf` |
 | 2006 | 2 | `2006_tijdvak2_vwo_natuurkunde12_opgaven.pdf` |
-| 2006 | 2 | `2006_tijdvak2_vwo_moderne-natuurkunde_opgaven.pdf` |
 | 2007 | 1 | `2007_tijdvak1_vwo_natuurkunde12_opgaven.pdf` |
-| 2007 | 1 | `2007_tijdvak1_vwo_moderne-natuurkunde_opgaven.pdf` |
 | 2013 | 2 | `2013_tijdvak2_vwo_opgaven.pdf` |
 | 2014 | 2 | `2014_tijdvak2_vwo_opgaven.pdf` |
 | 2015 | 1 | `2015_tijdvak1_vwo_opgaven.pdf` |
@@ -32,8 +29,8 @@ uitwerkbijlagen.
 | 2023 | 2 | `2023_tijdvak2_vwo_opgaven.pdf` |
 | 2026 | 2 | `2026_tijdvak2_vwo_opgaven.pdf` |
 
-In 2005–2007 bestaat het examen in twee varianten (natuurkunde 1,2 en het project
-moderne natuurkunde); beide bevatten dezelfde modelopgave.
+In 2005–2007 bestond het examen ook in een variant voor het project moderne natuurkunde
+met dezelfde modelopgave; die boekjes zijn weggelaten.
 
 ## Opmerkingen
 
