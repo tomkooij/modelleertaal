@@ -4,6 +4,7 @@ var model_index = [
 		{title: "Examen vwo 2006-II Sojoez", url: "modellen/examenvwo2006.xml"},
 		{title: "Examen vwo 2013-II Trekkertrek", url: "modellen/examenvwo2013.xml"},
 		{title: "Examen vwo 2014-II Kogelstoten", url: "modellen/examenvwo2014.xml"},
+		{title: "Examen vwo 2014-II Kogelstoten (antwoord)", url: "modellen/examenvwo2014-antwoord.xml"},
 		{title: "Examen vwo 2015-I Sprong bij Volleybal", url: "modellen/examenvwo2015.xml"},
 		{title: "Examen vwo 2016-I Ruimtelift", url: "modellen/examenvwo2016.xml"},
 		{title: "Examen vwo 2016-II Jupiter Fly-by", url: "modellen/examenvwo2016-2.xml"},
@@ -16,5 +17,8 @@ var model_index = [
 		{title: "Examen vwo 2021-III Kayak-Jumping (antwoord)", url: "modellen/examenvwo2021-3-antwoord.xml"},
 		{title: "Examen vwo 2021-III Kayak-Jumping - met energie", url: "modellen/examenvwo2021-3-energie.xml"},
 		{title: "Examen vwo 2022-I Vrije worp bij basketbal", url: "modellen/examenvwo2022.xml"},
+		{title: "Examen vwo 2023-II Fietshelm", url: "modellen/examenvwo2023-2.xml"},
+		{title: "Examen vwo 2023-II Fietshelm (antwoord)", url: "modellen/examenvwo2023-2-antwoord.xml"},
+		{title: "Examen vwo 2026-II Sporen op Phobos", url: "modellen/examenvwo2026-2.xml"},
 		{title: "Leeg model", url: "modellen/leeg.xml"},
 ];

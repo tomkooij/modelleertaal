@@ -42,7 +42,7 @@ Bij P2-2 staat ook een gewijzigd aantal iteraties in de notitie ("iteraties 500 
 - Logica zonder DOM in een eigen module met mocha-tests in `test/` (zoals `autoplot.js`).
 - Elke wijziging in `CHANGELOG.md` onder `[Unreleased]`.
 - Testen in de browser: `python -m http.server` en `index.html` openen; testmodellen:
-  `#model=examenvwo2005` (als/dan), `#model=examenvwo2019-2` (puntjes), `#model=examenvwo2014` (stop).
+  `#model=examenvwo2005` (als/dan), `#model=examenvwo2019-2` (puntjes), `#model=examenvwo2014-antwoord` (stop).
 
 ## Wat al goed is (niet stukmaken)
 
@@ -98,7 +98,7 @@ statusregel: "Het model is niet gestopt door 'stop': verhoog het aantal iteratie
 
 **Waar.** `print_run_status`; `stop` zoeken in `evaluator.modelregels_ast`.
 
-**Klaar als.** `examenvwo2014` met N = 100 toont de hint; één klik geeft N = 200 en een gestopt model.
+**Klaar als.** `examenvwo2014-antwoord` met N = 100 toont de hint; één klik geeft N = 200 en een gestopt model.
 
 ### P1-4 Bug: doorrekenen na `stop` (gebouwd)
 

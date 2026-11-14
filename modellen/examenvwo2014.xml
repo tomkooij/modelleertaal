@@ -3,6 +3,7 @@ N=500
 <startwaarden>
 // Startwaarden
 // in SI-eenheden
+// hoeken in graden
 t = 0  // niet in examen!
 dt = 0,01
 x = 0
@@ -18,10 +19,14 @@ vy = v0*sin(alfa)
 // Kogelstoten
 x = x + vx*dt
 y = y + vy*dt
-vy = vy - g*dt
+vy = ...
 t = t + dt
-Als y<0
+Als ...
 Dan stop
 eindals
 </modelregels>
+<grafisch>
+' zoals figuur 3 in het examen: pijlen van de formules in de startwaarden
+startwaarden: tonen
+</grafisch>
 </modelleertaal>

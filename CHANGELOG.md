@@ -2,6 +2,50 @@
 
 ## [Unreleased]
 
+### Grafisch model
+
+Closer to the graphical models in the exams (2018-I, 2026-II):
+
+- `dv = a*dt; v = v + dv` with `a` a hulpvariabele: the valve is `a`, not
+  `dv` (exam 2018-I). Also with a minus sign: `dEk = -Fw*ds` gives valve `Fw`.
+- Without `t`: `s = s + ds` with `ds` a constant is the independent variable,
+  like `t` (exam 2026-II Phobos). `s` and `ds` are not drawn.
+- Exam style: no arrows from formulas in the startwaarden (`Fz = m*g`,
+  `Ek = 1/2*m*v^2`), and no constante that is only used there (`g`). The
+  style Kleur still shows them. Switching the style makes a new layout.
+- The stopvoorwaarde is a diamond with its condition, top left, without
+  arrows (exam 2026-II). Click it to see the condition.
+- New checkbox **formules** next to Examen | Kleur: a box with the formula or
+  beginwaarde next to every symbol, as in the exams 2015-I and 2016-I
+  (`a = Fres/m`, `y = 0,68`; `als ... dan ...` on more lines). The layout makes
+  room for the boxes. Remembered for the next visit.
+- `x = x + v*dt` with `v` a toestandsvariabele: in the exam style the valve has
+  no name (exams 2015-I, 2023-II), only the arrow from `v`.
+- A line with `...` (to be filled in) has no arrows, but the exam figure does.
+  New optional section `<grafisch>` in the model file gives them, one line per
+  variable: `Fres: Fz, Fp`. Only used while the line still has `...`; the
+  formula itself is not in it. Kept when the model is saved. Added to
+  2023-II Fietshelm (figuur 6).
+- Valve without a name also when the flow is one constante (`x = x + vx*dt`,
+  exams 2014-II and 2022-I): the name is already on the symbol it comes from.
+- `vy = ...` with a startwaarde is a toestandsvariabele without flows (exam
+  2014-II, figuur 3); in the answer it is `vy = vy - g*dt`.
+- `startwaarden: tonen` in `<grafisch>`: the exam style also draws the arrows
+  from formulas in the startwaarden, dashed (exam 2014-II: `v0` and `alfa` to
+  `vx` and `vy`). Without it, as before (exam 2026-II). Added to both 2014-II
+  models.
+
+### Modellen
+
+- Examen vwo 2014-II *Kogelstoten* as in the exam, with `vy = ...` and
+  `Als ... Dan stop` (figuur 3), and the answer from the correctievoorschrift
+  as `examenvwo2014-antwoord.xml` (the model that was there before).
+
+- Add Examen vwo 2023-II *Fietshelm* (with answer) and 2026-II *Sporen op
+  Phobos* (model 2). Checked against all natuurkunde havo/vwo exams on
+  examenblad.nl from 2021 to 2026 (no exams in 2020): these were the only
+  missing exams with modelregels. Havo has no modelling questions; 2022-II
+  (vwo) describes a computermodel but does not print it.
 ### Webapp
 
 - Error in the model: a cross (✕) next to the line number of the line with the
