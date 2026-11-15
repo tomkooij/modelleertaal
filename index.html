@@ -302,27 +302,6 @@
             margin-left: 8px;
         }
 
-        kbd {
-            font: inherit;
-            font-size: 0.8rem;
-            color: var(--muted);
-            border: 1px solid var(--border);
-            border-radius: 4px;
-            padding: 1px 5px;
-        }
-
-        /* sneltoets naast Run, alleen op brede schermen (een telefoon heeft geen Ctrl) */
-        #run_kbd {
-            display: none;
-            margin-left: -10px;
-        }
-
-        @media (min-width: 961px) and (pointer: fine) {
-            #run_kbd {
-                display: inline;
-            }
-        }
-
         /* (fout)meldingen */
         /* opdracht bij het model (voor docenten: Meer opties) */
         #opdracht {
@@ -1275,7 +1254,6 @@
 
         <div class="card runbar">
             <button id="run" type="button" title="Run: voer het model uit (Ctrl+Enter)">&#9654; Run</button>
-            <kbd id="run_kbd" aria-hidden="true">Ctrl+Enter</kbd>
             <button id="stap" type="button" title="Reken het model regel voor regel door en zie de berekening met getallen">Stap</button>
             <label>Aantal iteraties:
                 <input type="text" id="NBox" value="1000" inputmode="numeric">
@@ -1468,7 +1446,6 @@
             $('#version').text('Modelleertaal webapp ' + (m.version || ''));
             // Mac: Cmd instead of Ctrl
             if (/Mac|iPhone|iPad/.test(navigator.platform || '')) {
-                $('#run_kbd').text('\u2318+Enter');
                 $('#run').attr('title', 'Run: voer het model uit (\u2318+Enter)');
             }
             $("#open_file").click(function() {

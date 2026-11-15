@@ -71,7 +71,7 @@
   new link was ignored without a word.
 - Stap voor stap: the graph shows the last Run in gray (so the axes do not jump) with the
   points computed so far and a dot at the current point.
-- `Ctrl+Enter` (on a Mac `⌘+Enter`) is shown small and gray next to Run on wide screens.
+- `Ctrl+Enter` (on a Mac `⌘+Enter`) runs the model; it is in the tooltip of Run, not always visible.
 - "Vanaf iteratie 16 heeft 'x' geen geldige waarde meer" names the most probable cause:
   division by zero (with the variable that is 0, also a constant), the square root of a
   negative number, or values that grow until they are too large (dt too large). Otherwise
