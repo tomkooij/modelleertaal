@@ -52,3 +52,20 @@ describe('rondleiding', function () {
         assert.include(html, 'id="rondleiding_knop"');
     });
 });
+
+describe('rondleiding: demonstraties', function () {
+    var rondleiding = require('../rondleiding.js');
+    it('elke demo bij een stap bestaat', function () {
+        Object.keys(rondleiding.RONDLEIDINGEN).forEach(function (naam) {
+            rondleiding.RONDLEIDINGEN[naam].stappen.forEach(function (stap) {
+                if (stap.demo) assert.isFunction(rondleiding.DEMOS[stap.demo], stap.demo);
+            });
+        });
+    });
+    it('de grafiek aflezen wordt voorgedaan', function () {
+        var stap = rondleiding.RONDLEIDINGEN.leerling.stappen.filter(function (s) {
+            return s.doel == '.area_graph';
+        })[0];
+        assert.equal(stap.demo, 'aflezen');
+    });
+});

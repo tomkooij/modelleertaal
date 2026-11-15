@@ -5,7 +5,8 @@
     - voor leerlingen: de basis (model kiezen, modelregels, Run en Stap, grafieken, diagram)
     - voor docenten: wat een docent extra kan (opdracht, Deel link, runs vergelijken in de klas,
       het diagram als invoer, het diagram uit het tekstmodel)
-    Start nooit vanzelf: alleen met de knop Rondleiding bovenaan, die een keuzemenu opent.
+    Start nooit vanzelf: alleen met de knop Rondleiding onderaan, die een keuzemenu opent.
+    Bij een paar stappen doet de rondleiding het voor (zie DEMOS).
     Tot iemand de rondleiding een keer geopend heeft, staat er een kleine stip op de knop.
 
     Elke stap licht een deel van de pagina op (de rest wordt donkerder) met een tekstballon
@@ -51,6 +52,7 @@ var RONDLEIDINGEN = {
             {
                 doel: '.runbar',
                 titel: 'Run en Stap',
+                demo: 'stap',
                 tekst: '<b>Run</b> (of Ctrl+Enter) rekent het model door. Naast het aantal iteraties zie je ' +
                     'hoe lang het model loopt. Snap je niet wat er gebeurt? Met <b>Stap</b> reken je regel ' +
                     'voor regel, met de getallen ingevuld: ' +
@@ -59,6 +61,7 @@ var RONDLEIDINGEN = {
             {
                 doel: '.area_graph',
                 titel: 'De grafiek aflezen',
+                demo: 'aflezen',
                 voor: 'run',
                 tekst: 'De webapp kiest zelf de grafieken; klik op een miniatuur om die groot te zien, ' +
                     'of kies een andere grootheid op de as. Klik op een punt om af te lezen. ' +
@@ -68,6 +71,7 @@ var RONDLEIDINGEN = {
             {
                 doel: '.area_model',
                 titel: 'Tekst + grafisch',
+                demo: 'kies_symbool',
                 voor: 'grafisch',
                 tekst: 'Met <b>Tekst + grafisch</b> zie je je model als diagram, zoals in het examen: ' +
                     'toestandsvariabelen, stromen en pijlen voor &ldquo;hangt af van&rdquo;. ' +
@@ -111,6 +115,7 @@ var RONDLEIDINGEN = {
             {
                 doel: '#grafisch_model',
                 titel: 'Het diagram is ook invoer',
+                demo: 'formulier',
                 voor: 'grafisch',
                 tekst: 'Tekst en diagram zijn gekoppeld. Klik op een symbool: de regels ervan lichten op in de ' +
                     'tekst, en in het formulier verander je de naam of de formule. Met de knoppen erboven voeg ' +
@@ -121,6 +126,7 @@ var RONDLEIDINGEN = {
             {
                 doel: '.area_model',
                 titel: 'Het diagram komt uit de tekst',
+                demo: 'cursor',
                 voor: 'grafisch',
                 tekst: 'Het diagram wordt vanzelf getekend uit het tekstmodel, terwijl je typt; Run is niet nodig. ' +
                     'Zo laat je bij elk examenmodel het grafische model zien. Zet de cursor in een regel en het ' +
@@ -131,6 +137,122 @@ var RONDLEIDINGEN = {
         ]
     }
 };
+
+
+// Demonstraties: de rondleiding doet het even voor. Elke demo krijgt ctx:
+//   ctx.app            de webapp
+//   ctx.later(fn, ms)  doe fn na ms (alleen zolang deze stap open is)
+//   ctx.toon(html)     zet een korte uitleg in de ballon ('' haalt hem weg)
+// en geeft een functie terug die alles terugzet. Het model zelf verandert nooit.
+var DEMOS = {
+    stap: function(ctx) {
+        // a few lines with Stap: the calculation with the numbers below the run bar
+        var app = ctx.app, n = 0;
+        function stap() {
+            if (!app.step() || !app.stepper) return;
+            n += 1;
+            ctx.toon('Hier wordt drie keer op <b>Stap</b> gedrukt: de berekening staat onder de knoppen, ' +
+                'de regel licht op in de modelregels.');
+            if (n < 3) ctx.later(stap, 1100);
+        }
+        ctx.later(stap, 500);
+        return function() { app.end_stepping(); };
+    },
+
+    aflezen: function(ctx) {
+        // a point is read off, then the tangent is clicked: the helling as on paper
+        var app = ctx.app;
+        var vorige = app.read;
+        if (!app.results_available() || app.multiplot || !app.yvar || app.results.length < 5) {
+            return function() {};
+        }
+        var row = Math.round((app.results.length - 1) * 0.3);
+        var punt = {row: row, yvar: app.yvar};
+        ctx.later(function() {
+            app.set_read(punt);
+            ctx.toon('Hier is op de grafiek geklikt: de stip met hulplijnen naar beide assen, en de raaklijn.');
+            ctx.later(function() {
+                app.set_read($.extend({}, punt, {tangent: true}));
+                ctx.toon('En nu op de raaklijn: de snijpunten met de assen zijn afgelezen en de helling ' +
+                    'volgt uit &Delta;y/&Delta;x, ingevuld met die punten.');
+            }, 2200);
+        }, 600);
+        return function() { app.set_read(vorige || null); };
+    },
+
+    kies_symbool: function(ctx) {
+        // a symbol is selected: its lines light up in the text (no form)
+        return kies(ctx, true);
+    },
+
+    formulier: function(ctx) {
+        // a symbol is selected with its form: name, beginwaarde, flows
+        return kies(ctx, false);
+    },
+
+    cursor: function(ctx) {
+        // the cursor in a line of the text: the symbol lights up (without moving the real cursor)
+        var app = ctx.app;
+        var lines = app.grafisch_lines && app.grafisch_lines.byLine;
+        var g = app.grafisch_g;
+        if (!lines || !g || !app.CodeMirrorActive) return function() {};
+        var regel = null, id;
+        Object.keys(lines).forEach(function(key) {
+            var m = /^modelregels:(\d+)$/.exec(key);
+            var el = g.elements[lines[key]];
+            if (!m || !el) return;
+            var score = el.kind == 'aux' ? 2 : 1;
+            if (!regel || score > regel.score) regel = {line: Number(m[1]), id: lines[key], score: score};
+        });
+        if (!regel) return function() {};
+        id = regel.id;
+        var editor = app.modelregels_editor;
+        var handle = null;
+        ctx.later(function() {
+            handle = editor.addLineClass(regel.line - 1, 'background', 'mt-link-line');
+            app.grafisch_linked = id;
+            app.grafisch_mark_linked();
+            ctx.toon('Zoals hier: de cursor staat in regel ' + regel.line + ' (<code>' +
+                esc(editor.getLine(regel.line - 1).trim()) + '</code>) en <b>' + esc(g.elements[id].name || id) +
+                '</b> licht op in het diagram.');
+        }, 500);
+        return function() {
+            if (handle) editor.removeLineClass(handle, 'background', 'mt-link-line');
+            if (app.grafisch_linked === id) {
+                app.grafisch_linked = undefined;
+                app.grafisch_mark_linked();
+            }
+        };
+    }
+};
+
+function kies(ctx, noform) {
+    // select a toestandsvariabele (with flows, if there is one), as if it was clicked
+    var app = ctx.app, g = app.grafisch_g;
+    if (!g) return function() {};
+    var ids = Object.keys(g.elements), id = null;
+    ids.forEach(function(k) {
+        var el = g.elements[k];
+        if (id === null && el.kind == 'stock' && el.inflows && el.inflows.length) id = k;
+    });
+    if (id === null) ids.forEach(function(k) { if (id === null && g.elements[k].name) id = k; });
+    if (id === null) return function() {};
+    var naam = esc(g.elements[id].name || id);
+    ctx.later(function() {
+        app.grafisch_select(id, noform ? {noform: true} : undefined);
+        ctx.toon(noform ?
+            'Hier is op <b>' + naam + '</b> geklikt: de regels van ' + naam + ' lichten op in de tekst.' :
+            'Hier is op <b>' + naam + '</b> geklikt: de regels lichten op en het formulier staat open. ' +
+            'Wat je daar verandert, komt in de tekst.');
+    }, 500);
+    return function() {
+        if (app.grafisch_selected === id) app.grafisch_select(undefined);
+    };
+}
+
+function esc(text) {
+    return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
 
 
 function storage(action) {
@@ -234,6 +356,7 @@ Rondleiding.prototype.start = function(naam) {
 
 Rondleiding.prototype.stop = function() {
     if (this.index < 0) return;
+    this.demo_stop();
     this.zet_terug();
     this.index = -1;
     $(document).off('keydown', this.on_key);
@@ -243,12 +366,40 @@ Rondleiding.prototype.stop = function() {
     clearTimeout(this.timer);
     this.$spot.remove();
     this.$ballon.remove();
-    $('#rondleiding_knop').attr('aria-expanded', 'false').trigger('focus');
+    // back to the button, without scrolling to it (it is at the bottom of the page)
+    var knop = $('#rondleiding_knop').attr('aria-expanded', 'false')[0];
+    if (knop) knop.focus({preventScroll: true});
 };
 
 Rondleiding.prototype.zet_terug = function() {
     if (this.herstel) this.herstel();
     this.herstel = null;
+};
+
+Rondleiding.prototype.demo_stop = function() {
+    (this.demo_timers || []).forEach(clearTimeout);
+    this.demo_timers = [];
+    if (this.demo_herstel) this.demo_herstel();
+    this.demo_herstel = null;
+};
+
+Rondleiding.prototype.demo_start = function(naam) {
+    var self = this;
+    var index = this.index;
+    if (!DEMOS[naam]) return;
+    var ctx = {
+        app: this.app,
+        later: function(fn, ms) {
+            self.demo_timers.push(setTimeout(function() {
+                if (self.index === index) fn();
+            }, ms));
+        },
+        toon: function(html) {
+            self.$ballon.find('.tour_demo').html(html).prop('hidden', !html);
+            self.plaats();
+        }
+    };
+    this.demo_herstel = DEMOS[naam](ctx);
 };
 
 Rondleiding.prototype.zet_klaar = function(voor) {
@@ -277,6 +428,7 @@ Rondleiding.prototype.ga = function(index) {
     if (index < 0) return;
     var stap = this.stappen[index];
     var extra = '';
+    this.demo_stop();
     if (!(this.herstel && stap.voor && stap.voor == this.voor)) {
         // the next step needs the same (the diagram stays open): leave the page as it is
         this.zet_terug();
@@ -293,6 +445,7 @@ Rondleiding.prototype.ga = function(index) {
         '<h2 id="tour_titel">' + stap.titel + '</h2>' +
         '<p>' + stap.tekst + '</p>' +
         (extra ? '<p class="tour_extra">' + extra + '</p>' : '') +
+        '<p class="tour_demo" aria-live="polite" hidden></p>' +
         (laatste ? '<p class="tour_extra">' + this.rondleiding.einde + '</p>' : '') +
         '<div class="tour_knoppen">' +
         (index > 0 ? '<button type="button" data-tour="vorige">Vorige</button>' : '<span></span>') +
@@ -315,6 +468,7 @@ Rondleiding.prototype.ga = function(index) {
     this.timer = setTimeout(function() { self.plaats(); }, 400);
     var volgende = this.$ballon.find('.tour_volgende')[0];
     if (volgende) volgende.focus({preventScroll: true});
+    this.demo_start(stap.demo);
 };
 
 Rondleiding.prototype.plaats = function() {
@@ -363,3 +517,4 @@ Rondleiding.prototype.plaats = function() {
 
 exports.Rondleiding = Rondleiding;
 exports.RONDLEIDINGEN = RONDLEIDINGEN;
+exports.DEMOS = DEMOS;

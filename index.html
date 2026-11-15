@@ -240,6 +240,7 @@
         #rondleiding_knop {
             position: relative;
             margin-left: auto;
+            font-size: 1rem;
             display: inline-flex;
             align-items: center;
             gap: 6px;
@@ -280,14 +281,10 @@
             border: 2px solid var(--bg);
         }
 
-        .topbar {
-            position: relative;
-        }
-
         .tour_menu {
             position: absolute;
             right: 0;
-            top: calc(100% + 6px);
+            bottom: calc(100% + 6px);
             z-index: 1002;
             display: flex;
             flex-direction: column;
@@ -371,6 +368,19 @@
         .tour_teller {
             font-size: 0.8rem;
             color: var(--muted);
+        }
+
+        .tour_demo {
+            margin: 0 0 8px;
+            padding: 6px 10px;
+            border-left: 3px solid #f59e0b;
+            background: #fffbeb;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        .tour_demo[hidden] {
+            display: none;
         }
 
         .tour_extra {
@@ -1482,6 +1492,11 @@
         }
 
         footer {
+            position: relative;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 4px 6px;
             margin-top: 14px;
             color: var(--muted);
             font-size: 0.85rem;
@@ -1513,8 +1528,6 @@
             <button id="download_xml" type="button" title="Sla dit model op je computer op (.xml). De naam van het bestand is de titel van het model.">Bewaar</button>
             <button id="permalink" type="button" title="Kopieer een link naar dit model (met jouw wijzigingen)">Deel link</button>
         </div>
-        <button id="rondleiding_knop" type="button" aria-expanded="false"
-            title="Nieuw hier? Een korte rondleiding in vijf stappen, voor leerlingen of voor docenten"><span class="tour_icoon" aria-hidden="true">?</span>Rondleiding</button>
     </header>
 
     <main>
@@ -1678,6 +1691,8 @@
     <footer>
         <span id="version"></span>
         <span id="classic_link">&middot; Liever de oude indeling? Gebruik <a href="https://www.tomkooij.nl/modelleertaal-classic" title="De vorige versie van deze webapp, met de oude indeling">Modelleertaal classic</a>.</span>
+        <button id="rondleiding_knop" type="button" aria-expanded="false"
+            title="Nieuw hier? Een korte rondleiding in vijf stappen, voor leerlingen of voor docenten"><span class="tour_icoon" aria-hidden="true">?</span>Rondleiding</button>
     </footer>
 
     <!-- jQuery is included in head section -->
