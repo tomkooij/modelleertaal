@@ -1532,23 +1532,23 @@ ModelleertaalApp.prototype.grafisch_new_form = function(kind) {
     form = this.grafisch_form('Nieuwe toestandsvariabele',
       'Een grootheid die elke stap een beetje verandert, zoals de plaats x of de snelheid v. ' +
       'In de tekst komt: x = x + dx met dx = (verandering per tijdseenheid) * dt.',
-      [{key: 'name', label: 'Naam', value: '', placeholder: 'bijvoorbeeld x'},
+      [{key: 'name', label: 'Naam', value: '', placeholder: 'x'},
        {key: 'initial', label: 'Beginwaarde', value: '0', formula: true},
-       {key: 'rate', label: 'Verandering per tijdseenheid', value: '', placeholder: 'formule, bijvoorbeeld v', formula: true}],
+       {key: 'rate', label: 'Verandering per tijdseenheid', value: '', placeholder: 'v', formula: true}],
       [{text: 'Voeg toe', action: function(v) {
         self.grafisch_apply([{op: 'addStock', name: v.name, initial: v.initial, rate: v.rate}], $.trim(v.name));
       }}, close]);
   } else if (kind == 'aux') {
     form = this.grafisch_form('Nieuwe hulpvariabele', 'Een grootheid die elke stap met een formule wordt uitgerekend, zoals Fres.',
-      [{key: 'name', label: 'Naam', value: '', placeholder: 'bijvoorbeeld Fres'},
-       {key: 'text', label: 'Formule', value: '', placeholder: 'bijvoorbeeld Fz - Fw', formula: true}],
+      [{key: 'name', label: 'Naam', value: '', placeholder: 'Fres'},
+       {key: 'text', label: 'Formule', value: '', placeholder: 'Fz - Fw', formula: true}],
       [{text: 'Voeg toe', action: function(v) {
         self.grafisch_apply([{op: 'addAux', name: v.name, text: v.text}], $.trim(v.name));
       }}, close]);
   } else {
     form = this.grafisch_form('Nieuwe constante', 'Een grootheid die niet verandert, zoals de massa m. Komt bij de startwaarden.',
-      [{key: 'name', label: 'Naam', value: '', placeholder: 'bijvoorbeeld m'},
-       {key: 'text', label: 'Waarde', value: '', formula: true}],
+      [{key: 'name', label: 'Naam', value: '', placeholder: 'm'},
+       {key: 'text', label: 'Waarde', value: '', placeholder: '75', formula: true}],
       [{text: 'Voeg toe', action: function(v) {
         self.grafisch_apply([{op: 'addConstant', name: v.name, text: v.text}], $.trim(v.name));
       }}, close]);
