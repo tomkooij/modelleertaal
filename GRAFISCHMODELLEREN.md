@@ -9,19 +9,24 @@ draaide. Dit document beschrijft wat er moet veranderen, in volgorde van belang.
 
 ## Stand
 
-Uitgevoerd: punten 1–8 en 13. De eindcontrole is gedaan in Chrome (headless): alle drie de
+Uitgevoerd: punten 1–8, 12 en 13. De eindcontrole is gedaan in Chrome (headless): alle drie de
 volgordes (eerst `x`, eerst `v`, via *Maak constante* → *+ Stroom erin*) geven hetzelfde model
 met `a = 4`, `v = 40` en `x = 220`.
 
 Bij punt 4 bleek de oorzaak niet alleen `grafisch_focus`: Escape werkt nu ook als de focus in
 het formulier of het diagram staat.
 
-Nog open:
+Toelichting:
+- 12: een stroom `dx = v * dt` wordt getekend zoals `x = x + v*dt`: in de stijl Examen een
+  ventiel zonder naam met een pijl van `v` (examens 2014-II, 2015-I), in de stijl Kleur met de
+  naam `v`. Dit geldt ook voor bestaande modellen met `ds = v * dt` (Bungeejumper).
+
+Niet gedaan:
 - 9: bewust niet gedaan. In de stijl Examen wordt een constante die alleen in een startwaarde
   wordt gebruikt weggelaten, zoals in het examen 2026-II (`Fz = m * g`: geen `g`). `Fres = F`
   heeft dezelfde vorm. In de stijl Kleur wordt hij wel getekend. Via Enter wordt `Fres = F` nu
   een hulpvariabele, dus het probleem komt minder vaak voor.
-- 10, 11, 12: niet gedaan; 10 is niet nagebootst (bij 1400 px breed blijft het diagram op 100%).
+- 10, 11: niet gedaan; 10 is niet nagebootst (bij 1400 px breed blijft het diagram op 100%).
 
 ## Doel
 

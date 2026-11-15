@@ -391,10 +391,14 @@ function analyse(startwaarden_ast, modelregels_ast, options) {
                     } else {
                         var def = assigned[v].uncond[0].expr;
                         var rate = stripDt(def, dt);
+                        // dx = v * dt ; x = x + dx: drawn as x = x + v * dt (see below): in the exam
+                        // style a valve without a name with an arrow from v, in color the name v
+                        var single = !!(rate && isVar(rate) && rate.name != time);
                         f = {id: f ? v + '#' + flows.length : v, kind: 'flow', name: v, label: v,
                              from: term.sign < 0 ? name : null, to: term.sign > 0 ? name : null,
                              term: v, code: code(def),
                              definition: fmt(def), rate: rate ? fmt(rate) : null,
+                             varRate: single, shown: single ? rate.name : null,
                              deps: without(variables(def), [dt])};
                         if (!flowOfVar[v]) flowOfVar[v] = f;
                         flows.push(add(f));
@@ -1204,7 +1208,7 @@ function toSVG(g, lay, opts) {
         if (!p || vw.hidden[id]) continue;
         var tip = '<title>' + esc(tooltip(g, el) + valueText(el, opts.values)) + '</title>';
         out.push('<g data-id="' + esc(id) + '">');
-        var x = p.x, y = p.y, label = el.name || el.label;
+        var x = p.x, y = p.y, label = el.shown || el.name || el.label;
         switch (el.kind) {
             case 'stock':
                 // rectangle, name inside

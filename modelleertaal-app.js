@@ -1107,7 +1107,7 @@ ModelleertaalApp.prototype.draw_grafisch_model = function() {
   } catch (err) {
     svg.empty().append($('<div>').addClass('placeholder').text(err.empty ?
       'Nog geen model. Begin met een toestandsvariabele, zoals x (+ Toestandsvariabele). ' +
-      'Klik daarna op een ? om die grootheid in te vullen. Of typ het model hieronder.' :
+      'Klik daarna op een ? om die grootheid in te vullen. Of typ het model in de tekstvakken.' :
       'Geen grafisch model: ' + (err.message || 'fout in het model')));
     this.grafisch_g = undefined;
     this.grafisch_layout = undefined;

@@ -27,6 +27,10 @@
 - A field **dt =** in the toolbar of the diagram sets the time step.
 - The red error bar of the last Run disappears when the model changes.
 - The empty diagram explains how to start: a toestandsvariabele first, then click a **?**.
+- A flow `dx = v * dt` with `x = x + dx` (as the diagram writes it) is drawn as `x = x + v*dt`:
+  in the style Examen a valve without a name with an arrow from `v` (as in the exams 2014-II,
+  2015-I), in the style Kleur the name `v`. The flow is still called `dx` in its form and in
+  *Herkende elementen*. Also for models such as `ds = v * dt` (Bungeejumper).
 
 ## [6.5]
 
