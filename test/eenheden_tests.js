@@ -77,4 +77,24 @@ describe('eenheden.js - eenheden uit het commentaar', function() {
         assert.match(d.conflicts.N || d.conflicts.t, /dag/);
         assert.equal(eenheden.derive("v = 3 '[m/s]", "w = sqrt(v^2 + 1)\nh = sin(v)").units.w, 'm/s');
     });
+
+    it('een getal met een eenheid die er niet staat (9,81) maakt de eenheid onbekend', function() {
+        var d = eenheden.derive("m = 91 '[kg]\nv = 0\nx = 0\nt = 0 '[s]\ndt = 0,1",
+            "Fz = m * 9,81\nFr = Fz - Fw\na = Fr/m\nv = v + a*dt\nx = x + v*dt\nt = t + dt");
+        ['Fz', 'Fr', 'a', 'v', 'x'].forEach(function(name) { assert.isUndefined(d.units[name], name); });
+        // terug oplossen ook niet: m krijgt geen N
+        d = eenheden.derive("Fz = 0 '[N]\nm = 3", "Fz = m * 9,81");
+        assert.isUndefined(d.units.m);
+        // gehele getallen, 0,5 en pi wel
+        d = eenheden.derive("m = 2 '[kg]\nv = 3 '[m/s]\nr = 1 '[m]", "Ek = 0,5 * m * v^2\np = 2 * m * v\nO = 2 * pi * r\nh = r / 2");
+        assert.equal(d.units.Ek, 'J');
+        assert.equal(d.units.p, 'kg·m/s');
+        assert.equal(d.units.O, 'm');
+        assert.equal(d.units.h, 'm');
+    });
+
+    it('geen lege haken: a () wordt a', function() {
+        assert.equal(eenheden.label('a', {a: ''}), 'a');
+        assert.equal(eenheden.labels(['a', 'b'], {a: '', b: ''}), 'a, b');
+    });
 });

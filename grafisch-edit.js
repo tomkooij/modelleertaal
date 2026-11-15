@@ -32,11 +32,23 @@
 
     Met timeUnit in een bewerking (bijvoorbeeld 's') krijgen t en dt die eenheid als de
     bewerking ze maakt: t = 0 '[s]
-      {op: 'remove', id}
+      {op: 'remove', id}                         ook een voorval of stopvoorwaarde (het hele als-blok)
+
+    Voorwaarden (als ... dan ... eindals, zoals in de examenmodellen):
+      {op: 'addEvent', condition, target, text}  als condition dan target = text eindals,
+                                                 na de laatste regel die target uitrekent
+      {op: 'addEvent', condition, stop: true}    als condition dan stop eindals, aan het eind
+      {op: 'setEvent', id, condition, text}      voorwaarde en/of nieuwe waarde van een voorval
+                                                 of stopvoorwaarde (id: ~e1, ~s1)
+      {op: 'setLimit', name, bound, text}        bound 'max': als x > text dan x = text eindals,
+                                                 'min': als x < text dan x = text eindals; text '': weg
 
     Verder:
       edit.variablesOf(text)    de variabelen in een formule (Error als het geen formule is)
       edit.dtOf(model)          {name, text}: de tijdstap en zijn startwaarde (text: null als die er niet is)
+      edit.eventOf(model, id)   {condition, target, text} van een voorval of stopvoorwaarde, als code;
+                                null als het niet via het diagram kan (meer regels, als binnen als)
+      edit.limitsOf(model, name)  {max, min}: de grenzen van een toestandsvariabele ('' als er geen is)
 */
 
 //jshint node:true
@@ -248,6 +260,73 @@ Context.prototype.need = function(line, name) {
 
 Context.prototype.timeLine = function() {
     return this.g.time ? this.regelLine(this.g.time, 'self') : -1;
+};
+
+Context.prototype.blocks = function() {
+    // the als ... eindals blocks at the top level of the modelregels: [{start, end, stmt}]
+    // (end: the line of eindals). A block that is not one statement is left out.
+    var depth = depths(this.regels), out = [], i, j, k;
+    for (i = 0; i < this.regels.length; i++) {
+        var words = tokens(splitComment(this.regels[i]).code);
+        if (depth[i] !== 0 || !words.length || words[0].toLowerCase() != 'als') continue;
+        for (j = i; j + 1 < this.regels.length && depth[j + 1] !== 0; j++) { /* to the eindals */ }
+        var ast = null, stmts = [];
+        try {
+            ast = parse(this.regels.slice(i, j + 1).join('\n'), 'als');
+        } catch (err) {
+            ast = null;
+        }
+        for (k = 0; ast && k < ast.length; k++) if (ast[k].type != 'Blank') stmts.push(ast[k]);
+        if (stmts.length == 1 && (stmts[0].type == 'If' || stmts[0].type == 'IfElse')) {
+            out.push({start: i, end: j, stmt: stmts[0]});
+        }
+        i = j;
+    }
+    return out;
+};
+
+Context.prototype.eventBlock = function(el) {
+    // the block of a voorval (one condition, only name = ... for its targets) or a stopvoorwaarde
+    var list = this.blocks();
+    for (var i = 0; i < list.length; i++) {
+        var st = list[i].stmt, body = [], k;
+        if (st.type != 'If' || grafisch.fmt(st.cond) != el.condition) continue;
+        for (k = 0; k < st.then.length; k++) if (st.then[k].type != 'Blank') body.push(st.then[k]);
+        if (el.kind == 'stop' && body.length == 1 && body[0].type == 'Stop') return list[i];
+        if (el.kind != 'event' || body.length != el.actions.length) continue;
+        var ok = true;
+        for (k = 0; k < body.length; k++) {
+            if (body[k].type != 'Assignment' || el.targets.indexOf(body[k].left) == -1) ok = false;
+        }
+        if (ok) return list[i];
+    }
+    return null;
+};
+
+Context.prototype.afterLast = function(name) {
+    // where a voorval for name goes: after the last line that calculates name (after the end
+    // of its als-block). A toestandsvariabele or constante: also after the other toestandsvariabelen,
+    // just before t = t + dt (als h < 0 dan v = -v after h = h + v*dt, as in the exam models).
+    // A hulpvariabele (also one drawn as the valve of a flow, groei in dOpp = groei * dt): right
+    // after its formula, before it is used.
+    var depth = depths(this.regels), at = -1, i, t = this.timeLine();
+    if (!this.isFormula(name) && t != -1) {
+        for (i = t; i < this.regels.length; i++) {
+            var m2 = ASSIGN_RE.exec(splitComment(this.regels[i]).code);
+            if (m2 && m2[2] == name && i != t) t = -1;   // name is calculated after t = t + dt
+        }
+        if (t != -1) return t;
+    }
+    for (i = 0; i < this.regels.length; i++) {
+        var m = ASSIGN_RE.exec(splitComment(this.regels[i]).code);
+        if (m && m[2] == name && i != this.timeLine()) at = i;
+    }
+    if (at == -1) {
+        t = this.timeLine();
+        return t != -1 ? t : endOf(this.regels);
+    }
+    while (at + 1 < this.regels.length && depth[at + 1] > 0) at++;
+    return at + 1;
 };
 
 Context.prototype.decimal = function(value) {
@@ -505,6 +584,20 @@ ops.setUnit = function(c, op) {
     lines[line] = parts.code.replace(/\s+$/, '') + comment;
 };
 
+function flowName(c, name, stock, rate) {
+    // the name of the flow of stock: given, or d + stock. It cannot be in its own formula:
+    // dOpp = dOpp * dt would be a second toestandsvariabele
+    var auto = /^\s*$/.test(name || '');
+    name = auto ? c.freeName('d' + stock) : c.checkNewName(name);
+    if (grafisch.variables(exprOf(rate)).indexOf(name) != -1) {
+        throw new Error(auto ?
+            name + ' is de naam van de stroom van ' + stock + '. Kies een andere naam voor de ' +
+            'verandering per tijdseenheid, bijvoorbeeld groei.' :
+            'De stroom ' + name + ' kan niet in zijn eigen formule staan (' + name + ' = ' + rate + ' * ' + c.g.dt + ').');
+    }
+    return name;
+}
+
 function flowLine(c, name, rate) {
     // dx = rate * dt
     return name + ' = ' + grafisch.code(exprOf(rate), 5, false) + ' * ' + c.g.dt;
@@ -517,10 +610,10 @@ function defineStock(c, name, initial, rate, flow) {
     exprOf(rate);
     addStart(c, name, initial);
     c.analyse();
-    var flowName = /^\s*$/.test(flow || '') ? c.freeName('d' + name) : c.checkNewName(flow);
+    var fname = flowName(c, flow, name, rate);
     c.needTime();
-    var at = insert(c.regels, c.stockPlace(name), name + ' = ' + name + ' + ' + flowName);
-    insert(c.regels, at, flowLine(c, flowName, rate));
+    var at = insert(c.regels, c.stockPlace(name), name + ' = ' + name + ' + ' + fname);
+    insert(c.regels, at, flowLine(c, fname, rate));
 }
 
 ops.addStock = function(c, op) {
@@ -537,7 +630,7 @@ ops.addFlow = function(c, op) {
     var el = c.checkStock(op.stock);
     var rate = /^\s*$/.test(op.rate || '') ? '0' : op.rate;
     exprOf(rate);
-    var name = /^\s*$/.test(op.name || '') ? c.freeName('d' + op.stock) : c.checkNewName(op.name);
+    var name = flowName(c, op.name, op.stock, rate);
     c.needTime();
     var terms = c.flowsOf(op.stock);
     terms.push({sign: op.direction == 'out' ? -1 : 1, term: name});
@@ -648,9 +741,136 @@ ops.remove = function(c, op) {
             var s = findLine(c.start, el.id, undefined, true);
             if (s != -1) c.start.splice(s, 1);
             break;
+        case 'event':
+        case 'stop':
+            var block = c.eventBlock(el);
+            if (!block) c.need(-1, el.label);
+            c.regels.splice(block.start, block.end - block.start + 1);
+            break;
         default:
             throw new Error('Dit element kun je hier niet verwijderen.' + MANUAL);
     }
+};
+
+
+// ------------------------------------------------------------------ voorwaarden
+
+function condOf(text) {
+    // a condition typed by the user: 't > 13' (also 'als t > 13 dan'). Returns the trimmed text
+    text = String(text || '').replace(/^\s+|\s+$/g, '').replace(/^als\s+/i, '').replace(/\s+dan$/i, '');
+    var ast = null;
+    try {
+        ast = parse('als ' + text + ' dan\nstop\neindals', 'voorwaarde');
+    } catch (err) {
+        ast = null;
+    }
+    if (!text || !ast || ast.length != 1 || ast[0].type != 'If') {
+        throw new Error('De voorwaarde "' + text + '" klopt niet. Bijvoorbeeld: t > 13');
+    }
+    return text;
+}
+
+function blockLines(condition, body) {
+    // als t > 13 dan / (indented) Opp = Opp + dOpp / eindals, as in the exam models
+    var out = ['als ' + condition + ' dan'];
+    for (var i = 0; i < body.length; i++) out.push('    ' + body[i]);
+    out.push('eindals');
+    return out;
+}
+
+function writeBlock(c, at, lines) {
+    // insert the lines of a block before line at (outside als ... eindals), same indentation
+    var i = insert(c.regels, at, lines[0]);
+    var ind = /^\s*/.exec(c.regels[i])[0];
+    for (var k = 1; k < lines.length; k++) c.regels.splice(i + k, 0, ind + lines[k]);
+}
+
+function replaceBlock(c, block, lines) {
+    var ind = /^\s*/.exec(c.regels[block.start])[0];
+    var args = [block.start, block.end - block.start + 1];
+    for (var k = 0; k < lines.length; k++) args.push(ind + lines[k]);
+    c.regels.splice.apply(c.regels, args);
+}
+
+Context.prototype.isFormula = function(name) {
+    // calculated with a formula in the modelregels, not a toestandsvariabele (x = x + dx)
+    var el = this.g.elements.hasOwnProperty(name) ? this.g.elements[name] : null;
+    return this.assigned.hasOwnProperty(name) && !(el && el.kind == 'stock') && !this.init.hasOwnProperty(name);
+};
+
+Context.prototype.checkTarget = function(name) {
+    // a variable that a voorval can change: with a startwaarde, or a hulpvariabele
+    name = String(name || '').replace(/^\s+|\s+$/g, '');
+    if (!name) throw new Error('Welke variabele verandert er? Vul de naam in, bijvoorbeeld v.');
+    if (name == this.g.time || name == this.g.dt) {
+        throw new Error(name + ' kun je niet met een voorwaarde veranderen. Kies "Stop het model" om op een tijdstip te stoppen.');
+    }
+    if (!this.exists(name)) throw new Error('De variabele "' + name + '" bestaat niet.');
+    if (!this.init.hasOwnProperty(name) && !this.isFormula(name)) {
+        throw new Error(name + ' heeft nog geen beginwaarde. Geef ' + name + ' eerst een waarde (klik op de ?).');
+    }
+    return name;
+};
+
+ops.addEvent = function(c, op) {
+    var cond = condOf(op.condition);
+    if (op.stop) {
+        writeBlock(c, endOf(c.regels), blockLines(cond, ['stop']));
+        return;
+    }
+    var name = c.checkTarget(op.target), text = String(op.text || '').replace(/^\s+|\s+$/g, '');
+    exprOf(text);
+    writeBlock(c, c.afterLast(name), blockLines(cond, [name + ' = ' + text]));
+};
+
+ops.setEvent = function(c, op) {
+    var el = c.element(op.id);
+    if (el.kind != 'event' && el.kind != 'stop') throw new Error('Dit is geen voorval of stopvoorwaarde.');
+    var block = c.eventBlock(el);
+    if (!block) c.need(-1, el.label);
+    var st = block.stmt;
+    var cond = op.condition === undefined ? grafisch.code(st.cond) : condOf(op.condition);
+    var body = [], k;
+    for (k = 0; k < st.then.length; k++) {
+        var s = st.then[k];
+        if (s.type == 'Stop') body.push('stop');
+        if (s.type == 'Assignment') body.push(s.left + ' = ' + grafisch.code(s.right));
+    }
+    if (op.text !== undefined && el.kind == 'event') {
+        if (body.length != 1) c.need(-1, el.label);
+        var text = String(op.text).replace(/^\s+|\s+$/g, '');
+        exprOf(text);
+        for (k = 0; k < st.then.length; k++) if (st.then[k].type == 'Assignment') body[0] = st.then[k].left + ' = ' + text;
+    }
+    replaceBlock(c, block, blockLines(cond, body));
+};
+
+Context.prototype.limitBlock = function(name, bound) {
+    // als x > 42,6 dan x = 42,6 eindals (bound 'max'), als x < 0 dan x = 0 eindals ('min')
+    var list = this.blocks(), cmp = bound == 'max' ? ['>', '>='] : ['<', '<='];
+    for (var i = 0; i < list.length; i++) {
+        var st = list[i].stmt, body = [], k;
+        if (st.type != 'If' || st.cond.type != 'Logical' || cmp.indexOf(st.cond.operator) == -1) continue;
+        if (st.cond.left.type != 'Variable' || st.cond.left.name != name) continue;
+        for (k = 0; k < st.then.length; k++) if (st.then[k].type != 'Blank') body.push(st.then[k]);
+        if (body.length == 1 && body[0].type == 'Assignment' && body[0].left == name &&
+            grafisch.code(body[0].right) == grafisch.code(st.cond.right)) return list[i];
+    }
+    return null;
+};
+
+ops.setLimit = function(c, op) {
+    var name = op.name, text = String(op.text || '').replace(/^\s+|\s+$/g, '');
+    if (op.bound != 'max' && op.bound != 'min') throw new Error('Onbekende grens: ' + op.bound);
+    var block = c.limitBlock(name, op.bound);
+    if (text === '') {
+        if (block) c.regels.splice(block.start, block.end - block.start + 1);
+        return;
+    }
+    exprOf(text);
+    var lines = blockLines(name + (op.bound == 'max' ? ' > ' : ' < ') + text, [name + ' = ' + text]);
+    if (block) replaceBlock(c, block, lines);
+    else writeBlock(c, c.afterLast(name), lines);
 };
 
 
@@ -684,6 +904,32 @@ function dtOf(model) {
     return {name: dt, text: c.init.hasOwnProperty(dt) ? grafisch.code(c.init[dt]) : null};
 }
 
+function eventOf(model, id) {
+    var c = new Context(model), el = c.element(id);
+    var block = (el.kind == 'event' || el.kind == 'stop') ? c.eventBlock(el) : null;
+    if (!block) return null;
+    var st = block.stmt, out = {condition: grafisch.code(st.cond), target: null, text: null};
+    for (var k = 0; k < st.then.length; k++) {
+        if (st.then[k].type == 'Assignment') {
+            if (out.target !== null) return {condition: out.condition, target: null, text: null};   // more: only the condition
+            out.target = st.then[k].left;
+            out.text = grafisch.code(st.then[k].right);
+        }
+    }
+    return out;
+}
+
+function limitsOf(model, name) {
+    var c = new Context(model), out = {}, bounds = ['max', 'min'];
+    for (var i = 0; i < bounds.length; i++) {
+        var b = c.limitBlock(name, bounds[i]);
+        out[bounds[i]] = b ? grafisch.code(b.stmt.cond.right) : '';
+    }
+    return out;
+}
+
 exports.apply = apply;
+exports.eventOf = eventOf;
+exports.limitsOf = limitsOf;
 exports.variablesOf = variablesOf;
 exports.dtOf = dtOf;

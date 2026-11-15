@@ -475,6 +475,7 @@ function ModelleertaalApp(params) {
   $('#grafisch_nieuw_toestand').click(function() { self.grafisch_new_form('stock'); });
   $('#grafisch_nieuw_hulp').click(function() { self.grafisch_new_form('aux'); });
   $('#grafisch_nieuw_constante').click(function() { self.grafisch_new_form('const'); });
+  $('#grafisch_nieuw_voorwaarde').click(function() { self.grafisch_new_form('event'); });
   // the unit of dt (with the toggle eenheden)
   $('#grafisch_dt_eenheid').on('change', function() {
     var dt = self.grafisch_g ? self.grafisch_g.dt : 'dt';
@@ -1255,6 +1256,7 @@ ModelleertaalApp.prototype.render_grafisch_model = function() {
   var opts = {bounds: this.grafisch_bounds, values: this.grafisch_values(), stijl: this.grafisch_stijl,
               formules: this.grafisch_formules,
               units: this.grafisch_eenheden && this.grafisch_units ? this.grafisch_units.units : undefined,
+              derivedUnits: this.grafisch_units ? this.grafisch_units.derived : undefined,
               selected: this.grafisch_form_new ? undefined : this.grafisch_selected};
   var view = $(this.dom_grafisch_svg);
   view.html(grafisch.toSVG(this.grafisch_g, this.grafisch_layout, opts));
@@ -1477,6 +1479,10 @@ ModelleertaalApp.prototype.grafisch_apply = function(ops, select, opts) {
     return false;
   }
   this.grafisch_message('');
+  // nothing changed (dt = 0,1 again when the field loses the focus): no new drawing, so a form
+  // that is being clicked is not replaced and the click and the keys after it are not lost
+  if (model.startwaarden == this.model.startwaarden.replace(/\r/g, '') &&
+      model.modelregels == this.model.modelregels.replace(/\r/g, '')) return true;
   this.grafisch_history = this.grafisch_history || [];
   this.grafisch_history.push({
     before: {startwaarden: this.model.startwaarden.replace(/\r/g, ''), modelregels: this.model.modelregels.replace(/\r/g, '')},
@@ -1679,6 +1685,9 @@ ModelleertaalApp.prototype.grafisch_new_form = function(kind, name, value) {
     self.grafisch_form_new = false;
     self.grafisch_select(undefined);
   }};
+  // + Voorwaarde with a variable selected: that variable changes
+  var g = this.grafisch_g, sel = (g && this.grafisch_selected !== undefined) ? g.elements[this.grafisch_selected] : null;
+  var target = (sel && sel.name && ['stock', 'const', 'aux'].indexOf(sel.kind) != -1) ? sel.name : '';
   this.grafisch_message('');
   this.grafisch_selected = undefined;
   this.grafisch_highlight_lines(undefined);
@@ -1698,6 +1707,21 @@ ModelleertaalApp.prototype.grafisch_new_form = function(kind, name, value) {
         self.grafisch_apply(self.grafisch_unit_ops([{op: 'addStock', name: v.name, initial: v.initial, rate: v.rate}],
           $.trim(v.name), v), $.trim(v.name), {noform: true});
       }}, close]);
+  } else if (kind == 'event') {
+    form = this.grafisch_form('Nieuwe voorwaarde',
+      'Als de voorwaarde waar is, krijgt de variabele een nieuwe waarde (bijvoorbeeld: als t > 13 dan ' +
+      'Opp = Opp + dOpp). Of het model stopt. In de tekst komt: als ... dan ... eindals.',
+      [{key: 'condition', label: 'Als', value: '', placeholder: 't > 13', formula: true},
+       {key: 'target', label: 'dan verandert', value: target, placeholder: 'Opp', hint: true},
+       {key: 'text', label: 'in (nieuwe waarde)', value: '', placeholder: 'Opp + dOpp', formula: true, hint: true}],
+      [{text: 'Voeg toe', action: function(v) {
+        self.grafisch_apply([{op: 'addEvent', condition: v.condition, target: v.target, text: v.text}],
+          $.trim(v.target) || undefined, {noform: true});
+      }}, {text: 'Stop het model', action: function(v) {
+        self.grafisch_apply([{op: 'addEvent', condition: v.condition, stop: true}], undefined);
+      }}, close]);
+    form.find('input').first().focus();
+    return;
   } else if (kind == 'aux') {
     form = this.grafisch_form('Nieuwe hulpvariabele', 'Een grootheid die elke stap met een formule wordt uitgerekend, zoals Fres.',
       [{key: 'name', label: 'Naam', value: '', placeholder: 'Fres'},
@@ -1813,15 +1837,28 @@ ModelleertaalApp.prototype.grafisch_select = function(id, opts) {
 
   switch (el.kind) {
     case 'stock':
+      // a maximum or minimum: als x > 42,6 dan x = 42,6 eindals (exam 2005-I)
+      this.read_model();
+      var limits = {max: '', min: ''};
+      try {
+        limits = grafisch_edit.limitsOf({startwaarden: this.model.startwaarden, modelregels: this.model.modelregels}, el.name);
+      } catch (err) {
+        limits = {max: '', min: ''};
+      }
+      var limit_fields = [{key: 'min', label: 'Minimum', value: limits.min, placeholder: 'geen', hint: true, formula: true},
+                          {key: 'max', label: 'Maximum', value: limits.max, placeholder: 'geen', hint: true, formula: true}];
       this.grafisch_form('Toestandsvariabele ' + el.name,
         unit_note((el.general || el.updates != 1) ? 'De stromen van ' + el.name + ' kun je alleen in de tekst aanpassen.' : ''),
         [{key: 'name', label: 'Naam', value: el.name},
-         {key: 'text', label: 'Beginwaarde', value: el.initialCode, formula: true}].concat(unit_fields, stockFlows),
+         {key: 'text', label: 'Beginwaarde', value: el.initialCode, formula: true}].concat(unit_fields, stockFlows, limit_fields),
         [remove],
         function(v) {
           var ops = [], now = rename(ops, v);
           if ($.trim(v.text) != el.initialCode) ops.push({op: 'setDefinition', id: now, text: v.text});
           unit_op(ops, now, v);
+          ['max', 'min'].forEach(function(b) {
+            if ($.trim(v[b]) != limits[b]) ops.push({op: 'setLimit', name: now, bound: b, text: v[b]});
+          });
           stockFlows.forEach(function(f) {
             if ($.trim(v[f.key]) != f.value) ops.push({op: 'setDefinition', id: f.flow, text: v[f.key]});
           });
@@ -1924,10 +1961,36 @@ ModelleertaalApp.prototype.grafisch_select = function(id, opts) {
       unknown_form.find('input').first().focus();
       break;
     case 'event':
-      this.grafisch_form('Voorval', 'als ' + el.condition + ' dan ' + el.actions.join('; ') + '. ' + manual, [], []);
-      break;
     case 'stop':
-      this.grafisch_form('Stopvoorwaarde', 'Het model stopt als ' + el.condition + '. ' + manual, [], []);
+      // condition and new value can be changed when the voorval is one als-block (see grafisch-edit.js)
+      this.read_model();
+      var ev = null;
+      try {
+        ev = grafisch_edit.eventOf({startwaarden: this.model.startwaarden, modelregels: this.model.modelregels}, id);
+      } catch (err) {
+        ev = null;
+      }
+      var title = el.kind == 'stop' ? 'Stopvoorwaarde' : 'Voorval';
+      if (!ev) {
+        this.grafisch_form(title, (el.kind == 'stop' ? 'Het model stopt als ' + el.condition :
+          'als ' + el.condition + ' dan ' + el.actions.join('; ')) + '. ' + manual, [], []);
+        break;
+      }
+      var ev_fields = [{key: 'condition', label: 'Als', value: ev.condition, formula: true}];
+      if (ev.target !== null) ev_fields.push({key: 'text', label: 'dan wordt ' + ev.target, value: ev.text, formula: true});
+      this.grafisch_form(title,
+        el.kind == 'stop' ? 'Het model stopt als de voorwaarde waar is.' :
+          (ev.target === null ? 'als ' + el.condition + ' dan ' + el.actions.join('; ') + '. De nieuwe waarden kun je alleen in de tekst aanpassen.' :
+           'Als de voorwaarde waar is, krijgt ' + ev.target + ' een nieuwe waarde.'),
+        ev_fields, [remove],
+        function(v) {
+          var op = {op: 'setEvent', id: id};
+          if ($.trim(v.condition) != ev.condition) op.condition = v.condition;
+          if (ev.target !== null && $.trim(v.text) != ev.text) op.text = v.text;
+          if (op.condition === undefined && op.text === undefined) return;
+          // the id of a voorval is its number (~e1): it stays the same when the condition changes
+          return self.grafisch_apply([op], id);
+        });
       break;
     default:
       this.grafisch_form(el.name, el.definition + '. ' + manual, [], []);
@@ -1958,7 +2021,8 @@ ModelleertaalApp.prototype.download_grafisch_model = function() {
     lay = undefined;
   }
   this.save_string('<?xml version="1.0" encoding="UTF-8"?>\n' + grafisch.toSVG(g, lay, {stijl: this.grafisch_stijl, formules: this.grafisch_formules,
-    units: this.grafisch_eenheden && this.grafisch_units ? this.grafisch_units.units : undefined}), this.file_name('.svg', 'grafisch model'));
+    units: this.grafisch_eenheden && this.grafisch_units ? this.grafisch_units.units : undefined,
+    derivedUnits: this.grafisch_units ? this.grafisch_units.derived : undefined}), this.file_name('.svg', 'grafisch model'));
 };
 
 

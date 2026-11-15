@@ -9,6 +9,9 @@ draaide. Dit document beschrijft wat er moet veranderen, in volgorde van belang.
 
 ## Stand
 
+Uitgevoerd (tweede ronde): punten 14, 15 en 16, zie "Stand tweede ronde" onder de tweede
+gebruikstest.
+
 Uitgevoerd: punten 1–8, 12 en 13. De eindcontrole is gedaan in Chrome (headless): alle drie de
 volgordes (eerst `x`, eerst `v`, via *Maak constante* → *+ Stroom erin*) geven hetzelfde model
 met `a = 4`, `v = 40` en `x = 220`.
@@ -352,6 +355,32 @@ Na *Maak toestandsvariabele* staat de cursor in *Verandering per tijdseenheid*; 
 27. **Leeg canvas.** Het lege diagram is één regel hoog. Geef het de hoogte van een klein model,
     dan verspringt de pagina niet bij het eerste element.
 
+## Stand tweede ronde
+
+Uitgevoerd: 14, 15 en 16 (`npm test`: 239 tests, in de browser nagelopen met het Champignon-model).
+
+- 14: *+ Voorwaarde* (`addEvent`), bewerkbaar voorval en stopvoorwaarde (`setEvent`, `remove`),
+  *Minimum* / *Maximum* bij een toestandsvariabele (`setLimit`). Het Champignon-model is gebouwd
+  zoals in het examen: `Opp` als constante 0,8, dan *+ Voorwaarde* `t > 13`: `Opp = Opp + dOpp`,
+  dan *Maximum* 42,6. De uitkomst is gelijk aan `modellen/examenvwo2005.xml` (test).
+  Niet gedaan: `als … dan … anders …` voor een hulpvariabele (2015-I `Fafzet`); dat kan nu wel met
+  `Fafzet = C * (yB - y)` en een voorwaarde `y >= yB`: `Fafzet = 0`.
+- 15: een getal met een onbekende eenheid maakt een product onbekend; afgeleide eenheden lichter
+  in het diagram; geen `a ()`. Niet gedaan: de hint "Geef 9,81 een naam (g)".
+- 16: de stroomnaam mag niet in zijn eigen formule staan; melding in het formulier.
+- 19 (Enter in *Eenheid*): de oorzaak bleek het veld `dt =`. Na Enter daarin stuurde de browser
+  bij het verlaten nog een `change`; die tekende het formulier opnieuw terwijl je erin klikte,
+  en het typen kwam terug in `dt =`. Opgelost: een bewerking die de tekst niet verandert tekent
+  niets opnieuw. Enter in *Eenheid* werkt.
+
+Nieuw gezien bij het nalopen:
+- Het formulier van een toestandsvariabele die alleen door een voorval verandert (`Opp`) zegt
+  "De stromen van Opp kun je alleen in de tekst aanpassen". Dat klopt niet: er zijn geen stromen.
+- Bij een geselecteerd voorval licht alleen de regel `Opp = Opp + dOpp` op, niet `als` en `eindals`.
+- De labels van twee voorvallen naast elkaar (`t > 13`, `Opp > 42,6`) overlappen de pijlen.
+- Het veld *Eenheid* staat alleen in het formulier als *eenheden* aan staat. Wie dan typt
+  `Tab Tab v Tab m` (zoals met eenheden aan) krijgt de formule `vm`.
+
 ## Eindcontrole (tweede ronde)
 
 Bouw 2005-I Champignon in de browser, zonder in de tekstvakken te typen:
@@ -360,7 +389,64 @@ Bouw 2005-I Champignon in de browser, zonder in de tekstvakken te typen:
 2. `Fz = m * g`, `g = 9,81` met eenheid `m/s^2`; `Fw = k * Opp * v^2`; `m = 91` kg; `k = 0,37`.
 3. `Opp` toestandsvariabele, 0,8 m², verandering `groei`; `groei = 11`.
 4. *+ Voorwaarde*: `t > 13` bij de stroom van `Opp` (daarvoor geen groei); maximum 42,6.
+   (Uitgevoerd als: `groei = 11` met *Maak hulpvariabele*, *+ Voorwaarde* `t <= 13`: `groei = 0`,
+   en *Maximum* 42,6 in het formulier van `Opp`.)
 5. Run met 500 iteraties.
 
 Verwacht: dezelfde grafiek van `v` als het examenmodel; eenheden `Fz (N)`, `a (m/s²)`,
 `v (m/s)`, `x (m)` na het invullen van `x` in m; het diagram blijft leesbaar (≥ 90%).
+
+### Uitkomst eindcontrole (tweede ronde)
+
+Uitgevoerd in de browser (1400 × 900), vanuit een leeg model, zonder in de tekstvakken te typen,
+met *eenheden* aan. **Geslaagd op het punt dat telt:** het gebouwde model geeft in alle 501 rijen
+precies dezelfde `t`, `v`, `x`, `Opp`, `a` en `Fw` als `modellen/examenvwo2005.xml` (verschil 0;
+eind `v = 7,526 m/s`, `x = 838,6 m`, `Opp = 42,6`). De grafiek van `v` is die van het examen.
+
+Het gebouwde model:
+
+```
+Fz = m * g                    x = 0 '[m]
+Fw = k * Opp * v^2            t = 0 '[s]
+Fr = Fz - Fw                  dt = 0,1 '[s]
+a = Fr/m                      v = 0
+dv = a * dt                   m = 91 '[kg]
+v = v + dv                    g = 9,81 '[m/s^2]
+dx = v * dt                   k = 0,37
+x = x + dx                    Opp = 0,8 '[m^2]
+groei = 11
+als t <= 13 dan
+    groei = 0
+eindals
+dOpp = groei * dt
+Opp = Opp + dOpp
+als Opp > 42,6 dan
+    Opp = 42,6
+eindals
+t = t + dt
+```
+
+Verwacht en gezien:
+- Eenheden: `Fz (N)`, `Fw (N)`, `Fr (N)`, `v (m/s)`, `x (m)`, `k (kg/m³)` en `groei (m²/s)`
+  afgeleid, al op de "?" voordat ze een waarde hebben. `a` staat er als `m/s^2` in plaats van
+  `m/s²`: de notatie volgt wat bij `g` is getypt (punt 19).
+- Diagram leesbaar (≥ 90%): **niet gehaald**, 85% vanaf het moment dat `Opp` erbij komt (punt 18).
+
+Tijdens de test gevonden en opgelost:
+- Een voorwaarde op `groei` werd geweigerd ("groei heeft nog geen beginwaarde"). `groei` is een
+  hulpvariabele, maar wordt als ventiel van `Opp` getekend en telde daardoor als stroom. Het blok
+  zou bovendien na `Opp = Opp + dOpp` zijn gezet, een stap te laat. Nu telt elke variabele met een
+  formule in de modelregels, en het blok komt direct na die formule (test toegevoegd).
+
+Nieuw gevonden, niet opgelost:
+- De voorwaarde op `groei` is in het diagram onzichtbaar: geen bliksemschicht, geen `t`, geen
+  pijl. Wie alleen het diagram ziet, mist dat de groei pas na 13 s begint. Voorstel: een
+  bliksemschicht (of gestippelde pijl van `t`) ook bij een voorwaarde op een hulpvariabele.
+- Enter bij "?" `groei` met `11` maakt een constante. Een voorwaarde op een constante verandert
+  hem blijvend: na de eerste stap is `groei = 0` en groeit `Opp` nooit. Dat is een valkuil.
+  Voorstel: bij *+ Voorwaarde* op een constante de vraag "Moet groei elke stap opnieuw 11 zijn?
+  Maak er dan een hulpvariabele van", met die knop.
+- *+ Voorwaarde* vult de naam niet in als het geselecteerde element een ventiel is (`groei`).
+- De stap "bij de stroom van Opp" uit deze eindcontrole kan niet letterlijk: een voorwaarde hangt
+  aan een variabele, niet aan een stroom. Via de hulpvariabele lukt het wel.
+

@@ -69,7 +69,8 @@ function units(startwaarden, modelregels) {
 
 function label(name, units) {
     // 'v (m/s)', or 'v' without a unit
-    return (units && units.hasOwnProperty(name)) ? name + ' (' + units[name] + ')' : name;
+    // no unit (or the empty unit of a ratio): no brackets, never 'a ()'
+    return (units && units.hasOwnProperty(name) && units[name]) ? name + ' (' + units[name] + ')' : name;
 }
 
 
@@ -78,7 +79,7 @@ function labels(names, units) {
     // else 'x (m), v (m/s)'
     if (names.length === 0) return '';
     var first = units && units.hasOwnProperty(names[0]) ? units[names[0]] : undefined;
-    var same = names.every(function(name) {
+    var same = !!first && names.every(function(name) {
         return units && units.hasOwnProperty(name) && units[name] === first;
     });
     if (same && first !== undefined) return names.join(', ') + ' (' + first + ')';
@@ -248,13 +249,24 @@ function args(node) {
     return [node];
 }
 
+function pureNumber(text) {
+    // a number without a unit for sure: a whole number, 0,5 (Ek = 0,5 * m * v^2) or pi.
+    // 9,81 or 0,37 in a formula is a quantity with a unit that is not written (g, k)
+    var v = Number(String(text).replace(',', '.'));
+    return !isNaN(v) && (v === Math.round(v) || v == 0.5 || Math.abs(v - Math.PI) < 1e-9);
+}
+
 function infer(node, env) {
     // unit of an expression: {d: dims, num: true for a plain number (fits any unit in a sum)},
-    // or null when unknown
+    // or null when unknown. num: 'pure' for a number that is certainly without unit (2, 0,5)
     if (!node) return null;
     var l, r, i;
+    var factor = function(a, b) {
+        // a number with an unknown unit (9,81) in a product: the product has no known unit
+        return a && a.num && a.num != 'pure' && !(b && b.num);
+    };
     switch (node.type) {
-        case 'Number': return {d: {}, num: true};
+        case 'Number': return {d: {}, num: pureNumber(node.value) ? 'pure' : true};
         case 'Variable': return env.hasOwnProperty(node.name) ? {d: env[node.name], num: false} : null;
         case 'Unary': return node.operator == 'NOT' ? null : infer(node.right, env);
         case 'Function':
@@ -287,9 +299,10 @@ function infer(node, env) {
                     if (r && !r.num) return r;
                     return (l && r) ? {d: {}, num: true} : null;
                 case '*':
-                    return (l && r) ? {d: mul(l.d, r.d, 1), num: l.num && r.num} : null;
                 case '/':
-                    return (l && r) ? {d: mul(l.d, r.d, -1), num: l.num && r.num} : null;
+                    if (!l || !r || factor(l, r) || factor(r, l)) return null;
+                    return {d: mul(l.d, r.d, node.operator == '*' ? 1 : -1),
+                            num: l.num && r.num ? (l.num == 'pure' && r.num == 'pure' ? 'pure' : true) : false};
                 case '^':
                     if (!l || node.right.type != 'Number') return (l && r && l.num && r.num) ? l : null;
                     var p = pow(l.d, Number(node.right.value));
@@ -320,6 +333,9 @@ function solve(node, target, env, set) {
         case 'Binary':
             l = infer(node.left, env);
             r = infer(node.right, env);
+            // 9,81 * m: the unit of 9,81 is not known, so m cannot be solved
+            if ((node.operator == '*' || node.operator == '/') &&
+                ((l && l.num && l.num != 'pure') || (r && r.num && r.num != 'pure'))) return;
             switch (node.operator) {
                 case '+':
                 case '-':

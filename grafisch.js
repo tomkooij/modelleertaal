@@ -1105,6 +1105,7 @@ function toSVG(g, lay, opts) {
     // opts.values: name --> {first, last}: values after a run, in the tooltip
     // opts.formules: a box with the formula or beginwaarde next to every symbol (exams 2015-I, 2016-I)
     // opts.units: name --> unit (eenheden.js): the unit after the name, v (m/s)
+    // opts.derivedUnits: name --> true for a unit derived from the formulas (drawn lighter)
     opts = opts || {};
     lay = lay || layout(g, opts);
     var vw = view(g, opts);
@@ -1189,13 +1190,14 @@ function toSVG(g, lay, opts) {
         if (dir.y > 0.3 || (row(g.elements[vw.links[i].from]) && row(g.elements[vw.links[i].to]) &&
                             Math.abs(to.y - from.y) < 1)) above[vw.links[i].to] = true;
     }
-    var lblUnit = '';
+    var lblUnit = '', lblDerived = false;
     var lab = function(text) {
         // the name in italics (exam style), the unit (opts.units) upright: v (m/s)
         text = String(text);
         var suffix = lblUnit ? ' (' + lblUnit + ')' : '';
         if (suffix && text.length > suffix.length && text.slice(-suffix.length) == suffix) {
-            return esc(text.slice(0, -suffix.length)) + '<tspan font-style="normal">' + esc(suffix) + '</tspan>';
+            return esc(text.slice(0, -suffix.length)) + '<tspan font-style="normal"' +
+                (lblDerived ? ' fill-opacity="0.55"' : '') + '>' + esc(suffix) + '</tspan>';
         }
         return esc(text);
     };
@@ -1221,6 +1223,7 @@ function toSVG(g, lay, opts) {
         out.push('<g data-id="' + esc(id) + '">');
         var x = p.x, y = p.y, label = el.shown || el.name || el.label;
         lblUnit = opts.units && el.kind != 'event' && el.kind != 'stop' && opts.units.hasOwnProperty(label) ? opts.units[label] : '';
+        lblDerived = !!(lblUnit && opts.derivedUnits && opts.derivedUnits[label]);
         if (lblUnit) label += ' (' + lblUnit + ')';
         var maxLen = lblUnit ? 28 : 16;
         switch (el.kind) {

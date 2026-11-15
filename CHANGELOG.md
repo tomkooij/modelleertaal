@@ -2,6 +2,35 @@
 
 ## [Unreleased]
 
+### Grafisch model: voorwaarden (als ... dan) via het diagram
+
+- New button **+ Voorwaarde**: *Als* `t > 13` *dan verandert* `Opp` *in* `Opp + dOpp`, or
+  *Stop het model*. It writes `als ... dan` / `Opp = Opp + dOpp` / `eindals` as in the exam
+  models: for a toestandsvariabele or constante just before `t = t + dt`, for a hulpvariabele
+  right after its formula, a stop at the end. With a variable selected, its name is filled in.
+- A voorval (lightning bolt) and a stopvoorwaarde can be changed in their form (condition and new
+  value) and removed, when they are one `als ... eindals` block. A block inside another `als` or
+  with more than one new value still says to change it in the text.
+- A voorwaarde can also change a hulpvariabele that is drawn as the valve of a flow (`groei` in
+  `dOpp = groei * dt`); its block goes right after `groei = 11`.
+- The form of a toestandsvariabele has **Minimum** and **Maximum**: `als Opp > 42,6 dan Opp = 42,6
+  eindals`; empty removes it.
+- The model of exam vwo 2005-I *Champignon* can now be built from an empty model without typing in
+  the text, and gives the same results.
+
+### Eenheden en stromen (GRAFISCHMODELLEREN.md 15, 16)
+
+- A number with a unit that is not written (`9,81` in `Fz = m * 9,81`, `0,37`) makes the unit of a
+  product unknown. Before, it counted as a pure number, which gave `Fz (kg)`, `a ()`, `v (s)` and
+  `x (s²)`. Whole numbers, `0,5` and `pi` still count as pure numbers (`Ek = 0,5 * m * v^2` is J).
+- No empty brackets: `a ()` is shown as `a`.
+- In the diagram a derived unit is lighter than a unit you filled in yourself.
+- A toestandsvariabele `Opp` with *verandering per tijdseenheid* `dOpp` was written as
+  `dOpp = dOpp * dt` (a second toestandsvariabele). Now the form says that `dOpp` is the name of
+  the flow and asks for another name.
+- Fixed: after Enter in the field `dt =`, a click in a form moved the typing back into `dt =`
+  (`0,1kg`). A change that does not change the text no longer redraws the diagram.
+
 ### Eenheden: afgeleid uit de formules, en in het grafische model
 
 - Units that are not written in the comments are derived from the formulas where possible, also

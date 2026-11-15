@@ -284,7 +284,13 @@ describe('grafisch-edit.js - grafisch model als invoer', function() {
         var g = analyse(model);
         assert.equal(g.elements.k.kind, 'aux');
         assert.throws(function() { edit.apply(model, {op: 'setDefinition', id: 'k', text: '1'}); }, /niet automatisch/);
-        assert.throws(function() { edit.apply(model, {op: 'remove', id: '~e1'}); }, /niet verwijderen/);
+        // een voorval (als h < 0 dan v = 0 eindals) kan nu wel weg, het hele als-blok
+        assert.notInclude(edit.apply(model, {op: 'remove', id: '~e1'}).modelregels, 'h < 0');
+        // een stopvoorwaarde binnen een andere voorwaarde niet
+        assert.throws(function() {
+            edit.apply({startwaarden: "x=0\nt=0\ndt=1", modelregels: "x = x + dt\nals x > 1 dan\n  als t > 2 dan stop eindals\neindals\nt = t + dt"},
+                {op: 'remove', id: '~s1'});
+        }, /niet automatisch/);
         assert.throws(function() { edit.apply({startwaarden: 'x = (', modelregels: ''}, {op: 'addConstant', name: 'a', text: '1'}); }, /fout/);
         // x = x * 1,05: geen x = x + ... vorm
         assert.throws(function() {
@@ -303,5 +309,80 @@ describe('grafisch-edit.js - grafisch model als invoer', function() {
         assert.closeTo(after.hoogte, before.x, 1e-9);
         assert.closeTo(after.v, before.v, 1e-9);
         assert.isAbove(after.Ek, 0);
+    });
+
+    it('een stroom kan niet in zijn eigen formule staan (dOpp = dOpp * dt)', function() {
+        var m = {startwaarden: '', modelregels: ''};
+        assert.throws(function() { edit.apply(m, {op: 'addStock', name: 'Opp', initial: '0,8', rate: 'dOpp'}); },
+            /dOpp is de naam van de stroom van Opp/);
+        assert.throws(function() { edit.apply(m, {op: 'addStock', name: 'x', initial: '0', rate: 'w', flow: 'w'}); },
+            /eigen formule/);
+        m = edit.apply(m, {op: 'addStock', name: 'x', initial: '0', rate: 'v'});
+        assert.throws(function() { edit.apply(m, {op: 'define', id: 'v', kind: 'stock', initial: '0', rate: 'dv'}); },
+            /dv is de naam van de stroom van v/);
+        assert.throws(function() { edit.apply(m, {op: 'addFlow', stock: 'x', direction: 'out', rate: 'dx2'}); },
+            /dx2 is de naam/);
+    });
+
+    it('voorwaarden: het model van examen vwo 2005-I Champignon via het diagram', function() {
+        var m = {startwaarden: '', modelregels: ''};
+        var A = function(op) { m = edit.apply(m, op); };
+        A({op: 'addStock', name: 'x', initial: '0', rate: 'v'});
+        A({op: 'define', id: 'v', kind: 'stock', initial: '0', rate: 'a'});
+        A({op: 'define', id: 'a', kind: 'aux', text: 'Fr/m'});
+        A({op: 'define', id: 'Fr', kind: 'aux', text: 'Fz - Fw'});
+        A({op: 'define', id: 'Fz', kind: 'aux', text: 'm * 9,81'});
+        A({op: 'define', id: 'Fw', kind: 'aux', text: 'k * Opp * v^2'});
+        A({op: 'define', id: 'm', kind: 'const', text: '91'});
+        A({op: 'define', id: 'k', kind: 'const', text: '0,37'});
+        A({op: 'define', id: 'Opp', kind: 'const', text: '0,8'});
+        A({op: 'addEvent', condition: 't > 13', target: 'Opp', text: 'Opp + dOpp'});
+        A({op: 'define', id: 'dOpp', kind: 'const', text: '1,1'});
+        A({op: 'setLimit', name: 'Opp', bound: 'max', text: '42,6'});
+        var r = lines(m.modelregels);
+        assert.deepEqual(r.slice(r.indexOf('als t > 13 dan')),
+            ['als t > 13 dan', '    Opp = Opp + dOpp', 'eindals', 'als Opp > 42,6 dan', '    Opp = 42,6', 'eindals', 't = t + dt']);
+        var g = analyse(m);
+        assert.equal(g.elements.Opp.kind, 'stock');
+        assert.equal(g.elements['~e1'].kind, 'event');
+        assert.deepEqual(edit.limitsOf(m, 'Opp'), {max: '42,6', min: ''});
+        assert.deepEqual(edit.eventOf(m, '~e1'), {condition: 't > 13', target: 'Opp', text: 'Opp + dOpp'});
+        // dezelfde uitkomst als het examenmodel
+        var exam = {startwaarden: "m = 91\nk = 0,37\nOpp = 0,8\nv = 0\nx = 0\nt = 0\ndOpp = 1,1\ndt = 0,1",
+                    modelregels: "Fz = m * 9,81\nFw = k * Opp * v^2\nFr = Fz - Fw\na = Fr/m\nv = v + a*dt\nx = x + v*dt\n" +
+                                 "als t > 13 dan\n    Opp = Opp + dOpp\neindals\nals Opp > 42,6 dan\n    Opp = 42,6\neindals\nt = t + dt"};
+        var mine = run(m, 300), theirs = run(exam, 300);
+        ['v', 'x', 'Opp', 't'].forEach(function(name) { assert.closeTo(mine[name], theirs[name], 1e-9, name); });
+        assert.closeTo(mine.Opp, 42.6, 1e-9);
+    });
+
+    it('voorwaarden aanpassen, stoppen, grenzen weghalen', function() {
+        var m = {startwaarden: "h = 10\nv = 0\nt = 0\ndt = 0,1", modelregels: "v = v - 9,81*dt\nh = h + v*dt\nt = t + dt"};
+        m = edit.apply(m, {op: 'addEvent', condition: 'als h < 0 dan', target: 'v', text: '-0,8 * v'});
+        m = edit.apply(m, {op: 'addEvent', condition: 't > 5', stop: true});
+        assert.deepEqual(lines(m.modelregels),
+            ['v = v - 9,81*dt', 'h = h + v*dt', 'als h < 0 dan', '    v = -0,8 * v', 'eindals', 't = t + dt',
+             'als t > 5 dan', '    stop', 'eindals']);
+        m = edit.apply(m, {op: 'setEvent', id: '~e1', condition: 'h <= 0', text: '-v'});
+        assert.include(m.modelregels, 'als h <= 0 dan\n    v = -v\neindals');
+        m = edit.apply(m, {op: 'setEvent', id: '~s1', condition: 't > 8'});
+        assert.deepEqual(edit.eventOf(m, '~s1'), {condition: 't > 8', target: null, text: null});
+        m = edit.apply(m, {op: 'setLimit', name: 'h', bound: 'min', text: '0'});
+        assert.equal(edit.limitsOf(m, 'h').min, '0');
+        m = edit.apply(m, {op: 'setLimit', name: 'h', bound: 'min', text: ''});
+        assert.equal(edit.limitsOf(m, 'h').min, '');
+        assert.throws(function() { edit.apply(m, {op: 'addEvent', condition: 't >', target: 'v', text: '0'}); }, /voorwaarde/);
+        assert.throws(function() { edit.apply(m, {op: 'addEvent', condition: 't > 1', target: 'w', text: '0'}); }, /bestaat niet/);
+        assert.throws(function() { edit.apply(m, {op: 'addEvent', condition: 't > 1', target: 't', text: '0'}); }, /Stop het model/);
+        assert.equal(run(m, 200).t >= 8, true);
+    });
+
+    it('voorwaarde op een hulpvariabele die als ventiel getekend wordt (groei)', function() {
+        var m = {startwaarden: "Opp = 0,8\nt = 0\ndt = 0,1", modelregels: "groei = 11\ndOpp = groei * dt\nOpp = Opp + dOpp\nt = t + dt"};
+        assert.equal(analyse(m).elements.groei.kind, 'flow');
+        m = edit.apply(m, {op: 'addEvent', condition: 't <= 13', target: 'groei', text: '0'});
+        assert.deepEqual(lines(m.modelregels),
+            ['groei = 11', 'als t <= 13 dan', '    groei = 0', 'eindals', 'dOpp = groei * dt', 'Opp = Opp + dOpp', 't = t + dt']);
+        assert.closeTo(run(m, 200).Opp, 0.8 + 1.1 * 69, 1e-6);
     });
 });
