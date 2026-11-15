@@ -280,6 +280,55 @@
             border: 2px solid var(--bg);
         }
 
+        .topbar {
+            position: relative;
+        }
+
+        .tour_menu {
+            position: absolute;
+            right: 0;
+            top: calc(100% + 6px);
+            z-index: 1002;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            width: min(300px, calc(100vw - 32px));
+            padding: 6px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+        }
+
+        .tour_menu[hidden] {
+            display: none;
+        }
+
+        .tour_menu button {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 2px;
+            text-align: left;
+            border: none;
+            background: transparent;
+            padding: 8px 10px;
+        }
+
+        .tour_menu button:hover,
+        .tour_menu button:focus-visible {
+            background: #eff6ff;
+        }
+
+        .tour_menu button b {
+            color: var(--primary);
+        }
+
+        .tour_menu button span {
+            font-size: 0.85rem;
+            color: var(--muted);
+        }
+
         .tour_spot {
             position: fixed;
             z-index: 1000;
@@ -1465,7 +1514,7 @@
             <button id="permalink" type="button" title="Kopieer een link naar dit model (met jouw wijzigingen)">Deel link</button>
         </div>
         <button id="rondleiding_knop" type="button" aria-expanded="false"
-            title="Nieuw hier? Een korte rondleiding langs de vijf belangrijkste onderdelen (1 minuut)"><span class="tour_icoon" aria-hidden="true">?</span>Rondleiding</button>
+            title="Nieuw hier? Een korte rondleiding in vijf stappen, voor leerlingen of voor docenten"><span class="tour_icoon" aria-hidden="true">?</span>Rondleiding</button>
     </header>
 
     <main>
@@ -1617,7 +1666,7 @@
                     <label for="opdracht_invoer">Opdracht bij dit model (gaat mee in Deel link en Bewaar):</label>
                     <textarea id="opdracht_invoer" rows="3" spellcheck="true" placeholder="Bijvoorbeeld: vul de puntjes in en bepaal de eindsnelheid."></textarea>
                 </div>
-                <div>
+                <div class="docent_downloads">
                     <span>Grafiek voor docenten:</span>
                     <button id="download_svg" type="button" title="De lijn van de grafiek als SVG (zonder assen)">Download als SVG</button>
                     <button id="download_pgf" type="button" title="De grafiek als PGFPlot voor LaTeX, op millimeterpapier">Download als PGFPlot (LaTeX)</button>

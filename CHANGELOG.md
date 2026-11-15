@@ -4,12 +4,15 @@
 
 ### Rondleiding
 
-- New button **Rondleiding** at the right of the top bar: a short tour along the five parts a
-  teacher should see first: choosing a model, Run and Stap, the automatic graphs and reading them,
-  Tekst + grafisch, and an opdracht with Deel link. It never starts by itself; a small dot on the
-  button shows it has not been opened yet (remembered in the browser).
+- New button **Rondleiding** at the right of the top bar. It opens a small menu with two tours of
+  five steps each. It never starts by itself; a small dot on the button shows it has not been
+  opened yet (remembered in the browser).
+- **Voor leerlingen**: choosing a model, modelregels and startwaarden, Run and Stap, reading the
+  graph (and the tangent line), Tekst + grafisch.
+- **Voor docenten**: an opdracht with the model, Deel link, comparing runs in class (Houd vast),
+  graphs for lesson material (SVG, PGFPlot, PNG, Excel), and work of students (Bewaar and Open).
 - Each step lights up its part of the page; the page stays usable. Volgende/Vorige, the arrow keys
-  and Esc. For the graph step the tour runs the model if it has no results; the diagram and Meer
+  and Esc. For the graph steps the tour runs the model if it has no results; the diagram and Meer
   opties are opened for their step and closed again afterwards.
 
 ## [6.6]

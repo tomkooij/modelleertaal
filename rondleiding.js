@@ -1,9 +1,12 @@
 /*
     rondleiding.js
 
-    Een korte rondleiding langs de vijf onderdelen die een docent het eerst moet zien.
-    Start nooit vanzelf: alleen met de knop Rondleiding bovenaan. Tot iemand de rondleiding
-    een keer geopend heeft, staat er een kleine stip op de knop.
+    Twee korte rondleidingen, elk in vijf stappen:
+    - voor leerlingen: de basis (model kiezen, modelregels, Run en Stap, grafieken, diagram)
+    - voor docenten: wat een docent extra kan (opdracht, Deel link, runs vergelijken in de klas,
+      grafieken voor lesmateriaal, werk van leerlingen)
+    Start nooit vanzelf: alleen met de knop Rondleiding bovenaan, die een keuzemenu opent.
+    Tot iemand de rondleiding een keer geopend heeft, staat er een kleine stip op de knop.
 
     Elke stap licht een deel van de pagina op (de rest wordt donkerder) met een tekstballon
     ernaast. De pagina blijft bruikbaar: je kunt tijdens de rondleiding gewoon klikken.
@@ -16,57 +19,113 @@
 
 var GEZIEN_KEY = 'modelleertaal_rondleiding_gezien';
 
-// De stappen. 'doel' is de selector van wat oplicht; 'voor' en 'na' zetten de pagina
-// klaar en terug (zie hieronder). In node (tests) worden alleen de teksten gebruikt.
-var STAPPEN = [
-    {
-        doel: '.model_select',
-        titel: 'Kies een model',
-        tekst: 'Alle modellen uit de vwo-examens en de modellen bij de modules staan klaar. ' +
-            'Kies eerst een verzameling, dan een model. Zelf beginnen? ' +
-            'Kies <b>Basismodellen</b> &rarr; <b>Leeg model</b>. ' +
-            'Met <b>Open</b> en <b>Bewaar</b> werk je met een bestand op je computer.'
-    },
-    {
-        doel: '.runbar',
-        titel: 'Run en Stap',
-        tekst: '<b>Run</b> (of Ctrl+Enter) rekent het model door. ' +
-            'Met <b>Stap</b> reken je regel voor regel, met de getallen ingevuld: ' +
-            '<code>v = v + a*dt &rarr; v = 0,981 + 9,78 &times; 0,1</code>. ' +
-            'Zo zien leerlingen hoe de rekenlus werkt. ' +
-            'Gaat er iets mis, dan staat de foutmelding in het Nederlands boven het model.'
-    },
-    {
-        doel: '.area_graph',
-        titel: 'Grafieken en aflezen',
-        voor: 'run',
-        tekst: 'Na Run kiest de webapp zelf de grafieken die bij het model passen; klik op een miniatuur ' +
-            'om die groot te zien. Klik op een punt in de grafiek om af te lezen, met hulplijnen ' +
-            'naar de assen en de raaklijn erbij. Verander een startwaarde en druk weer op Run: ' +
-            'de vorige run blijft als grijze lijn staan.'
-    },
-    {
-        doel: '.area_model',
-        titel: 'Tekst + grafisch',
-        voor: 'grafisch',
-        tekst: 'Met <b>Tekst + grafisch</b> staat het model ook als diagram boven de tekst, ' +
-            'getekend zoals in de examens. Tekst en diagram zijn gekoppeld: klik op een symbool en ' +
-            'de regels lichten op. Het diagram is ook invoer: voeg grootheden toe of verander een formule. ' +
-            'Onder het diagram kies je de stijl <b>Examen</b> of <b>Kleur</b>.'
-    },
-    {
-        doel: '.opdracht_optie',
-        titel: 'Een opdracht delen',
-        voor: 'opties',
-        tekst: 'Schrijf hier (in <b>Meer opties</b>) een opdracht bij het model, bijvoorbeeld ' +
-            '&ldquo;vul de puntjes in en bepaal de eindsnelheid&rdquo;. ' +
-            '<b>Deel link</b> bovenaan kopieert dan een link met het model &eacute;n de opdracht: ' +
-            'zet die in je lesmateriaal of stuur hem naar je leerlingen. Niets installeren, geen account.'
-    }
-];
+var DIDACTIEK = '<a href="https://github.com/tomkooij/modelleertaal/blob/master/DIDACTIEK.md" ' +
+    'target="_blank" rel="noopener">DIDACTIEK.md</a>';
+var README = '<a href="https://github.com/tomkooij/modelleertaal#de-webapp-in-je-eigen-website-gebruiken" ' +
+    'target="_blank" rel="noopener">README</a>';
 
-var EINDE = 'Waarom de webapp zo werkt, staat in ' +
-    '<a href="https://github.com/tomkooij/modelleertaal/blob/master/DIDACTIEK.md" target="_blank" rel="noopener">DIDACTIEK.md</a>.';
+// De rondleidingen. 'doel' is de selector van wat oplicht; 'voor' zet de pagina klaar
+// (zie zet_klaar). In node (tests) worden alleen de teksten gebruikt.
+var RONDLEIDINGEN = {
+    leerling: {
+        naam: 'Voor leerlingen',
+        uitleg: 'De basis: een model doorrekenen en de grafiek aflezen',
+        einde: 'Je werk blijft in deze browser staan, ook als je de pagina sluit. ' +
+            'Wil je het als bestand hebben, druk dan op <b>Bewaar</b>.',
+        stappen: [
+            {
+                doel: '.model_select',
+                titel: 'Kies een model',
+                tekst: 'Kies eerst een verzameling (de examens of je module), dan het model van je opgave. ' +
+                    'Heb je van je docent een link gekregen, dan staat het model al klaar. ' +
+                    'Staat er een opdracht bij, dan zie je die boven het model.'
+            },
+            {
+                doel: '.editors',
+                titel: 'Modelregels en startwaarden',
+                tekst: 'Rechts de <b>startwaarden</b>: zo begint het model. Links de <b>modelregels</b>: ' +
+                    'die worden elke stap opnieuw uitgerekend. Een eenheid zet je erachter: ' +
+                    '<code>v = 0 \'[m/s]</code>. Onder <b>Functies</b> staat wat je kunt gebruiken, zoals ' +
+                    '<code>sqrt</code> en <code>sin</code>. Een fout staat in het Nederlands boven het model.'
+            },
+            {
+                doel: '.runbar',
+                titel: 'Run en Stap',
+                tekst: '<b>Run</b> (of Ctrl+Enter) rekent het model door. Naast het aantal iteraties zie je ' +
+                    'hoe lang het model loopt. Snap je niet wat er gebeurt? Met <b>Stap</b> reken je regel ' +
+                    'voor regel, met de getallen ingevuld: ' +
+                    '<code>v = v + a*dt &rarr; v = 0,981 + 9,78 &times; 0,1</code>.'
+            },
+            {
+                doel: '.area_graph',
+                titel: 'De grafiek aflezen',
+                voor: 'run',
+                tekst: 'De webapp kiest zelf de grafieken; klik op een miniatuur om die groot te zien, ' +
+                    'of kies een andere grootheid op de as. Klik op een punt om af te lezen. ' +
+                    'Klik op de raaklijn: dan zie je hoe de helling &Delta;y/&Delta;x wordt uitgerekend. ' +
+                    'Alle waarden staan in de tabel.'
+            },
+            {
+                doel: '.area_model',
+                titel: 'Tekst + grafisch',
+                voor: 'grafisch',
+                tekst: 'Met <b>Tekst + grafisch</b> zie je je model als diagram, zoals in het examen: ' +
+                    'toestandsvariabelen, stromen en pijlen voor &ldquo;hangt af van&rdquo;. ' +
+                    'Klik op een symbool en de regels ervan lichten op in de tekst. ' +
+                    'Je kunt het model ook in het diagram bouwen met de knoppen erboven.'
+            }
+        ]
+    },
+    docent: {
+        naam: 'Voor docenten',
+        uitleg: 'Opdrachten maken, delen en demonstreren in de klas',
+        einde: 'Waarom de webapp zo werkt, staat in ' + DIDACTIEK + '. ' +
+            'De webapp met je eigen modellen op je eigen website: zie de ' + README + '. ' +
+            'De basis zie je in de rondleiding <b>Voor leerlingen</b>.',
+        stappen: [
+            {
+                doel: '.opdracht_optie',
+                titel: 'Een opdracht bij het model',
+                voor: 'opties',
+                tekst: 'Schrijf hier (in <b>Meer opties</b>) een opdracht bij het model, bijvoorbeeld ' +
+                    '&ldquo;vul de puntjes in en bepaal de eindsnelheid&rdquo;. Je leerlingen zien die ' +
+                    'boven het model. Tip: kies een examenmodel, vervang een regel door puntjes en schrijf ' +
+                    'de vraag erbij.'
+            },
+            {
+                doel: '#permalink',
+                titel: 'Deel link',
+                tekst: '<b>Deel link</b> kopieert een link met het model zoals het nu is: met jouw wijzigingen, ' +
+                    'de titel en de opdracht. Zet hem in je ELO of lesbrief. Leerlingen hoeven niets te ' +
+                    'installeren en hebben geen account nodig; het werkt ook op een telefoon.'
+            },
+            {
+                doel: '.area_graph',
+                titel: 'Runs vergelijken in de klas',
+                voor: 'run',
+                tekst: 'Laat zien wat een startwaarde doet: verander bijvoorbeeld de massa en druk op Run. ' +
+                    'De vorige run blijft als grijze lijn staan en onder de grafiek staat wat er veranderd is ' +
+                    '(<code>m = 91 &rarr; nu 120</code>). Met <b>Houd vast</b> blijft een grijze lijn staan ' +
+                    'als referentie terwijl je verder probeert.'
+            },
+            {
+                doel: '.docent_downloads',
+                titel: 'Grafieken voor lesmateriaal',
+                voor: 'opties',
+                tekst: 'Voor toetsen en lesbrieven: de grafiek als SVG, of als PGFPlot voor LaTeX op ' +
+                    'millimeterpapier. Bij de grafiek staat <b>Download grafiek</b> (PNG), bij de tabel ' +
+                    '<b>Download tabel</b> (Excel), en het diagram download je als SVG.'
+            },
+            {
+                doel: '.model_select',
+                titel: 'Werk van leerlingen',
+                tekst: 'Leerlingen leveren hun model in met <b>Bewaar</b> (een .xml-bestand met de titel als ' +
+                    'naam) of met een Deel link. Jij opent het bestand met <b>Open</b>. Werk dat niet ' +
+                    'bewaard is, blijft in de browser staan: bij het volgende bezoek kan een leerling verder.'
+            }
+        ]
+    }
+};
 
 
 function storage(action) {
@@ -90,14 +149,55 @@ function Rondleiding(app) {
 Rondleiding.prototype.knop = function(selector) {
     var self = this;
     var $knop = $(selector);
+    this.$knop = $knop;
     if (!storage('get')) $knop.addClass('nieuw');
+    // the menu: one choice per tour
+    var $menu = $('<div class="tour_menu" id="rondleiding_menu" role="menu" hidden>');
+    $.each(RONDLEIDINGEN, function(id, r) {
+        $('<button type="button" role="menuitem">').attr('data-rondleiding', id)
+            .append($('<b>').text(r.naam), $('<span>').text(r.uitleg))
+            .appendTo($menu);
+    });
+    $menu.insertAfter($knop);
+    $knop.attr({'aria-haspopup': 'menu', 'aria-controls': 'rondleiding_menu'});
+    this.$menu = $menu;
+
     $knop.on('click', function() {
-        if (self.index >= 0) self.stop(); else self.start();
+        if (self.index >= 0) self.stop();
+        else if ($menu.prop('hidden')) self.open_menu();
+        else self.sluit_menu();
+    });
+    $menu.on('click', '[data-rondleiding]', function() {
+        self.sluit_menu(true);
+        self.start($(this).attr('data-rondleiding'));
+    });
+    $menu.on('keydown', function(e) {
+        var items = $menu.find('button');
+        var i = items.index(document.activeElement);
+        if (e.key == 'Escape') { self.sluit_menu(); $knop.trigger('focus'); e.preventDefault(); }
+        else if (e.key == 'ArrowDown') { items.eq((i + 1) % items.length).trigger('focus'); e.preventDefault(); }
+        else if (e.key == 'ArrowUp') { items.eq((i - 1 + items.length) % items.length).trigger('focus'); e.preventDefault(); }
+    });
+    $(document).on('mousedown touchstart', function(e) {
+        if (!$menu.prop('hidden') && !$(e.target).closest($menu.add($knop)).length) self.sluit_menu();
     });
 };
 
-Rondleiding.prototype.start = function() {
+Rondleiding.prototype.open_menu = function() {
+    this.$menu.prop('hidden', false);
+    this.$knop.attr('aria-expanded', 'true');
+    this.$menu.find('button').first().trigger('focus');
+};
+
+Rondleiding.prototype.sluit_menu = function(tour_start) {
+    this.$menu.prop('hidden', true);
+    if (!tour_start) this.$knop.attr('aria-expanded', 'false');
+};
+
+Rondleiding.prototype.start = function(naam) {
     var self = this;
+    this.rondleiding = RONDLEIDINGEN[naam] || RONDLEIDINGEN.leerling;
+    this.stappen = this.rondleiding.stappen;
     storage('set');
     $('#rondleiding_knop').removeClass('nieuw').attr('aria-expanded', 'true');
     this.$spot = $('<div class="tour_spot" aria-hidden="true">').appendTo('body');
@@ -168,21 +268,22 @@ Rondleiding.prototype.zet_klaar = function(voor) {
 };
 
 Rondleiding.prototype.ga = function(index) {
-    if (index >= STAPPEN.length) { this.stop(); return; }
+    if (index >= this.stappen.length) { this.stop(); return; }
     if (index < 0) return;
     this.zet_terug();
     this.index = index;
-    var stap = STAPPEN[index];
+    var stap = this.stappen[index];
     var extra = this.zet_klaar(stap.voor);
-    var laatste = index == STAPPEN.length - 1;
+    var laatste = index == this.stappen.length - 1;
 
     this.$ballon.html(
         '<button type="button" class="tour_sluit" data-tour="stop" aria-label="Sluit de rondleiding" title="Sluiten (Esc)">&times;</button>' +
-        '<div class="tour_teller">' + (index + 1) + ' van ' + STAPPEN.length + '</div>' +
+        '<div class="tour_teller">' + this.rondleiding.naam + ' &middot; ' + (index + 1) + ' van ' +
+        this.stappen.length + '</div>' +
         '<h2 id="tour_titel">' + stap.titel + '</h2>' +
         '<p>' + stap.tekst + '</p>' +
         (extra ? '<p class="tour_extra">' + extra + '</p>' : '') +
-        (laatste ? '<p class="tour_extra">' + EINDE + '</p>' : '') +
+        (laatste ? '<p class="tour_extra">' + this.rondleiding.einde + '</p>' : '') +
         '<div class="tour_knoppen">' +
         (index > 0 ? '<button type="button" data-tour="vorige">Vorige</button>' : '<span></span>') +
         '<button type="button" class="tour_volgende" data-tour="volgende">' +
@@ -208,7 +309,7 @@ Rondleiding.prototype.ga = function(index) {
 
 Rondleiding.prototype.plaats = function() {
     if (this.index < 0) return;
-    var el = $(STAPPEN[this.index].doel)[0];
+    var el = $(this.stappen[this.index].doel)[0];
     var vw = document.documentElement.clientWidth;
     var vh = window.innerHeight;
     var marge = 6;
@@ -251,4 +352,4 @@ Rondleiding.prototype.plaats = function() {
 
 
 exports.Rondleiding = Rondleiding;
-exports.STAPPEN = STAPPEN;
+exports.RONDLEIDINGEN = RONDLEIDINGEN;

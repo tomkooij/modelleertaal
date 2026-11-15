@@ -31,7 +31,8 @@ Waarom de webapp werkt zoals hij werkt (de didactische uitgangspunten, en per on
 staat in **[DIDACTIEK.md](DIDACTIEK.md)**.
 
 - **Rondleiding.** Nieuw hier? De knop **Rondleiding** rechtsboven laat in vijf stappen de belangrijkste
-  onderdelen zien. Hij start nooit vanzelf.
+  onderdelen zien: *voor leerlingen* de basis, *voor docenten* opdrachten maken, delen en demonstreren
+  in de klas. Hij start nooit vanzelf.
 - **Model en Run.** Kies een examenmodel of begin met een leeg model. Typ de *modelregels* en
   *startwaarden* en druk op **Run** (of Ctrl+Enter).
 - **Automatische grafieken.** Na Run kiest de webapp zelf de grafieken die bij het model passen: (x,t), (v,t),
