@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [6.5]
+
+15 nov 2026
+
 ### Grafisch model: symbolen in de stijl Kleur
 
 - The style **Kleur** now uses the stock-flow notation shared by most System Dynamics software and
