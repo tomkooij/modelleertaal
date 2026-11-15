@@ -22,7 +22,17 @@
       {op: 'addFlow', stock, direction, name, rate}   direction: 'in' of 'out'
       {op: 'setFlowEnds', id, from, to}          stroom van/naar toestand (null: buiten)
       {op: 'define', id, kind, text}             onbekende (?) variabele: 'const' of 'aux'
+      {op: 'define', id, kind: 'stock', initial, rate}   onbekende wordt toestandsvariabele
+
+    addConstant, addAux en addStock met de naam van een onbekende (?) variabele
+    definiëren die variabele (zoals define).
+      {op: 'convert', id, kind}                  constante <-> hulpvariabele ('aux' of 'const')
+      {op: 'setDt', text}                        startwaarde van dt
       {op: 'remove', id}
+
+    Verder:
+      edit.variablesOf(text)    de variabelen in een formule (Error als het geen formule is)
+      edit.dtOf(model)          {name, text}: de tijdstap en zijn startwaarde (text: null als die er niet is)
 */
 
 //jshint node:true
@@ -177,7 +187,14 @@ Context.prototype.exists = function(name) {
         this.g.elements.hasOwnProperty(name) || name == this.g.dt || name == this.g.time;
 };
 
-Context.prototype.checkNewName = function(name) {
+Context.prototype.isUnknown = function(name) {
+    // used, but nowhere a value or formula: the '?' in the diagram
+    var el = this.g.elements.hasOwnProperty(name) ? this.g.elements[name] : null;
+    return !!el && el.kind == 'unknown' && !this.init.hasOwnProperty(name) && !this.assigned.hasOwnProperty(name);
+};
+
+Context.prototype.checkNewName = function(name, allowUnknown) {
+    // allowUnknown: the name of an unknown (?) variable is fine, it gets defined
     name = String(name || '').replace(/^\s+|\s+$/g, '');
     var ok = IDENT_RE.test(name);
     if (ok) {
@@ -190,7 +207,9 @@ Context.prototype.checkNewName = function(name) {
         }
     }
     if (!ok) throw new Error('"' + name + '" is geen geldige naam voor een variabele.');
-    if (this.exists(name)) throw new Error('De naam "' + name + '" bestaat al.');
+    if (this.exists(name) && !(allowUnknown && this.isUnknown(name))) {
+        throw new Error('De naam "' + name + '" bestaat al.');
+    }
     return name;
 };
 
@@ -265,8 +284,21 @@ Context.prototype.checkStock = function(stock) {
     return el;
 };
 
-Context.prototype.writeStock = function(stock, terms) {
-    // (re)write  stock = stock + in - out. No terms: remove the line (stock becomes a constant)
+Context.prototype.stockPlace = function(name) {
+    // where the new line  name = name + ...  goes: before the first flow or stock that uses name
+    // (x = x + v * dt after v = v + dv, as in the basismodellen), else before t = t + dt
+    var t = this.timeLine();
+    for (var i = 0; name !== null && i < this.regels.length; i++) {
+        var m = ASSIGN_RE.exec(splitComment(this.regels[i]).code);
+        var el = m && this.g.elements.hasOwnProperty(m[2]) ? this.g.elements[m[2]] : null;
+        if (el && !el.isRate && (el.kind == 'flow' || el.kind == 'stock') && uses(this.regels[i], name)) return i;
+    }
+    return t != -1 ? t : endOf(this.regels);
+};
+
+Context.prototype.writeStock = function(stock, terms, at) {
+    // (re)write  stock = stock + in - out. No terms: remove the line (stock becomes a constant).
+    // at: where a new line goes (default: before t = t + dt)
     this.checkStock(stock);
     var line = this.regelLine(stock, 'self');
     if ((this.assigned[stock] || []).length && line == -1) this.need(-1, stock);
@@ -274,8 +306,7 @@ Context.prototype.writeStock = function(stock, terms) {
     for (var i = 0; i < terms.length; i++) rhs += (terms[i].sign > 0 ? ' + ' : ' - ') + terms[i].term;
     if (line == -1) {
         if (!terms.length) return -1;
-        var t = this.timeLine();
-        line = insert(this.regels, t != -1 ? t : endOf(this.regels), stock + ' = ' + rhs);
+        line = insert(this.regels, at === undefined ? this.stockPlace(null) : at, stock + ' = ' + rhs);
     } else if (!terms.length) {
         this.regels.splice(line, 1);
         line = -1;
@@ -345,10 +376,26 @@ ops.rename = function(c, op) {
     replace(c.regels);
 };
 
+function addStart(c, name, text) {
+    // name = text in the startwaarden: after the startwaarden it needs, before the first
+    // startwaarde that uses it. A value that needs a variable without startwaarde: at the end.
+    var expr = exprOf(text), deps = grafisch.variables(expr), i, lo = 0, end = endOf(c.start), at = -1;
+    for (i = 0; i < deps.length && lo != -1; i++) {
+        if (deps[i] == name) continue;
+        var l = c.startLine(deps[i]);
+        lo = l == -1 ? -1 : Math.max(lo, l + 1);
+    }
+    if (lo != -1) {
+        for (i = lo; i < end && at == -1; i++) if (uses(c.start[i], name)) at = i;
+    }
+    if (at == -1) at = end;
+    var line = name + ' = ' + text.replace(/^\s+|\s+$/g, '');
+    if (at == end) c.start.splice(at, 0, indentOf(c.start, c.start.length) + line);
+    else insert(c.start, at, line);
+}
+
 ops.addConstant = function(c, op) {
-    var name = c.checkNewName(op.name);
-    exprOf(op.text);
-    c.start.splice(endOf(c.start), 0, indentOf(c.start, c.start.length) + name + ' = ' + op.text.replace(/^\s+|\s+$/g, ''));
+    addStart(c, c.checkNewName(op.name, true), op.text);
 };
 
 function addRule(c, name, text) {
@@ -380,15 +427,46 @@ function addRule(c, name, text) {
 }
 
 ops.addAux = function(c, op) {
-    addRule(c, c.checkNewName(op.name), op.text);
+    addRule(c, c.checkNewName(op.name, true), op.text);
 };
 
 ops.define = function(c, op) {
     var el = c.element(op.id);
     if (el.kind != 'unknown') throw new Error(el.name + ' heeft al een waarde of formule.');
-    exprOf(op.text);
+    if (op.kind == 'stock') return defineStock(c, el.name, op.initial, op.rate, op.flow);
     if (op.kind == 'aux') addRule(c, el.name, op.text);
-    else c.start.splice(endOf(c.start), 0, el.name + ' = ' + op.text.replace(/^\s+|\s+$/g, ''));
+    else addStart(c, el.name, op.text);
+};
+
+ops.convert = function(c, op) {
+    // constante (startwaarden) <-> hulpvariabele (modelregels), same name and formula
+    var el = c.element(op.id), line;
+    if (op.kind == 'aux' && el.kind == 'const') {
+        line = c.need(c.startLine(el.name), el.name);
+        c.start.splice(line, 1);
+        c.analyse();
+        addRule(c, el.name, el.code);
+    } else if (op.kind == 'const' && el.kind == 'aux') {
+        if (el.code === null) c.need(-1, el.name);
+        if (grafisch.variables(exprOf(el.code)).length) {
+            throw new Error(el.name + ' = ' + el.code + ' hangt af van andere variabelen: dat kan geen constante zijn.');
+        }
+        line = c.need(c.regelLine(el.name), el.name);
+        c.regels.splice(line, 1);
+        c.analyse();
+        addStart(c, el.name, el.code);
+    } else {
+        throw new Error('Dit element kan ik niet omzetten.' + MANUAL);
+    }
+};
+
+ops.setDt = function(c, op) {
+    var text = op.text.replace(/^\s+|\s+$/g, ''), dt = c.g.dt;
+    exprOf(text);
+    var line = c.startLine(dt);
+    if (line == -1 && c.init.hasOwnProperty(dt)) c.need(-1, dt);
+    if (line == -1) c.start.splice(endOf(c.start), 0, dt + ' = ' + text);
+    else setRhs(c.start, line, text);
 };
 
 function flowLine(c, name, rate) {
@@ -396,8 +474,22 @@ function flowLine(c, name, rate) {
     return name + ' = ' + grafisch.code(exprOf(rate), 5, false) + ' * ' + c.g.dt;
 }
 
+function defineStock(c, name, initial, rate, flow) {
+    // unknown variable becomes a stock: dv = rate * dt ; v = v + dv before the first use of v
+    initial = /^\s*$/.test(initial || '') ? '0' : initial.replace(/^\s+|\s+$/g, '');
+    rate = /^\s*$/.test(rate || '') ? '0' : rate;
+    exprOf(rate);
+    addStart(c, name, initial);
+    c.analyse();
+    var flowName = /^\s*$/.test(flow || '') ? c.freeName('d' + name) : c.checkNewName(flow);
+    c.needTime();
+    var at = insert(c.regels, c.stockPlace(name), name + ' = ' + name + ' + ' + flowName);
+    insert(c.regels, at, flowLine(c, flowName, rate));
+}
+
 ops.addStock = function(c, op) {
-    var name = c.checkNewName(op.name);
+    var name = c.checkNewName(op.name, true);
+    if (c.isUnknown(name)) return defineStock(c, name, op.initial, op.rate, op.flow);
     var initial = /^\s*$/.test(op.initial || '') ? '0' : op.initial.replace(/^\s+|\s+$/g, '');
     exprOf(initial);
     c.start.splice(endOf(c.start), 0, name + ' = ' + initial);
@@ -406,14 +498,15 @@ ops.addStock = function(c, op) {
 };
 
 ops.addFlow = function(c, op) {
-    c.checkStock(op.stock);
+    var el = c.checkStock(op.stock);
     var rate = /^\s*$/.test(op.rate || '') ? '0' : op.rate;
     exprOf(rate);
     var name = /^\s*$/.test(op.name || '') ? c.freeName('d' + op.stock) : c.checkNewName(op.name);
     c.needTime();
     var terms = c.flowsOf(op.stock);
     terms.push({sign: op.direction == 'out' ? -1 : 1, term: name});
-    var line = c.writeStock(op.stock, terms);
+    // a constant becomes a stock: its line goes where define would put it
+    var line = c.writeStock(op.stock, terms, el.kind == 'const' ? c.stockPlace(op.stock) : undefined);
     insert(c.regels, line, flowLine(c, name, rate));
 };
 
@@ -545,4 +638,15 @@ function apply(model, op) {
     return result;
 }
 
+function variablesOf(text) {
+    return grafisch.variables(exprOf(text));
+}
+
+function dtOf(model) {
+    var c = new Context(model), dt = c.g.dt;
+    return {name: dt, text: c.init.hasOwnProperty(dt) ? grafisch.code(c.init[dt]) : null};
+}
+
 exports.apply = apply;
+exports.variablesOf = variablesOf;
+exports.dtOf = dtOf;

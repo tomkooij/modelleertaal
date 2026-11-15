@@ -1006,6 +1006,29 @@
             cursor: default;
         }
 
+        .grafisch_dt {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.9rem;
+        }
+
+        .grafisch_dt span {
+            font-family: ui-monospace, Consolas, monospace;
+        }
+
+        .grafisch_dt input {
+            width: 5em;
+            min-height: 30px;
+            padding: 2px 6px;
+            font-family: ui-monospace, Consolas, monospace;
+        }
+
+        .grafisch_dt input.invalid {
+            border-color: #dc2626;
+            box-shadow: 0 0 0 2px #fecaca;
+        }
+
         .grafisch_zoom {
             display: inline-flex;
             align-items: center;
@@ -1327,6 +1350,10 @@
                         <button id="grafisch_nieuw_hulp" type="button" title="Een grootheid die elke stap met een formule wordt uitgerekend, zoals Fres">+ Hulpvariabele</button>
                         <button id="grafisch_nieuw_constante" type="button" title="Een grootheid die niet verandert, zoals de massa m">+ Constante</button>
                         <button id="grafisch_undo" type="button" disabled title="Maak de laatste wijziging in het diagram ongedaan (Ctrl+Z)" aria-label="Ongedaan maken">&#8630;</button>
+                        <label class="grafisch_dt" title="De tijdstap: de startwaarde van dt">
+                            <span id="grafisch_dt_naam">dt =</span>
+                            <input id="grafisch_dt" type="text" spellcheck="false" autocomplete="off" size="5" aria-label="Tijdstap dt">
+                        </label>
                         <span class="grafisch_zoom">
                             <button id="grafisch_zoom_uit" type="button" title="Uitzoomen (Ctrl + muiswiel)" aria-label="Uitzoomen">&minus;</button>
                             <span id="grafisch_zoom_waarde">100%</span>

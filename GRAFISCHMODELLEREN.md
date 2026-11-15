@@ -7,6 +7,22 @@ via het diagram (geen tekst getypt in de modelregels of startwaarden).
 Het lukte, maar met twee omwegen. Eén daarvan leverde eerst een model op dat niet
 draaide. Dit document beschrijft wat er moet veranderen, in volgorde van belang.
 
+## Stand
+
+Uitgevoerd: punten 1–8 en 13. De eindcontrole is gedaan in Chrome (headless): alle drie de
+volgordes (eerst `x`, eerst `v`, via *Maak constante* → *+ Stroom erin*) geven hetzelfde model
+met `a = 4`, `v = 40` en `x = 220`.
+
+Bij punt 4 bleek de oorzaak niet alleen `grafisch_focus`: Escape werkt nu ook als de focus in
+het formulier of het diagram staat.
+
+Nog open:
+- 9: bewust niet gedaan. In de stijl Examen wordt een constante die alleen in een startwaarde
+  wordt gebruikt weggelaten, zoals in het examen 2026-II (`Fz = m * g`: geen `g`). `Fres = F`
+  heeft dezelfde vorm. In de stijl Kleur wordt hij wel getekend. Via Enter wordt `Fres = F` nu
+  een hulpvariabele, dus het probleem komt minder vaak voor.
+- 10, 11, 12: niet gedaan; 10 is niet nagebootst (bij 1400 px breed blijft het diagram op 100%).
+
 ## Doel
 
 Een leerling bouwt dit model volledig via het diagram, in de volgorde die hij zelf

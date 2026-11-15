@@ -108,6 +108,81 @@ describe('grafisch-edit.js - grafisch model als invoer', function() {
         assert.isNumber(run(m2).x);
     });
 
+    it('onbekende variabele (?) wordt toestandsvariabele: regels voor het eerste gebruik', function() {
+        var m = edit.apply({startwaarden: '', modelregels: ''},
+            {op: 'addStock', name: 'x', initial: '0', rate: 'v'});
+        assert.equal(analyse(m).elements.v.kind, 'unknown');
+        m = edit.apply(m, {op: 'define', id: 'v', kind: 'stock', initial: '0', rate: 'a'});
+        assert.deepEqual(lines(m.modelregels), ['dv = a * dt', 'v = v + dv', 'dx = v * dt', 'x = x + dx', 't = t + dt']);
+        var g = analyse(m);
+        assert.equal(g.elements.v.kind, 'stock');
+        assert.equal(g.elements.a.kind, 'unknown');
+        // + Toestandsvariabele met de naam van een onbekende: hetzelfde
+        var m2 = edit.apply({startwaarden: '', modelregels: ''},
+            {op: 'addStock', name: 'x', initial: '0', rate: 'v'});
+        m2 = edit.apply(m2, {op: 'addStock', name: 'v', initial: '0', rate: 'a'});
+        assert.deepEqual(m2, m);
+        // + Hulpvariabele en + Constante met de naam van een onbekende
+        var m3 = edit.apply(m, {op: 'addAux', name: 'a', text: 'Fres / m'});
+        assert.equal(lines(m3.modelregels)[0], 'a = Fres / m');
+        m3 = edit.apply(m3, {op: 'addConstant', name: 'm', text: '25'});
+        assert.include(lines(m3.startwaarden), 'm = 25');
+        // een naam met een waarde of formule blijft geweigerd
+        assert.throws(function() { edit.apply(m3, {op: 'addStock', name: 'a', initial: '0', rate: '1'}); }, /bestaat al/);
+        assert.throws(function() { edit.apply(m3, {op: 'addConstant', name: 'v', text: '1'}); }, /bestaat al/);
+        assert.throws(function() { edit.apply(m3, {op: 'define', id: 'v', kind: 'stock', initial: '0', rate: '1'}); }, /al een waarde/);
+    });
+
+    it('constante voor de startwaarde die hem gebruikt, na de startwaarden die hij nodig heeft', function() {
+        var m = edit.apply({startwaarden: '', modelregels: ''},
+            {op: 'addStock', name: 'v', initial: '0', rate: 'a'});
+        m = edit.apply(m, {op: 'addAux', name: 'a', text: 'Fres / m'});
+        m = edit.apply(m, {op: 'define', id: 'Fres', kind: 'const', text: 'F'});
+        m = edit.apply(m, {op: 'define', id: 'm', kind: 'const', text: '25'});
+        m = edit.apply(m, {op: 'define', id: 'F', kind: 'const', text: '100'});
+        var start = lines(m.startwaarden);
+        assert.isBelow(start.indexOf('F = 100'), start.indexOf('Fres = F'));
+        assert.closeTo(run(m, 10).v, 4, 1e-9);   // dt = 0,1
+        // addConstant met een waarde die een bestaande startwaarde gebruikt: daaronder
+        m = edit.apply(VAL, {op: 'addConstant', name: 'm2', text: '2 * m'});
+        start = lines(m.startwaarden);
+        assert.isAbove(start.indexOf('m2 = 2 * m'), start.indexOf('m = 80   // kg'));
+        // ... en boven een startwaarde die hem gebruikt
+        m = edit.apply({startwaarden: 'm = 80\nG = m * g\nt = 0\ndt = 1', modelregels: 't = t + dt'},
+            {op: 'addConstant', name: 'g', text: '9,81'});
+        assert.deepEqual(lines(m.startwaarden), ['m = 80', 'g = 9,81', 'G = m * g', 't = 0', 'dt = 1']);
+    });
+
+    it('constante met een stroom erin: regels voor het eerste gebruik (zelfde volgorde als define)', function() {
+        var m = edit.apply({startwaarden: '', modelregels: ''}, {op: 'addStock', name: 'x', initial: '0', rate: 'v'});
+        m = edit.apply(m, {op: 'define', id: 'v', kind: 'const', text: '0'});
+        m = edit.apply(m, {op: 'addFlow', stock: 'v', direction: 'in', rate: 'a'});
+        assert.deepEqual(lines(m.modelregels), ['dv = a * dt', 'v = v + dv', 'dx = v * dt', 'x = x + dx', 't = t + dt']);
+    });
+
+    it('constante <-> hulpvariabele omzetten', function() {
+        var m = edit.apply(VAL, {op: 'convert', id: 'k', kind: 'aux'});
+        assert.notInclude(m.startwaarden, 'k = 0,3');
+        var regels = lines(m.modelregels);
+        assert.isBelow(regels.indexOf('k = 0,3'), regels.indexOf("Fw = k*v^2   ' luchtweerstand"));
+        assert.equal(analyse(m).elements.k.kind, 'aux');
+        var m2 = edit.apply(m, {op: 'convert', id: 'k', kind: 'const'});
+        assert.include(lines(m2.startwaarden), 'k = 0,3');
+        assert.equal(analyse(m2).elements.k.kind, 'const');
+        assert.closeTo(run(m2, 20).x, run(VAL, 20).x, 1e-9);
+        assert.throws(function() { edit.apply(VAL, {op: 'convert', id: 'Fz', kind: 'const'}); }, /hangt af van/);
+    });
+
+    it('dt aanpassen en aflezen', function() {
+        var m = edit.apply(VAL, {op: 'setDt', text: '1'});
+        assert.equal(lines(m.startwaarden).pop(), 'dt = 1');
+        assert.deepEqual(edit.dtOf(m), {name: 'dt', text: '1'});
+        assert.deepEqual(edit.dtOf({startwaarden: '', modelregels: ''}).text, null);
+        assert.deepEqual(edit.variablesOf('Fres / m'), ['Fres', 'm']);
+        assert.deepEqual(edit.variablesOf('2 * 3'), []);
+        assert.throws(function() { edit.variablesOf('2 *'); }, /klopt niet/);
+    });
+
     it('nieuwe toestandsvariabele in een leeg model: ook t en dt', function() {
         var m = edit.apply({startwaarden: '', modelregels: ''},
             {op: 'addStock', name: 'N', initial: '1000', rate: '-0,1 * N'});

@@ -2,6 +2,32 @@
 
 ## [Unreleased]
 
+### Grafisch model: bouwen vanuit een leeg model (GRAFISCHMODELLEREN.md)
+
+- An unknown variable (**?**) can become a *toestandsvariabele*: the form *Onbekend* has a third
+  button *Maak toestandsvariabele*. Its lines `dv = a * dt` and `v = v + dv` go before the first
+  flow that uses `v`, so building `x` first and `v` second gives the same model (and the same
+  order of calculation) as the other way round.
+- *+ Toestandsvariabele*, *+ Hulpvariabele* and *+ Constante* with the name of an unknown
+  variable define it, instead of the message "De naam bestaat al".
+- Enter in the form *Onbekend* chooses: a number (or a formula without variables) becomes a
+  *constante*, a formula with variables a *hulpvariabele*. Before, Enter always made a constante,
+  and `Fres = F` followed by `F = 100` gave a model that did not run.
+- A new constante goes before the first startwaarde that uses it and after the startwaarden it
+  needs (was: always at the end).
+- A constante with a new flow (*+ Stroom erin*) becomes a toestandsvariabele at the same place
+  as above (was: just before `t = t + dt`).
+- After *Voeg toe* the new element is selected, but its form stays closed: the diagram stays in
+  view. A click on the element opens the form.
+- The form covers as little of the diagram as possible: never the selected element, preferably
+  not the elements connected to it.
+- Escape closes the form whenever the focus is in the form or the diagram.
+- The form *Onbekend* puts the cursor in *Waarde of formule*.
+- A constante can become a hulpvariabele and back (button *Maak hulpvariabele* / *Maak constante*).
+- A field **dt =** in the toolbar of the diagram sets the time step.
+- The red error bar of the last Run disappears when the model changes.
+- The empty diagram explains how to start: a toestandsvariabele first, then click a **?**.
+
 ## [6.5]
 
 15 nov 2026
