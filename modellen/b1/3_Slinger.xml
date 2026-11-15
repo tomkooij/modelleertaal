@@ -1,19 +1,19 @@
 ﻿<modelleertaal>
 <startwaarden>
-m = 1
-g = 9,81
-Fz = m * g
+m = 1 '[kg]
+g = 9,81 '[m/s^2]
+Fz = m * g '[N]
 
-L = 1
+L = 1 '[m]
 θ = 30
 ω = 0
 
-t = 0
-dt = 0,1
+t = 0 '[s]
+dt = 0,1 '[s]
 
 </startwaarden>
 <modelregels>
-Fres = -Fz * sin(θ)
+Fres = -Fz * sin(θ) '[N]
 α = Fres / (m * L)
 
 ω = ω + α * dt

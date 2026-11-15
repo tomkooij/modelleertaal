@@ -1,5 +1,82 @@
 # Changelog
 
+## [Unreleased]
+
+### Documentatie
+
+- New `DIDACTIEK.md`: the didactic principles of the webapp and, per part, the reason behind
+  it. The README links to it and describes the new features that matter for teaching
+  (reading off and slope, units, tips, opdracht bij een model).
+
+### Eenheden
+
+- A unit in square brackets in the comment after a startwaarde is recognised:
+  `m = 91 '[kg]` or `v = 0 // [m/s]`. For a variable without a startwaarde: in the comment
+  after its modelregel. The unit is shown on the axes (`v (m/s)`), in the table header, in the
+  tooltip of the graph, in the TSV header, in the PGFPlot labels, in the end time next to the
+  number of iterations (`× dt = 50 s`) and in the status line. Models without brackets do not
+  change. New module `eenheden.js` (with tests).
+- PGFPlot no longer uses a fixed list of units (in which `a` was m/s).
+- The basic models (Basismodellen) have units.
+
+### Aflezen in de grafiek
+
+- A click on a point of the graph shows it as a dot with lines to both axes (reading off,
+  as on paper) and a label with its values. The table shows that row and marks it.
+  The other way around: a click on a row of the table puts the dot in the graph. A click
+  next to the line removes it. The separate mini table under the graph (`#clickdata`) is gone.
+- With one graph the label also shows the slope at that point (`helling Δv/Δt = 9,81`, with
+  its unit), from the points before and after, with a short tangent. New module `aflezen.js`
+  (with tests).
+- The table keeps the number of rows shown when it is drawn again.
+
+### Grafiek
+
+- Zoom in: drag a rectangle in the graph (the cursor is a cross). **Hele grafiek** (only
+  visible when zoomed in) or a double click shows the whole graph again. Not on a touch
+  screen, where dragging scrolls the page. Another graph: not zoomed in.
+- The variables on the axes are chosen on the axis labels themselves (a small arrow next to
+  the label; the menus show the units). The menus "verticaal" and "horizontaal" under the
+  graph are gone.
+- Several graphs in one figure: when the ranges differ more than a factor 20, the small ones
+  get a second axis on the right ("(as rechts)" next to the checkbox). New module `assen.js`
+  (with tests).
+
+### Controle van het model
+
+- Quiet check while typing: 1 s after the last key the model is parsed. A syntax error gives
+  only a red dot next to the line number, with the message as title (hover). No message bar,
+  the cursor does not move. The full message comes with Run, as before. Lines with `...`
+  are not an error.
+- Hints after Run for common mistakes, as information and only when there is no other
+  message (one at a time): the time does not run (`t = t + dt` is missing), a startwaarde
+  that is not used, and a startwaarde that is overwritten in the modelregels before it is
+  used. New module `hints.js` (with tests).
+
+### Opdracht en indeling
+
+- Opdracht bij een model (for teachers): in **Meer opties** a text box "Opdracht bij dit
+  model". The text is shown in a small card above the model, and goes along in Deel link
+  (field `o`), Bewaar (section `<opdracht>`) and the autosave. A teacher can share a model
+  with puntjes and a question in one link.
+- The layout of the graphical model is kept: dragged symbols keep their place in Deel link
+  (field `p`), Bewaar (section `<indeling>`, JSON) and the autosave. Herstel indeling clears it.
+  Changing the opdracht or the layout counts as a change of the model (warning before it is lost).
+- `BogusXML.md` describes the new sections.
+
+### Kleine punten
+
+- Opening another link (`#model=...`, `#code=...`) in the same tab with a changed model now
+  asks first whether the changes may be lost, as choosing another model does. Before, the
+  new link was ignored without a word.
+- Stap voor stap: the graph shows the last Run in gray (so the axes do not jump) with the
+  points computed so far and a dot at the current point.
+- `Ctrl+Enter` (on a Mac `⌘+Enter`) is shown small and gray next to Run on wide screens.
+- "Vanaf iteratie 16 heeft 'x' geen geldige waarde meer" names the most probable cause:
+  division by zero (with the variable that is 0, also a constant), the square root of a
+  negative number, or values that grow until they are too large (dt too large). Otherwise
+  the general message as before. New module `oorzaak.js` (with tests).
+
 ## [6.4.1]
 
 14 nov 2026

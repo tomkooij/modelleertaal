@@ -20,7 +20,16 @@ van de breakpoints van `evaluator.js` (die code blijft staan maar wordt niet mee
 stopt na N iteraties. De grafiek blijft tijdens het stappen die van de laatste Run.
 Bij P2-2 staat ook een gewijzigd aantal iteraties in de notitie ("iteraties 500 → nu 1000").
 
+Afwijking bij P1-6 (v6.4): geen eigen voorbeeldmodellen, maar de verzamelingen B1, C2 en C3 met
+een groep Basismodellen (twee keuzelijsten: verzameling en model). Bij P2-6 hebben de basismodellen
+eenheden gekregen; de eenheid van `dt` staat ook achter de eindtijd (`× dt = 50 s`).
+Bij P3-1 sleept de app de rechthoek zelf: de Flot-bundel mist `jquery.event.drag`, waardoor de
+selection-plugin niet werkt. Bij P3-4 ligt een onzichtbaar keuzemenu over het aslabel van Flot, zodat
+het label ook in de PNG staat.
+
 ## Uitgangspunten (gelden voor elk punt)
+
+De uitgewerkte versie, met per onderdeel de didactische overweging, staat in [DIDACTIEK.md](DIDACTIEK.md).
 
 - **Geen knoppencursus.** Een leerling uit 5 vwo moet zonder uitleg kunnen werken. Liever een
   knop weghalen dan een knop toevoegen. Nieuwe functies zitten op de plek waar je kijkt
@@ -132,7 +141,7 @@ statusregel: "Het model is niet gestopt door 'stop': verhoog het aantal iteratie
 **Klaar als.** De bovenbalk bevat: naam webapp, modelkeuze, Open, Bewaar, Deel link. Titel wijzigen
 werkt zonder uitklappen en komt in de deellink en de bestandsnaam.
 
-### P1-6 Modelkeuze: eerst eenvoudige voorbeelden, dan examens
+### P1-6 Modelkeuze: eerst eenvoudige voorbeelden, dan examens (gebouwd)
 
 **Probleem.** De lijst bevat alleen examenmodellen; "Leeg model" staat onderaan. Er is geen
 opbouw voor een leerling die begint met modelleren.
@@ -284,7 +293,7 @@ als SVG-elementen met `data-action`), `index.html`.
 **Klaar als.** Een leeg model kan zonder leestekst worden opgebouwd tot val met luchtweerstand
 (v, x, a, Fz, Fw, m, k) met alleen klikken en het typen van getallen en operatoren.
 
-### P2-6 Eenheden op de assen en in de tabel
+### P2-6 Eenheden op de assen en in de tabel (gebouwd)
 
 **Probleem.** Assen en tabelkoppen tonen alleen de naam van de variabele. Bij natuurkunde hoort
 een grootheid een eenheid te hebben; in een verslag is een grafiek zonder eenheden fout.
@@ -306,39 +315,39 @@ veranderen niet.
 
 ## Prioriteit 3: verfijning
 
-### P3-1 Inzoomen in de grafiek
+### P3-1 Inzoomen in de grafiek (gebouwd)
 
 Sleep een rechthoek in de grafiek om in te zoomen (Flot selection-plugin); dubbelklik of de knop
 **Hele grafiek**, die alleen zichtbaar is als er is ingezoomd, zet het terug. Op een aanraakscherm
 niet inschakelen (botst met scrollen). De cursor is een kruisje boven de grafiek.
 
-### P3-2 Aflezen: punt in de grafiek en rij in de tabel horen bij elkaar
+### P3-2 Aflezen: punt in de grafiek en rij in de tabel horen bij elkaar (gebouwd)
 
 Een klik op een punt toont nu een losse minitabel onder de grafiekinstellingen. Beter: het punt
 krijgt een stip met hulplijnen naar beide assen (aflezen zoals op papier) en de tabel springt naar
 die rij en markeert hem. Andersom: een klik op een rij in de tabel zet de stip in de grafiek.
 `#clickdata` vervalt.
 
-### P3-3 Helling aflezen (raaklijn)
+### P3-3 Helling aflezen (raaklijn) (gebouwd)
 
 Als P3-2 er is: toon bij het aangeklikte punt in de tooltip ook de helling
 (`Δv/Δt = 9,81`), berekend uit de twee buurpunten, en teken een korte raaklijn. Sluit aan op de
 examenvaardigheid "bepaal de versnelling uit het (v,t)-diagram". Alleen bij een enkele grafiek.
 
-### P3-4 Assen kiezen op de assen zelf
+### P3-4 Assen kiezen op de assen zelf (gebouwd)
 
 De keuzelijsten "verticaal" en "horizontaal" staan onder de miniaturen. Zet ze op de plek van de
 aslabels (links-midden en onder-midden van de grafiek, vormgegeven als label met een klein
 pijltje). "Meerdere grafieken in één figuur" blijft een vinkje; hebben de gekozen grootheden
 een bereik dat meer dan een factor 20 verschilt, gebruik dan automatisch een tweede as rechts.
 
-### P3-5 Stille controle tijdens het typen
+### P3-5 Stille controle tijdens het typen (gebouwd)
 
 Controleer 1 s na de laatste toetsaanslag de syntax (alleen parsen). Bij een fout: alleen een rode
 stip in de regelnummerkolom met de melding als `title`; geen meldingsbalk en geen cursorsprong.
 De volledige melding komt zoals nu bij Run. Regels met `...` zijn geen fout.
 
-### P3-6 Hints bij veelgemaakte modelfouten
+### P3-6 Hints bij veelgemaakte modelfouten (gebouwd)
 
 Na Run, als informatie (nooit blokkerend), hoogstens één hint tegelijk:
 - een startwaarde die nergens wordt gebruikt: "'k' wordt niet gebruikt in de modelregels";
@@ -348,19 +357,19 @@ Na Run, als informatie (nooit blokkerend), hoogstens één hint tegelijk:
 
 Logica in een eigen module `hints.js` op de AST, met tests.
 
-### P3-7 Opdracht bij een model (voor docenten)
+### P3-7 Opdracht bij een model (voor docenten) (gebouwd)
 
 Een optioneel blok `<opdracht>...</opdracht>` in de XML en een veld `o` in de deellink. Is het
 gevuld, dan staat de tekst in een smalle kaart boven het model. Bewerken: in "Meer opties" een
 tekstvak "Opdracht bij dit model (gaat mee in Deel link)". Zo kan een docent een model met puntjes
 en een vraag in één link delen, zonder aparte handleiding.
 
-### P3-8 Indeling van het diagram bewaren
+### P3-8 Indeling van het diagram bewaren (gebouwd)
 
 Versleepte posities (`grafisch_moved`) gaan verloren bij herladen. Neem ze mee in de deellink
 (veld `p`) en in de XML (`<indeling>` met JSON), en in het automatisch bewaren van P1-1.
 
-### P3-9 Kleine punten
+### P3-9 Kleine punten (gebouwd)
 
 - `hashchange` met een gewijzigd model negeert de nieuwe link stilzwijgend: vraag net als bij de
   modelkeuze of de wijzigingen weg mogen.

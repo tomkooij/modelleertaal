@@ -84,6 +84,8 @@ nooit `N = ...` of een sectie-tag op de eerste regel.
 | `<startwaarden>` ... `</startwaarden>` | de *startwaarden*: worden één keer uitgevoerd vóór de rekenlus | nee, leeg als hij ontbreekt |
 | `<modelregels>` ... `</modelregels>` | de *modelregels*: worden elke iteratie uitgevoerd | nee, leeg als hij ontbreekt |
 | `<grafisch>` ... `</grafisch>` | aanwijzingen voor het grafische model (sinds 6.3) | nee |
+| `<opdracht>` ... `</opdracht>` | een opdracht of vraag bij het model, voor de leerling (sinds 6.5) | nee |
+| `<indeling>` ... `</indeling>` | de posities van versleepte symbolen in het grafische model (sinds 6.5) | nee |
 | `</modelleertaal>` | einde van het bestand | nee (wordt niet gecontroleerd) |
 
 Regels voor tag-regels:
@@ -94,7 +96,8 @@ Regels voor tag-regels:
 - Een begintag start een sectie, een eindtag (van welke sectie dan ook) beëindigt de huidige sectie. Een nieuwe
   begintag binnen een sectie beëindigt de vorige sectie ook (er is geen nesting).
 - Een sectie zonder eindtag loopt door tot het einde van het bestand.
-- De volgorde van de secties maakt niet uit. De webapp schrijft altijd: `<startwaarden>`, `<modelregels>`, `<grafisch>`.
+- De volgorde van de secties maakt niet uit. De webapp schrijft altijd: `<opdracht>`, `<startwaarden>`,
+  `<modelregels>`, `<grafisch>`, `<indeling>`.
 - Komt een sectie twee keer voor, dan worden de inhouden achter elkaar gezet.
 - Onbekende tags (bijvoorbeeld `<titel>`) worden buiten een sectie genegeerd en binnen een sectie gelezen als inhoud.
 
@@ -151,6 +154,28 @@ Betekenis:
 In de webapp is `<grafisch>` alleen te lezen, niet te bewerken: de sectie van het geopende bestand blijft bewaard
 en wordt bij **Bewaar** weer geschreven.
 
+### De sectie `<opdracht>`
+
+Gewone tekst: een opdracht of vraag bij het model, bijvoorbeeld "Vul de puntjes in en bepaal de eindsnelheid.".
+De webapp toont hem in een smalle kaart boven het model. Een docent schrijft hem in **Meer opties** ("Opdracht bij
+dit model"); hij gaat mee in **Bewaar**, **Deel link** en het automatisch bewaren. Witruimte en lege regels aan het
+eind worden bij het lezen weggehaald. `N = ...` binnen deze sectie is tekst, geen aantal iteraties.
+
+### De sectie `<indeling>`
+
+Eén regel JSON: de posities van de symbolen die de gebruiker in het grafische model heeft versleept, per element
+(dezelfde `id` als in [`grafisch.js`](grafisch.js)), in de coördinaten van de tekening:
+
+```
+<indeling>
+{"v":[123,45],"Fw":[300,80]}
+</indeling>
+```
+
+Symbolen die niet in de sectie staan, krijgen hun automatische plek. Een `id` die niet (meer) in het model voorkomt
+wordt genegeerd; een positie die geen twee getallen is ook (`positions` in [`deellink.js`](deellink.js)). Ongeldige
+JSON geeft de automatische indeling, geen foutmelding. **Herstel indeling** maakt de sectie leeg.
+
 ### Titel
 
 De titel van een model staat **niet** in het bestand. Hij komt uit:
@@ -167,6 +192,9 @@ De titel van een model staat **niet** in het bestand. Hij komt uit:
 ```
 <modelleertaal>
 N = <N>                      ← alleen als N bekend is
+<opdracht>                   ← alleen als er een opdracht is
+<opdracht-tekst>
+</opdracht>
 <startwaarden>
 <startwaarden-tekst>
 </startwaarden>
@@ -176,6 +204,9 @@ N = <N>                      ← alleen als N bekend is
 <grafisch>                   ← alleen als de sectie niet leeg is
 <grafisch-tekst>
 </grafisch>
+<indeling>                   ← alleen als er symbolen versleept zijn
+<indeling-json>
+</indeling>
 </modelleertaal>
 ```
 
@@ -198,8 +229,8 @@ ook hier bij moet:
 
 | Plaats | Formaat | Velden |
 |---|---|---|
-| **Deel link** (`#code=...`, [`deellink.js`](deellink.js)) | gecomprimeerde JSON in de URL | modelregels, startwaarden, titel, N. **Geen `<grafisch>`.** |
-| **Automatisch bewaren** (localStorage, `modelleertaal_autosave`) | JSON | modelregels, startwaarden, titel, N. **Geen `<grafisch>`.** |
+| **Deel link** (`#code=...`, [`deellink.js`](deellink.js)) | gecomprimeerde JSON in de URL | modelregels, startwaarden, titel, N, opdracht (`o`), indeling (`p`, als object). **Geen `<grafisch>`.** |
+| **Automatisch bewaren** (localStorage, `modelleertaal_autosave`) | JSON | modelregels, startwaarden, titel, N, opdracht (`o`), indeling (`p`, als JSON-tekst). **Geen `<grafisch>`.** |
 
 ## Eigenaardigheden
 
@@ -217,6 +248,7 @@ het weten.
 
 | Versie | Wijziging |
 |---|---|
+| 6.5 | Secties `<opdracht>` (tekst boven het model) en `<indeling>` (posities van versleepte symbolen, JSON). Ook in de deellink (`o`, `p`) en het automatisch bewaren. |
 | na 6.3 | `N`: alleen een regel die met `N =` begint (ook na een langere regel met `=`; `AN = 5` telt niet meer). Schrijven: geen lege regels aan het eind van een sectie, dus Open + Bewaar verandert het bestand niet meer; overal `\r\n`. |
 | 6.3 | Sectie `<grafisch>` (aanwijzingen `naam: ...` en de instelling `startwaarden: tonen`). Wordt gelezen en weer geschreven. |
 | 6.0 | BOM wordt genegeerd; `\r\n` wordt correct gelezen (geen `\r` meer in de tekst, regelnummers in foutmeldingen kloppen). |

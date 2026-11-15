@@ -1,17 +1,17 @@
 <modelleertaal>
 <modelregels>
-Fres = -C * u
-a = Fres / m
+Fres = -C * u '[N]
+a = Fres / m '[m/s^2]
 v = v + a * dt
 u = u + v * dt
 t = t + dt
 </modelregels>
 <startwaarden>
-C = 10
-m = 0,1
-v = 3
-u = 0
-t = 0
-dt = 0,001
+C = 10 '[N/m]
+m = 0,1 '[kg]
+v = 3 '[m/s]
+u = 0 '[m]
+t = 0 '[s]
+dt = 0,001 '[s]
 </startwaarden>
 </modelleertaal>

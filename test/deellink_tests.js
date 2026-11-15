@@ -126,6 +126,26 @@ describe('deellink.js - nieuwe links', function() {
         assert.equal(FROZEN.v2_unicode, 'v2.' + FROZEN.v1_unicode);
     });
 
+    it('opdracht en indeling (6.5): heen en terug, en weg als ze leeg zijn', function() {
+        var code = deellink.encode({modelregels: 'x = x + v*dt', startwaarden: 'x = 0', opdracht: 'Vul in.\nWat is v?',
+                                    indeling: {v: [10, 20], 'f:x': [3.5, -4]}});
+        var back = deellink.decode(code);
+        assert.equal(back.opdracht, 'Vul in.\nWat is v?');
+        assert.deepEqual(back.indeling, {v: [10, 20], 'f:x': [3.5, -4]});
+        back = deellink.decode(deellink.encode({modelregels: 'a = 1', startwaarden: '', opdracht: '', indeling: {}}));
+        assert.equal(back.opdracht, '');
+        assert.deepEqual(back.indeling, {});
+        // a link without the fields (all older links) gives empty values
+        assert.equal(deellink.decode(FROZEN.v2_champignon).opdracht, '');
+        assert.deepEqual(deellink.decode(FROZEN.v2_champignon).indeling, {});
+    });
+
+    it('indeling: alleen getallen, ongeldige posities vallen weg', function() {
+        assert.deepEqual(deellink.positions({a: [1, 2], b: {x: 3, y: 4}, c: ['x', 1], d: 5, e: null}),
+                         {a: [1, 2], b: [3, 4]});
+        assert.deepEqual(deellink.positions('onzin'), {});
+    });
+
     it('veel verschillende tekens: heen en terug', function() {
         var text = '';
         for (var c = 1; c < 0x3000; c += 7) text += String.fromCharCode(c);

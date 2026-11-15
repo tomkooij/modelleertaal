@@ -7,6 +7,11 @@ var stapper = require('./stapper.js');
 var vergelijk = require('./vergelijk.js');
 var dtcheck = require('./dtcheck.js');
 var modelkeuze = require('./modelkeuze.js');
+var eenheden = require('./eenheden.js');
+var aflezen = require('./aflezen.js');
+var assen = require('./assen.js');
+var hints = require('./hints.js');
+var oorzaak = require('./oorzaak.js');
 var Blob = require('blob');
 var FileSaver = require('file-saver');
 // this also depends on:
@@ -29,6 +34,7 @@ var version = "v6.4.1";
 
 var COLOR_PLOT = '#1d4ed8';
 var COLOR_PREVIOUS = '#c3c8d1';
+var COLOR_READ = '#d97706';   // Aflezen: the point that was clicked, its lines and the tangent
 // qualitative colour scheme that is colour-blind safe.
 // https://personal.sron.nl/~pault/#sec:qualitative
 // blue, cyan, green, yellow, red, purple, grey
@@ -78,16 +84,22 @@ function ModelleertaalApp(params) {
   this.dom_download_png = "#download_png";
   this.dom_precision = "#precision";
   this.dom_max_rows = "#max_rows";
-  this.dom_clickdata = "#clickdata";
   this.dom_x_var = "#x_var";
   this.dom_y_var = "#y_var";
   this.dom_y_checks = "#y_checks";
+  this.dom_x_pick = "#x_pick";
+  this.dom_y_pick = "#y_pick";
+  this.dom_zoom_reset = "#zoom_reset";
   this.dom_multiplot = "#multiplot";
   this.dom_yaxis_zero = "#yaxis_zero";
   this.dom_model_keuze = "#model_keuze";
   this.dom_model_groep = "#model_groep";
   this.dom_permalink = "#permalink";
   this.dom_titel = "#model_titel";
+  this.dom_opdracht = "#opdracht";
+  this.dom_opdracht_tekst = "#opdracht_tekst";
+  this.dom_opdracht_invoer = "#opdracht_invoer";
+  this.opdracht = '';   // the assignment with the model (shown above the model)
   this.dom_grafisch = "#grafisch_model";
   this.dom_grafisch_svg = "#grafisch_svg";
   this.dom_view_switch = ".view_switch";
@@ -105,6 +117,7 @@ function ModelleertaalApp(params) {
   this.grafisch_selected = undefined;   // id of the selected element
   this.grafisch_moved = {};   // positions of elements dragged by the user
   this.model_title = '';
+  this.units = {};   // name --> unit, from the comments of the model (eenheden.js)
 
   this.read_model();
   this.fill_functies();
@@ -216,9 +229,12 @@ function ModelleertaalApp(params) {
   });
 
   $(window).on('hashchange', function() {
-    // user opens another link (#model=...) in the same tab
+    // user opens another link (#model=...) in the same tab. Changed model: ask first, as with the menu.
     var url_params = self.parse_url_hash();
-    if ((url_params.model || url_params.code) && !self.is_modified()) self.load_model();
+    if (!url_params.model && !url_params.code) return;
+    if (self.is_modified() && !window.confirm('Je hebt dit model aangepast.\n' +
+        'Als je de nieuwe link opent, gaan je wijzigingen verloren.\n\nNieuwe link openen?')) return;
+    self.load_model();
   });
 
   $(window).on('beforeunload', function(event) {
@@ -232,6 +248,12 @@ function ModelleertaalApp(params) {
 
   $(this.dom_titel).on('input', function() {
     self.update_document_title();
+    self.schedule_autosave();
+  });
+
+  // Opdracht bij dit model (Meer opties): shown above the model, goes into Deel link
+  $(this.dom_opdracht_invoer).on('input', function() {
+    self.set_opdracht($(this).val(), false);
     self.schedule_autosave();
   });
 
@@ -291,6 +313,7 @@ function ModelleertaalApp(params) {
   $(this.dom_grafisch_reset).click(function() {
     self.grafisch_moved = {};
     self.draw_grafisch_model();
+    self.schedule_autosave();
   });
 
   // drag elements of the grafisch model. Arrows and pipes are drawn again from the new positions.
@@ -338,6 +361,8 @@ function ModelleertaalApp(params) {
       // click: select the element (a cloud: its flow) and show its properties
       self.grafisch_select(drag.id.replace(/:(src|dst)$/, ''));
     }
+    // the new layout is kept (autosave, Bewaar, Deel link)
+    if (drag && drag.moved) self.schedule_autosave();
     drag = null;
   });
 
@@ -496,12 +521,83 @@ function ModelleertaalApp(params) {
     self.do_plot();
   });
 
+  // Aflezen: a click on a point shows it with lines to the axes, and its row in the table.
+  // A click next to the graph line removes it.
+  // Inzoomen: drag a rectangle in the graph. Double click or Hele grafiek: back.
+  // Not on a touch screen (dragging there scrolls the page).
+  this.zoom_enabled = !(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+  this.zoom = null;
+  var zoom_drag = null;
+  $(this.dom_graph).on('mousedown', function(event) {
+    if (!self.zoom_enabled || event.button !== 0 || !self.plot_object || !self.results_available()) return;
+    var p = self.zoom_position(event);
+    if (!p.inside) return;
+    zoom_drag = {x0: p.x, y0: p.y, x1: p.x, y1: p.y, box: null};
+    event.preventDefault();
+  });
+  $(window).on('mousemove', function(event) {
+    if (!zoom_drag) return;
+    var p = self.zoom_position(event);
+    zoom_drag.x1 = p.x;
+    zoom_drag.y1 = p.y;
+    if (!zoom_drag.box && Math.abs(p.x - zoom_drag.x0) + Math.abs(p.y - zoom_drag.y0) < 6) return;
+    if (!zoom_drag.box) zoom_drag.box = $('<div class="zoom_box">').appendTo(self.dom_graph);
+    var off = self.plot_object.getPlotOffset();
+    zoom_drag.box.css({
+      left: off.left + Math.min(zoom_drag.x0, p.x) + 'px',
+      top: off.top + Math.min(zoom_drag.y0, p.y) + 'px',
+      width: Math.abs(p.x - zoom_drag.x0) + 'px',
+      height: Math.abs(p.y - zoom_drag.y0) + 'px'
+    });
+  });
+  $(window).on('mouseup', function() {
+    if (!zoom_drag) return;
+    var d = zoom_drag;
+    zoom_drag = null;
+    if (!d.box) return;   // a click, not a rectangle
+    d.box.remove();
+    if (Math.abs(d.x1 - d.x0) < 6 || Math.abs(d.y1 - d.y0) < 6) return;
+    var ranges = {};
+    $.each(self.plot_object.getAxes(), function(name, axis) {
+      if (!axis.used) return;
+      var a = axis.c2p(axis.direction == 'x' ? d.x0 : d.y0), b = axis.c2p(axis.direction == 'x' ? d.x1 : d.y1);
+      ranges[name] = {from: Math.min(a, b), to: Math.max(a, b)};
+    });
+    self.zoom = {key: self.zoom_key(), ranges: ranges};
+    self.zoom_time = Date.now();
+    self.do_plot();
+  });
+  $(this.dom_graph).on('dblclick', function() {
+    self.set_zoom(null);
+  });
+  $(this.dom_zoom_reset).click(function() {
+    self.set_zoom(null);
+  });
+
   $(this.dom_graph).on("plotclick", function(event, pos, item) {
-    if (!item || item.series.mt_previous) return;
-    var table = $('<table>').addClass('table');
-    table.append(self.table_header(self.allVars));
-    table.append(self.table_row(self.results, self.get_result_rowIndex(item.dataIndex)));
-    $(self.dom_clickdata).html($('<div>').addClass('table_scroll').append(table));
+    // the end of dragging a rectangle (zoom) is not a click. Stap voor stap: no reading off.
+    if (self.zoom_time && Date.now() - self.zoom_time < 400) return;
+    if (self.stepper) return;
+    if (item && item.series.mt_read) return;
+    if (!item || item.series.mt_previous || !item.series.mt_yvar) {
+      self.set_read(null);
+      return;
+    }
+    var row = self.get_result_rowIndex(item.dataIndex, item.series.data.length);
+    var same = self.read && self.read.row == row && self.read.yvar == item.series.mt_yvar;
+    self.set_read(same ? null : {row: row, yvar: item.series.mt_yvar});
+  });
+
+  // and the other way around: a click on a row of the table puts the point in the graph
+  $(this.dom_datatable).on('click', 'tbody tr[data-row]', function() {
+    if (self.stepper || !self.results_available()) return;
+    var row = Number($(this).attr('data-row'));
+    var yvar = self.yvar;
+    if (self.multiplot) {
+      yvar = (self.read && self.multi_yvars.indexOf(self.read.yvar) != -1) ? self.read.yvar : self.multi_yvars[0];
+    }
+    if (!yvar) return;
+    self.set_read((self.read && self.read.row == row) ? null : {row: row, yvar: yvar});
   });
 
   var resize_timer;
@@ -546,6 +642,8 @@ ModelleertaalApp.prototype.load_model = function() {
       this.model.modelregels = shared.modelregels;
       this.model.startwaarden = shared.startwaarden;
       if (shared.N) this.model.N = shared.N;
+      this.model.opdracht = shared.opdracht;
+      this.model.indeling = JSON.stringify(shared.indeling);
       this.model_title = shared.title || 'Gedeeld model';
       this.dropdown_extra('shared', this.model_title + ' (uit link)');
       this.init_app();
@@ -721,6 +819,8 @@ ModelleertaalApp.prototype.read_model = function() {
   var grafisch = this.model ? this.model.grafisch : undefined;
   this.model = new evaluator_js.Model();
   if (grafisch) this.model.grafisch = grafisch;
+  this.model.opdracht = this.opdracht;
+  this.model.indeling = this.indeling_text();
   if (this.CodeMirrorActive) {
     this.model.modelregels = this.modelregels_editor.getValue();
     this.model.startwaarden = this.startwaarden_editor.getValue();
@@ -749,7 +849,46 @@ ModelleertaalApp.prototype.is_modified = function() {
     return String(s).replace(/\r/g, '').replace(/\s+$/, '');
   }
   return normalize(current.modelregels) != normalize(this.loaded.modelregels) ||
-         normalize(current.startwaarden) != normalize(this.loaded.startwaarden);
+         normalize(current.startwaarden) != normalize(this.loaded.startwaarden) ||
+         normalize(this.opdracht) != normalize(this.loaded.opdracht || '') ||
+         this.indeling_text() != (this.loaded.indeling || '');
+};
+
+
+ModelleertaalApp.prototype.indeling_text = function() {
+  // the positions of the dragged symbols as JSON ({"id": [x, y]}), '' if none
+  var out = {}, any = false;
+  for (var id in this.grafisch_moved) {
+    if (this.grafisch_moved.hasOwnProperty(id)) {
+      out[id] = [this.grafisch_moved[id].x, this.grafisch_moved[id].y];
+      any = true;
+    }
+  }
+  return any ? JSON.stringify(out) : '';
+};
+
+
+ModelleertaalApp.prototype.set_indeling = function(text) {
+  // positions from a file, link or autosave (see indeling_text)
+  var parsed = {};
+  try {
+    parsed = deellink.positions(typeof text == 'string' ? (text ? JSON.parse(text) : {}) : text);
+  } catch (err) {
+    parsed = {};
+  }
+  this.grafisch_moved = {};
+  for (var id in parsed) {
+    if (parsed.hasOwnProperty(id)) this.grafisch_moved[id] = {x: parsed[id][0], y: parsed[id][1]};
+  }
+};
+
+
+ModelleertaalApp.prototype.set_opdracht = function(text, update_input) {
+  // the assignment above the model. Empty: no card.
+  this.opdracht = String(text || '').replace(/\s+$/, '');
+  $(this.dom_opdracht_tekst).text(this.opdracht);
+  $(this.dom_opdracht).prop('hidden', !this.opdracht);
+  if (update_input) $(this.dom_opdracht_invoer).val(this.opdracht);
 };
 
 
@@ -761,6 +900,9 @@ ModelleertaalApp.prototype.on_model_edited = function() {
   if (this.stepper) this.end_stepping();
   clearTimeout(this.hint_timer);
   this.hint_timer = setTimeout(function() { self.update_endtime_hint(true); }, 300);
+  // 1 s after the last key: check the syntax, quietly (a red dot next to the line)
+  clearTimeout(this.lint_timer);
+  this.lint_timer = setTimeout(function() { self.silent_check(); }, 1000);
   this.schedule_autosave();
   if (this.grafisch_open()) {
     clearTimeout(this.grafisch_timer);
@@ -770,6 +912,63 @@ ModelleertaalApp.prototype.on_model_edited = function() {
     this.set_stale(true);
     this.print_status("Model gewijzigd. Druk op Run.");
   }
+};
+
+
+ModelleertaalApp.prototype.silent_check = function() {
+  // only parse the model. A syntax error: a red dot in the line numbers, with the message
+  // as title. No message bar and the cursor does not move: the full message comes with Run.
+  this.remove_lint();
+  if (!this.CodeMirrorActive) return;
+  var model = new evaluator_js.Model();
+  var text = this.current_text();
+  model.startwaarden = text.startwaarden;
+  model.modelregels = text.modelregels;
+  try {
+    // jshint nonew:false
+    new evaluator_js.ModelregelsEvaluator(model, false);
+  } catch (err) {
+    // ... (to be filled in) or an empty model is not an error
+    if (err.blank || err.empty) return;
+    var editor = this.get_editor(err.parser_name);
+    var line = err.parser_line;
+    if (!editor || !line || line < 1) return;
+    line = Math.min(line, editor.lineCount());
+    var marker = $('<span class="mt-lint-marker" role="img">').text('\u25cf')
+      .attr({'title': err.message || 'Fout in deze regel', 'aria-label': err.message || 'Fout in deze regel'});
+    this.lint = {editor: editor, handle: editor.setGutterMarker(line - 1, 'mt-error-markers', marker[0])};
+  }
+};
+
+
+ModelleertaalApp.prototype.remove_lint = function() {
+  if (!this.lint) return;
+  this.lint.editor.setGutterMarker(this.lint.handle, 'mt-error-markers', null);
+  this.lint = undefined;
+};
+
+
+ModelleertaalApp.prototype.constant_values = function(names) {
+  // values of startwaarden that stay constant (they are not in the table): name --> value
+  var out = {};
+  names = (names || []).filter(function(name) { return /^[^\s=]+$/.test(name); });
+  if (!names.length) return out;
+  var model = new evaluator_js.Model();
+  model.startwaarden = this.model.startwaarden;
+  model.modelregels = names.map(function(name) { return name + ' = ' + name; }).join('\n');
+  try {
+    var evaluator = new evaluator_js.ModelregelsEvaluator(model, false);
+    evaluator.set_state(0, true, false);
+    evaluator.run();
+    var varNames = evaluator.namespace.varNames;
+    names.forEach(function(name) {
+      var j = varNames.indexOf(name);
+      if (j != -1) out[name] = evaluator.result[0][j];
+    });
+  } catch (err) {
+    // no values: the general message
+  }
+  return out;
 };
 
 
@@ -798,6 +997,10 @@ ModelleertaalApp.prototype.update_endtime_hint = function(model_changed) {
   var text = '';
   if (this.hint_dt !== null && isFinite(N) && N >= 1) {
     text = '× dt = ' + Number((Math.round(N) * this.hint_dt).toPrecision(this.precision));
+    // with the unit of dt, if the model has one: × dt = 50 s
+    var text_now = this.current_text();
+    var unit = eenheden.units(text_now.startwaarden, text_now.modelregels).dt;
+    if (unit) text += ' ' + unit;
   }
   $(this.dom_endtime_hint).text(text);
 };
@@ -1592,7 +1795,8 @@ ModelleertaalApp.prototype.download_model = function() {
 
   this.save_string(this.model.createBogusXMLString(), filename);
   // model is saved: do not warn for unsaved changes
-  this.loaded = {modelregels: this.model.modelregels, startwaarden: this.model.startwaarden};
+  this.loaded = {modelregels: this.model.modelregels, startwaarden: this.model.startwaarden,
+                 opdracht: this.opdracht, indeling: this.indeling_text()};
   this.autosave();
 };
 
@@ -1663,6 +1867,8 @@ ModelleertaalApp.prototype.autosave = function() {
       m: text.modelregels,
       s: text.startwaarden,
       N: String($(this.dom_nbox).val()),
+      o: this.opdracht,
+      p: this.indeling_text(),
       time: Date.now()
     }));
     this.restore_pending = false;
@@ -1728,6 +1934,8 @@ ModelleertaalApp.prototype.restore_autosave = function(saved) {
   this.model.startwaarden = saved.s;
   var N = Number(saved.N);
   if (isFinite(N) && N >= 1) this.model.N = N;
+  this.model.opdracht = saved.o ? String(saved.o) : '';
+  this.model.indeling = saved.p ? String(saved.p) : '';
   this.model_title = saved.t ? String(saved.t) : '';
 
   // in the menu, like a model from a shared link
@@ -1738,7 +1946,7 @@ ModelleertaalApp.prototype.restore_autosave = function(saved) {
 
   this.init_app();
   // the restored model is not saved in a file: still warn before it is lost
-  this.loaded = {modelregels: '', startwaarden: ''};
+  this.loaded = {modelregels: '', startwaarden: '', opdracht: '', indeling: ''};
   this.restore_pending = false;
   this.autosave();
   this.print_status('Model van de vorige keer teruggezet. Druk op Run.');
@@ -1755,11 +1963,19 @@ ModelleertaalApp.prototype.share_url = function() {
     return base + '#model=' + this.model_name_from_url(entry.url);
   }
   this.read_model();
+  var indeling = {};
+  try {
+    indeling = JSON.parse(this.indeling_text() || '{}');
+  } catch (err) {
+    indeling = {};
+  }
   return base + '#code=' + deellink.encode({
     modelregels: this.model.modelregels,
     startwaarden: this.model.startwaarden,
     title: title,
-    N: Number(String($(this.dom_nbox).val()).replace(',', '.'))
+    N: Number(String($(this.dom_nbox).val()).replace(',', '.')),
+    opdracht: this.opdracht,
+    indeling: indeling
   });
 };
 
@@ -2004,6 +2220,7 @@ ModelleertaalApp.prototype.start_stepping = function() {
   this.remove_highlight_error();
   this.clear_message();
   this.read_model();
+  this.units = eenheden.units(this.model.startwaarden, this.model.modelregels);
   try {
     // check the model (and find the columns of the table) without computing an iteration
     var evaluator = new evaluator_js.ModelregelsEvaluator(this.model, this.debug);
@@ -2031,6 +2248,7 @@ ModelleertaalApp.prototype.show_step = function(step) {
   // the table: the cell that changed lights up
   this.step_mark = {row: step.iteration, column: this.stepper.varNames.indexOf(step.name)};
   this.print_table();
+  this.plot_steps();
 
   var status;
   if (step.finished && this.stepper.stopped) {
@@ -2054,14 +2272,65 @@ ModelleertaalApp.prototype.end_stepping = function() {
   this.remove_highlight_trace();
   $(this.dom_step_line).prop('hidden', true).empty();
   $(this.dom_datatable).removeClass('stepping');
+  $(this.dom_graph).removeClass('stepping');
   if (this.results_available()) {
     this.print_table();
+    this.do_plot();
     this.print_status(this.stale ? "Model gewijzigd. Druk op Run." : "Klaar met stap voor stap. Druk op Run of Stap.");
   } else {
     $(this.dom_datatable).empty().append(
       $('<div>').addClass('placeholder').text('Hier komt de tabel met resultaten.'));
+    if (this.plot_object) {
+      this.plot_object.shutdown();
+      this.plot_object = undefined;
+    }
+    $(this.dom_graph).empty().append(
+      $('<div>').addClass('placeholder').text('Druk op Run om het model door te rekenen.'));
+    $(this.dom_graph_note).empty();
+    this.place_axis_picks();
     this.print_status("Druk op Run of Stap.");
   }
+};
+
+
+ModelleertaalApp.prototype.plot_steps = function() {
+  // Stap voor stap: the graph of the last Run in gray (fixed axes), with the iterations
+  // computed so far on top and a dot at the current point
+  var self = this;
+  if (!this.stepper) return;
+  var rows = this.stepper.table(), vars = this.stepper.varNames;
+  var x = this.xvar, ys = this.multiplot ? this.multi_yvars.slice() : [this.yvar];
+  if (vars.indexOf(x) == -1) x = (vars.indexOf('t') != -1) ? 't' : vars[0];
+  ys = ys.filter(function(name) { return vars.indexOf(name) != -1; });
+  if (ys.length === 0) {
+    var other = vars.filter(function(name) { return name != x; });
+    if (other.length === 0) return;
+    ys = [other[0]];
+  }
+  var last_run = this.results_available() ? this.reduce_rows(this.results, this.max_rows_in_plot) : null;
+  var dataset = [], gray = false;
+  ys.forEach(function(name, n) {
+    var color = ys.length > 1 ? COLORS_MULTIPLOT[n % COLORS_MULTIPLOT.length] : COLOR_PLOT;
+    var previous = last_run ? self.xy_data(last_run, self.allVars, x, name) : null;
+    if (previous) {
+      gray = true;
+      dataset.push({data: previous, color: COLOR_PREVIOUS, points: {show: false}, hoverable: false, clickable: false});
+    }
+    var data = self.xy_data(rows, vars, x, name) || [];
+    dataset.push({data: data, color: color, label: ys.length > 1 ? name : undefined, points: {show: data.length <= 60}});
+    var now = null;
+    for (var i = data.length - 1; i >= 0 && now === null; i--) now = data[i];
+    if (now) {
+      dataset.push({data: [now], color: COLOR_READ, lines: {show: false},
+                    points: {show: true, radius: 5, fill: true, fillColor: COLOR_READ},
+                    hoverable: false, clickable: false});
+    }
+  });
+  this.read_xy = null;
+  $(this.dom_graph_note).empty().append($('<span>').text(gray ?
+    'Stap voor stap: de punten tot nu toe, grijs is de laatste Run.' : 'Stap voor stap: de punten tot nu toe.'));
+  this.plot_graph(dataset, x, ys);
+  $(this.dom_graph).addClass('stepping');
 };
 
 
@@ -2069,9 +2338,12 @@ ModelleertaalApp.prototype.setup_run = function() {
 
   this.remove_highlight_trace();
   this.remove_highlight_error();
+  this.remove_lint();
+  clearTimeout(this.lint_timer);
   this.clear_message();
 
   this.read_model();
+  this.units = eenheden.units(this.model.startwaarden, this.model.modelregels);
 
   try {
     this.evaluator = new evaluator_js.ModelregelsEvaluator(this.model, this.debug);
@@ -2144,7 +2416,8 @@ ModelleertaalApp.prototype.after_run = function() {
   this.choose_axes();
   this.update_axis_controls();
 
-  this.print_table();
+  this.read = null;
+  this.print_table(10);
   this.do_plot();
   this.draw_thumbnails();
 
@@ -2158,7 +2431,10 @@ ModelleertaalApp.prototype.after_run = function() {
   var run_id = this.run_id = (this.run_id || 0) + 1;
   clearTimeout(this.dtcheck_timer);
   this.dtcheck_timer = setTimeout(function() {
-    if (run_id == self.run_id && !self.stale && !self.stepper) self.check_dt();
+    if (run_id == self.run_id && !self.stale && !self.stepper) {
+      self.check_dt();
+      self.show_hint();
+    }
   }, 30);
 };
 
@@ -2188,6 +2464,20 @@ ModelleertaalApp.prototype.check_dt = function() {
 };
 
 
+ModelleertaalApp.prototype.show_hint = function() {
+  // a common mistake in the model (hints.js): one hint, as information, only if there is no
+  // other message
+  if ($(this.dom_message).is(':visible') || !this.evaluator) return;
+  var list;
+  try {
+    list = hints.find(this.evaluator.startwaarden_ast, this.evaluator.modelregels_ast);
+  } catch (err) {
+    return;
+  }
+  if (list.length) this.show_message('info', 'Tip', list[0].text);
+};
+
+
 ModelleertaalApp.prototype.print_run_status = function() {
 
   var N_iterations = this.results.length - 1;
@@ -2202,7 +2492,8 @@ ModelleertaalApp.prototype.print_run_status = function() {
   if (this.analysis.time !== null) {
     var t = this.results[this.results.length - 1][this.allVars.indexOf(this.analysis.time)];
     if (typeof t == 'number' && isFinite(t)) {
-      status += " Eindtijd: " + this.analysis.time + " = " + Number(t.toPrecision(this.precision)) + ".";
+      var unit = this.units.hasOwnProperty(this.analysis.time) ? ' ' + this.units[this.analysis.time] : '';
+      status += " Eindtijd: " + this.analysis.time + " = " + Number(t.toPrecision(this.precision)) + unit + ".";
     }
   }
   this.print_status(status);
@@ -2270,10 +2561,15 @@ ModelleertaalApp.prototype.check_results = function() {
   }
 
   if (bad_var !== undefined) {
-    this.show_message('warning', 'Let op',
-      "Vanaf iteratie " + first_bad_row + " heeft '" + bad_var + "' geen geldige waarde meer. " +
-      "Wordt er gedeeld door nul, de wortel getrokken uit een negatief getal of wordt een getal te groot? " +
-      "Controleer de modelregels en startwaarden (is dt klein genoeg?).");
+    // name the most probable cause (oorzaak.js), not three questions at once
+    var cause = null;
+    try {
+      cause = oorzaak.find(this.evaluator.modelregels_ast, this.allVars, this.results, first_bad_row,
+                           this.constant_values(this.evaluator.namespace.constNames));
+    } catch (err) {
+      cause = null;
+    }
+    this.show_message('warning', 'Let op', oorzaak.message(cause, first_bad_row, bad_var));
   } else if (this.evaluator.messages.length > 0) {
     this.show_message('info', 'print', this.evaluator.messages.join(' '));
   }
@@ -2324,8 +2620,8 @@ ModelleertaalApp.prototype.update_axis_controls = function() {
   } else {
     for (i = 0; i < this.allVars.length; i++) {
       name = this.allVars[i];
-      $('<option/>').val(name).text(name).appendTo(this.dom_x_var);
-      $('<option/>').val(name).text(name).appendTo(this.dom_y_var);
+      $('<option/>').val(name).text(eenheden.label(name, this.units)).appendTo(this.dom_x_var);
+      $('<option/>').val(name).text(eenheden.label(name, this.units)).appendTo(this.dom_y_var);
       $('<label/>').append(
         $('<input type="checkbox">').val(name)
           .prop('checked', this.multi_yvars.indexOf(name) != -1)
@@ -2378,7 +2674,7 @@ ModelleertaalApp.prototype.table_header = function(vars) {
   firstrow.append($('<th>').text('#'));
 
   for (var k = 0; k < vars.length; k++) {
-    firstrow.append($('<th>').text(vars[k]));
+    firstrow.append($('<th>').text(eenheden.label(vars[k], this.units)));
   }
   return firstrow;
 };
@@ -2386,8 +2682,9 @@ ModelleertaalApp.prototype.table_header = function(vars) {
 
 ModelleertaalApp.prototype.table_row = function(rows, rowIndex, mark_column) {
   // mark_column (optional): the cell that just changed (Stap voor stap)
-  var row = $('<tr>');
+  var row = $('<tr>').attr('data-row', rowIndex);
   row.append($('<td>').text(rowIndex));
+  if (!this.stepper && this.read && this.read.row == rowIndex) row.addClass('mt-read-row');
 
   for (var j = 0; j < rows[rowIndex].length; j++) {
     var cell = $('<td>').text(this.format_number(rows[rowIndex][j], j));
@@ -2412,8 +2709,15 @@ ModelleertaalApp.prototype.print_table = function(limit) {
 
   this.compute_column_scale(rows, vars);
 
-  limit = (limit) ? limit : 10;
-  limit = Math.min(rows.length, limit);
+  // the number of rows shown stays (also after a click on a row)
+  if (limit) this.table_limit = limit;
+  limit = Math.min(rows.length, this.table_limit || 10);
+  // this row is always shown: the step, or the point that is read in the graph
+  var focus = mark ? mark.row : (this.read ? this.read.row : undefined);
+  var shown = function(i) {
+    return limit >= rows.length || i < Math.floor(limit / 2) || i >= rows.length - Math.ceil(limit / 2) ||
+           (focus !== undefined && Math.abs(i - focus) <= 2);
+  };
 
   var table = $('<table>').addClass('table');
   table.append($('<thead>').append(this.table_header(vars)));
@@ -2424,19 +2728,20 @@ ModelleertaalApp.prototype.print_table = function(limit) {
   };
 
   for (var i = 0; i < rows.length; i++) {
-    body.append(this.table_row(rows, i, (mark && mark.row == i) ? mark.column : undefined));
-
-    if (limit != rows.length && i == Math.floor(limit / 2) - 1) {
-      var hidden = rows.length - limit;
-      var truncrow = $('<tr>').addClass('truncated');
-      truncrow.append($('<td>')
-        .attr('colspan', vars.length + 1)
-        .append($('<button type="button">')
-          .text('\u22ee  ' + hidden + ' rijen verborgen. Klik voor meer rijen.')
-          .click(show_more)));
-      body.append(truncrow);
-      i = rows.length - 1 - Math.ceil(limit / 2);
+    if (shown(i)) {
+      body.append(this.table_row(rows, i, (mark && mark.row == i) ? mark.column : undefined));
+      continue;
     }
+    var j = i;
+    while (j < rows.length && !shown(j)) j++;
+    var truncrow = $('<tr>').addClass('truncated');
+    truncrow.append($('<td>')
+      .attr('colspan', vars.length + 1)
+      .append($('<button type="button">')
+        .text('\u22ee  ' + (j - i) + (j - i == 1 ? ' rij' : ' rijen') + ' verborgen. Klik voor meer rijen.')
+        .click(show_more)));
+    body.append(truncrow);
+    i = j - 1;
   }
 
   $(self.dom_datatable).empty().append($('<div>').addClass('table_scroll').append(table));
@@ -2495,8 +2800,25 @@ ModelleertaalApp.prototype.do_plot = function() {
 
   var show_points = (rows.length <= 60);
   var dataset = [];
-  var y_label;
+  var y_names = [];
   var note = '';
+
+  // another graph: not zoomed in anymore
+  if (this.zoom && this.zoom.key != this.zoom_key()) this.zoom = null;
+  $(this.dom_zoom_reset).prop('hidden', !this.zoom);
+
+  // several graphs with a very different range: the small ones on a second axis (right)
+  var split = {left: this.multiplot ? this.multi_yvars : [this.yvar], right: []};
+  if (this.multiplot) {
+    var ranges = {};
+    this.multi_yvars.forEach(function(name) {
+      ranges[name] = assen.data_range(self.xy_data(rows, self.allVars, self.xvar, name));
+    });
+    split = assen.split(this.multi_yvars, ranges);
+  }
+  this.axis_of = function(name) {
+    return (split.right.indexOf(name) != -1) ? 2 : 1;
+  };
 
   var has_previous = false;
   var push_previous = function(yvar) {
@@ -2506,6 +2828,7 @@ ModelleertaalApp.prototype.do_plot = function() {
     dataset.push({
       data: data,
       color: COLOR_PREVIOUS,
+      yaxis: self.axis_of(yvar),
       mt_previous: true,
       points: {show: false},
       hoverable: false,
@@ -2520,29 +2843,35 @@ ModelleertaalApp.prototype.do_plot = function() {
         data: self.xy_data(rows, self.allVars, self.xvar, name),
         color: COLORS_MULTIPLOT[n % COLORS_MULTIPLOT.length],
         label: name,
+        mt_yvar: name,
+        yaxis: self.axis_of(name),
         points: {show: show_points}
       });
     });
-    y_label = this.multi_yvars.join(', ');
+    y_names = split.left;
     if (dataset.length === 0) note = 'Vink hieronder aan welke variabelen je wilt zien.';
-    // legend: colour next to the checkbox
+    // legend: colour next to the checkbox, and which graphs use the axis on the right
     $(this.dom_y_checks).find('label').each(function() {
-      var n = self.multi_yvars.indexOf($(this).find('input').val());
+      var name = $(this).find('input').val();
+      var n = self.multi_yvars.indexOf(name);
       $(this).find('.swatch')
         .css('background-color', COLORS_MULTIPLOT[Math.max(n, 0) % COLORS_MULTIPLOT.length])
         .css('display', (n == -1) ? 'none' : 'inline-block');
+      $(this).find('.as_rechts').remove();
+      if (split.right.indexOf(name) != -1) $(this).append($('<span class="as_rechts">').text(' (as rechts)'));
     });
   } else {
     push_previous(this.yvar);
     dataset.push({
       data: this.xy_data(rows, this.allVars, this.xvar, this.yvar),
       color: COLOR_PLOT,
+      mt_yvar: this.yvar,
       points: {show: show_points}
     });
-    y_label = this.yvar;
+    y_names = [this.yvar];
   }
 
-  $(this.dom_clickdata).empty();
+  var read_text = this.read_point(dataset);
   var note_box = $(this.dom_graph_note).empty();
   if (has_previous) {
     note_box.append($('<span>').text((this.pinned ? 'Grijs: vastgehouden run' : 'Grijs: vorige run') +
@@ -2555,31 +2884,155 @@ ModelleertaalApp.prototype.do_plot = function() {
       .text('\ud83d\udccc Houd vast'));
   }
   if (note) note_box.append($('<span>').text(' ' + note));
-  this.plot_graph(dataset, this.xvar, y_label);
+  this.plot_graph(dataset, this.xvar, y_names, split.right);
+  this.show_read_label(read_text);
   this.select_thumbnail();
 }; // do_plot
 
 
-ModelleertaalApp.prototype.plot_graph = function(dataset, x_label, y_label) {
+//
+// Aflezen: the point that was clicked in the graph (or the row in the table)
+//
+ModelleertaalApp.prototype.set_read = function(read) {
+  // read: {row (in this.results), yvar}, or null
+  if (!read && !this.read) return;
+  this.read = read;
+  if (!this.results_available()) return;
+  this.do_plot();
+  if (!this.stepper) this.print_table();
+};
+
+
+ModelleertaalApp.prototype.zoom_key = function() {
+  // the graph that is shown: zooming in belongs to this graph
+  return [this.xvar, this.multiplot ? this.multi_yvars.join(',') : this.yvar, this.multiplot].join('|');
+};
+
+
+ModelleertaalApp.prototype.zoom_position = function(event) {
+  // mouse position in the plot area (pixels), limited to the plot area
+  var off = this.plot_object.getPlotOffset();
+  var g = $(this.dom_graph).offset();
+  var x = event.pageX - g.left - off.left, y = event.pageY - g.top - off.top;
+  var w = this.plot_object.width(), h = this.plot_object.height();
+  return {inside: x >= 0 && y >= 0 && x <= w && y <= h,
+          x: Math.max(0, Math.min(w, x)), y: Math.max(0, Math.min(h, y))};
+};
+
+
+ModelleertaalApp.prototype.set_zoom = function(zoom) {
+  if (!zoom && !this.zoom) return;
+  this.zoom = zoom;
+  if (this.results_available()) this.do_plot();
+};
+
+
+ModelleertaalApp.prototype.read_point = function(dataset) {
+  // adds the point (and the tangent) to dataset. Returns the text next to the point, or null.
+  var self = this;
+  var read = this.read;
+  this.read_xy = null;
+  if (!read || !this.results_available() || !this.results[read.row]) return null;
+  var shown = this.multiplot ? this.multi_yvars : [this.yvar];
+  if (shown.indexOf(read.yvar) == -1) return null;
+  var xi = this.allVars.indexOf(this.xvar), yi = this.allVars.indexOf(read.yvar);
+  if (xi == -1 || yi == -1) return null;
+  var x = this.results[read.row][xi], y = this.results[read.row][yi];
+  if (typeof x != 'number' || typeof y != 'number' || !isFinite(x) || !isFinite(y)) return null;
+
+  function value(name, val) {
+    var unit = self.units.hasOwnProperty(name) ? ' ' + self.units[name] : '';
+    return name + ' = ' + self.format_text(val) + unit;
+  }
+  var text = [value(this.xvar, x), value(read.yvar, y)];
+  var axis = this.axis_of ? this.axis_of(read.yvar) : 1;
+
+  // the slope, with a short tangent (only with one graph: which line would it be?)
+  if (!this.multiplot) {
+    var slope = aflezen.slope(this.results, xi, yi, read.row);
+    if (slope !== null) {
+      var range = {xmin: Infinity, xmax: -Infinity, ymin: Infinity, ymax: -Infinity};
+      dataset.forEach(function(series) {
+        series.data.forEach(function(p) {
+          if (p === null) return;
+          range.xmin = Math.min(range.xmin, p[0]);
+          range.xmax = Math.max(range.xmax, p[0]);
+          range.ymin = Math.min(range.ymin, p[1]);
+          range.ymax = Math.max(range.ymax, p[1]);
+        });
+      });
+      var line = aflezen.tangent([x, y], slope, range);
+      if (line) {
+        dataset.push({data: line, color: COLOR_READ, lines: {show: true, lineWidth: 2}, yaxis: axis,
+                      points: {show: false}, mt_read: true, hoverable: false, clickable: false});
+      }
+      var unit = aflezen.slope_unit(this.units[read.yvar], this.units[this.xvar]);
+      text.push('helling \u0394' + read.yvar + '/\u0394' + this.xvar + ' = ' + this.format_text(slope) +
+                (unit ? ' ' + unit : ''));
+    }
+  }
+  dataset.push({data: [[x, y]], color: COLOR_READ, lines: {show: false}, yaxis: axis,
+                points: {show: true, radius: 5, fill: true, fillColor: COLOR_READ},
+                mt_read: true, hoverable: false, clickable: false});
+  this.read_xy = [x, y];
+  this.read_axis = axis;
+  return text;
+};
+
+
+ModelleertaalApp.prototype.show_read_label = function(text) {
+  // the values of the point that is read, next to the point in the graph
+  if (!text || !this.plot_object || !this.read_xy) return;
+  var graph = $(this.dom_graph);
+  var off = this.plot_object.pointOffset({x: this.read_xy[0], y: this.read_xy[1], yaxis: this.read_axis || 1});
+  // zoomed in: the point can be outside the graph
+  var box = this.plot_object.getPlotOffset();
+  if (off.left < box.left || off.left > box.left + this.plot_object.width() ||
+      off.top < box.top || off.top > box.top + this.plot_object.height()) return;
+  var label = $('<div class="read_label">').appendTo(graph);
+  text.forEach(function(line) { label.append($('<div>').text(line)); });
+  var w = label.outerWidth(), h = label.outerHeight();
+  var left = off.left + 12, top = off.top - h - 10;
+  if (left + w > graph.width()) left = off.left - w - 12;
+  if (left < 0) left = 0;
+  if (top < 0) top = off.top + 12;
+  label.css({left: left + 'px', top: top + 'px'});
+};
+
+
+ModelleertaalApp.prototype.plot_graph = function(dataset, x_name, y_names, y2_names) {
+  // y_names: the variables on the vertical axis, y2_names (optional): on the second axis (right).
+  // The axes show the units (eenheden.js)
 
   var self = this;
+  y2_names = y2_names || [];
+  var x_label = eenheden.label(x_name, this.units);
+  var y_label = eenheden.labels(y_names, this.units);
+  var y2_label = eenheden.labels(y2_names, this.units);
+  var zoom = this.zoom ? this.zoom.ranges : null;
 
   if ($(this.dom_graph).width() === 0 || $(this.dom_graph).height() === 0) return;
 
-  // plot the y-axis from 0, unless autoscale
-  var yaxis_min, yaxis_max;
-  if (!this.yaxis_autoscale) {
+  // plot the y-axis from 0, unless autoscale. Zoomed in: the rectangle.
+  function y_range(n, zoomed) {
+    if (zoomed) return {min: zoomed.from, max: zoomed.to, autoScale: 'none'};
+    var range = {};
+    if (self.yaxis_autoscale) return range;
     var min = Infinity, max = -Infinity;
     dataset.forEach(function(series) {
+      if ((series.yaxis || 1) != n) return;
       series.data.forEach(function(point) {
         if (point === null) return;
         if (point[1] < min) min = point[1];
         if (point[1] > max) max = point[1];
       });
     });
-    if (min >= 0) yaxis_min = 0;
-    if (max <= 0) yaxis_max = 0;
+    if (min >= 0) range.min = 0;
+    if (max <= 0) range.max = 0;
+    return range;
   }
+  var y1 = y_range(1, zoom && zoom.yaxis);
+  var y2 = y_range(2, zoom && zoom.y2axis);
 
   function sciFormatter(val, axis) {
     // format large numbers in scientific notation: 1e6
@@ -2593,12 +3046,30 @@ ModelleertaalApp.prototype.plot_graph = function(dataset, x_label, y_label) {
     return String(Number(Number(val).toPrecision(self.precision)));
   }
 
+  function value(name, val) {
+    // 'v = 3.2 m/s'
+    var unit = self.units.hasOwnProperty(name) ? ' ' + self.units[name] : '';
+    return name + ' = ' + short(val) + unit;
+  }
+
   function axis_lines(axes) {
     // the lines x = 0 and y = 0 when they are inside the graph (gh-37)
     var lines = [];
     function inside(axis) { return axis.min < 0 && axis.max > 0; }
     if (inside(axes.yaxis)) lines.push({yaxis: {from: 0, to: 0}, color: '#4b5563', lineWidth: 1});
     if (inside(axes.xaxis)) lines.push({xaxis: {from: 0, to: 0}, color: '#4b5563', lineWidth: 1});
+    // Aflezen: from the point to both axes, as on paper
+    if (self.read_xy) {
+      var x = self.read_xy[0], y = self.read_xy[1];
+      if (self.read_axis == 2 && axes.y2axis) {
+        // a graph on the right axis: the line goes to the right
+        lines.push({xaxis: {from: x, to: x}, y2axis: {from: axes.y2axis.min, to: y}, color: COLOR_READ, lineWidth: 1});
+        lines.push({y2axis: {from: y, to: y}, xaxis: {from: x, to: axes.xaxis.max}, color: COLOR_READ, lineWidth: 1});
+      } else {
+        lines.push({xaxis: {from: x, to: x}, yaxis: {from: axes.yaxis.min, to: y}, color: COLOR_READ, lineWidth: 1});
+        lines.push({yaxis: {from: y, to: y}, xaxis: {from: axes.xaxis.min, to: x}, color: COLOR_READ, lineWidth: 1});
+      }
+    }
     return lines;
   }
 
@@ -2609,7 +3080,30 @@ ModelleertaalApp.prototype.plot_graph = function(dataset, x_label, y_label) {
     color: "#4b5563"
   };
 
-  $(this.dom_graph).empty();
+  $(this.dom_graph).empty().toggleClass('zoomable', this.zoom_enabled);
+
+  var yaxes = [{
+      font: axis_font,
+      showTicks: false,
+      position: 'left',
+      tickFormatter: sciFormatter,
+      min: y1.min,
+      max: y1.max,
+      autoScale: y1.autoScale,
+      axisLabel: y_label
+    }];
+  if (y2_names.length) {
+    yaxes.push({
+      font: axis_font,
+      showTicks: false,
+      position: 'right',
+      tickFormatter: sciFormatter,
+      min: y2.min,
+      max: y2.max,
+      autoScale: y2.autoScale,
+      axisLabel: y2_label
+    });
+  }
 
   this.plot_object = $.plot($(this.dom_graph), dataset, {
     series: {
@@ -2637,28 +3131,51 @@ ModelleertaalApp.prototype.plot_graph = function(dataset, x_label, y_label) {
       font: axis_font,
       showTicks: false,
       tickFormatter: sciFormatter,
+      min: zoom ? zoom.xaxis.from : undefined,
+      max: zoom ? zoom.xaxis.to : undefined,
+      autoScale: zoom ? 'none' : undefined,
       axisLabel: x_label
     },
-    yaxis: {
-      font: axis_font,
-      showTicks: false,
-      position: 'left',
-      tickFormatter: sciFormatter,
-      min: yaxis_min,
-      max: yaxis_max,
-      axisLabel: y_label
-    },
+    yaxes: yaxes,
     legend: {
       show: false
     },
     tooltip: {
       show: true,
       content: function(label, x, y) {
-        return x_label + " = " + short(x) + ", " + (label || y_label) + " = " + short(y);
+        return value(x_name, x) + ", " + value(label || y_names[0], y);
       }
     }
   }); // $.plot()
+  this.place_axis_picks();
 }; // plot_graph()
+
+
+ModelleertaalApp.prototype.place_axis_picks = function() {
+  // choose the variables on the axes on the axis labels themselves: an invisible menu
+  // on top of the label (the label is part of the graph, also in the PNG)
+  var self = this;
+  var wrap = $(this.dom_graph).parent()[0];
+  var base = wrap.getBoundingClientRect();
+  var ok = this.results_available() && this.plot_object;
+  function place(pick, label_class, show) {
+    var label = $(self.dom_graph).find('.' + label_class)[0];
+    if (!show || !label || !label.getBoundingClientRect) {
+      $(pick).prop('hidden', true);
+      return;
+    }
+    var r = label.getBoundingClientRect();
+    var w = Math.max(r.width + 8, 26), h = Math.max(r.height + 6, 26);
+    $(pick).prop('hidden', false).css({
+      left: Math.round(r.left - base.left + r.width / 2 - w / 2) + 'px',
+      top: Math.round(r.top - base.top + r.height / 2 - h / 2) + 'px',
+      width: Math.round(w) + 'px',
+      height: Math.round(h) + 'px'
+    });
+  }
+  place(this.dom_x_pick, 'x1Label', ok);
+  place(this.dom_y_pick, 'y1Label', ok && !this.multiplot);
+};
 
 
 //
@@ -2816,10 +3333,18 @@ ModelleertaalApp.prototype.init_app = function() {
   $(this.dom_titel).val(this.model_title || '');
   this.update_document_title();
 
-  this.loaded ={modelregels: this.model.modelregels, startwaarden: this.model.startwaarden};
+  this.set_opdracht(this.model.opdracht || '', true);
+  // other model: the dragged positions of its file (or none)
+  this.set_indeling(this.model.indeling || '');
+  this.loaded = {modelregels: this.model.modelregels, startwaarden: this.model.startwaarden,
+                 opdracht: this.opdracht, indeling: this.indeling_text()};
 
   this.results = [];
   this.allVars = [];
+  this.units = {};
+  this.read = null;
+  this.table_limit = 10;
+  this.zoom = null;
   this.graphs = [];
   this.analysis = undefined;
   this.end_stepping();
@@ -2830,6 +3355,8 @@ ModelleertaalApp.prototype.init_app = function() {
   this.has_run = false;
   this.remove_highlight_trace();
   this.remove_highlight_error();
+  clearTimeout(this.lint_timer);
+  this.remove_lint();
 
   // (re)set graph menu
   this.multiplot = false;
@@ -2849,7 +3376,8 @@ ModelleertaalApp.prototype.init_app = function() {
     $('<div>').addClass('placeholder').text('Druk op Run om het model door te rekenen.'));
   $(this.dom_graph_tabs).empty();
   $(this.dom_graph_note).empty();
-  $(this.dom_clickdata).empty();
+  $(this.dom_zoom_reset).prop('hidden', true);
+  this.place_axis_picks();
   $(this.dom_download_tsv + ',' + this.dom_download_png).prop('hidden', true);
   $(this.dom_datatable).empty().append(
     $('<div>').addClass('placeholder').text('Hier komt de tabel met resultaten.'));
@@ -2868,7 +3396,6 @@ ModelleertaalApp.prototype.init_app = function() {
     this.print_status('Het model uit de link kon niet geladen worden.');
     this.link_error = undefined;
   }
-  this.grafisch_moved = {};   // other model: forget dragged positions
   this.grafisch_zoom = null;
   this.grafisch_history = [];
   this.grafisch_selected = undefined;
@@ -2886,7 +3413,9 @@ ModelleertaalApp.prototype.create_tsv = function() {
   var self = this;
   var tsv = '';
 
-  tsv += this.allVars.join('\t'); //header row
+  tsv += this.allVars.map(function(name) {   // header row, with units: v (m/s)
+    return eenheden.label(name, self.units);
+  }).join('\t');
   tsv += "\n";
 
   tsv += this.results.map(function(row) {
@@ -2947,21 +3476,13 @@ ModelleertaalApp.prototype.create_pgfplot_header = function(scatter_plot) {
     return 10 * power_of_ten;
   }
 
-  function get_units_by_variable_name(var_name) {
-    var units = {
-      "x": "\\meter", "y": "\\meter", "h": "\\meter", "u": "\\meter",
-      "s": "\\meter", "t": "\\second",
-      "v": "\\meter\\per\\second",
-      "a": "\\meter\\per\\second",
-      "Fres": "\\Newton", "Fr": "\\Newton", "Fw": "\\Newton"
-    };
-    return (units[var_name]) ? units[var_name] : "unknown";
-  }
-
   var x_var = this.xvar;
   var y_var = this.yvar;
-  var x_unit = get_units_by_variable_name(x_var);
-  var y_unit = get_units_by_variable_name(y_var);
+  var units = this.units;
+  function axis_label(name) {
+    // unit from the comments of the model (eenheden.js): {$v$ [\si{m/s}]}
+    return "{$" + name + "$" + (units.hasOwnProperty(name) ? " [\\si{" + units[name] + "}]" : "") + "}";
+  }
 
   // and back to columns again ...
   var x = [];
@@ -2986,8 +3507,8 @@ ModelleertaalApp.prototype.create_pgfplot_header = function(scatter_plot) {
     "\\begin{axis}[x=1cm\/" + x_scale + ", y=1cm\/" + y_scale + ",\n" +
     "axis y line=left, axis x line=middle,\n" +
     "enlargelimits=false, tick align=outside,\n " +
-    "xlabel={$" + x_var + "$ [\\si{" + x_unit + "}]},\n" +
-    "ylabel={$" + y_var + "$ [\\si{" + y_unit + "}]},\n" +
+    "xlabel=" + axis_label(x_var) + ",\n" +
+    "ylabel=" + axis_label(y_var) + ",\n" +
     "% xtick={0, 1, 2, ..., 10},\n" +
     "% ytick={0, 2, 4, ..., 20},\n" +
     "xmin=" + x_min + ", xmax=" + x_max + ", ymin=" + y_min + ", ymax=" + y_max + "]\n";
@@ -3089,10 +3610,11 @@ ModelleertaalApp.prototype.reduce_rows = function(rows, Nresults) {
 };
 
 
-ModelleertaalApp.prototype.get_result_rowIndex = function(rowIndex_plot) {
+ModelleertaalApp.prototype.get_result_rowIndex = function(rowIndex_plot, length_plot) {
   // map row index from plot (reduced number of rows)
-  // back to this.results
+  // back to this.results. The last point of the plot is the last row (see reduce_rows).
 
+  if (length_plot !== undefined && rowIndex_plot == length_plot - 1) return this.results.length - 1;
   var rowIndex = this.rowinc * rowIndex_plot;
   if (rowIndex < this.results.length) {
     return rowIndex;
@@ -3137,6 +3659,7 @@ ModelleertaalApp.prototype.highlight_error = function(line, editor_name, message
   line = Math.min(line, editor.lineCount());
 
   this.remove_highlight_error();
+  this.remove_lint();
   this.error_highlight = {
     editor: editor,
     handle: editor.addLineClass(line - 1, 'background', 'mt-error-line')
