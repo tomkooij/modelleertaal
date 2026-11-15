@@ -97,4 +97,23 @@ describe('eenheden.js - eenheden uit het commentaar', function() {
         assert.equal(eenheden.label('a', {a: ''}), 'a');
         assert.equal(eenheden.labels(['a', 'b'], {a: '', b: ''}), 'a, b');
     });
+
+    it('getoond met superscript, ook een eenheid zoals hij getypt is (m^2)', function() {
+        assert.equal(eenheden.pretty('m/s^2'), 'm/s²');
+        assert.equal(eenheden.pretty('m^-1'), 'm⁻¹');
+        assert.equal(eenheden.pretty('kg*m^2'), 'kg·m²');
+        var d = eenheden.derive("Opp = 0,8 '[m^2]\ng = 9,81 '[m/s^2]\nm = 2 '[kg]", "Fz = m * g");
+        assert.equal(d.units.Opp, 'm²');
+        assert.equal(d.units.g, 'm/s²');
+        assert.equal(d.units.Fz, 'N');
+        assert.equal(d.explicit.Opp, 'm^2', 'de tekst van het model blijft zoals getypt');
+    });
+
+    it('voor LaTeX (pgfplots): m/s² wordt m/s^{2}', function() {
+        assert.equal(eenheden.latex('m/s²'), 'm/s^{2}');
+        assert.equal(eenheden.latex('kg·m²/s³'), 'kg.m^{2}/s^{3}');
+        assert.equal(eenheden.latex('s⁻¹'), 's^{-1}');
+        assert.equal(eenheden.latex('km/h'), 'km/h');
+    });
 });
+

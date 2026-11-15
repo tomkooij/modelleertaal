@@ -425,6 +425,26 @@ function deriveAst(startAst, regelsAst, explicit) {
     return out;
 }
 
+function pretty(text) {
+    // 'm/s^2' --> 'm/s²', 'kg*m' --> 'kg·m': how a unit is shown (the text of the model keeps 'm/s^2')
+    return String(text).replace(/\^\s*([-−]?)(\d+)/g, function(all, minus, digits) {
+        var t = minus ? '⁻' : '';
+        for (var i = 0; i < digits.length; i++) t += TO_SUP[Number(digits.charAt(i))];
+        return t;
+    }).replace(/\s*\*\s*/g, '·');
+}
+
+function latex(text) {
+    // 'm/s²' --> 'm/s^{2}', 'kg·m' --> 'kg.m': for \si{...} in the pgfplots download
+    var back = {}, k;
+    for (k in SUP) if (SUP.hasOwnProperty(k)) back[k] = String(SUP[k]);
+    return String(text).replace(/([⁻]?)([⁰¹²³⁴⁵⁶⁷⁸⁹]+)/g, function(all, minus, sup) {
+        var t = minus ? '-' : '';
+        for (var i = 0; i < sup.length; i++) t += back[sup.charAt(i)];
+        return '^{' + t + '}';
+    }).replace(/·/g, '.');
+}
+
 function derive(startwaarden, modelregels) {
     // all units: from the comments and from the formulas. A model with an error: only the comments
     var explicit = units(startwaarden, modelregels);
@@ -440,6 +460,8 @@ function derive(startwaarden, modelregels) {
         for (var k in explicit) if (explicit.hasOwnProperty(k)) out.units[k] = explicit[k];
     }
     out.explicit = explicit;
+    // shown with superscripts (m²), also a unit as it was typed (m^2)
+    for (var n in out.units) if (out.units.hasOwnProperty(n)) out.units[n] = pretty(out.units[n]);
     return out;
 }
 
@@ -448,6 +470,8 @@ exports.derive = derive;
 exports.deriveAst = deriveAst;
 exports.parse = parse;
 exports.format = format;
+exports.pretty = pretty;
+exports.latex = latex;
 exports.label = label;
 exports.labels = labels;
 exports.line_unit = line_unit;

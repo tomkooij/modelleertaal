@@ -329,6 +329,18 @@ Context.prototype.afterLast = function(name) {
     return at + 1;
 };
 
+Context.prototype.startEnd = function() {
+    // where a new startwaarde goes: at the end, but above t = 0 and dt = 0,1 when those are
+    // the last lines (as in the basismodellen)
+    var end = endOf(this.start), names = [this.g.time, this.g.dt];
+    while (end > 0) {
+        var m = ASSIGN_RE.exec(splitComment(this.start[end - 1]).code);
+        if (!m || names.indexOf(m[2]) == -1) break;
+        end--;
+    }
+    return end;
+};
+
 Context.prototype.decimal = function(value) {
     // 0.1 in the style of the model: 0,1 (default) or 0.1
     var t = this.start.join('\n') + this.regels.join('\n');
@@ -412,7 +424,7 @@ ops.setDefinition = function(c, op) {
             setRhs(c.start, c.need(c.startLine(el.name), el.name), text);
             break;
         case 'stock':
-            if (!c.init.hasOwnProperty(el.name)) c.start.splice(endOf(c.start), 0, el.name + ' = ' + text);
+            if (!c.init.hasOwnProperty(el.name)) c.start.splice(c.startEnd(), 0, el.name + ' = ' + text);
             else setRhs(c.start, c.need(c.startLine(el.name), el.name), text);
             break;
         case 'aux':
@@ -472,7 +484,7 @@ function addStart(c, name, text) {
     if (lo != -1) {
         for (i = lo; i < end && at == -1; i++) if (uses(c.start[i], name)) at = i;
     }
-    if (at == -1) at = end;
+    if (at == -1) at = lo == -1 ? end : Math.max(lo, c.startEnd());
     var line = name + ' = ' + text.replace(/^\s+|\s+$/g, '');
     if (at == end) c.start.splice(at, 0, indentOf(c.start, c.start.length) + line);
     else insert(c.start, at, line);
@@ -621,7 +633,7 @@ ops.addStock = function(c, op) {
     if (c.isUnknown(name)) return defineStock(c, name, op.initial, op.rate, op.flow);
     var initial = /^\s*$/.test(op.initial || '') ? '0' : op.initial.replace(/^\s+|\s+$/g, '');
     exprOf(initial);
-    c.start.splice(endOf(c.start), 0, name + ' = ' + initial);
+    c.start.splice(c.startEnd(), 0, name + ' = ' + initial);
     c.analyse();
     ops.addFlow(c, {stock: name, direction: 'in', name: op.flow, rate: op.rate});
 };

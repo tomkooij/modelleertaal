@@ -894,7 +894,7 @@ function layout(g, opts) {
     }
 
     // with formulas (opts.formules): room for the boxes below the names
-    var layerH = L.layerH + (opts && opts.formules ? 30 : 0);
+    var layerH = L.layerH + (opts && opts.formules ? 38 : 0);
     var boxW = function(id) {
         var t = opts && opts.formules ? formulaText(g.elements[id]) : null;
         if (t === null) return 0;
@@ -1226,6 +1226,7 @@ function toSVG(g, lay, opts) {
         lblDerived = !!(lblUnit && opts.derivedUnits && opts.derivedUnits[label]);
         if (lblUnit) label += ' (' + lblUnit + ')';
         var maxLen = lblUnit ? 28 : 16;
+        var nameDown = 0;   // a name lower than usual (below a tap that points down)
         switch (el.kind) {
             case 'stock':
                 // rectangle, name inside
@@ -1239,6 +1240,7 @@ function toSVG(g, lay, opts) {
                 if (exam) {
                     // ventiel: a circle on the pipe with a tap. An arrow from above: the tap below
                     var flip = above[id] && !bottom[id];
+                    if (flip && valveDir[id] != 'v') nameDown = 7;
                     out.push(tip + valve(x, y, valveDir[id], flip, S) + (el.varRate ? '' :
                         name(x, flip && valveDir[id] != 'v' ? y + 7 : y, S.valve, shorten(label, maxLen), id)));
                 } else {
@@ -1303,13 +1305,14 @@ function toSVG(g, lay, opts) {
                 grow(x, y + 10, 30);
         }
         if (opts.formules) {
-            // a box with the formula or beginwaarde (exams 2015-I and 2016-I): above a stock,
-            // otherwise below the name
+            // a box with the formula or beginwaarde (exams 2015-I and 2016-I): above a stock
+            // (higher than the + buttons on its corners), otherwise below the name (also when the
+            // name is lower, below a tap that points down)
             var ftext = formulaText(el);
             if (ftext !== null) {
                 var fr = el.kind == 'flow' ? S.valve : el.kind == 'const' ? S.constant : S.aux;
                 var named = !(el.kind == 'flow' && exam && el.varRate) && !bottom[id];
-                var ftop = el.kind == 'stock' ? y - L.stockH / 2 - 24 : y + fr + (named ? 22 : 6);
+                var ftop = el.kind == 'stock' ? y - L.stockH / 2 - 31 : y + fr + (named ? 24 + nameDown : 6);
                 out.push(formulaBox(x, ftop, ftext, S, grow));
             }
         }

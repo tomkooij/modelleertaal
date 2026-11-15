@@ -18,6 +18,23 @@
 - The model of exam vwo 2005-I *Champignon* can now be built from an empty model without typing in
   the text, and gives the same results.
 
+### Grafisch model: formulieren, eenheden, opnieuw beginnen (GRAFISCHMODELLEREN.md 17–27)
+
+- The form of a new element is placed where it covers the least of the diagram; with *Maak
+  toestandsvariabele* it stays next to the **?** that is being defined.
+- In the form of an existing element, Enter saves and closes the form (the element stays selected).
+  New button **OK** does the same.
+- Units are shown with superscripts everywhere (`m²`, `m/s²`), also when typed as `m^2`; the text
+  of the model keeps what was typed. The pgfplots download writes `\si{m/s^{2}}`.
+- Formula boxes (*formules*): the box of a flow is below its name, also when the tap points down;
+  the box with the beginwaarde is above the + buttons of a toestandsvariabele.
+- A new startwaarde goes above `t = 0` and `dt = 0,1` when those are the last lines.
+- *Verder werken → Ga verder* goes back to *Tekst + grafisch* when that was the view of the saved
+  work. A new visit still starts with *Tekst* (6.1.1).
+- New button **Nieuw** above the diagram: Basismodellen → Leeg model, also when that is already
+  chosen. It asks first when the model was changed.
+- The empty diagram is as high as a small model, so the page does not jump at the first element.
+
 ### Grafisch model: Tab neemt de voorgestelde waarde over
 
 - Tab in an empty field of a form of the diagram takes over the grey example or suggestion as

@@ -355,6 +355,33 @@ Na *Maak toestandsvariabele* staat de cursor in *Verandering per tijdseenheid*; 
 27. **Leeg canvas.** Het lege diagram is één regel hoog. Geef het de hoogte van een klein model,
     dan verspringt de pagina niet bij het eerste element.
 
+## Stand derde ronde
+
+Uitgevoerd: 17, 19, 20, 22, 25, 26 en 27 (`npm test`: 243 tests; in de browser nagelopen).
+
+- 17: het formulier van een nieuw element kiest de hoek of zijkant van het diagram waar het het
+  minst bedekt. Bij *Maak toestandsvariabele* telt de "?" die wordt ingevuld als geselecteerd
+  element: het formulier staat ernaast, niet erover.
+- 19: Enter in een formulier van een bestaand element slaat op en sluit het formulier; het element
+  blijft geselecteerd. Nieuwe knop *OK* doet hetzelfde. Een eenheid wordt overal met superscript
+  getoond (`m²`, `m/s²`), ook als hij als `m^2` is getypt; de tekst van het model houdt `m^2`.
+  In de pgfplots-download wordt `m/s²` weer `m/s^{2}` (`\si{}`).
+- 20: de vermenigvuldigpunt stond er al (`m·9,81`, `SHOW` in `grafisch.js`); in de schermafdrukken
+  op 57% was hij niet te zien. Wel aangepast: het formulevakje van een stroom staat onder de naam,
+  ook als het kraantje naar beneden wijst (de naam staat dan lager), en het vakje met de
+  beginwaarde staat hoger dan de "+"-knoppen op de hoeken. Nagemeten in de browser: geen overlap
+  in het Champignon-model (10 vakjes) en bij een geselecteerde toestandsvariabele.
+- 22: een nieuwe startwaarde komt boven `t = 0` en `dt = 0,1` als die onderaan staan
+  (`x`, `v`, `m`, `F`, `t`, `dt`).
+- 25: anders dan gevraagd. In 6.1.1 is bewust gekozen dat elk bezoek met *Tekst* begint. Daarom
+  wordt de weergave nu bij het automatisch bewaarde werk onthouden, niet in de instellingen:
+  *Verder werken → Ga verder* zet *Tekst + grafisch* terug, een nieuw bezoek begint met *Tekst*.
+- 26: knop *Nieuw* (tweede rij van de werkbalk): Basismodellen → Leeg model, ook als dat al gekozen
+  is; vraagt eerst als het model is veranderd; maakt *ongedaan maken* leeg.
+- 27: het lege diagram is 180 px hoog, zoals een klein model.
+
+Nog open uit eerdere rondes: 18 (indeling en zoom), 21, 23, 24, de punten onder "Nieuw gevonden".
+
 ## Stand tweede ronde
 
 Uitgevoerd: 14, 15 en 16 (`npm test`: 239 tests, in de browser nagelopen met het Champignon-model).

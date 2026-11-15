@@ -86,7 +86,8 @@ describe('grafisch-edit.js - grafisch model als invoer', function() {
 
     it('nieuwe constante en hulpvariabele (voor de stromen en toestanden)', function() {
         var m = edit.apply(VAL, {op: 'addConstant', name: 'g', text: '9,81'});
-        assert.equal(lines(m.startwaarden).pop(), 'g = 9,81');
+        // above t = 0 and dt = 0,1, as in the basismodellen
+        assert.deepEqual(lines(m.startwaarden).slice(-3), ['g = 9,81', 't = 0', 'dt = 0,1']);
         m = edit.apply(m, {op: 'addAux', name: 'Ek', text: '0,5 * m * v^2'});
         var regels = lines(m.modelregels);
         assert.isBelow(regels.indexOf('Ek = 0,5 * m * v^2'), regels.indexOf('dv = a*dt'));
@@ -384,5 +385,17 @@ describe('grafisch-edit.js - grafisch model als invoer', function() {
         assert.deepEqual(lines(m.modelregels),
             ['groei = 11', 'als t <= 13 dan', '    groei = 0', 'eindals', 'dOpp = groei * dt', 'Opp = Opp + dOpp', 't = t + dt']);
         assert.closeTo(run(m, 200).Opp, 0.8 + 1.1 * 69, 1e-6);
+    });
+});
+
+describe('grafisch-edit.js - volgorde van de startwaarden', function() {
+    it('vanuit een leeg model: t en dt blijven onderaan', function() {
+        var m = {startwaarden: '', modelregels: ''};
+        m = edit.apply(m, {op: 'addStock', name: 'x', initial: '0', rate: 'v'});
+        m = edit.apply(m, {op: 'define', id: 'v', kind: 'stock', initial: '0', rate: 'a'});
+        m = edit.apply(m, {op: 'define', id: 'a', kind: 'aux', text: 'F/m'});
+        m = edit.apply(m, {op: 'define', id: 'm', kind: 'const', text: '25'});
+        m = edit.apply(m, {op: 'addConstant', name: 'F', text: '100'});
+        assert.deepEqual(m.startwaarden.split('\n'), ['x = 0', 'v = 0', 'm = 25', 'F = 100', 't = 0', 'dt = 0,1']);
     });
 });
