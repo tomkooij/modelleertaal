@@ -76,18 +76,57 @@ een cirkel met een kraantje), *hulpvariabelen* en *constanten* (cirkels, naam er
 
 <img src="images/webapp-grafisch-kleur.png" alt="Hetzelfde grafische model in kleur" width="400" align="right">
 
-Liever in kleur? De schakelaar **Examen | Kleur** onder het diagram tekent hetzelfde model in de kleuren van
-Coach 7: blauwe symbolen en rode pijlen voor "hangt af van". In deze stijl zijn *hulpvariabelen* cirkels en
-*constanten* kleine cirkels met aan elke kant een streepje, zoals in Coach 7. Een *stroom* van of naar buiten
-het model begint of eindigt in een gestippelde cirkel. De webapp onthoudt je keuze, en **Download** slaat het
-diagram op in de stijl die je ziet.
+Liever in kleur? De schakelaar **Examen | Kleur** onder het diagram tekent hetzelfde model met de symbolen
+die je in de meeste software voor System Dynamics tegenkomt: blauwe symbolen en rode pijlen voor "hangt af
+van". In deze stijl is een *hulpvariabele* een cirkel, een *constante* een ruit en een *stopvoorwaarde* een
+stopbord (achthoek). Een *stroom* is een buis met een ventiel in de vorm van een vlinderdas; een *stroom* van
+of naar buiten het model begint of eindigt in een wolkje. De webapp onthoudt je keuze, en **Download** slaat
+het diagram op in de stijl die je ziet.
 
 Bronnen van de twee stijlen:
 
 | Stijl | Bron |
 |---|---|
 | Examen | De grafische modellen in de centrale examens natuurkunde vwo op [examenblad.nl](https://www.examenblad.nl): 2022-I *Vrije worp bij basketbal* (figuur 5), 2023-II *Fietshelm* (figuur 6), 2018-I *Uitrijden van een auto* (figuur 2) |
-| Kleur | Coach 7 (CMA), zoals beschreven in A. Heck, [*Guide on modelling*](https://staff.fnwi.uva.nl/a.j.p.heck/Guide_on_modelling/Text/grafischmodelleren.html) (UvA), figuur 3.10 *A graphical model in Coach 7*: een *hulpvariabele* is een cirkel ("indicated by a circle"), een *constante* een cirkel met aan elke kant een streepje ("a circle with two extra line segments on each side"). Het examen 2018-I gebruikt hetzelfde symbool voor een *constante*. |
+| Kleur | De gangbare stock-flow notatie (zie de tabel hieronder): J.W. Forrester, *Industrial Dynamics* (1961), hoofdstuk *Symbols for flow diagrams*; J.D. Sterman, *Business Dynamics* (2000); de handleidingen van Stella, Vensim en Powersim |
+
+Waarom deze symbolen in de kleurstijl? De examenstijl volgt het examen; de kleurstijl volgt wat je buiten
+school ziet, in boeken over System Dynamics en in de bekende programma's. Zo herkent een leerling of docent
+die met andere software werkt het diagram meteen, en wat je hier leert is niet aan één programma gebonden.
+Per symbool:
+
+| Element | Symbool in Kleur | Waar het vandaan komt |
+|---|---|---|
+| *toestandsvariabele* | rechthoek | Forrester (*level*), en alle programma's: Stella, Vensim, Powersim, Insight Maker |
+| *stroom* | dikke buis met een ventiel als vlinderdas | Forrester (*rate*: een kraan in de buis), Sterman, Vensim (*valve*) |
+| *stroom* van of naar buiten het model | wolkje | Forrester (*source* en *sink*), Sterman, [Stella](https://iseesystems.com/resources/help/v3/Content/08-Reference/ObjectIconography.htm) en [Vensim](https://vensim.com/documentation/ref_variable_types.html): het wolkje is de grens van het model, wat daar gebeurt rekenen we niet uit |
+| *hulpvariabele* | cirkel | Stella (*converter*), Powersim (*auxiliary*) |
+| *constante* | ruit | Powersim (*constant*), zie de [Powersim Studio best practices](https://powersim.com/wp-content/uploads/2022/06/SANDIAPowersimStudioBestPracticesManual06-23-2011.pdf) (Sandia, 2011) |
+| "hangt af van" | dunne, gebogen pijl | Stella (*connector*), Vensim (*arrow*): informatie, geen materie, en hij wijst nooit naar een *toestandsvariabele* |
+| *stopvoorwaarde* | achthoek (stopbord) | eigen keuze: de ruit is in deze stijl al de *constante* |
+| *voorval* | bliksem (geel) | het *Event* van [AnyLogic](https://anylogic.help/anylogic/statecharts/events.html): een gele bliksem voor iets wat op één moment gebeurt |
+| *onafhankelijke variabele* (`t`) | klok | het blok *Clock* van [Simulink](https://www.mathworks.com/help/simulink/slref/clock.html), dat de simulatietijd geeft |
+
+Bliksem en klok horen niet bij de stock-flow notatie van Forrester en staan ook niet in de examenfiguren;
+de webapp tekent ze in beide stijlen (in Examen zwart-wit). Welke elementen er zijn (een *voorval* als
+voorwaarde die een *toestandsvariabele* sprongsgewijs verandert, en een *onafhankelijke variabele*) volgt
+de handleiding van Coach 7 (hoofdstuk *Modelelementen voor de grafische en vergelijkingenmodus*), net als
+de rest van *Modelleertaal*. De pictogrammen zijn daar niet van overgenomen: in die software wordt de
+onafhankelijke variabele standaard niet getekend.
+
+Waarom een ruit voor een *constante* en geen cirkel? In de examenstijl zien *hulpvariabele* en *constante* er
+hetzelfde uit (zoals in de examens); in de kleurstijl zie je meteen wat elke stap opnieuw uitgerekend wordt
+(cirkel) en wat vast ligt (ruit). Vensim tekent beide als alleen een naam, maar voor leerlingen is een
+zichtbaar verschil duidelijker.
+
+De kleuren (blauwe symbolen met een lichtblauwe vulling, rode pijlen op wit) sluiten aan bij wat veel
+leerlingen al van school kennen. Ze zijn iets zachter gemaakt dan puur blauw en rood, zodat het diagram
+rustig blijft, en de rode pijlen vallen op tussen de blauwe symbolen: precies die pijlen ("waar hangt dit
+van af?") moet een leerling lezen.
+
+Een vergelijking met de grafische modellen in de
+[SLO-voorbeelden van computermodellen](https://www.slo.nl/thema/vakspecifieke-thema/natuur-techniek/modelleren/voorbeelden-computermodellen-natuurkunde/),
+en waarom er geen derde stijl is, staat in [DIDACTIEK.md](DIDACTIEK.md#vergelijking-met-de-slo-voorbeelden).
 
 - Het diagram wordt getekend uit de tekst van het model, terwijl je typt. Run is niet nodig.
 - **Tekst en diagram zijn gekoppeld.** Klik op een symbool en de regels ervan worden gemarkeerd in de tekst.
