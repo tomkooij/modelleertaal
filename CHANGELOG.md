@@ -28,8 +28,9 @@
 - With one graph the tangent at that point is drawn up to the axes (or the edge of the graph),
   through the whole graph, without changing the axes. The slope comes from the points before
   and after. A click on the tangent shows its two ends (where it crosses the axes) with their
-  values, and the label calculates the slope from them, with units: `Δy = ...`, `Δt = ...`,
-  `helling = Δy/Δt = 1,087/0,4525 = 2,403 m/s`. Another click hides it. Before that click the
+  values, and the label calculates the slope from them as real (stacked) fractions:
+  helling = Δy/Δt = (1,5 − 0,4127)/(0,4525 − 0) = 2,403 m/s, with the values read off the
+  tangent in the numerator and denominator. Another click hides it. Before that click the
   label only says "klik op de raaklijn voor de helling". New module `aflezen.js` (with tests).
   See DIDACTIEK.md, with screenshots made by `tools/screenshots.mjs`.
 - The table keeps the number of rows shown when it is drawn again.

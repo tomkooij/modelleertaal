@@ -2986,17 +2986,16 @@ ModelleertaalApp.prototype.tangent_text = function() {
   var dx = b[0] - a[0], dy = b[1] - a[1];
   function num(v) { return self.format_text(v).replace('-', '\u2212'); }
   function minus(v) { return (v < 0) ? '(' + num(v) + ')' : num(v); }
-  function unit(name) { return self.units[name] ? ' ' + self.units[name] : ''; }
-  function delta(name, v1, v2, d) {
-    return '\u0394' + name + ' = ' + num(v2) + ' \u2212 ' + minus(v1) + ' = ' + num(d) + unit(name);
-  }
+  function difference(v1, v2) { return num(v2) + ' − ' + minus(v1); }
   var slope_unit = aflezen.slope_unit(this.units[t.yvar], this.units[t.xvar]);
-  return [
-    {text: delta(t.yvar, a[1], b[1], dy), cls: 'read_calc read_first'},
-    {text: delta(t.xvar, a[0], b[0], dx), cls: 'read_calc'},
-    {text: 'helling = \u0394' + t.yvar + '/\u0394' + t.xvar + ' = ' + minus(dy) + '/' + minus(dx) + ' = ' +
-           num(dy / dx) + (slope_unit ? ' ' + slope_unit : ''), cls: 'read_calc read_result'}
-  ];
+  // helling = (delta y)/(delta x) = (y2 - y1)/(x2 - x1) = ..., as real fractions (show_read_label)
+  return [{cls: 'read_calc read_first read_result', parts: [
+    'helling = ',
+    {num: 'Δ' + t.yvar, den: 'Δ' + t.xvar},
+    ' = ',
+    {num: difference(a[1], b[1]), den: difference(a[0], b[0])},
+    ' = ' + num(dy / dx) + (slope_unit ? ' ' + slope_unit : '')
+  ]}];
 };
 
 
@@ -3034,7 +3033,21 @@ ModelleertaalApp.prototype.show_read_label = function(text) {
   var label = $('<div class="read_label">').appendTo(graph);
   text.forEach(function(line) {
     if (typeof line == 'string') line = {text: line};
-    label.append($('<div>').addClass(line.cls || '').text(line.text));
+    var div = $('<div>').addClass(line.cls || '').appendTo(label);
+    if (!line.parts) {
+      div.text(line.text);
+      return;
+    }
+    // text and fractions {num, den}
+    line.parts.forEach(function(part) {
+      if (typeof part == 'string') {
+        div.append($('<span>').text(part));
+      } else {
+        div.append($('<span class="frac">')
+          .append($('<span class="frac_num">').text(part.num))
+          .append($('<span class="frac_den">').text(part.den)));
+      }
+    });
   });
   // a click on the tangent: the values at both ends, next to the ends
   var t = this.read_tangent;

@@ -37,7 +37,7 @@ staat in **[DIDACTIEK.md](DIDACTIEK.md)**.
 - **Grafieken aflezen.** Klik op een punt in de grafiek: een stip met hulplijnen naar beide assen, zoals je op
   papier afleest, en de rij in de tabel licht op (en andersom: klik op een rij). Bij één grafiek tekent de
   webapp ook de raaklijn, tot aan de assen. Klik op de raaklijn: de snijpunten met de assen worden afgelezen en
-  de helling volgt uit Δy/Δx (`helling = Δy/Δt = 1,087/0,4525 = 2,403 m/s`): zo bepaal je bijvoorbeeld de
+  de helling volgt uit de breuk Δy/Δx, ingevuld met die punten (`(1,5 − 0,4127)/(0,4525 − 0) = 2,403 m/s`): zo bepaal je bijvoorbeeld de
   versnelling uit het (v,t)-diagram. Zie [DIDACTIEK.md](DIDACTIEK.md).
 - **Eenheden.** Schrijf een eenheid tussen rechte haken in het commentaar achter een startwaarde
   (`v = 0 '[m/s]`) en hij staat op de assen (`v (m/s)`), in de tabel en in de downloads.

@@ -122,13 +122,10 @@ het antwoord:
    ![Een punt aangeklikt: de raaklijn loopt tot aan de assen](images/raaklijn-punt.png)
 
 2. **Klik op de raaklijn:** de twee snijpunten met de assen (of de rand) krijgen een open rondje met hun
-   waarden, en het label rekent de helling uit, met eenheden, zoals een leerling het opschrijft:
+   waarden, en het label rekent de helling uit zoals een leerling het opschrijft: als **echte breuk**
+   Δy/Δt, met in de teller en de noemer de afgelezen waarden van de twee punten:
 
-   ```
-   Δy = 1,5 − 0,4127 = 1,087 m
-   Δt = 0,4525 − 0 = 0,4525 s
-   helling = Δy/Δt = 1,087/0,4525 = 2,403 m/s
-   ```
+   $$\text{helling} = \frac{\Delta y}{\Delta t} = \frac{1{,}5 - 0{,}4127}{0{,}4525 - 0} = 2{,}403\ \text{m/s}$$
 
    ![Op de raaklijn geklikt: de snijpunten met de assen en de helling uit Δy/Δt](images/raaklijn-helling.png)
 
@@ -144,8 +141,12 @@ Waarom zo:
   een "mooie" waarde (`t = 0`, `y = 0`).
 - **Eerst zelf, dan controleren.** De berekening komt pas na een tweede klik. Zonder die klik ziet de
   leerling alleen de raaklijn, net als in een examenopgave.
-- **Eenheden in de berekening.** Bij Δy en Δx staat de eenheid, bij de helling de samengestelde eenheid
-  (`m/s`, `(m/s)/s`): de eenheid van de helling volgt uit de eenheden op de assen.
+- **Een echte breuk, ingevuld.** Δy/Δx staat als breuk, met eronder dezelfde breuk met de afgelezen
+  getallen in teller en noemer (`1,5 − 0,4127` boven de streep, `0,4525 − 0` eronder). Zo zie je welk
+  punt waar in de formule komt, en de breuk ziet eruit als op papier, niet als een schuine streep van een
+  rekenmachine.
+- **De eenheid bij de helling.** Achter de uitkomst staat de samengestelde eenheid (`m/s`, `(m/s)/s`):
+  de eenheid van de helling volgt uit de eenheden op de assen.
 
 De raaklijn zelf is de lijn door het punt met de helling uit de punten ervoor en erna (centraal verschil).
 De raaklijn verandert de assen niet: hij wordt getekend in de grafiek zoals die al was, ook als je

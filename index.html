@@ -776,6 +776,26 @@
 
         .read_label .read_result {
             font-weight: 600;
+            display: flex;
+            align-items: center;
+            white-space: pre;
+        }
+
+        /* een breuk: teller boven de streep, noemer eronder */
+        .read_label .frac {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 1px 2px;
+        }
+
+        .read_label .frac_num {
+            padding: 0 3px;
+        }
+
+        .read_label .frac_den {
+            padding: 0 3px;
+            border-top: 1px solid #111827;
         }
 
         .read_label.read_end {
