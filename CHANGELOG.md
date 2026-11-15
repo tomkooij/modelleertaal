@@ -18,6 +18,15 @@
 - The model of exam vwo 2005-I *Champignon* can now be built from an empty model without typing in
   the text, and gives the same results.
 
+### Grafisch model: Tab neemt de voorgestelde waarde over
+
+- Tab in an empty field of a form of the diagram takes over the grey example or suggestion as
+  real input: `x`, `0`, `v` and `m` in *Nieuwe toestandsvariabele*, or the derived unit (`m/s`) in
+  the field *Eenheid*. In the form of an existing element it is applied when the field is left.
+  The tooltip of the field says so. Also in the field for the unit of `dt` (a derived unit, not the
+  word *eenheid*). Not for a placeholder that is not a value: *geen* (Minimum, Maximum) and
+  *(geen naam)* (a flow without a name). Shift+Tab never fills in.
+
 ### Eenheden en stromen (GRAFISCHMODELLEREN.md 15, 16)
 
 - A number with a unit that is not written (`9,81` in `Fz = m * 9,81`, `0,37`) makes the unit of a

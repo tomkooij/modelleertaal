@@ -484,6 +484,8 @@ function ModelleertaalApp(params) {
     }
   }).on('input', function() { $(this).removeClass('invalid'); })
     .on('keydown', function(event) { if (event.key == 'Enter') { event.preventDefault(); $(this).trigger('change'); } });
+  // Tab takes over the derived unit (not the word 'eenheid')
+  grafisch_accept_on_tab($('#grafisch_dt_eenheid'), function(text) { return text != 'eenheid'; });
   // dt: the startwaarde of the time step
   $('#grafisch_dt').on('change', function() {
     var text = $.trim($(this).val());
@@ -1513,8 +1515,30 @@ ModelleertaalApp.prototype.grafisch_names = function() {
 };
 
 
+function grafisch_accept_on_tab(input, ok) {
+  // Tab (forward) in an empty field: the grey suggestion (placeholder) becomes the value, so it is
+  // real input (and in a form of an existing element it is applied when the field is left).
+  // ok (optional): function(placeholder) --> false for a placeholder that is not a value
+  input.on('keydown', function(event) {
+    var text = input.attr('placeholder') || '';
+    if (event.key != 'Tab' || event.shiftKey || event.ctrlKey || event.altKey || event.metaKey) return;
+    if ($.trim(input.val()) !== '' || $.trim(text) === '' || (ok && !ok(text))) return;
+    input.val(text).removeClass('invalid').trigger('change');
+  });
+  input.on('focus', function() {
+    // the tooltip says so, with the suggestion of this moment
+    var text = input.attr('placeholder') || '';
+    var show = $.trim(input.val()) === '' && $.trim(text) !== '' && (!ok || ok(text));
+    if (show) input.attr('title', 'Tab: ' + text + ' overnemen');
+    else input.removeAttr('title');
+  });
+}
+
+
 ModelleertaalApp.prototype.grafisch_form = function(title, note, fields, buttons, onchange, onenter) {
   // fields: [{key, label, value, placeholder, options: [{value, text}], formula: true}]
+  //   Tab in an empty field takes over the grey example or suggestion (placeholder) as real input,
+  //   unless accept: false (a placeholder that is not a value, such as 'geen').
   // buttons: [{text, action: function(values)}]
   // onchange (optional), for an existing element: function(values, key). Every change is applied
   //   at once: with Enter, or when you leave the field. Returns false if the change is not possible
@@ -1613,6 +1637,7 @@ ModelleertaalApp.prototype.grafisch_form = function(title, note, fields, buttons
         });
       }
       input.on('input', function() { $(this).removeClass('invalid'); });
+      if (f.accept !== false) grafisch_accept_on_tab(input);
     }
     input.data('committed', input.val());
     if (f.hint) input.data('hint', true).addClass('grafisch_hint');
@@ -1845,8 +1870,8 @@ ModelleertaalApp.prototype.grafisch_select = function(id, opts) {
       } catch (err) {
         limits = {max: '', min: ''};
       }
-      var limit_fields = [{key: 'min', label: 'Minimum', value: limits.min, placeholder: 'geen', hint: true, formula: true},
-                          {key: 'max', label: 'Maximum', value: limits.max, placeholder: 'geen', hint: true, formula: true}];
+      var limit_fields = [{key: 'min', label: 'Minimum', value: limits.min, placeholder: 'geen', hint: true, accept: false, formula: true},
+                          {key: 'max', label: 'Maximum', value: limits.max, placeholder: 'geen', hint: true, accept: false, formula: true}];
       this.grafisch_form('Toestandsvariabele ' + el.name,
         unit_note((el.general || el.updates != 1) ? 'De stromen van ' + el.name + ' kun je alleen in de tekst aanpassen.' : ''),
         [{key: 'name', label: 'Naam', value: el.name},
@@ -1918,7 +1943,7 @@ ModelleertaalApp.prototype.grafisch_select = function(id, opts) {
       this.grafisch_form('Stroom ' + (el.name || el.label),
         el.name ? (el.isRate ? 'Stroomsterkte per tijdseenheid: in de tekst staat ' + el.term + '.' : '') :
           'Deze stroom heeft geen naam: hij staat als ' + el.term + ' in de regel van ' + (el.to || el.from) + '.',
-        [{key: 'name', label: 'Naam', value: el.name || '', placeholder: '(geen naam)'},
+        [{key: 'name', label: 'Naam', value: el.name || '', placeholder: '(geen naam)', accept: false},
          {key: 'text', label: 'Formule', value: el.code, formula: true}].concat(unit_fields, [
          {key: 'from', label: 'Van', value: el.from || '', options: ends},
          {key: 'to', label: 'Naar', value: el.to || '', options: ends}]),
