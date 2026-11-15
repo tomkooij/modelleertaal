@@ -2,6 +2,22 @@
 
 ## [Unreleased]
 
+### Eenheden: afgeleid uit de formules, en in het grafische model
+
+- Units that are not written in the comments are derived from the formulas where possible, also
+  backwards: with `x '[m]` and `t '[s]`, `dx = v * dt ; x = x + dx` gives `dx` in m and `v` in m/s;
+  `Fres/m` with N and kg gives m/s² (N, J, W, Pa, V, Ω and C are recognised; km, h, g, dag stay
+  their own symbols). The derived units appear on the axes, in the table and in the downloads.
+  No time unit is assumed.
+- *Tekst + grafisch* has a toggle **eenheden**: the units after the names in the diagram (upright),
+  in *Herkende elementen*, and a field *Eenheid* in every form (new elements, *Onbekend*, existing
+  elements) and next to `dt =`. The field writes the comment `'[kg]` in the text; empty removes it.
+  The grey hint in the field is the derived unit (or an example) and is **not** taken over by
+  *Voeg toe*.
+- With the toggle on, a new model gets `t = 0 '[s]` and `dt = 0,1 '[s]`.
+- A form says when the units in a formula do not fit (*volgens de formule is de eenheid m/s², niet
+  m/s*; *kg en kg·dag/s opgeteld*).
+
 ### Grafisch model: bouwen vanuit een leeg model (GRAFISCHMODELLEREN.md)
 
 - An unknown variable (**?**) can become a *toestandsvariabele*: the form *Onbekend* has a third

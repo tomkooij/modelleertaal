@@ -183,6 +183,27 @@ describe('grafisch-edit.js - grafisch model als invoer', function() {
         assert.throws(function() { edit.variablesOf('2 *'); }, /klopt niet/);
     });
 
+    it('eenheid als commentaar: toevoegen, vervangen, weghalen', function() {
+        var m = edit.apply(VAL, {op: 'setUnit', name: 'm', unit: 'g'});
+        assert.equal(lines(m.startwaarden)[0], "m = 80   // [g] kg");
+        m = edit.apply(m, {op: 'setUnit', name: 'm', unit: 'kg'});
+        assert.equal(lines(m.startwaarden)[0], "m = 80   // [kg] kg");
+        m = edit.apply(VAL, {op: 'setUnit', name: 'k', unit: 'kg/m'});
+        assert.equal(lines(m.startwaarden)[1], "k = 0,3 '[kg/m]");
+        m = edit.apply(m, {op: 'setUnit', name: 'k', unit: ''});
+        assert.equal(lines(m.startwaarden)[1], "k = 0,3");
+        // hulpvariabele en benoemde stroom: in de modelregels
+        m = edit.apply(VAL, {op: 'setUnit', name: 'Fw', unit: 'N'});
+        assert.equal(lines(m.modelregels)[2], "Fw = k*v^2   '[N] luchtweerstand");
+        m = edit.apply(m, {op: 'setUnit', name: 'dv', unit: 'm/s'});
+        assert.include(lines(m.modelregels), "dv = a*dt '[m/s]");
+        assert.throws(function() { edit.apply(VAL, {op: 'setUnit', name: 'k', unit: 'a]b'}); }, /geen eenheid/);
+        // nieuw model met timeUnit: t en dt in s
+        m = edit.apply({startwaarden: '', modelregels: ''}, {op: 'addStock', name: 'x', initial: '0', rate: '2', timeUnit: 's'});
+        assert.equal(m.startwaarden, "x = 0\nt = 0 '[s]\ndt = 0,1 '[s]");
+        assert.closeTo(run(m, 1).t, 0.1, 1e-9);
+    });
+
     it('nieuwe toestandsvariabele in een leeg model: ook t en dt', function() {
         var m = edit.apply({startwaarden: '', modelregels: ''},
             {op: 'addStock', name: 'N', initial: '1000', rate: '-0,1 * N'});

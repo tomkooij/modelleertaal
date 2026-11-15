@@ -40,7 +40,11 @@ staat in **[DIDACTIEK.md](DIDACTIEK.md)**.
   de helling volgt uit de breuk Δy/Δx, ingevuld met die punten (`(1,5 − 0,4127)/(0,4525 − 0) = 2,403 m/s`): zo bepaal je bijvoorbeeld de
   versnelling uit het (v,t)-diagram. Zie [DIDACTIEK.md](DIDACTIEK.md).
 - **Eenheden.** Schrijf een eenheid tussen rechte haken in het commentaar achter een startwaarde
-  (`v = 0 '[m/s]`) en hij staat op de assen (`v (m/s)`), in de tabel en in de downloads.
+  (`v = 0 '[m/s]`) en hij staat op de assen (`v (m/s)`), in de tabel en in de downloads. Eenheden die
+  er niet staan worden waar het kan afgeleid uit de formules: met `x '[m]` en `t '[s]` krijgt `v` in
+  `x = x + v*dt` de eenheid m/s, en `Fres/m` met `Fres` in N en `m` in kg wordt m/s². In *Tekst + grafisch*
+  zet de knop **eenheden** de eenheden achter de namen in het diagram en een veld *Eenheid* in de
+  formulieren; de afgeleide eenheid staat daar als grijze hint.
 - **Stap voor stap.** Met **Stap** reken je het model regel voor regel door. Onder de runbalk staat de
   berekening met ingevulde getallen (`v = v + a*dt  →  v = 0,981 + 9,78 × 0,1 = 1,959`), de regel licht op
   in de editor en de waarde die net veranderde in de tabel. In de grafiek groeien de punten mee over de

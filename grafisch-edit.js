@@ -28,6 +28,10 @@
     definiëren die variabele (zoals define).
       {op: 'convert', id, kind}                  constante <-> hulpvariabele ('aux' of 'const')
       {op: 'setDt', text}                        startwaarde van dt
+      {op: 'setUnit', name, unit}                eenheid als commentaar: m = 25 '[kg] (unit '': weg)
+
+    Met timeUnit in een bewerking (bijvoorbeeld 's') krijgen t en dt die eenheid als de
+    bewerking ze maakt: t = 0 '[s]
       {op: 'remove', id}
 
     Verder:
@@ -256,12 +260,13 @@ Context.prototype.decimal = function(value) {
 Context.prototype.needTime = function() {
     // new model: t = t + dt
     var dt = this.g.dt;
+    var unit = this.timeUnit ? " '[" + this.timeUnit + "]" : '';
     if (!this.g.time) {
         var t = this.freeName('t');
-        this.start.splice(endOf(this.start), 0, t + ' = 0');
+        this.start.splice(endOf(this.start), 0, t + ' = 0' + unit);
         this.regels.splice(endOf(this.regels), 0, t + ' = ' + t + ' + ' + dt);
     }
-    if (!this.init.hasOwnProperty(dt)) this.start.splice(endOf(this.start), 0, dt + ' = ' + this.decimal('0.1'));
+    if (!this.init.hasOwnProperty(dt)) this.start.splice(endOf(this.start), 0, dt + ' = ' + this.decimal('0.1') + unit);
     this.analyse();
 };
 
@@ -469,6 +474,37 @@ ops.setDt = function(c, op) {
     else setRhs(c.start, line, text);
 };
 
+ops.setUnit = function(c, op) {
+    // the unit in the comment of the line of name: in the startwaarden, else in the modelregels
+    var unit = String(op.unit || '').replace(/^\s+|\s+$/g, ''), name = op.name;
+    if (unit.length > 20 || /[\[\]\n]/.test(unit)) {
+        throw new Error('"' + unit + '" is geen eenheid die ik kan opslaan (geen [ of ], hoogstens 20 tekens).');
+    }
+    var lines = c.start, line = c.startLine(name);
+    if (line == -1 && !c.init.hasOwnProperty(name)) {
+        lines = c.regels;
+        line = c.regelLine(name, 'def');
+        if (line == -1) line = c.regelLine(name);
+    }
+    c.need(line, name);
+    var parts = splitComment(lines[line]), comment = parts.comment;
+    var bracket = /\s*\[[^\[\]]*\]/;
+    if (unit === '') {
+        comment = comment.replace(bracket, '');
+        if (/^\s*('|\/\/|#)\s*$/.test(comment)) comment = '';
+    } else if (bracket.test(comment)) {
+        comment = comment.replace(/\[[^\[\]]*\]/, '[' + unit + ']');
+    } else if (comment) {
+        // 'massa --> '[kg] massa ; // massa --> // [kg] massa
+        comment = comment.replace(/^(\s*)('|\/\/|#)\s*/, function(all, space, mark) {
+            return space + mark + (mark == "'" ? '' : ' ') + '[' + unit + '] ';
+        });
+    } else {
+        comment = " '[" + unit + "]";
+    }
+    lines[line] = parts.code.replace(/\s+$/, '') + comment;
+};
+
 function flowLine(c, name, rate) {
     // dx = rate * dt
     return name + ' = ' + grafisch.code(exprOf(rate), 5, false) + ' * ' + c.g.dt;
@@ -627,6 +663,7 @@ function apply(model, op) {
     } catch (err) {
         throw new Error('Het model bevat een fout. Los die eerst op in de tekst.');
     }
+    c.timeUnit = op.timeUnit;
     ops[op.op](c, op);
     var result = c.text();
     try {

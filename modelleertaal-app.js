@@ -110,6 +110,8 @@ function ModelleertaalApp(params) {
   this.grafisch_stijl = 'examen';   // style of the diagram: 'examen' or 'kleur' (see grafisch.js)
   this.grafisch_formules = false;   // a box with the formula next to every symbol (exams 2015, 2016)
   this.dom_grafisch_formules = "#grafisch_formules";
+  this.grafisch_eenheden = false;   // units in the diagram and a field Eenheid in the forms
+  this.dom_grafisch_eenheden = "#grafisch_eenheden";
   this.dom_download_grafisch = "#download_grafisch";
   this.dom_grafisch_reset = "#grafisch_herstel";
   this.dom_grafisch_form = "#grafisch_eigenschappen";
@@ -295,6 +297,9 @@ function ModelleertaalApp(params) {
     self.set_grafisch_stijl($(this).attr('data-stijl'), true);
   });
   // Formules: a box with the formula or beginwaarde next to every symbol
+  $(this.dom_grafisch_eenheden).on('change', function() {
+    self.set_grafisch_eenheden($(this).prop('checked'), true);
+  });
   $(this.dom_grafisch_formules).on('change', function() {
     self.set_grafisch_formules($(this).prop('checked'), true);
   });
@@ -470,6 +475,14 @@ function ModelleertaalApp(params) {
   $('#grafisch_nieuw_toestand').click(function() { self.grafisch_new_form('stock'); });
   $('#grafisch_nieuw_hulp').click(function() { self.grafisch_new_form('aux'); });
   $('#grafisch_nieuw_constante').click(function() { self.grafisch_new_form('const'); });
+  // the unit of dt (with the toggle eenheden)
+  $('#grafisch_dt_eenheid').on('change', function() {
+    var dt = self.grafisch_g ? self.grafisch_g.dt : 'dt';
+    if (!self.grafisch_apply([{op: 'setUnit', name: dt, unit: $(this).val()}], self.grafisch_selected, {noform: self.grafisch_noform})) {
+      $(this).addClass('invalid');
+    }
+  }).on('input', function() { $(this).removeClass('invalid'); })
+    .on('keydown', function(event) { if (event.key == 'Enter') { event.preventDefault(); $(this).trigger('change'); } });
   // dt: the startwaarde of the time step
   $('#grafisch_dt').on('change', function() {
     var text = $.trim($(this).val());
@@ -1050,6 +1063,51 @@ ModelleertaalApp.prototype.set_grafisch_stijl = function(stijl, save) {
 };
 
 
+ModelleertaalApp.prototype.set_grafisch_eenheden = function(on, save) {
+  // units: after the names in the diagram, and a field Eenheid in the forms
+  this.grafisch_eenheden = !!on;
+  $(this.dom_grafisch_eenheden).prop('checked', this.grafisch_eenheden);
+  $('#grafisch_dt_eenheid').prop('hidden', !this.grafisch_eenheden);
+  if (this.grafisch_open() && this.grafisch_g) {
+    this.grafisch_form_new = false;
+    this.draw_grafisch_model();
+  }
+  if (save) this.save_settings();
+};
+
+
+ModelleertaalApp.prototype.grafisch_unit = function(name) {
+  // {explicit: unit in the text or '', derived: unit from the formulas or '', conflict: text or ''}
+  var u = this.grafisch_units || {units: {}, explicit: {}, derived: {}, conflicts: {}};
+  var has = function(o) { return !!name && o.hasOwnProperty(name); };
+  return {explicit: has(u.explicit) ? u.explicit[name] : '',
+          derived: has(u.derived) ? u.units[name] : '',
+          conflict: has(u.conflicts) ? u.conflicts[name] : ''};
+};
+
+
+ModelleertaalApp.prototype.grafisch_unit_field = function(name, example) {
+  // the field Eenheid (only with the toggle eenheden). The grey hint is the unit that follows
+  // from the formulas (or an example): it is not taken over, an empty field means no unit
+  if (!this.grafisch_eenheden) return [];
+  var u = this.grafisch_unit(name);
+  return [{key: 'unit', label: 'Eenheid', value: u.explicit, placeholder: u.derived || example || '', hint: true}];
+};
+
+
+ModelleertaalApp.prototype.grafisch_unit_ops = function(ops, name, v) {
+  // ops for a new element: + its unit, and t and dt in s when they are made
+  var self = this;
+  if (this.grafisch_eenheden) {
+    ops.forEach(function(op) { op.timeUnit = 's'; });
+    if (v.unit !== undefined && $.trim(v.unit) !== '' && $.trim(v.unit) != self.grafisch_unit(name).explicit) {
+      ops.push({op: 'setUnit', name: name, unit: v.unit});
+    }
+  }
+  return ops;
+};
+
+
 ModelleertaalApp.prototype.set_grafisch_formules = function(on, save) {
   // the formulas next to the symbols, as in the exams 2015-I and 2016-I
   this.grafisch_formules = !!on;
@@ -1094,6 +1152,7 @@ ModelleertaalApp.prototype.analyse_grafisch_model = function() {
   // <grafisch> in the model file: the arrows of the lines with ... (as in the exam figure)
   var g = grafisch.analyse(ev.startwaarden_ast, ev.modelregels_ast, {hints: this.model.grafisch});
   this.grafisch_lines = grafisch.lines(g, ev.startwaarden_ast, ev.modelregels_ast);
+  this.grafisch_units = eenheden.derive(this.model.startwaarden, this.model.modelregels);
   return g;
 };
 
@@ -1130,11 +1189,13 @@ ModelleertaalApp.prototype.draw_grafisch_model = function() {
   this.grafisch_bounds = null;
   this.render_grafisch_model();
   // Herkende elementen: the same model as a list
-  var table = $('<table>');
+  var table = $('<table>'), self = this;
   grafisch.table(g).forEach(function(row) {
+    var unit = self.grafisch_eenheden && self.grafisch_units && self.grafisch_units.units.hasOwnProperty(row.name) ?
+      ' (' + self.grafisch_units.units[row.name] + ')' : '';
     var tr = $('<tr>')
       .append($('<td>').text(row.kind))
-      .append($('<td>').append($('<b>').text(row.name)))
+      .append($('<td>').append($('<b>').text(row.name)).append(document.createTextNode(unit)))
       .append($('<td>').text(row.definition));
     if (row.id !== undefined) tr.attr('data-id', row.id).attr('title', 'Klik om ' + row.name + ' in het diagram te kiezen');
     table.append(tr);
@@ -1161,6 +1222,11 @@ ModelleertaalApp.prototype.grafisch_show_dt = function() {
   }
   input.removeClass('invalid').val(dt && dt.text !== null ? dt.text : '')
     .attr('placeholder', dt ? '' : '?').prop('disabled', !dt);
+  var u = this.grafisch_unit(dt ? dt.name : null), unit = $('#grafisch_dt_eenheid');
+  if (!unit.is(':focus')) {
+    unit.removeClass('invalid').val(u.explicit).attr('placeholder', u.derived || 'eenheid')
+      .prop('disabled', !dt || dt.text === null).prop('hidden', !this.grafisch_eenheden);
+  }
   $('#grafisch_dt_naam').text((dt ? dt.name : 'dt') + ' =');
 };
 
@@ -1188,6 +1254,7 @@ ModelleertaalApp.prototype.render_grafisch_model = function() {
   var self = this;
   var opts = {bounds: this.grafisch_bounds, values: this.grafisch_values(), stijl: this.grafisch_stijl,
               formules: this.grafisch_formules,
+              units: this.grafisch_eenheden && this.grafisch_units ? this.grafisch_units.units : undefined,
               selected: this.grafisch_form_new ? undefined : this.grafisch_selected};
   var view = $(this.dom_grafisch_svg);
   view.html(grafisch.toSVG(this.grafisch_g, this.grafisch_layout, opts));
@@ -1465,7 +1532,9 @@ ModelleertaalApp.prototype.grafisch_form = function(title, note, fields, buttons
     for (var key in inputs) {
       if (!inputs.hasOwnProperty(key)) continue;
       v[key] = inputs[key].val();
-      if (!live && $.trim(v[key]) === '' && inputs[key].attr('placeholder')) v[key] = inputs[key].attr('placeholder');
+      if (!live && !inputs[key].data('hint') && $.trim(v[key]) === '' && inputs[key].attr('placeholder')) {
+        v[key] = inputs[key].attr('placeholder');
+      }
     }
     return v;
   };
@@ -1540,6 +1609,7 @@ ModelleertaalApp.prototype.grafisch_form = function(title, note, fields, buttons
       input.on('input', function() { $(this).removeClass('invalid'); });
     }
     input.data('committed', input.val());
+    if (f.hint) input.data('hint', true).addClass('grafisch_hint');
     inputs[f.key] = input;
     if (f.formula) formulas.push(input);
     form.append($('<label>').append($('<span>').text(f.label)).append(input));
@@ -1622,23 +1692,29 @@ ModelleertaalApp.prototype.grafisch_new_form = function(kind, name, value) {
       'In de tekst komt: ' + x + ' = ' + x + ' + d' + x + ' met d' + x + ' = (verandering per tijdseenheid) * dt.',
       [{key: 'name', label: 'Naam', value: name, placeholder: 'x'},
        {key: 'initial', label: 'Beginwaarde', value: value || '0', formula: true},
-       {key: 'rate', label: 'Verandering per tijdseenheid', value: '', placeholder: name ? '' : 'v', formula: true}],
+       {key: 'rate', label: 'Verandering per tijdseenheid', value: '', placeholder: name ? '' : 'v', formula: true}]
+        .concat(this.grafisch_unit_field(name, name ? '' : 'm')),
       [{text: 'Voeg toe', action: function(v) {
-        self.grafisch_apply([{op: 'addStock', name: v.name, initial: v.initial, rate: v.rate}], $.trim(v.name), {noform: true});
+        self.grafisch_apply(self.grafisch_unit_ops([{op: 'addStock', name: v.name, initial: v.initial, rate: v.rate}],
+          $.trim(v.name), v), $.trim(v.name), {noform: true});
       }}, close]);
   } else if (kind == 'aux') {
     form = this.grafisch_form('Nieuwe hulpvariabele', 'Een grootheid die elke stap met een formule wordt uitgerekend, zoals Fres.',
       [{key: 'name', label: 'Naam', value: '', placeholder: 'Fres'},
-       {key: 'text', label: 'Formule', value: '', placeholder: 'Fz - Fw', formula: true}],
+       {key: 'text', label: 'Formule', value: '', placeholder: 'Fz - Fw', formula: true}]
+        .concat(this.grafisch_unit_field(null, 'N')),
       [{text: 'Voeg toe', action: function(v) {
-        self.grafisch_apply([{op: 'addAux', name: v.name, text: v.text}], $.trim(v.name), {noform: true});
+        self.grafisch_apply(self.grafisch_unit_ops([{op: 'addAux', name: v.name, text: v.text}], $.trim(v.name), v),
+          $.trim(v.name), {noform: true});
       }}, close]);
   } else {
     form = this.grafisch_form('Nieuwe constante', 'Een grootheid die niet verandert, zoals de massa m. Komt bij de startwaarden.',
       [{key: 'name', label: 'Naam', value: '', placeholder: 'm'},
-       {key: 'text', label: 'Waarde', value: '', placeholder: '75', formula: true}],
+       {key: 'text', label: 'Waarde', value: '', placeholder: '75', formula: true}]
+        .concat(this.grafisch_unit_field(null, 'kg')),
       [{text: 'Voeg toe', action: function(v) {
-        self.grafisch_apply([{op: 'addConstant', name: v.name, text: v.text}], $.trim(v.name), {noform: true});
+        self.grafisch_apply(self.grafisch_unit_ops([{op: 'addConstant', name: v.name, text: v.text}], $.trim(v.name), v),
+          $.trim(v.name), {noform: true});
       }}, close]);
   }
   // the first empty field (a name that is already filled in: the next one)
@@ -1658,7 +1734,8 @@ ModelleertaalApp.prototype.grafisch_flow_form = function(stock, direction) {
     [{key: 'name', label: 'Naam', value: '', placeholder: 'd' + stock},
      {key: 'rate', label: 'Stroomsterkte (per tijdseenheid)', value: '', placeholder: '0', formula: true}],
     [{text: 'Voeg toe', action: function(v) {
-      self.grafisch_apply([{op: 'addFlow', stock: stock, direction: direction, name: v.name, rate: v.rate}], stock, {noform: true});
+      self.grafisch_apply(self.grafisch_unit_ops([{op: 'addFlow', stock: stock, direction: direction, name: v.name, rate: v.rate}],
+        stock, {}), stock, {noform: true});
     }}, {text: 'Annuleer', action: function() {
       self.grafisch_form_new = false;
       self.grafisch_select(stock);
@@ -1702,6 +1779,17 @@ ModelleertaalApp.prototype.grafisch_select = function(id, opts) {
   var apply = function(ops, select) {
     if (ops.length) return self.grafisch_apply(ops, select);
   };
+  // the field Eenheid (toggle eenheden), and a remark when the units do not fit
+  var unit_name = el.name;
+  var unit_fields = unit_name ? this.grafisch_unit_field(unit_name) : [];
+  var unit_info = this.grafisch_unit(unit_name);
+  var unit_note = function(note) {
+    if (!self.grafisch_eenheden || !unit_info.conflict) return note;
+    return (note ? note + ' ' : '') + 'Eenheid: ' + unit_info.conflict + '.';
+  };
+  var unit_op = function(ops, now, v) {
+    if (unit_fields.length && $.trim(v.unit || '') != unit_info.explicit) ops.push({op: 'setUnit', name: now, unit: v.unit});
+  };
   var remove = {text: 'Verwijder', action: function() {
     self.grafisch_apply([{op: 'remove', id: id}], undefined);
   }};
@@ -1726,13 +1814,14 @@ ModelleertaalApp.prototype.grafisch_select = function(id, opts) {
   switch (el.kind) {
     case 'stock':
       this.grafisch_form('Toestandsvariabele ' + el.name,
-        (el.general || el.updates != 1) ? 'De stromen van ' + el.name + ' kun je alleen in de tekst aanpassen.' : '',
+        unit_note((el.general || el.updates != 1) ? 'De stromen van ' + el.name + ' kun je alleen in de tekst aanpassen.' : ''),
         [{key: 'name', label: 'Naam', value: el.name},
-         {key: 'text', label: 'Beginwaarde', value: el.initialCode, formula: true}].concat(stockFlows),
+         {key: 'text', label: 'Beginwaarde', value: el.initialCode, formula: true}].concat(unit_fields, stockFlows),
         [remove],
         function(v) {
           var ops = [], now = rename(ops, v);
           if ($.trim(v.text) != el.initialCode) ops.push({op: 'setDefinition', id: now, text: v.text});
+          unit_op(ops, now, v);
           stockFlows.forEach(function(f) {
             if ($.trim(v[f.key]) != f.value) ops.push({op: 'setDefinition', id: f.flow, text: v[f.key]});
           });
@@ -1740,15 +1829,16 @@ ModelleertaalApp.prototype.grafisch_select = function(id, opts) {
         });
       break;
     case 'const':
-      this.grafisch_form('Constante ' + el.name, 'Met een stroom erin of eruit wordt het een toestandsvariabele.',
+      this.grafisch_form('Constante ' + el.name, unit_note('Met een stroom erin of eruit wordt het een toestandsvariabele.'),
         [{key: 'name', label: 'Naam', value: el.name},
-         {key: 'text', label: 'Waarde', value: el.code, formula: true}],
+         {key: 'text', label: 'Waarde', value: el.code, formula: true}].concat(unit_fields),
         [inflow, outflow, {text: 'Maak hulpvariabele', action: function() {
           apply([{op: 'convert', id: id, kind: 'aux'}], id);
         }}, remove],
         function(v) {
           var ops = [], now = rename(ops, v);
           if ($.trim(v.text) != el.code) ops.push({op: 'setDefinition', id: now, text: v.text});
+          unit_op(ops, now, v);
           return apply(ops, now);
         });
       break;
@@ -1768,15 +1858,16 @@ ModelleertaalApp.prototype.grafisch_select = function(id, opts) {
       } catch (err) {
         no_vars = false;
       }
-      this.grafisch_form('Hulpvariabele ' + el.name, '',
+      this.grafisch_form('Hulpvariabele ' + el.name, unit_note(''),
         [{key: 'name', label: 'Naam', value: el.name},
-         {key: 'text', label: 'Formule', value: el.code, formula: true}],
+         {key: 'text', label: 'Formule', value: el.code, formula: true}].concat(unit_fields),
         (no_vars ? [{text: 'Maak constante', action: function() {
           apply([{op: 'convert', id: id, kind: 'const'}], id);
         }}] : []).concat([remove]),
         function(v) {
           var ops = [], now = rename(ops, v);
           if ($.trim(v.text) != el.code) ops.push({op: 'setDefinition', id: now, text: v.text});
+          unit_op(ops, now, v);
           return apply(ops, now);
         });
       break;
@@ -1791,13 +1882,14 @@ ModelleertaalApp.prototype.grafisch_select = function(id, opts) {
         el.name ? (el.isRate ? 'Stroomsterkte per tijdseenheid: in de tekst staat ' + el.term + '.' : '') :
           'Deze stroom heeft geen naam: hij staat als ' + el.term + ' in de regel van ' + (el.to || el.from) + '.',
         [{key: 'name', label: 'Naam', value: el.name || '', placeholder: '(geen naam)'},
-         {key: 'text', label: 'Formule', value: el.code, formula: true},
+         {key: 'text', label: 'Formule', value: el.code, formula: true}].concat(unit_fields, [
          {key: 'from', label: 'Van', value: el.from || '', options: ends},
-         {key: 'to', label: 'Naar', value: el.to || '', options: ends}],
+         {key: 'to', label: 'Naar', value: el.to || '', options: ends}]),
         [remove],
         function(v) {
           var ops = [], now = rename(ops, v);
           if ($.trim(v.text) != el.code) ops.push({op: 'setDefinition', id: now, text: v.text});
+          unit_op(ops, now, v);
           if (v.from != (el.from || '') || v.to != (el.to || '')) {
             ops.push({op: 'setFlowEnds', id: now, from: v.from || null, to: v.to || null});
             // a flow without a name gets a name: its id is not known here
@@ -1807,15 +1899,15 @@ ModelleertaalApp.prototype.grafisch_select = function(id, opts) {
         });
       break;
     case 'unknown':
-      var define = function(kind, text) {
-        self.grafisch_apply([{op: 'define', id: id, kind: kind, text: text}], id, {noform: true});
+      var define = function(kind, v) {
+        self.grafisch_apply(self.grafisch_unit_ops([{op: 'define', id: id, kind: kind, text: v.text}], el.name, v), id, {noform: true});
       };
       var unknown_form = this.grafisch_form('Onbekend: ' + el.name,
         el.name + ' wordt gebruikt, maar heeft nog geen waarde of formule. ' +
         'Enter: een getal wordt een constante, een formule met variabelen een hulpvariabele.',
-        [{key: 'text', label: 'Waarde of formule', value: '', formula: true}],
-        [{text: 'Maak constante', action: function(v) { define('const', v.text); }},
-         {text: 'Maak hulpvariabele', action: function(v) { define('aux', v.text); }},
+        [{key: 'text', label: 'Waarde of formule', value: '', formula: true}].concat(unit_fields),
+        [{text: 'Maak constante', action: function(v) { define('const', v); }},
+         {text: 'Maak hulpvariabele', action: function(v) { define('aux', v); }},
          {text: 'Maak toestandsvariabele', action: function(v) { self.grafisch_new_form('stock', el.name, $.trim(v.text)); }}],
         undefined,
         function(v) {
@@ -1827,7 +1919,7 @@ ModelleertaalApp.prototype.grafisch_select = function(id, opts) {
             self.grafisch_message(err.message);
             return;
           }
-          define(vars.length ? 'aux' : 'const', v.text);
+          define(vars.length ? 'aux' : 'const', v);
         });
       unknown_form.find('input').first().focus();
       break;
@@ -1865,7 +1957,8 @@ ModelleertaalApp.prototype.download_grafisch_model = function() {
     }
     lay = undefined;
   }
-  this.save_string('<?xml version="1.0" encoding="UTF-8"?>\n' + grafisch.toSVG(g, lay, {stijl: this.grafisch_stijl, formules: this.grafisch_formules}), this.file_name('.svg', 'grafisch model'));
+  this.save_string('<?xml version="1.0" encoding="UTF-8"?>\n' + grafisch.toSVG(g, lay, {stijl: this.grafisch_stijl, formules: this.grafisch_formules,
+    units: this.grafisch_eenheden && this.grafisch_units ? this.grafisch_units.units : undefined}), this.file_name('.svg', 'grafisch model'));
 };
 
 
@@ -1956,6 +2049,7 @@ ModelleertaalApp.prototype.load_settings = function() {
   $(this.dom_yaxis_zero).prop('checked', !this.yaxis_autoscale);
   this.set_grafisch_stijl(settings.grafisch_stijl, false);
   this.set_grafisch_formules(settings.grafisch_formules === true, false);
+  this.set_grafisch_eenheden(settings.grafisch_eenheden === true, false);
   // Tekst | Tekst + grafisch is not remembered: every visit starts with Tekst
   this.set_weergave('tekst', false);
 };
@@ -1964,7 +2058,8 @@ ModelleertaalApp.prototype.load_settings = function() {
 ModelleertaalApp.prototype.save_settings = function() {
   storage('set', JSON.stringify({precision: this.precision, yaxis_zero: !this.yaxis_autoscale,
                                  grafisch_stijl: this.grafisch_stijl,
-                                 grafisch_formules: this.grafisch_formules}), SETTINGS_KEY);
+                                 grafisch_formules: this.grafisch_formules,
+                                 grafisch_eenheden: this.grafisch_eenheden}), SETTINGS_KEY);
 };
 
 
@@ -2338,7 +2433,7 @@ ModelleertaalApp.prototype.start_stepping = function() {
   this.remove_highlight_error();
   this.clear_message();
   this.read_model();
-  this.units = eenheden.units(this.model.startwaarden, this.model.modelregels);
+  this.units = eenheden.derive(this.model.startwaarden, this.model.modelregels).units;
   try {
     // check the model (and find the columns of the table) without computing an iteration
     var evaluator = new evaluator_js.ModelregelsEvaluator(this.model, this.debug);
@@ -2461,7 +2556,7 @@ ModelleertaalApp.prototype.setup_run = function() {
   this.clear_message();
 
   this.read_model();
-  this.units = eenheden.units(this.model.startwaarden, this.model.modelregels);
+  this.units = eenheden.derive(this.model.startwaarden, this.model.modelregels).units;
 
   try {
     this.evaluator = new evaluator_js.ModelregelsEvaluator(this.model, this.debug);

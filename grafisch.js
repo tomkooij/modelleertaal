@@ -1104,6 +1104,7 @@ function toSVG(g, lay, opts) {
     // opts.selected: id of the selected element (a toestandsvariabele gets + buttons for new flows)
     // opts.values: name --> {first, last}: values after a run, in the tooltip
     // opts.formules: a box with the formula or beginwaarde next to every symbol (exams 2015-I, 2016-I)
+    // opts.units: name --> unit (eenheden.js): the unit after the name, v (m/s)
     opts = opts || {};
     lay = lay || layout(g, opts);
     var vw = view(g, opts);
@@ -1188,12 +1189,22 @@ function toSVG(g, lay, opts) {
         if (dir.y > 0.3 || (row(g.elements[vw.links[i].from]) && row(g.elements[vw.links[i].to]) &&
                             Math.abs(to.y - from.y) < 1)) above[vw.links[i].to] = true;
     }
+    var lblUnit = '';
+    var lab = function(text) {
+        // the name in italics (exam style), the unit (opts.units) upright: v (m/s)
+        text = String(text);
+        var suffix = lblUnit ? ' (' + lblUnit + ')' : '';
+        if (suffix && text.length > suffix.length && text.slice(-suffix.length) == suffix) {
+            return esc(text.slice(0, -suffix.length)) + '<tspan font-style="normal">' + esc(suffix) + '</tspan>';
+        }
+        return esc(text);
+    };
     var name = function(x, y, r, label, id, cls) {
         cls = (cls || 'name') + ' lbl';
         if (bottom[id]) grow(x + r + 4 + 8 * String(label).length, y, 4);
         return bottom[id] ?
-            '<text x="' + (x + r + 4) + '" y="' + (y + 5) + '" class="' + cls + '">' + esc(label) + '</text>' :
-            '<text x="' + x + '" y="' + (y + r + 16) + '" text-anchor="middle" class="' + cls + '">' + esc(label) + '</text>';
+            '<text x="' + (x + r + 4) + '" y="' + (y + 5) + '" class="' + cls + '">' + lab(label) + '</text>' :
+            '<text x="' + x + '" y="' + (y + r + 16) + '" text-anchor="middle" class="' + cls + '">' + lab(label) + '</text>';
     };
     var circle = function(x, y, r, fill, stroke, extra) {
         return '<circle cx="' + x + '" cy="' + y + '" r="' + r + '" fill="' + fill + '" stroke="' + stroke +
@@ -1209,13 +1220,16 @@ function toSVG(g, lay, opts) {
         var tip = '<title>' + esc(tooltip(g, el) + valueText(el, opts.values)) + '</title>';
         out.push('<g data-id="' + esc(id) + '">');
         var x = p.x, y = p.y, label = el.shown || el.name || el.label;
+        lblUnit = opts.units && el.kind != 'event' && el.kind != 'stop' && opts.units.hasOwnProperty(label) ? opts.units[label] : '';
+        if (lblUnit) label += ' (' + lblUnit + ')';
+        var maxLen = lblUnit ? 28 : 16;
         switch (el.kind) {
             case 'stock':
                 // rectangle, name inside
                 out.push(tip + '<rect x="' + (x - L.stockW / 2) + '" y="' + (y - L.stockH / 2) + '" width="' + L.stockW +
                     '" height="' + L.stockH + '"' + (exam ? '' : ' rx="3"') + ' fill="' + S.fill + '" stroke="' + S.line +
                     '" stroke-width="' + (exam ? 1.5 : 2) + '"/>' +
-                    '<text x="' + x + '" y="' + (y + (exam ? 6 : 5)) + '" text-anchor="middle" class="name stock">' + esc(label) + '</text>');
+                    '<text x="' + x + '" y="' + (y + (exam ? 6 : 5)) + '" text-anchor="middle" class="name stock">' + lab(label) + '</text>');
                 grow(x, y, L.stockW / 2 + 4);
                 break;
             case 'flow':
@@ -1223,10 +1237,10 @@ function toSVG(g, lay, opts) {
                     // ventiel: a circle on the pipe with a tap. An arrow from above: the tap below
                     var flip = above[id] && !bottom[id];
                     out.push(tip + valve(x, y, valveDir[id], flip, S) + (el.varRate ? '' :
-                        name(x, flip && valveDir[id] != 'v' ? y + 7 : y, S.valve, shorten(label), id)));
+                        name(x, flip && valveDir[id] != 'v' ? y + 7 : y, S.valve, shorten(label, maxLen), id)));
                 } else {
                     // the name as large as other names (a in v = v + a*dt), as in the SLO examples
-                    out.push(tip + valve(x, y, valveDir[id], false, S) + name(x, y, 12, shorten(label), id));
+                    out.push(tip + valve(x, y, valveDir[id], false, S) + name(x, y, 12, shorten(label, maxLen), id));
                 }
                 grow(x, y + 20, 30);
                 break;
