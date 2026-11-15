@@ -107,9 +107,51 @@ Een klik op de grafiek zet een stip met **hulplijnen naar beide assen**, zoals j
 tabel springt naar dezelfde rij. Andersom zet een klik op een rij van de tabel de stip in de grafiek.
 Grafiek en tabel zijn zo twee kanten van dezelfde gegevens.
 
-Bij één grafiek staat bij het punt ook de **helling** met een korte raaklijn (`helling Δv/Δt = 9,81
-(m/s)/s`). Dat sluit aan op de examenvaardigheid "bepaal de versnelling uit het (v,t)-diagram": de
-leerling kan zijn eigen raaklijn op papier controleren.
+### De helling: een raaklijn tot aan de assen, dan Δy/Δx
+
+"Bepaal de versnelling uit het (v,t)-diagram" is een examenvaardigheid met een vaste werkwijze op papier:
+teken de raaklijn, maak hem zo lang mogelijk, lees twee punten ver uit elkaar af en reken
+`helling = Δy/Δx` uit. De webapp doet het op dezelfde manier, in dezelfde volgorde, en geeft niet alleen
+het antwoord:
+
+1. **Klik op een punt** (bij één grafiek): de raaklijn wordt getekend **tot aan de assen**, door de hele
+   grafiek. Komt de raaklijn binnen de grafiek een as niet tegen, dan loopt hij tot de rand. De helling
+   staat er nog niet bij; het label zegt alleen *klik op de raaklijn voor de helling*. Zo kan de leerling
+   eerst zelf aflezen en rekenen.
+
+   ![Een punt aangeklikt: de raaklijn loopt tot aan de assen](images/raaklijn-punt.png)
+
+2. **Klik op de raaklijn:** de twee snijpunten met de assen (of de rand) krijgen een open rondje met hun
+   waarden, en het label rekent de helling uit zoals een leerling het opschrijft: als **echte breuk**
+   Δy/Δt, met in de teller en de noemer de afgelezen waarden van de twee punten:
+
+   $$\text{helling} = \frac{\Delta y}{\Delta t} = \frac{1{,}5 - 0{,}4127}{0{,}4525 - 0} = 2{,}403\ \text{m/s}$$
+
+   ![Op de raaklijn geklikt: de snijpunten met de assen en de helling uit Δy/Δt](images/raaklijn-helling.png)
+
+   Nog een klik op de raaklijn verbergt de berekening weer.
+
+Waarom zo:
+
+- **De werkwijze is het leerdoel, niet het getal.** Een helling die zomaar naast het punt staat, leert de
+  leerling niets over hoe je hem bepaalt. Met de snijpunten en de deling Δy/Δx ziet hij dezelfde stappen
+  als op zijn eigen blad, en kan hij zijn eigen raaklijn en aflezing ermee controleren.
+- **Twee punten ver uit elkaar.** De snijpunten met de assen liggen zo ver mogelijk uit elkaar: dat geeft
+  de nauwkeurigste helling, en het is de gewoonte die we leerlingen willen aanleren. Eén van beide is vaak
+  een "mooie" waarde (`t = 0`, `y = 0`).
+- **Eerst zelf, dan controleren.** De berekening komt pas na een tweede klik. Zonder die klik ziet de
+  leerling alleen de raaklijn, net als in een examenopgave.
+- **Een echte breuk, ingevuld.** Δy/Δx staat als breuk, met eronder dezelfde breuk met de afgelezen
+  getallen in teller en noemer (`1,5 − 0,4127` boven de streep, `0,4525 − 0` eronder). Zo zie je welk
+  punt waar in de formule komt, en de breuk ziet eruit als op papier, niet als een schuine streep van een
+  rekenmachine.
+- **De eenheid bij de helling.** Achter de uitkomst staat de samengestelde eenheid (`m/s`, `(m/s)/s`):
+  de eenheid van de helling volgt uit de eenheden op de assen.
+
+De raaklijn zelf is de lijn door het punt met de helling uit de punten ervoor en erna (centraal verschil).
+De raaklijn verandert de assen niet: hij wordt getekend in de grafiek zoals die al was, ook als je
+ingezoomd hebt (dan liggen de eindpunten op de rand van het ingezoomde stuk). Bij meerdere grafieken in één
+figuur is er geen raaklijn: welke lijn zou het zijn?
 
 ### Eenheden
 

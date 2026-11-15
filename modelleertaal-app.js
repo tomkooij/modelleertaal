@@ -578,6 +578,10 @@ function ModelleertaalApp(params) {
     // the end of dragging a rectangle (zoom) is not a click. Stap voor stap: no reading off.
     if (self.zoom_time && Date.now() - self.zoom_time < 400) return;
     if (self.stepper) return;
+    if (self.read && self.near_tangent(pos)) {
+      self.set_read($.extend({}, self.read, {tangent: !self.read.tangent}));
+      return;
+    }
     if (item && item.series.mt_read) return;
     if (!item || item.series.mt_previous || !item.series.mt_yvar) {
       self.set_read(null);
@@ -586,6 +590,10 @@ function ModelleertaalApp(params) {
     var row = self.get_result_rowIndex(item.dataIndex, item.series.data.length);
     var same = self.read && self.read.row == row && self.read.yvar == item.series.mt_yvar;
     self.set_read(same ? null : {row: row, yvar: item.series.mt_yvar});
+  });
+
+  $(this.dom_graph).on("plothover", function(event, pos) {
+    $(this).toggleClass('over_tangent', Boolean(self.read && self.near_tangent(pos)));
   });
 
   // and the other way around: a click on a row of the table puts the point in the graph
@@ -2885,6 +2893,7 @@ ModelleertaalApp.prototype.do_plot = function() {
   }
   if (note) note_box.append($('<span>').text(' ' + note));
   this.plot_graph(dataset, this.xvar, y_names, split.right);
+  if (read_text) read_text = read_text.concat(this.tangent_text());
   this.show_read_label(read_text);
   this.select_thumbnail();
 }; // do_plot
@@ -2928,10 +2937,11 @@ ModelleertaalApp.prototype.set_zoom = function(zoom) {
 
 
 ModelleertaalApp.prototype.read_point = function(dataset) {
-  // adds the point (and the tangent) to dataset. Returns the text next to the point, or null.
+  // adds the point to dataset (the tangent: plot_graph). Returns the text next to the point, or null.
   var self = this;
   var read = this.read;
   this.read_xy = null;
+  this.read_tangent = null;
   if (!read || !this.results_available() || !this.results[read.row]) return null;
   var shown = this.multiplot ? this.multi_yvars : [this.yvar];
   if (shown.indexOf(read.yvar) == -1) return null;
@@ -2947,28 +2957,14 @@ ModelleertaalApp.prototype.read_point = function(dataset) {
   var text = [value(this.xvar, x), value(read.yvar, y)];
   var axis = this.axis_of ? this.axis_of(read.yvar) : 1;
 
-  // the slope, with a short tangent (only with one graph: which line would it be?)
+  // the slope: a tangent from axis to axis (only with one graph: which line would it be?). It is drawn
+  // in plot_graph, when the axes are known. A click on the tangent shows the calculation of the helling.
+  this.read_tangent = null;
   if (!this.multiplot) {
     var slope = aflezen.slope(this.results, xi, yi, read.row);
     if (slope !== null) {
-      var range = {xmin: Infinity, xmax: -Infinity, ymin: Infinity, ymax: -Infinity};
-      dataset.forEach(function(series) {
-        series.data.forEach(function(p) {
-          if (p === null) return;
-          range.xmin = Math.min(range.xmin, p[0]);
-          range.xmax = Math.max(range.xmax, p[0]);
-          range.ymin = Math.min(range.ymin, p[1]);
-          range.ymax = Math.max(range.ymax, p[1]);
-        });
-      });
-      var line = aflezen.tangent([x, y], slope, range);
-      if (line) {
-        dataset.push({data: line, color: COLOR_READ, lines: {show: true, lineWidth: 2}, yaxis: axis,
-                      points: {show: false}, mt_read: true, hoverable: false, clickable: false});
-      }
-      var unit = aflezen.slope_unit(this.units[read.yvar], this.units[this.xvar]);
-      text.push('helling \u0394' + read.yvar + '/\u0394' + this.xvar + ' = ' + this.format_text(slope) +
-                (unit ? ' ' + unit : ''));
+      this.read_tangent = {point: [x, y], slope: slope, axis: axis, xvar: this.xvar, yvar: read.yvar,
+                           line: null};
     }
   }
   dataset.push({data: [[x, y]], color: COLOR_READ, lines: {show: false}, yaxis: axis,
@@ -2977,6 +2973,50 @@ ModelleertaalApp.prototype.read_point = function(dataset) {
   this.read_xy = [x, y];
   this.read_axis = axis;
   return text;
+};
+
+
+ModelleertaalApp.prototype.tangent_text = function() {
+  // the helling from the two ends of the tangent: delta y / delta x, as on paper (DIDACTIEK.md)
+  var self = this;
+  var t = this.read_tangent;
+  if (!t || !t.line || !this.read) return [];
+  if (!this.read.tangent) return [{text: 'klik op de raaklijn voor de helling', cls: 'read_hint'}];
+  var a = t.line[0], b = t.line[1];
+  var dx = b[0] - a[0], dy = b[1] - a[1];
+  function num(v) { return self.format_text(v).replace('-', '\u2212'); }
+  function minus(v) { return (v < 0) ? '(' + num(v) + ')' : num(v); }
+  function difference(v1, v2) { return num(v2) + ' − ' + minus(v1); }
+  var slope_unit = aflezen.slope_unit(this.units[t.yvar], this.units[t.xvar]);
+  // helling = (delta y)/(delta x) = (y2 - y1)/(x2 - x1) = ..., as real fractions (show_read_label)
+  return [{cls: 'read_calc read_first read_result', parts: [
+    'helling = ',
+    {num: 'Δ' + t.yvar, den: 'Δ' + t.xvar},
+    ' = ',
+    {num: difference(a[1], b[1]), den: difference(a[0], b[0])},
+    ' = ' + num(dy / dx) + (slope_unit ? ' ' + slope_unit : '')
+  ]}];
+};
+
+
+ModelleertaalApp.prototype.near_tangent = function(pos) {
+  // is the mouse (pos of plotclick/plothover) on the tangent? Not on the point itself: that is the graph.
+  var t = this.read_tangent;
+  if (!t || !t.line || !this.plot_object || !pos) return false;
+  var g = $(this.dom_graph).offset();
+  var mx = pos.pageX - g.left, my = pos.pageY - g.top;
+  var plot = this.plot_object;
+  function px(p) {
+    var o = plot.pointOffset({x: p[0], y: p[1], yaxis: t.axis || 1});
+    return [o.left, o.top];
+  }
+  var a = px(t.line[0]), b = px(t.line[1]), c = px(t.point);
+  if (Math.sqrt(Math.pow(mx - c[0], 2) + Math.pow(my - c[1], 2)) < 10) return false;
+  var vx = b[0] - a[0], vy = b[1] - a[1];
+  var f = ((mx - a[0]) * vx + (my - a[1]) * vy) / (vx * vx + vy * vy || 1);
+  f = Math.max(0, Math.min(1, f));
+  var d = Math.sqrt(Math.pow(mx - a[0] - f * vx, 2) + Math.pow(my - a[1] - f * vy, 2));
+  return d < 8;
 };
 
 
@@ -2989,14 +3029,55 @@ ModelleertaalApp.prototype.show_read_label = function(text) {
   var box = this.plot_object.getPlotOffset();
   if (off.left < box.left || off.left > box.left + this.plot_object.width() ||
       off.top < box.top || off.top > box.top + this.plot_object.height()) return;
+  var self = this;
   var label = $('<div class="read_label">').appendTo(graph);
-  text.forEach(function(line) { label.append($('<div>').text(line)); });
+  text.forEach(function(line) {
+    if (typeof line == 'string') line = {text: line};
+    var div = $('<div>').addClass(line.cls || '').appendTo(label);
+    if (!line.parts) {
+      div.text(line.text);
+      return;
+    }
+    // text and fractions {num, den}
+    line.parts.forEach(function(part) {
+      if (typeof part == 'string') {
+        div.append($('<span>').text(part));
+      } else {
+        div.append($('<span class="frac">')
+          .append($('<span class="frac_num">').text(part.num))
+          .append($('<span class="frac_den">').text(part.den)));
+      }
+    });
+  });
+  // a click on the tangent: the values at both ends, next to the ends
+  var t = this.read_tangent;
+  var taken = [];   // the labels at the ends: the label of the point must not cover them
+  if (t && t.line && this.read && this.read.tangent) {
+    t.line.forEach(function(p, i) {
+      var o = self.plot_object.pointOffset({x: p[0], y: p[1], yaxis: t.axis || 1});
+      var end = $('<div class="read_label read_end">').appendTo(graph)
+        .text('(' + self.format_text(p[0]) + '; ' + self.format_text(p[1]) + ')');
+      var ew = end.outerWidth(), eh = end.outerHeight();
+      var el = (i === 0) ? o.left + 8 : o.left - ew - 8;
+      var et = (o.top - eh - 6 < 0) ? o.top + 6 : o.top - eh - 6;
+      el = Math.max(0, Math.min(graph.width() - ew, el));
+      end.css({left: el + 'px', top: et + 'px'});
+      taken.push([el, et, ew, eh]);
+    });
+  }
   var w = label.outerWidth(), h = label.outerHeight();
-  var left = off.left + 12, top = off.top - h - 10;
-  if (left + w > graph.width()) left = off.left - w - 12;
-  if (left < 0) left = 0;
-  if (top < 0) top = off.top + 12;
-  label.css({left: left + 'px', top: top + 'px'});
+  // next to the point, not on the tangent: a rising tangent goes up to the right, so then below right
+  var right = off.left + 12, left = off.left - w - 12, above = off.top - h - 10, below = off.top + 12;
+  var places = [[right, above], [right, below], [left, above], [left, below]];
+  if (t && t.line && t.slope > 0) places = [[right, below], [left, above], [right, above], [left, below]];
+  if (t && t.line && t.slope < 0) places = [[right, above], [left, below], [right, below], [left, above]];
+  var place = places.filter(function(p) {
+    return p[0] >= 0 && p[0] + w <= graph.width() && p[1] >= 0 && p[1] + h <= graph.height() &&
+      taken.every(function(r) {
+        return p[0] >= r[0] + r[2] || p[0] + w <= r[0] || p[1] >= r[1] + r[3] || p[1] + h <= r[1];
+      });
+  })[0] || places[0];
+  label.css({left: Math.max(0, place[0]) + 'px', top: Math.max(0, place[1]) + 'px'});
 };
 
 
@@ -3105,7 +3186,7 @@ ModelleertaalApp.prototype.plot_graph = function(dataset, x_name, y_names, y2_na
     });
   }
 
-  this.plot_object = $.plot($(this.dom_graph), dataset, {
+  var options = {
     series: {
       lines: {
         show: true,
@@ -3146,7 +3227,41 @@ ModelleertaalApp.prototype.plot_graph = function(dataset, x_name, y_names, y2_na
         return value(x_name, x) + ", " + value(label || y_names[0], y);
       }
     }
-  }); // $.plot()
+  };
+  this.plot_object = $.plot($(this.dom_graph), dataset, options);
+
+  // Aflezen: the tangent from axis to axis. The axes are known now: plot again with the tangent and the
+  // same axes (the tangent must not change the axes).
+  var t = this.read_tangent;
+  if (t) {
+    var axes = this.plot_object.getAxes();
+    var ya = (t.axis == 2 && axes.y2axis) ? axes.y2axis : axes.yaxis;
+    t.line = aflezen.tangent_to_axes(t.point, t.slope,
+                                     {xmin: axes.xaxis.min, xmax: axes.xaxis.max, ymin: ya.min, ymax: ya.max});
+    if (t.line) {
+      var tangent = [{data: t.line, color: COLOR_READ, lines: {show: true, lineWidth: 2}, yaxis: t.axis || 1,
+                      points: {show: false}, mt_read: true, hoverable: false, clickable: false}];
+      if (this.read && this.read.tangent) {
+        tangent.push({data: t.line, color: COLOR_READ, lines: {show: false}, yaxis: t.axis || 1,
+                      points: {show: true, radius: 4, fill: true, fillColor: '#ffffff'},
+                      mt_read: true, hoverable: false, clickable: false});
+      }
+      // under the point that was clicked (the last series)
+      Array.prototype.splice.apply(dataset, [dataset.length - 1, 0].concat(tangent));
+      options.xaxis.min = axes.xaxis.min;
+      options.xaxis.max = axes.xaxis.max;
+      options.xaxis.autoScale = 'none';
+      options.yaxes.forEach(function(yaxis, i) {
+        var used = axes[i ? 'y2axis' : 'yaxis'];
+        if (!used) return;
+        yaxis.min = used.min;
+        yaxis.max = used.max;
+        yaxis.autoScale = 'none';
+      });
+      $(this.dom_graph).empty();
+      this.plot_object = $.plot($(this.dom_graph), dataset, options);
+    }
+  }
   this.place_axis_picks();
 }; // plot_graph()
 

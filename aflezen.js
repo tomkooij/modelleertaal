@@ -9,16 +9,14 @@
     usage:
       var aflezen = require('./aflezen.js');
       aflezen.slope(rows, xi, yi, row)       // dy/dx from the neighbours of row, or null
-      aflezen.tangent([x0, y0], slope, {xmin, xmax, ymin, ymax})   // [[x1, y1], [x2, y2]]
+      aflezen.tangent_to_axes([x0, y0], slope, {xmin, xmax, ymin, ymax})
+                                             // the whole tangent in the graph: [[x1, y1], [x2, y2]], x1 < x2
       aflezen.slope_unit('m/s', 's')         // '(m/s)/s'
 */
 
 //jshint node:true
 //jshint es3:true
 "use strict";
-
-var TANGENT_LENGTH = 0.12;   // half the length of the tangent, as a part of the graph
-
 
 function number(x) {
     if (typeof x == 'boolean') return x ? 1 : 0;
@@ -46,28 +44,31 @@ function slope(rows, xi, yi, row) {
 }
 
 
-function tangent(point, s, range) {
-    // a short piece of the tangent through point, with the same length on screen for every slope.
-    // It stays inside range (the graph), so the axes do not change.
-    var X = range.xmax - range.xmin, Y = range.ymax - range.ymin;
-    if (isNaN(X) || X <= 0) return null;
-    if (isNaN(Y) || Y <= 0) Y = Math.abs(s) * X || 1;
-    var s_screen = s * X / Y;
-    var hx = TANGENT_LENGTH / Math.sqrt(1 + s_screen * s_screen) * X;
+function tangent_to_axes(point, s, range) {
+    // the tangent through point, drawn through the whole graph: from axis to axis, as a student does on
+    // paper. The ends are where the line leaves the graph: on the axes (x = xmin, y = ymin) when it
+    // crosses them inside the graph, otherwise on the edge (x = xmax, y = ymax).
+    // Returns [[x1, y1], [x2, y2]] with x1 < x2, or null.
     var x0 = point[0], y0 = point[1];
-
-    function clip(sign) {
-        var h = hx;
-        var x = x0 + sign * h;
-        if (x > range.xmax) h = range.xmax - x0;
-        if (x < range.xmin) h = x0 - range.xmin;
-        var y = y0 + sign * s * h;
-        if (s !== 0 && y > range.ymax) h = Math.min(h, Math.abs((range.ymax - y0) / s));
-        if (s !== 0 && y < range.ymin) h = Math.min(h, Math.abs((y0 - range.ymin) / s));
-        h = Math.max(h, 0);
-        return [x0 + sign * h, y0 + sign * s * h];
+    if (isNaN(range.xmax - range.xmin) || isNaN(range.ymax - range.ymin) || !isFinite(s)) return null;
+    if (range.xmax <= range.xmin || range.ymax <= range.ymin) return null;
+    if (x0 < range.xmin || x0 > range.xmax || y0 < range.ymin || y0 > range.ymax) return null;
+    var ends = [];
+    function add(x, y) {
+        if (x < range.xmin || x > range.xmax || y < range.ymin || y > range.ymax) return;
+        ends.push([x, y]);
     }
-    return [clip(-1), clip(1)];
+    add(range.xmin, y0 + s * (range.xmin - x0));
+    add(range.xmax, y0 + s * (range.xmax - x0));
+    if (s !== 0) {
+        add(x0 + (range.ymin - y0) / s, range.ymin);
+        add(x0 + (range.ymax - y0) / s, range.ymax);
+    }
+    if (ends.length < 2) return null;
+    ends.sort(function(a, b) { return a[0] - b[0]; });
+    var a = ends[0], b = ends[ends.length - 1];
+    if (b[0] - a[0] <= 0) return null;
+    return [a, b];
 }
 
 
@@ -80,5 +81,5 @@ function slope_unit(y_unit, x_unit) {
 
 
 exports.slope = slope;
-exports.tangent = tangent;
+exports.tangent_to_axes = tangent_to_axes;
 exports.slope_unit = slope_unit;

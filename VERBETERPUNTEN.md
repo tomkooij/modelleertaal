@@ -333,6 +333,8 @@ die rij en markeert hem. Andersom: een klik op een rij in de tabel zet de stip i
 Als P3-2 er is: toon bij het aangeklikte punt in de tooltip ook de helling
 (`Δv/Δt = 9,81`), berekend uit de twee buurpunten, en teken een korte raaklijn. Sluit aan op de
 examenvaardigheid "bepaal de versnelling uit het (v,t)-diagram". Alleen bij een enkele grafiek.
+Later: de raaklijn loopt tot aan de assen, en een klik op de raaklijn rekent de helling uit de
+snijpunten met de assen uit (Δy/Δx), zie DIDACTIEK.md.
 
 ### P3-4 Assen kiezen op de assen zelf (gebouwd)
 
