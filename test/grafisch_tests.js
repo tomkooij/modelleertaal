@@ -252,6 +252,32 @@ describe('grafisch.js - tekstmodel naar grafisch model', function() {
         assert.deepEqual(ln.byElement['~s1'].modelregels, [5]);
     });
 
+    it('dx = v*dt ; x = x + dx: getekend als x = x + v*dt (examen: geen naam, kleur: v)', function() {
+        var g = analyse("m=2\nF=4\nv=0\nx=0\nt=0\ndt=0.1",
+            "a = F/m\ndv = a * dt\nv = v + dv\ndx = v * dt\nx = x + dx\nt = t + dt");
+        var dx = g.elements.dx;
+        assert.equal(dx.kind, 'flow');
+        assert.isTrue(dx.varRate);
+        assert.equal(dx.name, 'dx', 'de naam blijft dx (formulier, Herkende elementen)');
+        assert.isFalse(!!g.elements.a.varRate);
+        var symbol = function(svg, id) { return svg.split('data-id="' + id + '"')[1].split('</g>')[0]; };
+        assert.notInclude(symbol(grafisch.toSVG(g), 'dx'), '<text', 'examen: geen naam');
+        assert.include(symbol(grafisch.toSVG(g, undefined, {stijl: 'kleur'}), 'dx'), '>v<', 'kleur: v');
+        assert.include(symbol(grafisch.toSVG(g, undefined, {stijl: 'kleur'}), 'a'), '>a<');
+        // dx = 2 * v * dt: geen enkele variabele, de naam dx blijft staan
+        g = analyse("v=1\nx=0\nt=0\ndt=0.1", "dx = 2 * v * dt\nx = x + dx\nt = t + dt");
+        assert.isFalse(g.elements.dx.varRate);
+        assert.include(symbol(grafisch.toSVG(g), 'dx'), '>dx<');
+    });
+
+    it('eenheden achter de namen (opts.units), de eenheid rechtop', function() {
+        var g = analyse("m=2\nF=4\nv=0\nt=0\ndt=0.1", "a = F/m\ndv = a * dt\nv = v + dv\nt = t + dt");
+        var svg = grafisch.toSVG(g, undefined, {units: {v: 'm/s', a: 'm/s²', m: 'kg'}});
+        assert.include(svg, '>v<tspan font-style="normal"> (m/s)</tspan>');
+        assert.include(svg, '>a<tspan font-style="normal"> (m/s²)</tspan>');
+        assert.notInclude(grafisch.toSVG(g), '(m/s)');
+    });
+
     it('x = x + v*dt met v een toestand: ventiel zonder naam in de examenstijl (2015-I)', function() {
         var g = analyse("m=2\nk=0.5\nv=1\nx=0\nt=0\ndt=0.1", "F = -k*x\na = F/m\nv = v + a*dt\nx = x + v*dt\nt = t + dt");
         var flow = g.elements[g.elements.x.inflows[0]];

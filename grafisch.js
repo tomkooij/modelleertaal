@@ -391,10 +391,14 @@ function analyse(startwaarden_ast, modelregels_ast, options) {
                     } else {
                         var def = assigned[v].uncond[0].expr;
                         var rate = stripDt(def, dt);
+                        // dx = v * dt ; x = x + dx: drawn as x = x + v * dt (see below): in the exam
+                        // style a valve without a name with an arrow from v, in color the name v
+                        var single = !!(rate && isVar(rate) && rate.name != time);
                         f = {id: f ? v + '#' + flows.length : v, kind: 'flow', name: v, label: v,
                              from: term.sign < 0 ? name : null, to: term.sign > 0 ? name : null,
                              term: v, code: code(def),
                              definition: fmt(def), rate: rate ? fmt(rate) : null,
+                             varRate: single, shown: single ? rate.name : null,
                              deps: without(variables(def), [dt])};
                         if (!flowOfVar[v]) flowOfVar[v] = f;
                         flows.push(add(f));
@@ -890,7 +894,7 @@ function layout(g, opts) {
     }
 
     // with formulas (opts.formules): room for the boxes below the names
-    var layerH = L.layerH + (opts && opts.formules ? 30 : 0);
+    var layerH = L.layerH + (opts && opts.formules ? 38 : 0);
     var boxW = function(id) {
         var t = opts && opts.formules ? formulaText(g.elements[id]) : null;
         if (t === null) return 0;
@@ -1100,6 +1104,8 @@ function toSVG(g, lay, opts) {
     // opts.selected: id of the selected element (a toestandsvariabele gets + buttons for new flows)
     // opts.values: name --> {first, last}: values after a run, in the tooltip
     // opts.formules: a box with the formula or beginwaarde next to every symbol (exams 2015-I, 2016-I)
+    // opts.units: name --> unit (eenheden.js): the unit after the name, v (m/s)
+    // opts.derivedUnits: name --> true for a unit derived from the formulas (drawn lighter)
     opts = opts || {};
     lay = lay || layout(g, opts);
     var vw = view(g, opts);
@@ -1184,12 +1190,23 @@ function toSVG(g, lay, opts) {
         if (dir.y > 0.3 || (row(g.elements[vw.links[i].from]) && row(g.elements[vw.links[i].to]) &&
                             Math.abs(to.y - from.y) < 1)) above[vw.links[i].to] = true;
     }
+    var lblUnit = '', lblDerived = false;
+    var lab = function(text) {
+        // the name in italics (exam style), the unit (opts.units) upright: v (m/s)
+        text = String(text);
+        var suffix = lblUnit ? ' (' + lblUnit + ')' : '';
+        if (suffix && text.length > suffix.length && text.slice(-suffix.length) == suffix) {
+            return esc(text.slice(0, -suffix.length)) + '<tspan font-style="normal"' +
+                (lblDerived ? ' fill-opacity="0.55"' : '') + '>' + esc(suffix) + '</tspan>';
+        }
+        return esc(text);
+    };
     var name = function(x, y, r, label, id, cls) {
         cls = (cls || 'name') + ' lbl';
         if (bottom[id]) grow(x + r + 4 + 8 * String(label).length, y, 4);
         return bottom[id] ?
-            '<text x="' + (x + r + 4) + '" y="' + (y + 5) + '" class="' + cls + '">' + esc(label) + '</text>' :
-            '<text x="' + x + '" y="' + (y + r + 16) + '" text-anchor="middle" class="' + cls + '">' + esc(label) + '</text>';
+            '<text x="' + (x + r + 4) + '" y="' + (y + 5) + '" class="' + cls + '">' + lab(label) + '</text>' :
+            '<text x="' + x + '" y="' + (y + r + 16) + '" text-anchor="middle" class="' + cls + '">' + lab(label) + '</text>';
     };
     var circle = function(x, y, r, fill, stroke, extra) {
         return '<circle cx="' + x + '" cy="' + y + '" r="' + r + '" fill="' + fill + '" stroke="' + stroke +
@@ -1204,25 +1221,31 @@ function toSVG(g, lay, opts) {
         if (!p || vw.hidden[id]) continue;
         var tip = '<title>' + esc(tooltip(g, el) + valueText(el, opts.values)) + '</title>';
         out.push('<g data-id="' + esc(id) + '">');
-        var x = p.x, y = p.y, label = el.name || el.label;
+        var x = p.x, y = p.y, label = el.shown || el.name || el.label;
+        lblUnit = opts.units && el.kind != 'event' && el.kind != 'stop' && opts.units.hasOwnProperty(label) ? opts.units[label] : '';
+        lblDerived = !!(lblUnit && opts.derivedUnits && opts.derivedUnits[label]);
+        if (lblUnit) label += ' (' + lblUnit + ')';
+        var maxLen = lblUnit ? 28 : 16;
+        var nameDown = 0;   // a name lower than usual (below a tap that points down)
         switch (el.kind) {
             case 'stock':
                 // rectangle, name inside
                 out.push(tip + '<rect x="' + (x - L.stockW / 2) + '" y="' + (y - L.stockH / 2) + '" width="' + L.stockW +
                     '" height="' + L.stockH + '"' + (exam ? '' : ' rx="3"') + ' fill="' + S.fill + '" stroke="' + S.line +
                     '" stroke-width="' + (exam ? 1.5 : 2) + '"/>' +
-                    '<text x="' + x + '" y="' + (y + (exam ? 6 : 5)) + '" text-anchor="middle" class="name stock">' + esc(label) + '</text>');
+                    '<text x="' + x + '" y="' + (y + (exam ? 6 : 5)) + '" text-anchor="middle" class="name stock">' + lab(label) + '</text>');
                 grow(x, y, L.stockW / 2 + 4);
                 break;
             case 'flow':
                 if (exam) {
                     // ventiel: a circle on the pipe with a tap. An arrow from above: the tap below
                     var flip = above[id] && !bottom[id];
+                    if (flip && valveDir[id] != 'v') nameDown = 7;
                     out.push(tip + valve(x, y, valveDir[id], flip, S) + (el.varRate ? '' :
-                        name(x, flip && valveDir[id] != 'v' ? y + 7 : y, S.valve, shorten(label), id)));
+                        name(x, flip && valveDir[id] != 'v' ? y + 7 : y, S.valve, shorten(label, maxLen), id)));
                 } else {
                     // the name as large as other names (a in v = v + a*dt), as in the SLO examples
-                    out.push(tip + valve(x, y, valveDir[id], false, S) + name(x, y, 12, shorten(label), id));
+                    out.push(tip + valve(x, y, valveDir[id], false, S) + name(x, y, 12, shorten(label, maxLen), id));
                 }
                 grow(x, y + 20, 30);
                 break;
@@ -1282,13 +1305,14 @@ function toSVG(g, lay, opts) {
                 grow(x, y + 10, 30);
         }
         if (opts.formules) {
-            // a box with the formula or beginwaarde (exams 2015-I and 2016-I): above a stock,
-            // otherwise below the name
+            // a box with the formula or beginwaarde (exams 2015-I and 2016-I): above a stock
+            // (higher than the + buttons on its corners), otherwise below the name (also when the
+            // name is lower, below a tap that points down)
             var ftext = formulaText(el);
             if (ftext !== null) {
                 var fr = el.kind == 'flow' ? S.valve : el.kind == 'const' ? S.constant : S.aux;
                 var named = !(el.kind == 'flow' && exam && el.varRate) && !bottom[id];
-                var ftop = el.kind == 'stock' ? y - L.stockH / 2 - 24 : y + fr + (named ? 22 : 6);
+                var ftop = el.kind == 'stock' ? y - L.stockH / 2 - 31 : y + fr + (named ? 24 + nameDown : 6);
                 out.push(formulaBox(x, ftop, ftext, S, grow));
             }
         }

@@ -49,8 +49,9 @@ tekst**: het wordt getekend uit de tekst, en elke wijziging in het diagram is ee
 tekst. Pijlen in het diagram volgen uit de formules en kunnen niet los getekend worden; zo kunnen tekst
 en diagram elkaar nooit tegenspreken.
 
-Ook informatie die bij het model hoort, staat in de tekst en niet in een apart formulier. Een eenheid
-schrijf je als commentaar achter de startwaarde (`v = 0 '[m/s]`), zoals je dat op papier ook zou doen.
+Ook informatie die bij het model hoort, staat in de tekst. Een eenheid schrijf je als commentaar achter
+de startwaarde (`v = 0 '[m/s]`), zoals je dat op papier ook zou doen. Het veld *Eenheid* in de formulieren
+van het diagram schrijft precies dat commentaar.
 
 ### Run is een bewust moment
 
@@ -156,8 +157,16 @@ figuur is er geen raaklijn: welke lijn zou het zijn?
 ### Eenheden
 
 Een grootheid zonder eenheid is in een verslag fout. Een eenheid tussen rechte haken in het commentaar
-(`m = 91 '[kg]`) komt op de assen, in de tabel en in de downloads. Er is geen apart veld voor: de
-basismodellen gebruiken de notatie, zodat leerlingen hem vanzelf overnemen.
+(`m = 91 '[kg]`) komt op de assen, in de tabel en in de downloads. De basismodellen gebruiken de notatie,
+zodat leerlingen hem vanzelf overnemen.
+
+Eenheden die er niet staan, leidt de webapp waar het kan af uit de formules, ook terug (`x = x + dx` met
+`x` in m: `dx` in m). Dat is hetzelfde redeneren dat een leerling bij een eenhedencontrole doet: `Fres/m`
+met N en kg geeft m/s². Een tijdseenheid wordt niet aangenomen: zonder `t '[s]` of `dt '[s]` blijft de
+eenheid van een stroomsterkte open. Kloppen de eenheden in een formule niet (kg en kg·dag/s opgeteld), dan
+zegt het formulier dat, als de knop *eenheden* aan staat. In het diagram is de afgeleide eenheid een grijze
+hint in het veld *Eenheid*: wie Voeg toe kiest zonder iets in te vullen, schrijft geen eenheid in de tekst.
+Alleen wat de leerling zelf opschrijft komt in het model.
 
 ### Automatische grafieken
 

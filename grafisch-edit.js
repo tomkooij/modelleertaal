@@ -22,7 +22,33 @@
       {op: 'addFlow', stock, direction, name, rate}   direction: 'in' of 'out'
       {op: 'setFlowEnds', id, from, to}          stroom van/naar toestand (null: buiten)
       {op: 'define', id, kind, text}             onbekende (?) variabele: 'const' of 'aux'
-      {op: 'remove', id}
+      {op: 'define', id, kind: 'stock', initial, rate}   onbekende wordt toestandsvariabele
+
+    addConstant, addAux en addStock met de naam van een onbekende (?) variabele
+    definiëren die variabele (zoals define).
+      {op: 'convert', id, kind}                  constante <-> hulpvariabele ('aux' of 'const')
+      {op: 'setDt', text}                        startwaarde van dt
+      {op: 'setUnit', name, unit}                eenheid als commentaar: m = 25 '[kg] (unit '': weg)
+
+    Met timeUnit in een bewerking (bijvoorbeeld 's') krijgen t en dt die eenheid als de
+    bewerking ze maakt: t = 0 '[s]
+      {op: 'remove', id}                         ook een voorval of stopvoorwaarde (het hele als-blok)
+
+    Voorwaarden (als ... dan ... eindals, zoals in de examenmodellen):
+      {op: 'addEvent', condition, target, text}  als condition dan target = text eindals,
+                                                 na de laatste regel die target uitrekent
+      {op: 'addEvent', condition, stop: true}    als condition dan stop eindals, aan het eind
+      {op: 'setEvent', id, condition, text}      voorwaarde en/of nieuwe waarde van een voorval
+                                                 of stopvoorwaarde (id: ~e1, ~s1)
+      {op: 'setLimit', name, bound, text}        bound 'max': als x > text dan x = text eindals,
+                                                 'min': als x < text dan x = text eindals; text '': weg
+
+    Verder:
+      edit.variablesOf(text)    de variabelen in een formule (Error als het geen formule is)
+      edit.dtOf(model)          {name, text}: de tijdstap en zijn startwaarde (text: null als die er niet is)
+      edit.eventOf(model, id)   {condition, target, text} van een voorval of stopvoorwaarde, als code;
+                                null als het niet via het diagram kan (meer regels, als binnen als)
+      edit.limitsOf(model, name)  {max, min}: de grenzen van een toestandsvariabele ('' als er geen is)
 */
 
 //jshint node:true
@@ -177,7 +203,14 @@ Context.prototype.exists = function(name) {
         this.g.elements.hasOwnProperty(name) || name == this.g.dt || name == this.g.time;
 };
 
-Context.prototype.checkNewName = function(name) {
+Context.prototype.isUnknown = function(name) {
+    // used, but nowhere a value or formula: the '?' in the diagram
+    var el = this.g.elements.hasOwnProperty(name) ? this.g.elements[name] : null;
+    return !!el && el.kind == 'unknown' && !this.init.hasOwnProperty(name) && !this.assigned.hasOwnProperty(name);
+};
+
+Context.prototype.checkNewName = function(name, allowUnknown) {
+    // allowUnknown: the name of an unknown (?) variable is fine, it gets defined
     name = String(name || '').replace(/^\s+|\s+$/g, '');
     var ok = IDENT_RE.test(name);
     if (ok) {
@@ -190,7 +223,9 @@ Context.prototype.checkNewName = function(name) {
         }
     }
     if (!ok) throw new Error('"' + name + '" is geen geldige naam voor een variabele.');
-    if (this.exists(name)) throw new Error('De naam "' + name + '" bestaat al.');
+    if (this.exists(name) && !(allowUnknown && this.isUnknown(name))) {
+        throw new Error('De naam "' + name + '" bestaat al.');
+    }
     return name;
 };
 
@@ -227,6 +262,85 @@ Context.prototype.timeLine = function() {
     return this.g.time ? this.regelLine(this.g.time, 'self') : -1;
 };
 
+Context.prototype.blocks = function() {
+    // the als ... eindals blocks at the top level of the modelregels: [{start, end, stmt}]
+    // (end: the line of eindals). A block that is not one statement is left out.
+    var depth = depths(this.regels), out = [], i, j, k;
+    for (i = 0; i < this.regels.length; i++) {
+        var words = tokens(splitComment(this.regels[i]).code);
+        if (depth[i] !== 0 || !words.length || words[0].toLowerCase() != 'als') continue;
+        for (j = i; j + 1 < this.regels.length && depth[j + 1] !== 0; j++) { /* to the eindals */ }
+        var ast = null, stmts = [];
+        try {
+            ast = parse(this.regels.slice(i, j + 1).join('\n'), 'als');
+        } catch (err) {
+            ast = null;
+        }
+        for (k = 0; ast && k < ast.length; k++) if (ast[k].type != 'Blank') stmts.push(ast[k]);
+        if (stmts.length == 1 && (stmts[0].type == 'If' || stmts[0].type == 'IfElse')) {
+            out.push({start: i, end: j, stmt: stmts[0]});
+        }
+        i = j;
+    }
+    return out;
+};
+
+Context.prototype.eventBlock = function(el) {
+    // the block of a voorval (one condition, only name = ... for its targets) or a stopvoorwaarde
+    var list = this.blocks();
+    for (var i = 0; i < list.length; i++) {
+        var st = list[i].stmt, body = [], k;
+        if (st.type != 'If' || grafisch.fmt(st.cond) != el.condition) continue;
+        for (k = 0; k < st.then.length; k++) if (st.then[k].type != 'Blank') body.push(st.then[k]);
+        if (el.kind == 'stop' && body.length == 1 && body[0].type == 'Stop') return list[i];
+        if (el.kind != 'event' || body.length != el.actions.length) continue;
+        var ok = true;
+        for (k = 0; k < body.length; k++) {
+            if (body[k].type != 'Assignment' || el.targets.indexOf(body[k].left) == -1) ok = false;
+        }
+        if (ok) return list[i];
+    }
+    return null;
+};
+
+Context.prototype.afterLast = function(name) {
+    // where a voorval for name goes: after the last line that calculates name (after the end
+    // of its als-block). A toestandsvariabele or constante: also after the other toestandsvariabelen,
+    // just before t = t + dt (als h < 0 dan v = -v after h = h + v*dt, as in the exam models).
+    // A hulpvariabele (also one drawn as the valve of a flow, groei in dOpp = groei * dt): right
+    // after its formula, before it is used.
+    var depth = depths(this.regels), at = -1, i, t = this.timeLine();
+    if (!this.isFormula(name) && t != -1) {
+        for (i = t; i < this.regels.length; i++) {
+            var m2 = ASSIGN_RE.exec(splitComment(this.regels[i]).code);
+            if (m2 && m2[2] == name && i != t) t = -1;   // name is calculated after t = t + dt
+        }
+        if (t != -1) return t;
+    }
+    for (i = 0; i < this.regels.length; i++) {
+        var m = ASSIGN_RE.exec(splitComment(this.regels[i]).code);
+        if (m && m[2] == name && i != this.timeLine()) at = i;
+    }
+    if (at == -1) {
+        t = this.timeLine();
+        return t != -1 ? t : endOf(this.regels);
+    }
+    while (at + 1 < this.regels.length && depth[at + 1] > 0) at++;
+    return at + 1;
+};
+
+Context.prototype.startEnd = function() {
+    // where a new startwaarde goes: at the end, but above t = 0 and dt = 0,1 when those are
+    // the last lines (as in the basismodellen)
+    var end = endOf(this.start), names = [this.g.time, this.g.dt];
+    while (end > 0) {
+        var m = ASSIGN_RE.exec(splitComment(this.start[end - 1]).code);
+        if (!m || names.indexOf(m[2]) == -1) break;
+        end--;
+    }
+    return end;
+};
+
 Context.prototype.decimal = function(value) {
     // 0.1 in the style of the model: 0,1 (default) or 0.1
     var t = this.start.join('\n') + this.regels.join('\n');
@@ -237,12 +351,13 @@ Context.prototype.decimal = function(value) {
 Context.prototype.needTime = function() {
     // new model: t = t + dt
     var dt = this.g.dt;
+    var unit = this.timeUnit ? " '[" + this.timeUnit + "]" : '';
     if (!this.g.time) {
         var t = this.freeName('t');
-        this.start.splice(endOf(this.start), 0, t + ' = 0');
+        this.start.splice(endOf(this.start), 0, t + ' = 0' + unit);
         this.regels.splice(endOf(this.regels), 0, t + ' = ' + t + ' + ' + dt);
     }
-    if (!this.init.hasOwnProperty(dt)) this.start.splice(endOf(this.start), 0, dt + ' = ' + this.decimal('0.1'));
+    if (!this.init.hasOwnProperty(dt)) this.start.splice(endOf(this.start), 0, dt + ' = ' + this.decimal('0.1') + unit);
     this.analyse();
 };
 
@@ -265,8 +380,21 @@ Context.prototype.checkStock = function(stock) {
     return el;
 };
 
-Context.prototype.writeStock = function(stock, terms) {
-    // (re)write  stock = stock + in - out. No terms: remove the line (stock becomes a constant)
+Context.prototype.stockPlace = function(name) {
+    // where the new line  name = name + ...  goes: before the first flow or stock that uses name
+    // (x = x + v * dt after v = v + dv, as in the basismodellen), else before t = t + dt
+    var t = this.timeLine();
+    for (var i = 0; name !== null && i < this.regels.length; i++) {
+        var m = ASSIGN_RE.exec(splitComment(this.regels[i]).code);
+        var el = m && this.g.elements.hasOwnProperty(m[2]) ? this.g.elements[m[2]] : null;
+        if (el && !el.isRate && (el.kind == 'flow' || el.kind == 'stock') && uses(this.regels[i], name)) return i;
+    }
+    return t != -1 ? t : endOf(this.regels);
+};
+
+Context.prototype.writeStock = function(stock, terms, at) {
+    // (re)write  stock = stock + in - out. No terms: remove the line (stock becomes a constant).
+    // at: where a new line goes (default: before t = t + dt)
     this.checkStock(stock);
     var line = this.regelLine(stock, 'self');
     if ((this.assigned[stock] || []).length && line == -1) this.need(-1, stock);
@@ -274,8 +402,7 @@ Context.prototype.writeStock = function(stock, terms) {
     for (var i = 0; i < terms.length; i++) rhs += (terms[i].sign > 0 ? ' + ' : ' - ') + terms[i].term;
     if (line == -1) {
         if (!terms.length) return -1;
-        var t = this.timeLine();
-        line = insert(this.regels, t != -1 ? t : endOf(this.regels), stock + ' = ' + rhs);
+        line = insert(this.regels, at === undefined ? this.stockPlace(null) : at, stock + ' = ' + rhs);
     } else if (!terms.length) {
         this.regels.splice(line, 1);
         line = -1;
@@ -297,7 +424,7 @@ ops.setDefinition = function(c, op) {
             setRhs(c.start, c.need(c.startLine(el.name), el.name), text);
             break;
         case 'stock':
-            if (!c.init.hasOwnProperty(el.name)) c.start.splice(endOf(c.start), 0, el.name + ' = ' + text);
+            if (!c.init.hasOwnProperty(el.name)) c.start.splice(c.startEnd(), 0, el.name + ' = ' + text);
             else setRhs(c.start, c.need(c.startLine(el.name), el.name), text);
             break;
         case 'aux':
@@ -345,10 +472,26 @@ ops.rename = function(c, op) {
     replace(c.regels);
 };
 
+function addStart(c, name, text) {
+    // name = text in the startwaarden: after the startwaarden it needs, before the first
+    // startwaarde that uses it. A value that needs a variable without startwaarde: at the end.
+    var expr = exprOf(text), deps = grafisch.variables(expr), i, lo = 0, end = endOf(c.start), at = -1;
+    for (i = 0; i < deps.length && lo != -1; i++) {
+        if (deps[i] == name) continue;
+        var l = c.startLine(deps[i]);
+        lo = l == -1 ? -1 : Math.max(lo, l + 1);
+    }
+    if (lo != -1) {
+        for (i = lo; i < end && at == -1; i++) if (uses(c.start[i], name)) at = i;
+    }
+    if (at == -1) at = lo == -1 ? end : Math.max(lo, c.startEnd());
+    var line = name + ' = ' + text.replace(/^\s+|\s+$/g, '');
+    if (at == end) c.start.splice(at, 0, indentOf(c.start, c.start.length) + line);
+    else insert(c.start, at, line);
+}
+
 ops.addConstant = function(c, op) {
-    var name = c.checkNewName(op.name);
-    exprOf(op.text);
-    c.start.splice(endOf(c.start), 0, indentOf(c.start, c.start.length) + name + ' = ' + op.text.replace(/^\s+|\s+$/g, ''));
+    addStart(c, c.checkNewName(op.name, true), op.text);
 };
 
 function addRule(c, name, text) {
@@ -380,40 +523,131 @@ function addRule(c, name, text) {
 }
 
 ops.addAux = function(c, op) {
-    addRule(c, c.checkNewName(op.name), op.text);
+    addRule(c, c.checkNewName(op.name, true), op.text);
 };
 
 ops.define = function(c, op) {
     var el = c.element(op.id);
     if (el.kind != 'unknown') throw new Error(el.name + ' heeft al een waarde of formule.');
-    exprOf(op.text);
+    if (op.kind == 'stock') return defineStock(c, el.name, op.initial, op.rate, op.flow);
     if (op.kind == 'aux') addRule(c, el.name, op.text);
-    else c.start.splice(endOf(c.start), 0, el.name + ' = ' + op.text.replace(/^\s+|\s+$/g, ''));
+    else addStart(c, el.name, op.text);
 };
+
+ops.convert = function(c, op) {
+    // constante (startwaarden) <-> hulpvariabele (modelregels), same name and formula
+    var el = c.element(op.id), line;
+    if (op.kind == 'aux' && el.kind == 'const') {
+        line = c.need(c.startLine(el.name), el.name);
+        c.start.splice(line, 1);
+        c.analyse();
+        addRule(c, el.name, el.code);
+    } else if (op.kind == 'const' && el.kind == 'aux') {
+        if (el.code === null) c.need(-1, el.name);
+        if (grafisch.variables(exprOf(el.code)).length) {
+            throw new Error(el.name + ' = ' + el.code + ' hangt af van andere variabelen: dat kan geen constante zijn.');
+        }
+        line = c.need(c.regelLine(el.name), el.name);
+        c.regels.splice(line, 1);
+        c.analyse();
+        addStart(c, el.name, el.code);
+    } else {
+        throw new Error('Dit element kan ik niet omzetten.' + MANUAL);
+    }
+};
+
+ops.setDt = function(c, op) {
+    var text = op.text.replace(/^\s+|\s+$/g, ''), dt = c.g.dt;
+    exprOf(text);
+    var line = c.startLine(dt);
+    if (line == -1 && c.init.hasOwnProperty(dt)) c.need(-1, dt);
+    if (line == -1) c.start.splice(endOf(c.start), 0, dt + ' = ' + text);
+    else setRhs(c.start, line, text);
+};
+
+ops.setUnit = function(c, op) {
+    // the unit in the comment of the line of name: in the startwaarden, else in the modelregels
+    var unit = String(op.unit || '').replace(/^\s+|\s+$/g, ''), name = op.name;
+    if (unit.length > 20 || /[\[\]\n]/.test(unit)) {
+        throw new Error('"' + unit + '" is geen eenheid die ik kan opslaan (geen [ of ], hoogstens 20 tekens).');
+    }
+    var lines = c.start, line = c.startLine(name);
+    if (line == -1 && !c.init.hasOwnProperty(name)) {
+        lines = c.regels;
+        line = c.regelLine(name, 'def');
+        if (line == -1) line = c.regelLine(name);
+    }
+    c.need(line, name);
+    var parts = splitComment(lines[line]), comment = parts.comment;
+    var bracket = /\s*\[[^\[\]]*\]/;
+    if (unit === '') {
+        comment = comment.replace(bracket, '');
+        if (/^\s*('|\/\/|#)\s*$/.test(comment)) comment = '';
+    } else if (bracket.test(comment)) {
+        comment = comment.replace(/\[[^\[\]]*\]/, '[' + unit + ']');
+    } else if (comment) {
+        // 'massa --> '[kg] massa ; // massa --> // [kg] massa
+        comment = comment.replace(/^(\s*)('|\/\/|#)\s*/, function(all, space, mark) {
+            return space + mark + (mark == "'" ? '' : ' ') + '[' + unit + '] ';
+        });
+    } else {
+        comment = " '[" + unit + "]";
+    }
+    lines[line] = parts.code.replace(/\s+$/, '') + comment;
+};
+
+function flowName(c, name, stock, rate) {
+    // the name of the flow of stock: given, or d + stock. It cannot be in its own formula:
+    // dOpp = dOpp * dt would be a second toestandsvariabele
+    var auto = /^\s*$/.test(name || '');
+    name = auto ? c.freeName('d' + stock) : c.checkNewName(name);
+    if (grafisch.variables(exprOf(rate)).indexOf(name) != -1) {
+        throw new Error(auto ?
+            name + ' is de naam van de stroom van ' + stock + '. Kies een andere naam voor de ' +
+            'verandering per tijdseenheid, bijvoorbeeld groei.' :
+            'De stroom ' + name + ' kan niet in zijn eigen formule staan (' + name + ' = ' + rate + ' * ' + c.g.dt + ').');
+    }
+    return name;
+}
 
 function flowLine(c, name, rate) {
     // dx = rate * dt
     return name + ' = ' + grafisch.code(exprOf(rate), 5, false) + ' * ' + c.g.dt;
 }
 
+function defineStock(c, name, initial, rate, flow) {
+    // unknown variable becomes a stock: dv = rate * dt ; v = v + dv before the first use of v
+    initial = /^\s*$/.test(initial || '') ? '0' : initial.replace(/^\s+|\s+$/g, '');
+    rate = /^\s*$/.test(rate || '') ? '0' : rate;
+    exprOf(rate);
+    addStart(c, name, initial);
+    c.analyse();
+    var fname = flowName(c, flow, name, rate);
+    c.needTime();
+    var at = insert(c.regels, c.stockPlace(name), name + ' = ' + name + ' + ' + fname);
+    insert(c.regels, at, flowLine(c, fname, rate));
+}
+
 ops.addStock = function(c, op) {
-    var name = c.checkNewName(op.name);
+    var name = c.checkNewName(op.name, true);
+    if (c.isUnknown(name)) return defineStock(c, name, op.initial, op.rate, op.flow);
     var initial = /^\s*$/.test(op.initial || '') ? '0' : op.initial.replace(/^\s+|\s+$/g, '');
     exprOf(initial);
-    c.start.splice(endOf(c.start), 0, name + ' = ' + initial);
+    c.start.splice(c.startEnd(), 0, name + ' = ' + initial);
     c.analyse();
     ops.addFlow(c, {stock: name, direction: 'in', name: op.flow, rate: op.rate});
 };
 
 ops.addFlow = function(c, op) {
-    c.checkStock(op.stock);
+    var el = c.checkStock(op.stock);
     var rate = /^\s*$/.test(op.rate || '') ? '0' : op.rate;
     exprOf(rate);
-    var name = /^\s*$/.test(op.name || '') ? c.freeName('d' + op.stock) : c.checkNewName(op.name);
+    var name = flowName(c, op.name, op.stock, rate);
     c.needTime();
     var terms = c.flowsOf(op.stock);
     terms.push({sign: op.direction == 'out' ? -1 : 1, term: name});
-    var line = c.writeStock(op.stock, terms);
+    // a constant becomes a stock: its line goes where define would put it
+    var line = c.writeStock(op.stock, terms, el.kind == 'const' ? c.stockPlace(op.stock) : undefined);
     insert(c.regels, line, flowLine(c, name, rate));
 };
 
@@ -519,9 +753,136 @@ ops.remove = function(c, op) {
             var s = findLine(c.start, el.id, undefined, true);
             if (s != -1) c.start.splice(s, 1);
             break;
+        case 'event':
+        case 'stop':
+            var block = c.eventBlock(el);
+            if (!block) c.need(-1, el.label);
+            c.regels.splice(block.start, block.end - block.start + 1);
+            break;
         default:
             throw new Error('Dit element kun je hier niet verwijderen.' + MANUAL);
     }
+};
+
+
+// ------------------------------------------------------------------ voorwaarden
+
+function condOf(text) {
+    // a condition typed by the user: 't > 13' (also 'als t > 13 dan'). Returns the trimmed text
+    text = String(text || '').replace(/^\s+|\s+$/g, '').replace(/^als\s+/i, '').replace(/\s+dan$/i, '');
+    var ast = null;
+    try {
+        ast = parse('als ' + text + ' dan\nstop\neindals', 'voorwaarde');
+    } catch (err) {
+        ast = null;
+    }
+    if (!text || !ast || ast.length != 1 || ast[0].type != 'If') {
+        throw new Error('De voorwaarde "' + text + '" klopt niet. Bijvoorbeeld: t > 13');
+    }
+    return text;
+}
+
+function blockLines(condition, body) {
+    // als t > 13 dan / (indented) Opp = Opp + dOpp / eindals, as in the exam models
+    var out = ['als ' + condition + ' dan'];
+    for (var i = 0; i < body.length; i++) out.push('    ' + body[i]);
+    out.push('eindals');
+    return out;
+}
+
+function writeBlock(c, at, lines) {
+    // insert the lines of a block before line at (outside als ... eindals), same indentation
+    var i = insert(c.regels, at, lines[0]);
+    var ind = /^\s*/.exec(c.regels[i])[0];
+    for (var k = 1; k < lines.length; k++) c.regels.splice(i + k, 0, ind + lines[k]);
+}
+
+function replaceBlock(c, block, lines) {
+    var ind = /^\s*/.exec(c.regels[block.start])[0];
+    var args = [block.start, block.end - block.start + 1];
+    for (var k = 0; k < lines.length; k++) args.push(ind + lines[k]);
+    c.regels.splice.apply(c.regels, args);
+}
+
+Context.prototype.isFormula = function(name) {
+    // calculated with a formula in the modelregels, not a toestandsvariabele (x = x + dx)
+    var el = this.g.elements.hasOwnProperty(name) ? this.g.elements[name] : null;
+    return this.assigned.hasOwnProperty(name) && !(el && el.kind == 'stock') && !this.init.hasOwnProperty(name);
+};
+
+Context.prototype.checkTarget = function(name) {
+    // a variable that a voorval can change: with a startwaarde, or a hulpvariabele
+    name = String(name || '').replace(/^\s+|\s+$/g, '');
+    if (!name) throw new Error('Welke variabele verandert er? Vul de naam in, bijvoorbeeld v.');
+    if (name == this.g.time || name == this.g.dt) {
+        throw new Error(name + ' kun je niet met een voorwaarde veranderen. Kies "Stop het model" om op een tijdstip te stoppen.');
+    }
+    if (!this.exists(name)) throw new Error('De variabele "' + name + '" bestaat niet.');
+    if (!this.init.hasOwnProperty(name) && !this.isFormula(name)) {
+        throw new Error(name + ' heeft nog geen beginwaarde. Geef ' + name + ' eerst een waarde (klik op de ?).');
+    }
+    return name;
+};
+
+ops.addEvent = function(c, op) {
+    var cond = condOf(op.condition);
+    if (op.stop) {
+        writeBlock(c, endOf(c.regels), blockLines(cond, ['stop']));
+        return;
+    }
+    var name = c.checkTarget(op.target), text = String(op.text || '').replace(/^\s+|\s+$/g, '');
+    exprOf(text);
+    writeBlock(c, c.afterLast(name), blockLines(cond, [name + ' = ' + text]));
+};
+
+ops.setEvent = function(c, op) {
+    var el = c.element(op.id);
+    if (el.kind != 'event' && el.kind != 'stop') throw new Error('Dit is geen voorval of stopvoorwaarde.');
+    var block = c.eventBlock(el);
+    if (!block) c.need(-1, el.label);
+    var st = block.stmt;
+    var cond = op.condition === undefined ? grafisch.code(st.cond) : condOf(op.condition);
+    var body = [], k;
+    for (k = 0; k < st.then.length; k++) {
+        var s = st.then[k];
+        if (s.type == 'Stop') body.push('stop');
+        if (s.type == 'Assignment') body.push(s.left + ' = ' + grafisch.code(s.right));
+    }
+    if (op.text !== undefined && el.kind == 'event') {
+        if (body.length != 1) c.need(-1, el.label);
+        var text = String(op.text).replace(/^\s+|\s+$/g, '');
+        exprOf(text);
+        for (k = 0; k < st.then.length; k++) if (st.then[k].type == 'Assignment') body[0] = st.then[k].left + ' = ' + text;
+    }
+    replaceBlock(c, block, blockLines(cond, body));
+};
+
+Context.prototype.limitBlock = function(name, bound) {
+    // als x > 42,6 dan x = 42,6 eindals (bound 'max'), als x < 0 dan x = 0 eindals ('min')
+    var list = this.blocks(), cmp = bound == 'max' ? ['>', '>='] : ['<', '<='];
+    for (var i = 0; i < list.length; i++) {
+        var st = list[i].stmt, body = [], k;
+        if (st.type != 'If' || st.cond.type != 'Logical' || cmp.indexOf(st.cond.operator) == -1) continue;
+        if (st.cond.left.type != 'Variable' || st.cond.left.name != name) continue;
+        for (k = 0; k < st.then.length; k++) if (st.then[k].type != 'Blank') body.push(st.then[k]);
+        if (body.length == 1 && body[0].type == 'Assignment' && body[0].left == name &&
+            grafisch.code(body[0].right) == grafisch.code(st.cond.right)) return list[i];
+    }
+    return null;
+};
+
+ops.setLimit = function(c, op) {
+    var name = op.name, text = String(op.text || '').replace(/^\s+|\s+$/g, '');
+    if (op.bound != 'max' && op.bound != 'min') throw new Error('Onbekende grens: ' + op.bound);
+    var block = c.limitBlock(name, op.bound);
+    if (text === '') {
+        if (block) c.regels.splice(block.start, block.end - block.start + 1);
+        return;
+    }
+    exprOf(text);
+    var lines = blockLines(name + (op.bound == 'max' ? ' > ' : ' < ') + text, [name + ' = ' + text]);
+    if (block) replaceBlock(c, block, lines);
+    else writeBlock(c, c.afterLast(name), lines);
 };
 
 
@@ -534,6 +895,7 @@ function apply(model, op) {
     } catch (err) {
         throw new Error('Het model bevat een fout. Los die eerst op in de tekst.');
     }
+    c.timeUnit = op.timeUnit;
     ops[op.op](c, op);
     var result = c.text();
     try {
@@ -545,4 +907,41 @@ function apply(model, op) {
     return result;
 }
 
+function variablesOf(text) {
+    return grafisch.variables(exprOf(text));
+}
+
+function dtOf(model) {
+    var c = new Context(model), dt = c.g.dt;
+    return {name: dt, text: c.init.hasOwnProperty(dt) ? grafisch.code(c.init[dt]) : null};
+}
+
+function eventOf(model, id) {
+    var c = new Context(model), el = c.element(id);
+    var block = (el.kind == 'event' || el.kind == 'stop') ? c.eventBlock(el) : null;
+    if (!block) return null;
+    var st = block.stmt, out = {condition: grafisch.code(st.cond), target: null, text: null};
+    for (var k = 0; k < st.then.length; k++) {
+        if (st.then[k].type == 'Assignment') {
+            if (out.target !== null) return {condition: out.condition, target: null, text: null};   // more: only the condition
+            out.target = st.then[k].left;
+            out.text = grafisch.code(st.then[k].right);
+        }
+    }
+    return out;
+}
+
+function limitsOf(model, name) {
+    var c = new Context(model), out = {}, bounds = ['max', 'min'];
+    for (var i = 0; i < bounds.length; i++) {
+        var b = c.limitBlock(name, bounds[i]);
+        out[bounds[i]] = b ? grafisch.code(b.stmt.cond.right) : '';
+    }
+    return out;
+}
+
 exports.apply = apply;
+exports.eventOf = eventOf;
+exports.limitsOf = limitsOf;
+exports.variablesOf = variablesOf;
+exports.dtOf = dtOf;

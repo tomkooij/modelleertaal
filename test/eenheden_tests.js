@@ -40,4 +40,80 @@ describe('eenheden.js - eenheden uit het commentaar', function() {
         assert.equal(eenheden.labels(['x', 'v'], u), 'x (m), v (m/s)');
         assert.equal(eenheden.labels(['x', 't'], u), 'x (m), t');
     });
+
+    it('eenheden lezen en schrijven: N/kg is m/s², km/h blijft km/h', function() {
+        var f = function(t) { return eenheden.format(eenheden.parse(t)); };
+        assert.equal(f('N/kg'), 'm/s²');
+        assert.equal(f('kg*m/s^2'), 'N');
+        assert.equal(f('kg·m²/s³'), 'W');
+        assert.equal(f('m s-1'), 'm/s');
+        assert.equal(f('(m/s)/s'), 'm/s²');
+        assert.equal(f('1/s'), '1/s');
+        assert.equal(f('km/h'), 'km/h');
+        assert.equal(f('graden Celsius!'), 'graden Celsius!', 'niet begrepen: één symbool');
+        assert.equal(eenheden.format(eenheden.parse('m/s^2'), ['m/s^2']), 'm/s^2', 'zoals in het model');
+    });
+
+    it('eenheden afleiden uit de formules, ook terug (x = x + dx: dx in m)', function() {
+        var d = eenheden.derive("x = 0 '[m]\nt = 0 '[s]\ndt = 1\nm = 25 '[kg]\nF = 100 '[N]\nv = 0",
+            "Fres = F\na = Fres/m\ndv = a * dt\nv = v + dv\ndx = v * dt\nx = x + dx\nEk = 0,5*m*v^2\nP = Fres*v\nt = t + dt");
+        assert.deepEqual(d.units, {x: 'm', t: 's', m: 'kg', F: 'N', Fres: 'N', a: 'm/s²', dx: 'm', dt: 's',
+                                   dv: 'm/s', v: 'm/s', Ek: 'J', P: 'W'});
+        assert.isTrue(d.derived.v);
+        assert.isUndefined(d.derived.x);
+        assert.deepEqual(d.conflicts, {});
+    });
+
+    it('zonder tijdseenheid geen aanname; tegenstrijdige eenheid wordt gemeld', function() {
+        var d = eenheden.derive("x = 0 '[m]\nv = 2\nt = 0\ndt = 0,1", "x = x + v*dt\nt = t + dt");
+        assert.isUndefined(d.units.v, 'eenheid van dt onbekend');
+        d = eenheden.derive("m = 2 '[kg]\nF = 4 '[N]\na = 0 '[m/s]", "a = F/m");
+        assert.deepEqual(d.conflicts, {a: 'volgens de formule is de eenheid m/s², niet m/s'});
+        d = eenheden.derive("x = (", "");
+        assert.deepEqual(d.units, {}, 'fout in het model: alleen het commentaar');
+        d = eenheden.derive("k = 3 '[1/s]\nN = 100 '[kg]\nt = 0 '[dag]\ndt = 1", "N = N - k*N*dt\nt = t + dt");
+        // k per s, t in dagen: de fout komt bij N of bij t (welke volgt uit de volgorde)
+        assert.equal(Object.keys(d.conflicts).length, 1);
+        assert.match(d.conflicts.N || d.conflicts.t, /dag/);
+        assert.equal(eenheden.derive("v = 3 '[m/s]", "w = sqrt(v^2 + 1)\nh = sin(v)").units.w, 'm/s');
+    });
+
+    it('een getal met een eenheid die er niet staat (9,81) maakt de eenheid onbekend', function() {
+        var d = eenheden.derive("m = 91 '[kg]\nv = 0\nx = 0\nt = 0 '[s]\ndt = 0,1",
+            "Fz = m * 9,81\nFr = Fz - Fw\na = Fr/m\nv = v + a*dt\nx = x + v*dt\nt = t + dt");
+        ['Fz', 'Fr', 'a', 'v', 'x'].forEach(function(name) { assert.isUndefined(d.units[name], name); });
+        // terug oplossen ook niet: m krijgt geen N
+        d = eenheden.derive("Fz = 0 '[N]\nm = 3", "Fz = m * 9,81");
+        assert.isUndefined(d.units.m);
+        // gehele getallen, 0,5 en pi wel
+        d = eenheden.derive("m = 2 '[kg]\nv = 3 '[m/s]\nr = 1 '[m]", "Ek = 0,5 * m * v^2\np = 2 * m * v\nO = 2 * pi * r\nh = r / 2");
+        assert.equal(d.units.Ek, 'J');
+        assert.equal(d.units.p, 'kg·m/s');
+        assert.equal(d.units.O, 'm');
+        assert.equal(d.units.h, 'm');
+    });
+
+    it('geen lege haken: a () wordt a', function() {
+        assert.equal(eenheden.label('a', {a: ''}), 'a');
+        assert.equal(eenheden.labels(['a', 'b'], {a: '', b: ''}), 'a, b');
+    });
+
+    it('getoond met superscript, ook een eenheid zoals hij getypt is (m^2)', function() {
+        assert.equal(eenheden.pretty('m/s^2'), 'm/s²');
+        assert.equal(eenheden.pretty('m^-1'), 'm⁻¹');
+        assert.equal(eenheden.pretty('kg*m^2'), 'kg·m²');
+        var d = eenheden.derive("Opp = 0,8 '[m^2]\ng = 9,81 '[m/s^2]\nm = 2 '[kg]", "Fz = m * g");
+        assert.equal(d.units.Opp, 'm²');
+        assert.equal(d.units.g, 'm/s²');
+        assert.equal(d.units.Fz, 'N');
+        assert.equal(d.explicit.Opp, 'm^2', 'de tekst van het model blijft zoals getypt');
+    });
+
+    it('voor LaTeX (pgfplots): m/s² wordt m/s^{2}', function() {
+        assert.equal(eenheden.latex('m/s²'), 'm/s^{2}');
+        assert.equal(eenheden.latex('kg·m²/s³'), 'kg.m^{2}/s^{3}');
+        assert.equal(eenheden.latex('s⁻¹'), 's^{-1}');
+        assert.equal(eenheden.latex('km/h'), 'km/h');
+    });
 });
+

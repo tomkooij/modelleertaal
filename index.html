@@ -988,6 +988,10 @@
             cursor: pointer;
         }
 
+        .grafisch_onder .grafisch_formules + .grafisch_formules {
+            margin-left: 0;
+        }
+
         .grafisch_onder .grafisch_formules + .stijl_switch {
             margin-left: 0;
         }
@@ -1004,6 +1008,41 @@
 
         #grafisch_svg .placeholder {
             cursor: default;
+            /* as high as a small model, so the page does not jump at the first element */
+            min-height: 180px;
+            padding: 0 16px;
+            text-align: center;
+        }
+
+        .grafisch_dt {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.9rem;
+        }
+
+        .grafisch_dt span {
+            font-family: ui-monospace, Consolas, monospace;
+        }
+
+        .grafisch_dt input {
+            width: 5em;
+            min-height: 30px;
+            padding: 2px 6px;
+            font-family: ui-monospace, Consolas, monospace;
+        }
+
+        #grafisch_dt_eenheid {
+            width: 3.5em;
+        }
+
+        .grafisch_dt input[hidden] {
+            display: none;
+        }
+
+        .grafisch_dt input.invalid {
+            border-color: #dc2626;
+            box-shadow: 0 0 0 2px #fecaca;
         }
 
         .grafisch_zoom {
@@ -1177,6 +1216,12 @@
             font-size: 0.85rem;
         }
 
+        /* the unit that follows from the formulas: a hint, not a value */
+        .grafisch_form input.grafisch_hint::placeholder,
+        #grafisch_dt_eenheid::placeholder {
+            font-style: italic;
+        }
+
         .grafisch_form input.invalid {
             border-color: #dc2626;
             box-shadow: 0 0 0 2px #fecaca;
@@ -1326,7 +1371,13 @@
                         <button id="grafisch_nieuw_toestand" type="button" title="Een grootheid die elke stap een beetje verandert, zoals x of v">+ Toestandsvariabele</button>
                         <button id="grafisch_nieuw_hulp" type="button" title="Een grootheid die elke stap met een formule wordt uitgerekend, zoals Fres">+ Hulpvariabele</button>
                         <button id="grafisch_nieuw_constante" type="button" title="Een grootheid die niet verandert, zoals de massa m">+ Constante</button>
+                        <button id="grafisch_nieuw_voorwaarde" type="button" title="Als ... dan: een variabele krijgt een nieuwe waarde, of het model stopt">+ Voorwaarde</button>
                         <button id="grafisch_undo" type="button" disabled title="Maak de laatste wijziging in het diagram ongedaan (Ctrl+Z)" aria-label="Ongedaan maken">&#8630;</button>
+                        <label class="grafisch_dt" title="De tijdstap: de startwaarde van dt">
+                            <span id="grafisch_dt_naam">dt =</span>
+                            <input id="grafisch_dt" type="text" spellcheck="false" autocomplete="off" size="5" aria-label="Tijdstap dt">
+                            <input id="grafisch_dt_eenheid" type="text" spellcheck="false" autocomplete="off" size="4" hidden aria-label="Eenheid van dt" title="De eenheid van de tijd, bijvoorbeeld s">
+                        </label>
                         <span class="grafisch_zoom">
                             <button id="grafisch_zoom_uit" type="button" title="Uitzoomen (Ctrl + muiswiel)" aria-label="Uitzoomen">&minus;</button>
                             <span id="grafisch_zoom_waarde">100%</span>
@@ -1334,6 +1385,7 @@
                             <button id="grafisch_zoom_passend" type="button" title="Maak het hele model zichtbaar">Passend</button>
                             <button id="grafisch_herstel" type="button" title="Zet alle symbolen terug op hun eigen plek" aria-label="Herstel indeling">&#8634;</button>
                             <button id="download_grafisch" type="button" title="Sla het diagram op als plaatje (SVG)" aria-label="Download diagram">&#10515;</button>
+                            <button id="grafisch_nieuw_model" type="button" title="Nieuw model: begin opnieuw met een leeg model (Basismodellen &rarr; Leeg model)">Nieuw</button>
                         </span>
                     </div>
                     <div id="grafisch_view">
@@ -1355,6 +1407,8 @@
                             <span><svg width="16" height="16"><circle cx="8" cy="8" r="6.5" fill="#fff" stroke="#000" stroke-width="1.2"/></svg>hulpvariabele of constante</span>
                             <span><svg width="24" height="10"><path d="M1,5 H19" stroke="#000" stroke-width="1.3"/><path d="M14,1.5 L23,5 L14,8.5 L16,5 z" fill="#000"/></svg>hangt af van</span>
                         </div>
+                        <label class="grafisch_formules" title="Zet de eenheid achter de namen, en een veld Eenheid in de formulieren. Een eenheid die je niet invult wordt waar het kan uit de formules afgeleid.">
+                            <input type="checkbox" id="grafisch_eenheden"> eenheden</label>
                         <label class="grafisch_formules" title="Zet bij elk symbool de formule of de beginwaarde, zoals in de examens van 2015 en 2016">
                             <input type="checkbox" id="grafisch_formules"> formules</label>
                         <span class="stijl_switch" role="group" aria-label="Stijl van het diagram">

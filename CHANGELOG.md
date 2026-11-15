@@ -2,6 +2,110 @@
 
 ## [Unreleased]
 
+### Grafisch model: voorwaarden (als ... dan) via het diagram
+
+- New button **+ Voorwaarde**: *Als* `t > 13` *dan verandert* `Opp` *in* `Opp + dOpp`, or
+  *Stop het model*. It writes `als ... dan` / `Opp = Opp + dOpp` / `eindals` as in the exam
+  models: for a toestandsvariabele or constante just before `t = t + dt`, for a hulpvariabele
+  right after its formula, a stop at the end. With a variable selected, its name is filled in.
+- A voorval (lightning bolt) and a stopvoorwaarde can be changed in their form (condition and new
+  value) and removed, when they are one `als ... eindals` block. A block inside another `als` or
+  with more than one new value still says to change it in the text.
+- A voorwaarde can also change a hulpvariabele that is drawn as the valve of a flow (`groei` in
+  `dOpp = groei * dt`); its block goes right after `groei = 11`.
+- The form of a toestandsvariabele has **Minimum** and **Maximum**: `als Opp > 42,6 dan Opp = 42,6
+  eindals`; empty removes it.
+- The model of exam vwo 2005-I *Champignon* can now be built from an empty model without typing in
+  the text, and gives the same results.
+
+### Grafisch model: formulieren, eenheden, opnieuw beginnen (GRAFISCHMODELLEREN.md 17–27)
+
+- The form of a new element is placed where it covers the least of the diagram; with *Maak
+  toestandsvariabele* it stays next to the **?** that is being defined.
+- In the form of an existing element, Enter saves and closes the form (the element stays selected).
+  New button **OK** does the same.
+- Units are shown with superscripts everywhere (`m²`, `m/s²`), also when typed as `m^2`; the text
+  of the model keeps what was typed. The pgfplots download writes `\si{m/s^{2}}`.
+- Formula boxes (*formules*): the box of a flow is below its name, also when the tap points down;
+  the box with the beginwaarde is above the + buttons of a toestandsvariabele.
+- A new startwaarde goes above `t = 0` and `dt = 0,1` when those are the last lines.
+- *Verder werken → Ga verder* goes back to *Tekst + grafisch* when that was the view of the saved
+  work. A new visit still starts with *Tekst* (6.1.1).
+- New button **Nieuw** above the diagram: Basismodellen → Leeg model, also when that is already
+  chosen. It asks first when the model was changed.
+- The empty diagram is as high as a small model, so the page does not jump at the first element.
+
+### Grafisch model: Tab neemt de voorgestelde waarde over
+
+- Tab in an empty field of a form of the diagram takes over the grey example or suggestion as
+  real input: `x`, `0`, `v` and `m` in *Nieuwe toestandsvariabele*, or the derived unit (`m/s`) in
+  the field *Eenheid*. In the form of an existing element it is applied when the field is left.
+  The tooltip of the field says so. Also in the field for the unit of `dt` (a derived unit, not the
+  word *eenheid*). Not for a placeholder that is not a value: *geen* (Minimum, Maximum) and
+  *(geen naam)* (a flow without a name). Shift+Tab never fills in.
+
+### Eenheden en stromen (GRAFISCHMODELLEREN.md 15, 16)
+
+- A number with a unit that is not written (`9,81` in `Fz = m * 9,81`, `0,37`) makes the unit of a
+  product unknown. Before, it counted as a pure number, which gave `Fz (kg)`, `a ()`, `v (s)` and
+  `x (s²)`. Whole numbers, `0,5` and `pi` still count as pure numbers (`Ek = 0,5 * m * v^2` is J).
+- No empty brackets: `a ()` is shown as `a`.
+- In the diagram a derived unit is lighter than a unit you filled in yourself.
+- A toestandsvariabele `Opp` with *verandering per tijdseenheid* `dOpp` was written as
+  `dOpp = dOpp * dt` (a second toestandsvariabele). Now the form says that `dOpp` is the name of
+  the flow and asks for another name.
+- Fixed: after Enter in the field `dt =`, a click in a form moved the typing back into `dt =`
+  (`0,1kg`). A change that does not change the text no longer redraws the diagram.
+
+### Eenheden: afgeleid uit de formules, en in het grafische model
+
+- Units that are not written in the comments are derived from the formulas where possible, also
+  backwards: with `x '[m]` and `t '[s]`, `dx = v * dt ; x = x + dx` gives `dx` in m and `v` in m/s;
+  `Fres/m` with N and kg gives m/s² (N, J, W, Pa, V, Ω and C are recognised; km, h, g, dag stay
+  their own symbols). The derived units appear on the axes, in the table and in the downloads.
+  No time unit is assumed.
+- *Tekst + grafisch* has a toggle **eenheden**: the units after the names in the diagram (upright),
+  in *Herkende elementen*, and a field *Eenheid* in every form (new elements, *Onbekend*, existing
+  elements) and next to `dt =`. The field writes the comment `'[kg]` in the text; empty removes it.
+  The grey hint in the field is the derived unit (or an example) and is **not** taken over by
+  *Voeg toe*.
+- With the toggle on, a new model gets `t = 0 '[s]` and `dt = 0,1 '[s]`.
+- A form says when the units in a formula do not fit (*volgens de formule is de eenheid m/s², niet
+  m/s*; *kg en kg·dag/s opgeteld*).
+
+### Grafisch model: bouwen vanuit een leeg model (GRAFISCHMODELLEREN.md)
+
+- An unknown variable (**?**) can become a *toestandsvariabele*: the form *Onbekend* has a third
+  button *Maak toestandsvariabele*. Its lines `dv = a * dt` and `v = v + dv` go before the first
+  flow that uses `v`, so building `x` first and `v` second gives the same model (and the same
+  order of calculation) as the other way round.
+- *+ Toestandsvariabele*, *+ Hulpvariabele* and *+ Constante* with the name of an unknown
+  variable define it, instead of the message "De naam bestaat al".
+- Enter in the form *Onbekend* chooses: a number (or a formula without variables) becomes a
+  *constante*, a formula with variables a *hulpvariabele*. Before, Enter always made a constante,
+  and `Fres = F` followed by `F = 100` gave a model that did not run.
+- A new constante goes before the first startwaarde that uses it and after the startwaarden it
+  needs (was: always at the end).
+- A constante with a new flow (*+ Stroom erin*) becomes a toestandsvariabele at the same place
+  as above (was: just before `t = t + dt`).
+- After *Voeg toe* the new element is selected, but its form stays closed: the diagram stays in
+  view. A click on the element opens the form.
+- The form covers as little of the diagram as possible: never the selected element, preferably
+  not the elements connected to it.
+- Escape closes the form whenever the focus is in the form or the diagram.
+- The form *Onbekend* puts the cursor in *Waarde of formule*.
+- A constante can become a hulpvariabele and back (button *Maak hulpvariabele* / *Maak constante*).
+- A field **dt =** in the toolbar of the diagram sets the time step.
+- The red error bar of the last Run disappears when the model changes.
+- The empty diagram explains how to start: a toestandsvariabele first, then click a **?**.
+- In the form of a new element, an empty field takes the grey example: *Voeg toe* at once
+  makes `x` with change `v`, `Fres = Fz - Fw` or `m = 75` (was: an error message). A new flow
+  has the example `0` instead of the word *formule*.
+- A flow `dx = v * dt` with `x = x + dx` (as the diagram writes it) is drawn as `x = x + v*dt`:
+  in the style Examen a valve without a name with an arrow from `v` (as in the exams 2014-II,
+  2015-I), in the style Kleur the name `v`. The flow is still called `dx` in its form and in
+  *Herkende elementen*. Also for models such as `ds = v * dt` (Bungeejumper).
+
 ## [6.5]
 
 15 nov 2026
