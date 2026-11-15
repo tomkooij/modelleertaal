@@ -10,10 +10,12 @@
 - **Voor leerlingen**: choosing a model, modelregels and startwaarden, Run and Stap, reading the
   graph (and the tangent line), Tekst + grafisch.
 - **Voor docenten**: an opdracht with the model, Deel link, comparing runs in class (Houd vast),
-  graphs for lesson material (SVG, PGFPlot, PNG, Excel), and work of students (Bewaar and Open).
+  the diagram as input (text and diagram are linked), and the diagram drawn automatically from the
+  text model.
 - Each step lights up its part of the page; the page stays usable. Volgende/Vorige, the arrow keys
   and Esc. For the graph steps the tour runs the model if it has no results; the diagram and Meer
-  opties are opened for their step and closed again afterwards.
+  opties are opened for their step and closed again afterwards (the diagram stays open between two
+  diagram steps).
 
 ## [6.6]
 

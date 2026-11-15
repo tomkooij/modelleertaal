@@ -4,7 +4,7 @@
     Twee korte rondleidingen, elk in vijf stappen:
     - voor leerlingen: de basis (model kiezen, modelregels, Run en Stap, grafieken, diagram)
     - voor docenten: wat een docent extra kan (opdracht, Deel link, runs vergelijken in de klas,
-      grafieken voor lesmateriaal, werk van leerlingen)
+      het diagram als invoer, het diagram uit het tekstmodel)
     Start nooit vanzelf: alleen met de knop Rondleiding bovenaan, die een keuzemenu opent.
     Tot iemand de rondleiding een keer geopend heeft, staat er een kleine stip op de knop.
 
@@ -78,7 +78,7 @@ var RONDLEIDINGEN = {
     },
     docent: {
         naam: 'Voor docenten',
-        uitleg: 'Opdrachten maken, delen en demonstreren in de klas',
+        uitleg: 'Opdrachten maken en delen, demonstreren in de klas, het grafische model',
         einde: 'Waarom de webapp zo werkt, staat in ' + DIDACTIEK + '. ' +
             'De webapp met je eigen modellen op je eigen website: zie de ' + README + '. ' +
             'De basis zie je in de rondleiding <b>Voor leerlingen</b>.',
@@ -109,19 +109,24 @@ var RONDLEIDINGEN = {
                     'als referentie terwijl je verder probeert.'
             },
             {
-                doel: '.docent_downloads',
-                titel: 'Grafieken voor lesmateriaal',
-                voor: 'opties',
-                tekst: 'Voor toetsen en lesbrieven: de grafiek als SVG, of als PGFPlot voor LaTeX op ' +
-                    'millimeterpapier. Bij de grafiek staat <b>Download grafiek</b> (PNG), bij de tabel ' +
-                    '<b>Download tabel</b> (Excel), en het diagram download je als SVG.'
+                doel: '#grafisch_model',
+                titel: 'Het diagram is ook invoer',
+                voor: 'grafisch',
+                tekst: 'Tekst en diagram zijn gekoppeld. Klik op een symbool: de regels ervan lichten op in de ' +
+                    'tekst, en in het formulier verander je de naam of de formule. Met de knoppen erboven voeg ' +
+                    'je grootheden en voorwaarden toe; een stroom voeg je toe bij een gekozen toestandsvariabele. ' +
+                    'Elke wijziging is een kleine wijziging in de tekst: de tekst blijft het model, net als in ' +
+                    'het examen. Namen kies je met een klik, dus zonder typefouten.'
             },
             {
-                doel: '.model_select',
-                titel: 'Werk van leerlingen',
-                tekst: 'Leerlingen leveren hun model in met <b>Bewaar</b> (een .xml-bestand met de titel als ' +
-                    'naam) of met een Deel link. Jij opent het bestand met <b>Open</b>. Werk dat niet ' +
-                    'bewaard is, blijft in de browser staan: bij het volgende bezoek kan een leerling verder.'
+                doel: '.area_model',
+                titel: 'Het diagram komt uit de tekst',
+                voor: 'grafisch',
+                tekst: 'Het diagram wordt vanzelf getekend uit het tekstmodel, terwijl je typt; Run is niet nodig. ' +
+                    'Zo laat je bij elk examenmodel het grafische model zien. Zet de cursor in een regel en het ' +
+                    'symbool licht op. Onder het diagram zet je <b>formules</b> en <b>eenheden</b> bij de symbolen ' +
+                    'en kies je de stijl <b>Examen</b> of <b>Kleur</b>; <b>Herkende elementen</b> laat zien hoe ' +
+                    'elke regel herkend is.'
             }
         ]
     }
@@ -270,10 +275,15 @@ Rondleiding.prototype.zet_klaar = function(voor) {
 Rondleiding.prototype.ga = function(index) {
     if (index >= this.stappen.length) { this.stop(); return; }
     if (index < 0) return;
-    this.zet_terug();
-    this.index = index;
     var stap = this.stappen[index];
-    var extra = this.zet_klaar(stap.voor);
+    var extra = '';
+    if (!(this.herstel && stap.voor && stap.voor == this.voor)) {
+        // the next step needs the same (the diagram stays open): leave the page as it is
+        this.zet_terug();
+        extra = this.zet_klaar(stap.voor);
+        this.voor = stap.voor;
+    }
+    this.index = index;
     var laatste = index == this.stappen.length - 1;
 
     this.$ballon.html(
