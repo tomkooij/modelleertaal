@@ -207,3 +207,160 @@ Verwacht:
 
 Herhaal stap 1–5 in omgekeerde volgorde (eerst `v`, dan `x`) en via
 *Maak constante* → *+ Stroom erin*; ook dan moet het model draaien.
+
+---
+
+# Tweede gebruikstest (na uitvoering van punten 1–8, 12, 13)
+
+Getest op 15 november 2026 in de browser (1400 px breed), commit 5293427, zonder in de
+tekstvakken te typen. Twee modellen: het kracht-versnellingsmodel en het model van examen
+vwo 2005-I Champignon. De punten hieronder zijn voorstellen; er is nog niets gebouwd.
+
+## Resultaat
+
+**Kracht-versnellingsmodel: gelukt.** De eindcontrole hierboven werkt in zeven stappen, zonder
+omweg en zonder een formulier te hoeven sluiten: `a = 4`, na 10 stappen `v = 40` en `x = 220`.
+Wat goed werkt:
+- De "?" als werkwijze: elke onbekende grootheid is één klik, typen, Enter.
+- Enter kiest zelf constante of hulpvariabele; *Maak toestandsvariabele* zet de regels van `v`
+  vóór die van `x`.
+- Het formulier "Onbekend" staat naast het element, de cursor staat in het veld.
+- Het nieuwe element is geselecteerd en de bijbehorende tekstregels lichten op. Zo ziet de
+  leerling wat de GUI heeft geschreven.
+- Ongedaan maken, het dt-veld, en de melding "Verder werken?" na herladen.
+
+**Champignon: niet gelukt via het diagram.** De krachten, `v`, `x` en een groeiende `Opp` lukken.
+De twee voorwaarden (`als t > 13 dan …`, `als Opp > 42,6 dan …`) zijn niet te maken (punt 14).
+Onderweg kwamen foute eenheden (punt 15) en een ongeldige regel (punt 16) naar voren.
+
+## Deel 4 — blokkerend
+
+### 14. Een voorwaarde (voorval) is niet via het diagram te maken
+
+**Stappen:** maak `Opp` als toestandsvariabele met verandering `groei`. Klik op "?" groei en typ
+`als t > 13 dan 11 anders 0`.
+
+**Nu:**
+- "De formule … klopt niet." Er is geen knop voor een voorwaarde.
+- Het diagram *tekent* voorvallen wel (bliksemschicht, in het examenmodel `t > 13` en
+  `Opp > 42,6`), maar het formulier zegt: "Dit kun je alleen in de tekst van het model aanpassen."
+- Dit raakt ook andere examenmodellen, bijvoorbeeld 2015-I Sprong bij volleybal
+  (`als … anders …` en `als (v < 0) dan stop`). De overige examens zijn niet nagelopen.
+
+**Gewenst:**
+- Een vierde knop *+ Voorwaarde* met een formulier: voorwaarde (`t > 13`), variabele (`Opp`),
+  nieuwe waarde of formule (`Opp + dOpp`), en een keuze "stop het model". Het resultaat is
+  `als … dan … eindals`, geplaatst na de regels van de variabele en vóór `t = t + dt`.
+- Het formulier van een bestaand voorval wordt bewerkbaar (voorwaarde en toekenning), met
+  *Verwijder*.
+- Voor de begrenzing (`als Opp > 42,6 dan Opp = 42,6`) volstaat een veld *Maximum* / *Minimum*
+  in het formulier van een toestandsvariabele.
+- `als … dan … anders …` (2015-I, `Fafzet`): een hulpvariabele met een tweede formule
+  "anders". Dit kan later; de eerste drie punten dekken 2005-I.
+
+**Tests:** het model van 2005-I is via `ops` op te bouwen en geeft dezelfde uitkomst als
+`modellen/examenvwo2005.xml`.
+
+### 15. Afgeleide eenheden zijn fout bij een getal in een formule
+
+**Stappen:** zet *eenheden* aan. Bouw `Fz = m * 9,81`, `Fr = Fz - Fw`, `a = Fr/m`, `v`, `x`. Geef
+alleen `m` de eenheid `kg` (`t` en `dt` krijgen vanzelf `s`).
+
+**Nu:** het diagram, de tabelkop en de assen tonen `Fz (kg)`, `Fw (kg)`, `Fr (kg)`, `a ()`,
+`v (s)`, `x (s²)` en `k (kg/(m²·s²))`. Het getal `9,81` telt als dimensieloos
+(`eenheden.js`, `case 'Number'`). De leerling ziet foute natuurkunde zonder waarschuwing.
+
+**Gewenst:**
+- Een getal in een product of quotiënt maakt de eenheid **onbekend**, niet dimensieloos.
+  Uitzondering: een exponent en een geheel getal of `0,5` (`0,5 * m * v^2`).
+- Een afgeleide eenheid staat er anders dan een ingevulde (grijs of cursief), zodat duidelijk is
+  wat de leerling zelf heeft opgegeven.
+- `a ()` wordt nooit getoond: geen eenheid is geen haakjes.
+- Hint bij `m * 9,81`: "Geef 9,81 een naam (g) en een eenheid."
+
+**Tests (`test/eenheden_tests.js`):** `Fz = m * 9,81` met `m` in kg geeft geen eenheid voor `Fz`;
+`Ek = 0,5 * m * v^2` geeft wel `J`.
+
+### 16. De naam van de stroom kan botsen met de verandering
+
+**Stappen:** maak toestandsvariabele `Opp`, beginwaarde `0,8`, verandering `dOpp` (de naam uit
+het examenmodel).
+
+**Nu:** de GUI schrijft `dOpp = dOpp * dt` en `Opp = Opp + dOpp`. Het diagram tekent `dOpp` als
+tweede toestandsvariabele. Geen melding.
+
+**Gewenst:** `freeName('d' + naam)` telt ook de namen in de ingevulde formule mee. Bij een
+botsing: een foutmelding in het formulier ("dOpp is de naam van de stroom; kies een andere
+naam voor de verandering per tijdseenheid").
+
+**Tests:** `addStock Opp (rate dOpp)` wordt geweigerd of geeft een stroom met een andere naam.
+
+## Deel 5 — hinderlijk
+
+### 17. Het formulier voor een toestandsvariabele bedekt het diagram
+
+Punt 3 is opgelost voor "Onbekend" en voor de eigenschappen, niet voor *Nieuwe
+toestandsvariabele* / *Maak toestandsvariabele*. Dat formulier staat linksboven over het
+diagram; bij een klein model is alles weg, ook de "?" waar het om gaat. **Gewenst:** dezelfde
+plaatsing als "Onbekend".
+
+### 18. Indeling en zoom (punten 10 en 11, nu met een concreet geval)
+
+- Na elke stap staan de elementen ergens anders (`m` sprong van naast `Fr` naar de linkerrand,
+  `k` van boven `Fw` naar het midden). Een leerling moet elke keer opnieuw zoeken.
+- Bij negen elementen (Champignon) zoomt het diagram naar 85%, in één tussenstap naar 63%. De
+  formules zijn dan niet te lezen.
+- De pagina verspringt verticaal als een formulier opent.
+
+**Gewenst:** punt 11 (bestaande elementen blijven staan, een nieuw element komt bij zijn buur)
+en punt 10 (hoogte groeit mee) krijgen voorrang boven de rest van dit deel.
+
+### 19. Eenheid invullen
+
+- Enter in het veld *Eenheid* doet niets; de eenheid wordt pas opgeslagen als het veld de focus
+  verliest. **Gewenst:** Enter slaat op en sluit het formulier.
+- Het eigenschappenformulier heeft geen zichtbare knop om op te slaan; alleen *Verwijder*.
+  **Gewenst:** een knop *OK*.
+- De notatie wisselt: `Opp (m^2)` (ingevuld) naast `x (s²)` (afgeleid). **Gewenst:** altijd
+  superscript.
+
+### 20. Formules in het diagram
+
+- Vermenigvuldigen staat er als spatie: `Fz = m 9,81`, `Fw = k Opp v^2`. **Gewenst:** `·`.
+- Het formulelabel van een stroom staat over de naam (`a`), het label met de beginwaarde over
+  de "+"-handvatten van de toestandsvariabele.
+
+### 21. Beginwaarde wordt overgeslagen
+
+Na *Maak toestandsvariabele* staat de cursor in *Verandering per tijdseenheid*; de beginwaarde
+(`0`) ligt daarvoor. Voor `Opp = 0,8` moet de leerling terug. **Gewenst:** cursor in
+*Beginwaarde*, met de `0` geselecteerd.
+
+## Deel 6 — klein
+
+22. **Volgorde startwaarden.** Het resultaat is `x`, `t`, `dt`, `v`, `m`, `F`. Zet nieuwe
+    startwaarden boven `t` en `dt`, zoals in de basismodellen.
+23. **Spaties.** `a = Fres/m` (getypt) staat naast `dv = a * dt` (gegenereerd). Schrijf formules
+    uit het formulier met dezelfde spaties.
+24. **Tabel.** De stroomvariabelen `dv` en `dx` krijgen een eigen kolom. Overweeg ze standaard
+    te verbergen bij een model dat via het diagram is gemaakt.
+25. **Weergave onthouden.** Na herladen staat de weergave weer op *Tekst*. Onthoud
+    *Tekst + grafisch*.
+26. **Opnieuw beginnen.** Er is geen knop *Nieuw model* bij het diagram. Opnieuw beginnen gaat
+    via de modelkeuze of herladen. (Niet getest: of "Leeg model" opnieuw kiezen in de lijst
+    werkt als het al gekozen is.)
+27. **Leeg canvas.** Het lege diagram is één regel hoog. Geef het de hoogte van een klein model,
+    dan verspringt de pagina niet bij het eerste element.
+
+## Eindcontrole (tweede ronde)
+
+Bouw 2005-I Champignon in de browser, zonder in de tekstvakken te typen:
+
+1. `x` (0, `v`) → `v` toestandsvariabele (0, `a`) → `a = Fr/m` → `Fr = Fz - Fw`.
+2. `Fz = m * g`, `g = 9,81` met eenheid `m/s^2`; `Fw = k * Opp * v^2`; `m = 91` kg; `k = 0,37`.
+3. `Opp` toestandsvariabele, 0,8 m², verandering `groei`; `groei = 11`.
+4. *+ Voorwaarde*: `t > 13` bij de stroom van `Opp` (daarvoor geen groei); maximum 42,6.
+5. Run met 500 iteraties.
+
+Verwacht: dezelfde grafiek van `v` als het examenmodel; eenheden `Fz (N)`, `a (m/s²)`,
+`v (m/s)`, `x (m)` na het invullen van `x` in m; het diagram blijft leesbaar (≥ 90%).
