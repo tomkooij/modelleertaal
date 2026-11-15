@@ -2,6 +2,21 @@
 
 ## [Unreleased]
 
+### Rondleiding
+
+- New button **Rondleiding** at the right of the top bar. It opens a small menu with two tours of
+  five steps each. It never starts by itself; a small dot on the button shows it has not been
+  opened yet (remembered in the browser).
+- **Voor leerlingen**: choosing a model, modelregels and startwaarden, Run and Stap, reading the
+  graph (and the tangent line), Tekst + grafisch.
+- **Voor docenten**: an opdracht with the model, Deel link, comparing runs in class (Houd vast),
+  the diagram as input (text and diagram are linked), and the diagram drawn automatically from the
+  text model.
+- Each step lights up its part of the page; the page stays usable. Volgende/Vorige, the arrow keys
+  and Esc. For the graph steps the tour runs the model if it has no results; the diagram and Meer
+  opties are opened for their step and closed again afterwards (the diagram stays open between two
+  diagram steps).
+
 ## [6.6]
 
 15 nov 2026
