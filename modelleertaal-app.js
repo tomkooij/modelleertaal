@@ -12,6 +12,7 @@ var aflezen = require('./aflezen.js');
 var assen = require('./assen.js');
 var hints = require('./hints.js');
 var oorzaak = require('./oorzaak.js');
+var rondleiding = require('./rondleiding.js');
 var Blob = require('blob');
 var FileSaver = require('file-saver');
 // this also depends on:
@@ -182,6 +183,10 @@ function ModelleertaalApp(params) {
   // after the first model is loaded: offer to continue with unsaved work
   this.restore_check = true;
   this.load_model();
+
+  // Rondleiding: only with the button at the top, never automatically
+  this.rondleiding = new rondleiding.Rondleiding(this);
+  this.rondleiding.knop('#rondleiding_knop');
 
   $(this.dom_run).click(function() {
     // count model run as pageview to #run in goatcounter

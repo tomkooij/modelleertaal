@@ -2,6 +2,16 @@
 
 ## [Unreleased]
 
+### Rondleiding
+
+- New button **Rondleiding** at the right of the top bar: a short tour along the five parts a
+  teacher should see first: choosing a model, Run and Stap, the automatic graphs and reading them,
+  Tekst + grafisch, and an opdracht with Deel link. It never starts by itself; a small dot on the
+  button shows it has not been opened yet (remembered in the browser).
+- Each step lights up its part of the page; the page stays usable. Volgende/Vorige, the arrow keys
+  and Esc. For the graph step the tour runs the model if it has no results; the diagram and Meer
+  opties are opened for their step and closed again afterwards.
+
 ## [6.6]
 
 15 nov 2026

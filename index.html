@@ -235,6 +235,137 @@
             min-width: 0;
         }
 
+        /* Rondleiding: knop rechts in de bovenste balk. Valt op door de kleur, niet door beweging.
+           Tot de rondleiding een keer geopend is staat er een stip op (class nieuw). */
+        #rondleiding_knop {
+            position: relative;
+            margin-left: auto;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border-color: #93c5fd;
+            background: #eff6ff;
+            color: var(--primary);
+            font-weight: 600;
+            border-radius: 999px;
+            padding: 5px 14px 5px 6px;
+        }
+
+        #rondleiding_knop:hover {
+            background: #dbeafe;
+            border-color: var(--primary);
+        }
+
+        #rondleiding_knop .tour_icoon {
+            display: inline-grid;
+            place-items: center;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: #fff;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        #rondleiding_knop.nieuw::after {
+            content: "";
+            position: absolute;
+            top: -3px;
+            right: -3px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #f59e0b;
+            border: 2px solid var(--bg);
+        }
+
+        .tour_spot {
+            position: fixed;
+            z-index: 1000;
+            border-radius: 10px;
+            box-shadow: 0 0 0 3px #60a5fa, 0 0 0 9999px rgba(17, 24, 39, 0.45);
+            pointer-events: none;
+            transition: left 0.25s, top 0.25s, width 0.25s, height 0.25s;
+        }
+
+        .tour_ballon {
+            position: fixed;
+            z-index: 1001;
+            background: var(--card);
+            border-radius: 10px;
+            padding: 14px 16px 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+            font-size: 0.95rem;
+            line-height: 1.45;
+            max-height: calc(100vh - 32px);
+            overflow: auto;
+        }
+
+        .tour_ballon h2 {
+            color: var(--text);
+            font-size: 1.05rem;
+            margin: 2px 28px 6px 0;
+        }
+
+        .tour_ballon p {
+            margin: 0 0 8px;
+        }
+
+        .tour_ballon code {
+            font-size: 0.85em;
+            background: #f3f4f6;
+            padding: 1px 4px;
+            border-radius: 4px;
+        }
+
+        .tour_teller {
+            font-size: 0.8rem;
+            color: var(--muted);
+        }
+
+        .tour_extra {
+            font-size: 0.875rem;
+            color: var(--muted);
+        }
+
+        .tour_sluit {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            min-height: 0;
+            width: 30px;
+            height: 30px;
+            padding: 0;
+            border: none;
+            background: transparent;
+            font-size: 1.3rem;
+            line-height: 1;
+            color: var(--muted);
+        }
+
+        .tour_knoppen {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+        }
+
+        .tour_knoppen .tour_volgende {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: #fff;
+        }
+
+        .tour_knoppen .tour_volgende:hover {
+            background: var(--primary-dark);
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .tour_spot {
+                transition: none;
+            }
+        }
+
         /* run balk */
         .runbar {
             display: flex;
@@ -1333,6 +1464,8 @@
             <button id="download_xml" type="button" title="Sla dit model op je computer op (.xml). De naam van het bestand is de titel van het model.">Bewaar</button>
             <button id="permalink" type="button" title="Kopieer een link naar dit model (met jouw wijzigingen)">Deel link</button>
         </div>
+        <button id="rondleiding_knop" type="button" aria-expanded="false"
+            title="Nieuw hier? Een korte rondleiding langs de vijf belangrijkste onderdelen (1 minuut)"><span class="tour_icoon" aria-hidden="true">?</span>Rondleiding</button>
     </header>
 
     <main>
