@@ -180,7 +180,7 @@ leerling in de les ziet, ziet hij of zij op het examen terug.
 De **kleurstijl** volgt bewust geen enkel programma, maar de notatie die de meeste software en boeken over
 System Dynamics delen, vanaf Forrester (*Industrial Dynamics*, 1961): een rechthoek voor een
 *toestandsvariabele*, een buis met een ventiel (vlinderdas) voor een *stroom*, een wolkje voor wat buiten
-het model ligt, een cirkel voor een *hulpvariabele* (Stella, Powersim) en een ruit voor een *constante*
+het model ligt, een cirkel voor een *hulpvariabele* (Coach 7, Stella, Powersim) en een ruit voor een *constante*
 (Powersim). De overwegingen:
 
 - **Overdraagbaar.** Een leerling die later met Stella, Vensim, Powersim of Insight Maker werkt, of een
@@ -200,7 +200,7 @@ het model ligt, een cirkel voor een *hulpvariabele* (Stella, Powersim) en een ru
 - **De stopvoorwaarde is een stopbord.** Omdat de ruit al de constante is, krijgt de stopvoorwaarde een
   achthoek: zonder uitleg te begrijpen.
 - **Kleur met een functie.** Blauwe symbolen en rode pijlen op wit, kleuren die veel leerlingen van school
-  kennen. De rode pijlen springen eruit, want "waar hangt dit van af?" is de vraag die een leerling bij
+  kennen uit Coach 7. De rode pijlen springen eruit, want "waar hangt dit van af?" is de vraag die een leerling bij
   het lezen van een diagram moet stellen. De kleuren zijn zachter dan puur blauw en rood, zodat een groot
   model rustig blijft.
 

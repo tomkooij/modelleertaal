@@ -88,7 +88,7 @@ Bronnen van de twee stijlen:
 | Stijl | Bron |
 |---|---|
 | Examen | De grafische modellen in de centrale examens natuurkunde vwo op [examenblad.nl](https://www.examenblad.nl): 2022-I *Vrije worp bij basketbal* (figuur 5), 2023-II *Fietshelm* (figuur 6), 2018-I *Uitrijden van een auto* (figuur 2) |
-| Kleur | De gangbare stock-flow notatie (zie de tabel hieronder): J.W. Forrester, *Industrial Dynamics* (1961), hoofdstuk *Symbols for flow diagrams*; J.D. Sterman, *Business Dynamics* (2000); de handleidingen van Stella, Vensim en Powersim |
+| Kleur | De gangbare stock-flow notatie (zie de tabel hieronder): J.W. Forrester, *Industrial Dynamics* (1961), hoofdstuk *Symbols for flow diagrams*; J.D. Sterman, *Business Dynamics* (2000); de handleidingen van Stella, Vensim en Powersim; Coach 7 (A. Heck, *Guide on modelling*, UvA, figuur 3.10 *A graphical model in Coach 7*) voor de kleuren, de cirkel en de pijlen |
 
 Waarom deze symbolen in de kleurstijl? De examenstijl volgt het examen; de kleurstijl volgt wat je buiten
 school ziet, in boeken over System Dynamics en in de bekende programma's. Zo herkent een leerling of docent
@@ -97,12 +97,12 @@ Per symbool:
 
 | Element | Symbool in Kleur | Waar het vandaan komt |
 |---|---|---|
-| *toestandsvariabele* | rechthoek | Forrester (*level*), en alle programma's: Stella, Vensim, Powersim, Insight Maker |
+| *toestandsvariabele* | rechthoek | Forrester (*level*), en alle programma's: Coach, Stella, Vensim, Powersim, Insight Maker |
 | *stroom* | dikke buis met een ventiel als vlinderdas | Forrester (*rate*: een kraan in de buis), Sterman, Vensim (*valve*) |
 | *stroom* van of naar buiten het model | wolkje | Forrester (*source* en *sink*), Sterman, [Stella](https://iseesystems.com/resources/help/v3/Content/08-Reference/ObjectIconography.htm) en [Vensim](https://vensim.com/documentation/ref_variable_types.html): het wolkje is de grens van het model, wat daar gebeurt rekenen we niet uit |
-| *hulpvariabele* | cirkel | Stella (*converter*), Powersim (*auxiliary*) |
+| *hulpvariabele* | cirkel | Coach 7 (*hulpvariabele*), Stella (*converter*), Powersim (*auxiliary*) |
 | *constante* | ruit | Powersim (*constant*), zie de [Powersim Studio best practices](https://powersim.com/wp-content/uploads/2022/06/SANDIAPowersimStudioBestPracticesManual06-23-2011.pdf) (Sandia, 2011) |
-| "hangt af van" | dunne, gebogen pijl | Stella (*connector*), Vensim (*arrow*): informatie, geen materie, en hij wijst nooit naar een *toestandsvariabele* |
+| "hangt af van" | dunne, gebogen pijl | Coach 7 (*relatiepijl*, rood), Stella (*connector*), Vensim (*arrow*): informatie, geen materie, en hij wijst nooit naar een *toestandsvariabele* |
 | *stopvoorwaarde* | achthoek (stopbord) | eigen keuze: de ruit is in deze stijl al de *constante* |
 | *voorval* | bliksem (geel) | het *Event* van [AnyLogic](https://anylogic.help/anylogic/statecharts/events.html): een gele bliksem voor iets wat op één moment gebeurt |
 | *onafhankelijke variabele* (`t`) | klok | het blok *Clock* van [Simulink](https://www.mathworks.com/help/simulink/slref/clock.html), dat de simulatietijd geeft |
@@ -120,7 +120,7 @@ hetzelfde uit (zoals in de examens); in de kleurstijl zie je meteen wat elke sta
 zichtbaar verschil duidelijker.
 
 De kleuren (blauwe symbolen met een lichtblauwe vulling, rode pijlen op wit) sluiten aan bij wat veel
-leerlingen al van school kennen. Ze zijn iets zachter gemaakt dan puur blauw en rood, zodat het diagram
+leerlingen al van school kennen: de kleuren van Coach 7. Ze zijn iets zachter gemaakt dan puur blauw en rood, zodat het diagram
 rustig blijft, en de rode pijlen vallen op tussen de blauwe symbolen: precies die pijlen ("waar hangt dit
 van af?") moet een leerling lezen.
 
