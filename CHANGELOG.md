@@ -4,7 +4,7 @@
 
 ### Rondleiding
 
-- New button **Rondleiding** at the right of the top bar. It opens a small menu with two tours of
+- New button **Rondleiding** at the bottom right of the page (in the footer, out of the way). It opens a small menu with two tours of
   five steps each. It never starts by itself; a small dot on the button shows it has not been
   opened yet (remembered in the browser).
 - **Voor leerlingen**: choosing a model, modelregels and startwaarden, Run and Stap, reading the
@@ -16,6 +16,14 @@
   and Esc. For the graph steps the tour runs the model if it has no results; the diagram and Meer
   opties are opened for their step and closed again afterwards (the diagram stays open between two
   diagram steps).
+- The tour shows what it explains, with a short note in the balloon, and puts everything back
+  afterwards (the model itself never changes):
+  - Run en Stap: three times Stap, with the calculation below the run bar.
+  - De grafiek aflezen: a point is read off (dot, lines to the axes, tangent), then the tangent is
+    clicked: the intersections with the axes and the helling Δy/Δx.
+  - Tekst + grafisch: a toestandsvariabele is selected and its lines light up in the text.
+  - Het diagram is ook invoer: the same, with its form open.
+  - Het diagram komt uit de tekst: a line of the text lights up and its symbol in the diagram.
 
 ## [6.6]
 
