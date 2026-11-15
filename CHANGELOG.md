@@ -2,6 +2,22 @@
 
 ## [Unreleased]
 
+### Grafisch model: symbolen in de stijl Kleur
+
+- The style **Kleur** now uses the stock-flow notation shared by most System Dynamics software and
+  books (Forrester, Sterman, Stella, Vensim, Powersim) instead of the symbols of one program:
+  a *constante* is a diamond (was: a circle with a line segment on each side), a flow from or to
+  outside the model starts or ends in a cloud (was: a dashed circle) and a *stopvoorwaarde* is an
+  octagon (a stop sign; was: a red diamond). Toestandsvariabele (rectangle), stroom (pipe with a
+  bow tie valve), hulpvariabele (circle) and the colors do not change. The style Examen does not change.
+- README and DIDACTIEK.md explain the choice of symbols and colors, with sources per symbol.
+- In the style Kleur the name of a flow (`a` in `v = v + a*dt`) is as large as the other names
+  (was: small and grey), as in the SLO examples.
+- README, DIDACTIEK.md and `grafisch.js` give the sources of the lightning bolt (voorval: the
+  Event of AnyLogic) and the clock (onafhankelijke variabele: the Clock block of Simulink).
+- DIDACTIEK.md compares both styles with the graphical models in the SLO examples
+  (*Voorbeelden computermodellen natuurkunde*) and explains why there is no third style.
+
 ### Documentatie
 
 - New `DIDACTIEK.md`: the didactic principles of the webapp and, per part, the reason behind

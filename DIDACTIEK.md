@@ -172,6 +172,100 @@ grafische model. Daarom zijn ze gekoppeld: kies een symbool en de regels ervan l
 een regel en het symbool licht op. De examenstijl volgt de figuren in de centrale examens, zodat een
 leerling op het examen dezelfde symbolen ziet.
 
+### Twee stijlen: het examen en de gangbare notatie
+
+De **examenstijl** is de standaard: zwart-wit op grijs, zoals de figuren in de centrale examens. Wat een
+leerling in de les ziet, ziet hij of zij op het examen terug.
+
+De **kleurstijl** volgt bewust geen enkel programma, maar de notatie die de meeste software en boeken over
+System Dynamics delen, vanaf Forrester (*Industrial Dynamics*, 1961): een rechthoek voor een
+*toestandsvariabele*, een buis met een ventiel (vlinderdas) voor een *stroom*, een wolkje voor wat buiten
+het model ligt, een cirkel voor een *hulpvariabele* (Stella, Powersim) en een ruit voor een *constante*
+(Powersim). De overwegingen:
+
+- **Overdraagbaar.** Een leerling die later met Stella, Vensim, Powersim of Insight Maker werkt, of een
+  boek als Sterman's *Business Dynamics* openslaat, herkent de symbolen. Het begrip zit in de notatie, niet
+  in één programma.
+- **Het wolkje laat de modelgrens zien.** Een stroom "uit het niets" of "naar het niets" roept de vraag op
+  waar het vandaan komt; het wolkje zegt: dat rekenen we niet uit. Dat is een modelkeuze die een leerling
+  moet kunnen benoemen.
+- **Constante en hulpvariabele zijn verschillend.** In de examenstijl zijn ze allebei een cirkel, zoals in
+  de examens. In de kleurstijl zie je meteen wat vast ligt (ruit) en wat elke stap opnieuw berekend wordt
+  (cirkel). Dat onderscheid is precies het verschil tussen een startwaarde en een modelregel.
+- **Bliksem en klok voor wat geen stroom is.** Een *voorval* (`als h < 0 dan v = -v eindals`) verandert
+  een toestandsvariabele in één klap, niet met een stroom per stap. Dat verdient een eigen, opvallend
+  symbool: de bliksem, zoals het *Event* in AnyLogic. De *onafhankelijke variabele* `t` is een klok, zoals
+  het blok *Clock* in Simulink. Beide pictogrammen zijn zonder uitleg te begrijpen, en ze staan in beide
+  stijlen, omdat de examenfiguren er geen symbool voor hebben.
+- **De stopvoorwaarde is een stopbord.** Omdat de ruit al de constante is, krijgt de stopvoorwaarde een
+  achthoek: zonder uitleg te begrijpen.
+- **Kleur met een functie.** Blauwe symbolen en rode pijlen op wit, kleuren die veel leerlingen van school
+  kennen. De rode pijlen springen eruit, want "waar hangt dit van af?" is de vraag die een leerling bij
+  het lezen van een diagram moet stellen. De kleuren zijn zachter dan puur blauw en rood, zodat een groot
+  model rustig blijft.
+
+Welke stijl je kiest verandert niets aan het model: het is dezelfde tekst, anders getekend. De bronnen per
+symbool staan in de [README](README.md#grafisch-model).
+
+### Vergelijking met de SLO-voorbeelden
+
+SLO geeft bij de handreiking modelleren een reeks
+[voorbeelden van computermodellen natuurkunde](https://www.slo.nl/thema/vakspecifieke-thema/natuur-techniek/modelleren/voorbeelden-computermodellen-natuurkunde/):
+per model de differentievergelijkingen, het tekstmodel en een figuur van het grafische model (bijvoorbeeld
+het [parachutemodel](https://www.slo.nl/thema/vakspecifieke-thema/natuur-techniek/modelleren/voorbeelden-computermodellen-natuurkunde/kracht-beweging/parachutemodel/)
+en het [afkoelingsmodel](https://www.slo.nl/thema/vakspecifieke-thema/natuur-techniek/modelleren/voorbeelden-computermodellen-natuurkunde/energie-warmte/afkoelingsmodel/)).
+Die figuren zijn schermafbeeldingen van de modelleersoftware die op school gebruikt wordt. Bekeken zijn de
+18 grafische modellen bij kracht en beweging, trillingen en energie en warmte (november 2026).
+
+| | SLO-voorbeelden | Examen | Kleur |
+|---|---|---|---|
+| achtergrond | wit | grijs | wit |
+| kleuren | blauwe symbolen en namen, rode pijlen | zwart | blauwe symbolen, rode pijlen |
+| *toestandsvariabele* | rechthoek, wit, dunne rand, naam erin | rechthoek, wit, naam cursief | rechthoek met ronde hoeken, lichtblauw, naam vet |
+| *stroom* | holle buis (dubbele lijn) | holle buis | holle buis |
+| ventiel | cirkel op de buis | cirkel met een kraantje | vlinderdas |
+| pijlpunt bij de *toestandsvariabele* | holle driehoek met een **+** erin | open driehoek | dichte driehoek |
+| van of naar buiten het model | open uiteinde, geen symbool | open uiteinde | wolkje |
+| *hulpvariabele* | cirkel, naam eronder | cirkel, naam eronder | cirkel, naam eronder |
+| *constante* | **kleinere** cirkel met aan elke kant een streepje | dezelfde cirkel als een *hulpvariabele* | kleinere ruit |
+| "hangt af van" | dunne rode gebogen pijl | zwarte gebogen pijl | dunne rode gebogen pijl |
+| naam van een *stroom* | even groot als de andere namen (`a`, `T'`) | even groot, cursief | even groot als de andere namen (was: klein en grijs) |
+| richting van een *stroom* | bijna altijd **in** de *toestandsvariabele*; het teken zit in de formule (`T'` is negatief bij afkoelen) | volgt de tekst: `- ... * dt` is een stroom eruit | volgt de tekst |
+| indeling | *toestandsvariabelen* bovenaan, onder elkaar (`y` boven `v`) | *toestandsvariabelen* onderaan, naast elkaar | als Examen |
+
+Wat opvalt:
+
+- **De symbolen voor wat er bestaat zijn overal hetzelfde:** rechthoek, holle buis met een ventiel,
+  cirkel, gebogen pijl. Een leerling die de SLO-figuren of de examenfiguren kent, leest beide stijlen van de
+  webapp zonder uitleg.
+- **De verschillen zitten in drie details:** het ventiel (cirkel, kraantje of vlinderdas), de *constante*
+  (cirkel met streepjes, gewone cirkel of ruit) en de **+** in de pijlpunt. Alle drie de stijlen maken
+  wel verschil tussen een *constante* en een *hulpvariabele*, behalve het examen.
+- **De + in de pijlpunt** laat zien dat de *stroom* bij de *toestandsvariabele* wordt opgeteld
+  (`x = x + v*dt`). Dat is precies het verband tussen diagram en tekst dat de leerling moet zien. De webapp
+  laat het zien met de richting van de buis; een **+** of **−** zou het nog explicieter maken.
+- **De naam van een stroom** is in de SLO-figuren even goed leesbaar als de rest. In de kleurstijl was hij
+  klein en grijs; dat was een zwak punt, want `a` in `v = v + a*dt` is juist een naam die de leerling
+  moet herkennen. Nu is hij even groot als de andere namen (P3-10).
+- **De indeling** verschilt door de tekst, niet door de stijl. De webapp zet de keten van stromen en
+  toestandsvariabelen op één rij, zoals in de examenfiguren; SLO zet ze onder elkaar. Dat is geen reden om
+  de indeling te veranderen: de leerling kan de symbolen zelf verslepen.
+
+### Geen derde stijl
+
+Een derde stand ("zoals SLO") is **niet nodig**. De overwegingen:
+
+- **Het examen is de maat.** Wat een leerling moet herkennen, staat in de examenfiguren, en die stijl is
+  de standaard.
+- **Een SLO-stijl is een kopie van één programma.** De SLO-figuren zijn schermafbeeldingen van de software
+  op school. Een stijl die daarop lijkt, maakt de webapp afhankelijk van hoe dat programma er nu uitziet,
+  terwijl de kleurstijl juist de algemene notatie volgt.
+- **Elke keuze is een knop meer.** "Liever een knop weghalen dan een knop toevoegen": drie stijlen
+  vragen uitleg over het verschil, terwijl het verschil maar drie details is.
+- **Wat er goed is aan de SLO-figuren, past in de kleurstijl:** een leesbare naam bij een *stroom*
+  (gebouwd), een teken bij de pijlpunt en een rustiger tekening (voorstellen P3-11 en P3-12 in
+  [VERBETERPUNTEN.md](VERBETERPUNTEN.md)).
+
 ### Fouten en veelgemaakte modelfouten
 
 - **Tijdens het typen** controleert de webapp de syntax stil: een rode stip naast de regel, met de

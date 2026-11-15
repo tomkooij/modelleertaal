@@ -7,8 +7,9 @@
     grijze achtergrond, toestandsvariabele als rechthoek, stroom als holle pijl
     met een ventiel (cirkel met kraantje), hulpvariabelen en constanten als
     cirkels met de naam eronder en zwarte relatiepijlen.
-    Er is ook een stijl in kleur (toSVG(g, lay, {stijl: 'kleur'})): de kleuren en
-    symbolen van Coach 7 (hulpvariabele cirkel, constante cirkel met streepjes).
+    Er is ook een stijl in kleur (toSVG(g, lay, {stijl: 'kleur'})) met de symbolen
+    die de meeste System Dynamics software gebruikt (Forrester, Stella, Vensim, Powersim):
+    hulpvariabele cirkel, constante ruit, ventiel als vlinderdas, wolkje buiten het model.
     Bronnen: zie STIJLEN.
 
     Herkenning (Euler-vorm, zoals in de examenmodellen):
@@ -956,23 +957,33 @@ function layout(g, opts) {
 //             black on white symbols on a gray background, a hollow pipe with an open arrow head,
 //             ventiel = circle with a tap, hulpvariabele and constante the same circle, name below.
 //
-//   'kleur':  the colors of Coach 7 (CMA): blue symbols and names, red relatiepijlen, on white.
-//             The meaning of the symbols as in Coach 7, see A. Heck, Guide on modelling (UvA),
-//             https://staff.fnwi.uva.nl/a.j.p.heck/Guide_on_modelling/Text/grafischmodelleren.html
-//             (Fig 3.10 'A graphical model in Coach 7'):
-//               toestandsvariabele  rectangle
-//               hulpvariabele       circle ('indicated by a circle')
-//               constante           'a circle with two extra line segments on each side'
-//             (the same constante symbol is in the exam 2018-I 'Uitrijden van een auto', figuur 2).
-//             Our own: softer colors (Coach 7 uses #0000ff and #ff0000), a light blue fill, a bow tie
-//             as valve and a dashed circle for a flow from/to outside the model (Coach 7: open end).
+//   'kleur':  the stock-flow symbols that most System Dynamics software shares, going back to
+//             J.W. Forrester, Industrial Dynamics (1961), chapter 'Symbols for flow diagrams',
+//             and J.D. Sterman, Business Dynamics (2000):
+//               toestandsvariabele  rectangle                       (Forrester level; all software)
+//               stroom              pipe with a bow tie valve       (Forrester rate; Vensim, Sterman)
+//               buiten het model    cloud (source / sink)           (Forrester, Stella, Vensim, Powersim)
+//               hulpvariabele       circle                          (Stella converter, Powersim auxiliary)
+//               constante           diamond                         (Powersim constant)
+//               relatiepijl         thin curved arrow               (Stella connector, Vensim arrow)
+//               stopvoorwaarde      octagon (a stop sign; the diamond is the constante here)
+//             Not in the stock-flow notation, the same in both styles (black in examen):
+//               voorval             lightning bolt: the Event element of AnyLogic (a yellow bolt,
+//                                   https://anylogic.help/anylogic/statecharts/events.html)
+//               onafhankelijke var. clock face: the Clock block of Simulink (simulation time,
+//                                   https://www.mathworks.com/help/simulink/slref/clock.html)
+//             The elements themselves (voorval: a condition that changes a toestandsvariabele;
+//             onafhankelijke variabele t) are those of the Coach 7 manual, section 'Modelelementen
+//             voor de grafische en vergelijkingenmodus'; its icons are not copied.
+//             Colors: blue symbols, red relatiepijlen on white, as Dutch students know from school,
+//             softened (#1f5fa8 and #c62828 instead of pure blue and red) with a light blue fill.
 var STIJLEN = {
     examen: {line: '#000', fill: '#fff', bg: '#d4d4d4', red: '#c62828', text: '#000', grey: '#555',
              arrow: '#000', font: 'Times New Roman, Times, serif', size: 15,
              aux: 13, constant: 13, valve: 10, gap: 2},
     kleur: {line: '#1f5fa8', fill: '#dceaf8', bg: '#fff', red: '#c62828', text: '#1d2733', grey: '#6b7785',
             arrow: '#c62828', font: 'Segoe UI, Helvetica, Arial, sans-serif', size: 13,
-            aux: 18, constant: 11, valve: 9, gap: 3, outside: 10}
+            aux: 18, constant: 14, valve: 9, gap: 3, outside: 13}
 };
 
 function esc(s) {
@@ -988,7 +999,11 @@ function radius(el, dx, dy, S) {
             var ty = Math.abs(dy) > 1e-9 ? (L.stockH / 2) / Math.abs(dy) : Infinity;
             return Math.min(tx, ty) * len + 3;
         case 'flow': return S.valve + S.gap + 1;
-        case 'const': return S.constant + S.gap;
+        case 'const':
+            if (!S.outside) return S.constant + S.gap;
+            // diamond: |x| + |y| = r
+            var dl = Math.sqrt(dx * dx + dy * dy) || 1;
+            return S.constant * dl / ((Math.abs(dx) + Math.abs(dy)) || 1) + S.gap;
         case 'event': return 16;
         case 'stop': return 15;
         default: return S.aux + S.gap;
@@ -997,12 +1012,19 @@ function radius(el, dx, dy, S) {
 
 function pipeEnd(x, y, S) {
     // the open end of a flow from or to outside the model.
-    // examen: not drawn (an invisible area to drag it), kleur: a dashed circle
+    // examen: not drawn (an invisible area to drag it), kleur: a cloud (source or sink, as Forrester)
     if (!S.outside) {
         return '<circle class="end" cx="' + x + '" cy="' + y + '" r="12" fill="#000" fill-opacity="0" stroke="none"/>';
     }
-    return '<circle cx="' + x + '" cy="' + y + '" r="' + S.outside + '" fill="#fff" stroke="' + S.line +
-        '" stroke-width="1.5" stroke-dasharray="3 2.5"/>';
+    return '<path class="cloud" d="' + cloud(x, y) + '" fill="#fff" stroke="' + S.line +
+        '" stroke-width="1.5" stroke-linejoin="round"/>';
+}
+
+function cloud(x, y) {
+    // a cloud of four bumps on a flat bottom, about 26 wide and 17 high, centered at (x, y)
+    var pt = function(dx, dy) { return (x + dx) + ',' + (y + dy); };
+    return 'M' + pt(-9, 7) + ' A4.5,4.5 0 0 1 ' + pt(-10, -1) + ' A5.5,5.5 0 0 1 ' + pt(-2, -7) +
+        ' A5,5 0 0 1 ' + pt(7, -5) + ' A4.5,4.5 0 0 1 ' + pt(9, 7) + ' z';
 }
 
 function pipe(points, out, S) {
@@ -1101,8 +1123,10 @@ function toSVG(g, lay, opts) {
         var b = f.to ? pos[f.to] : pos[f.id + ':dst'];
         var u0 = unit(a, v), u1 = unit(v, b);
         // examen: the arrow head touches the stock, kleur: a small gap
-        var ra = f.from ? radius(g.elements[f.from], u0.x, u0.y, S) + (exam ? -3 : 0) : (exam ? 0 : S.outside + 1);
-        var rb = f.to ? radius(g.elements[f.to], -u1.x, -u1.y, S) + (exam ? -3 : 3) : (exam ? 0 : S.outside + 5);
+        // kleur: the pipe starts under the cloud, the arrow head touches the cloud (10 wide, 7 high)
+        var ra = f.from ? radius(g.elements[f.from], u0.x, u0.y, S) + (exam ? -3 : 0) : (exam ? 0 : 5);
+        var rb = f.to ? radius(g.elements[f.to], -u1.x, -u1.y, S) + (exam ? -3 : 3) :
+            (exam ? 0 : 10 * Math.abs(u1.x) + 7 * Math.abs(u1.y) + 2);
         var start = {x: a.x + u0.x * ra, y: a.y + u0.y * ra}, end = {x: b.x - u1.x * rb, y: b.y - u1.y * rb};
         var straight = Math.abs(u0.x * u1.y - u0.y * u1.x) < 1e-3 && (u0.x * u1.x + u0.y * u1.y) > 0;
         pipe(straight ? [start, end] : [start, v, end], out, S);
@@ -1197,7 +1221,8 @@ function toSVG(g, lay, opts) {
                     out.push(tip + valve(x, y, valveDir[id], flip, S) + (el.varRate ? '' :
                         name(x, flip && valveDir[id] != 'v' ? y + 7 : y, S.valve, shorten(label), id)));
                 } else {
-                    out.push(tip + valve(x, y, valveDir[id], false, S) + name(x, y, 12, shorten(label), id, 'small'));
+                    // the name as large as other names (a in v = v + a*dt), as in the SLO examples
+                    out.push(tip + valve(x, y, valveDir[id], false, S) + name(x, y, 12, shorten(label), id));
                 }
                 grow(x, y + 20, 30);
                 break;
@@ -1207,13 +1232,13 @@ function toSVG(g, lay, opts) {
                 grow(x, y + 10, 30);
                 break;
             case 'const':
-                // examen: the same circle as a hulpvariabele.
-                // kleur: as Coach 7, a small circle with a line segment on each side
-                var tick = exam ? 0 : 6;
-                out.push(tip + circle(x, y, S.constant, S.fill, S.line) + (exam ? '' :
-                    '<path d="M' + (x - S.constant - tick) + ',' + y + ' H' + (x - S.constant) +
-                    ' M' + (x + S.constant) + ',' + y + ' H' + (x + S.constant + tick) + '" stroke="' + S.line + '" stroke-width="2"/>') +
-                    name(x, y, S.constant + (bottom[id] ? tick : 0), label, id));
+                // examen: the same circle as a hulpvariabele. kleur: a diamond (Powersim)
+                var rc = S.constant;
+                out.push(tip + (exam ? circle(x, y, rc, S.fill, S.line) :
+                    '<path d="M' + x + ',' + (y - rc) + ' L' + (x + rc) + ',' + y + ' L' + x + ',' + (y + rc) +
+                    ' L' + (x - rc) + ',' + y + ' z" fill="' + S.fill + '" stroke="' + S.line +
+                    '" stroke-width="2" stroke-linejoin="round"/>') +
+                    name(x, y, rc, label, id));
                 grow(x, y + 10, 30);
                 break;
             case 'event':
@@ -1225,9 +1250,19 @@ function toSVG(g, lay, opts) {
                 grow(x, y + 10, 40);
                 break;
             case 'stop':
-                // stopvoorwaarde: a diamond, the condition below (Coach; exam 2026-II)
-                out.push(tip + '<path d="M' + x + ',' + (y - 14) + ' L' + (x + 14) + ',' + y + ' L' + x + ',' + (y + 14) +
-                    ' L' + (x - 14) + ',' + y + ' z" fill="' + S.fill + '" stroke="' + (exam ? S.line : S.red) +
+                // stopvoorwaarde, the condition below. examen: a diamond (exam 2026-II).
+                // kleur: an octagon, a stop sign (the diamond is the constante in this style)
+                var ds = '';
+                if (exam) {
+                    ds = 'M' + x + ',' + (y - 14) + ' L' + (x + 14) + ',' + y + ' L' + x + ',' + (y + 14) + ' L' + (x - 14) + ',' + y + ' z';
+                } else {
+                    for (var k8 = 0; k8 < 8; k8++) {
+                        var a8 = (k8 + 0.5) * Math.PI / 4;
+                        ds += (k8 ? ' L' : 'M') + (x + 14 * Math.cos(a8)).toFixed(1) + ',' + (y + 14 * Math.sin(a8)).toFixed(1);
+                    }
+                    ds += ' z';
+                }
+                out.push(tip + '<path d="' + ds + '" fill="' + (exam ? S.fill : '#fdecea') + '" stroke="' + (exam ? S.line : S.red) +
                     '" stroke-width="' + (exam ? 1.5 : 2) + '" stroke-linejoin="miter"/>' +
                     '<text x="' + x + '" y="' + (y + 31) + '" text-anchor="middle" class="name lbl">' +
                     esc(shorten(el.condition, 22)) + '</text>');

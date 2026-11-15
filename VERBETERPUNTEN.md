@@ -385,7 +385,43 @@ Versleepte posities (`grafisch_moved`) gaan verloren bij herladen. Neem ze mee i
 
 ---
 
+### P3-10 Kleur: de naam van een stroom even goed leesbaar als de andere namen (gebouwd)
+
+Aanleiding: de vergelijking met de SLO-voorbeelden (DIDACTIEK.md, *Vergelijking met de SLO-voorbeelden*).
+Daar is de naam van een stroom (`a`, `T'`, `Ptot`) even groot en even blauw als die van een
+hulpvariabele. In de stijl Kleur is hij nu klein (11px) en grijs (`class="small"` in `toSVG`, case
+`'flow'`). Juist `a` in `v = v + a*dt` moet een leerling herkennen.
+
+- Gebruik voor de naam van een stroom dezelfde class als bij een hulpvariabele (`name`), onder het ventiel.
+- Pas de test in `test/grafisch_tests.js` aan als die op `small` controleert.
+- Klein werk, geen nieuwe knop.
+
+### P3-11 Kleur: + of − bij de pijlpunt van een stroom
+
+In de SLO-figuren staat een **+** in de pijlpunt waar een stroom een toestandsvariabele in gaat: de stroom
+wordt opgeteld (`x = x + v*dt`). Dat is het verband tussen diagram en tekst dat de leerling moet zien.
+
+- In de stijl Kleur: een klein wit **+** in de (dichte) pijlpunt bij een toestandsvariabele, en een
+  **−** bij het begin van de buis waar een stroom een toestandsvariabele uit gaat (`x = x - u*dt`).
+- Niet in de stijl Examen: de examenfiguren hebben geen teken.
+- Let op een stroom van A naar B (`-` bij A, `+` bij B): dan staan er beide tekens.
+- Twijfel: de richting van de buis zegt het al. Eerst op papier met een paar leerlingen proberen.
+
+### P3-12 Kleur: rustiger tekening (optioneel)
+
+De SLO-figuren zijn wit gevuld met dunne lijnen; de stijl Kleur heeft een lichtblauwe vulling, lijnen van
+2px en een vette naam in de toestandsvariabele. In grote modellen (bungeejump, satelliet) is minder inkt
+rustiger.
+
+- Proberen: vulling wit (`fill: '#fff'`) of veel lichter, lijnen 1.5px, naam in de toestandsvariabele niet vet.
+- Alleen doen als het in de grote examenmodellen echt rustiger is; de lichtblauwe vulling maakt wel
+  duidelijk wat een symbool is en wat tekst.
+
 ## Bewust niet doen
+
+- Geen derde stijl "zoals SLO" naast Examen en Kleur: het examen is de maat, een kopie van één programma
+  maakt de webapp daarvan afhankelijk, en het verschil is maar drie details. Zie DIDACTIEK.md, *Geen derde
+  stijl*. Wat goed is aan de SLO-figuren, gaat in de stijl Kleur (P3-10 tot en met P3-12).
 
 - Geen schuifregelaars voor parameters en geen animaties: het wijzigen van een startwaarde in de
   tekst en opnieuw runnen is de handeling die op het examen gevraagd wordt.
