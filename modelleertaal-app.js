@@ -1460,9 +1460,12 @@ ModelleertaalApp.prototype.grafisch_form = function(title, note, fields, buttons
   var inputs = {}, formulas = [];
 
   var values = function() {
+    // a new element: an empty field with an example (placeholder) gets the example
     var v = {};
     for (var key in inputs) {
-      if (inputs.hasOwnProperty(key)) v[key] = inputs[key].val();
+      if (!inputs.hasOwnProperty(key)) continue;
+      v[key] = inputs[key].val();
+      if (!live && $.trim(v[key]) === '' && inputs[key].attr('placeholder')) v[key] = inputs[key].attr('placeholder');
     }
     return v;
   };
@@ -1653,7 +1656,7 @@ ModelleertaalApp.prototype.grafisch_flow_form = function(stock, direction) {
   var form = this.grafisch_form(direction == 'in' ? 'Nieuwe stroom naar ' + stock : 'Nieuwe stroom uit ' + stock,
     'In de tekst komt: ' + stock + ' = ' + stock + (direction == 'in' ? ' + ' : ' - ') + 'naam, met naam = (stroomsterkte) * dt.',
     [{key: 'name', label: 'Naam', value: '', placeholder: 'd' + stock},
-     {key: 'rate', label: 'Stroomsterkte (per tijdseenheid)', value: '', placeholder: 'formule', formula: true}],
+     {key: 'rate', label: 'Stroomsterkte (per tijdseenheid)', value: '', placeholder: '0', formula: true}],
     [{text: 'Voeg toe', action: function(v) {
       self.grafisch_apply([{op: 'addFlow', stock: stock, direction: direction, name: v.name, rate: v.rate}], stock, {noform: true});
     }}, {text: 'Annuleer', action: function() {
