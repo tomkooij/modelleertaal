@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [6.6]
+
+15 nov 2026
+
 ### Grafisch model: voorwaarden (als ... dan) via het diagram
 
 - New button **+ Voorwaarde**: *Als* `t > 13` *dan verandert* `Opp` *in* `Opp + dOpp`, or
