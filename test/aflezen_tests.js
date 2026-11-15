@@ -28,16 +28,28 @@ describe('aflezen.js - helling bij een punt in de grafiek', function() {
         assert.isNull(aflezen.slope([[0, 1]], 0, 1, 0));
     });
 
-    it('raaklijn door het punt, binnen de grafiek', function() {
-        var range = {xmin: 0, xmax: 1, ymin: 0, ymax: 9.81};
-        var line = aflezen.tangent([0.5, 4.905], 9.81, range);
-        // through the point, with the slope
-        assert.closeTo((line[1][1] - line[0][1]) / (line[1][0] - line[0][0]), 9.81, 1e-9);
-        assert.closeTo((line[0][1] + line[1][1]) / 2, 4.905, 1e-9);
-        // at the edge: shorter, not outside the graph
-        line = aflezen.tangent([1, 9.81], 9.81, range);
-        assert.closeTo(line[1][0], 1, 1e-12);
-        assert.isTrue(line[1][1] <= 9.81 + 1e-12);
+    it('raaklijn tot aan de assen', function() {
+        var range = {xmin: 0, xmax: 1, ymin: 0, ymax: 10};
+        // y = 2 + 4x: from the y-axis (0, 2) to the edge on the right (1, 6)
+        var line = aflezen.tangent_to_axes([0.5, 4], 4, range);
+        assert.deepEqual(line, [[0, 2], [1, 6]]);
+        // y = 8 - 16x: from the y-axis (0, 8) to the x-axis (0,5, 0)
+        line = aflezen.tangent_to_axes([0.25, 4], -16, range);
+        assert.deepEqual(line, [[0, 8], [0.5, 0]]);
+        // y = 20x - 5: from the x-axis (0,25, 0) to the top (0,75, 10)
+        line = aflezen.tangent_to_axes([0.5, 5], 20, range);
+        assert.closeTo(line[0][0], 0.25, 1e-12);
+        assert.equal(line[0][1], 0);
+        assert.closeTo(line[1][0], 0.75, 1e-12);
+        assert.equal(line[1][1], 10);
+        // horizontal
+        assert.deepEqual(aflezen.tangent_to_axes([0.5, 3], 0, range), [[0, 3], [1, 3]]);
+        // the helling of the line is the slope
+        line = aflezen.tangent_to_axes([0.3, 7], 3.3, range);
+        assert.closeTo((line[1][1] - line[0][1]) / (line[1][0] - line[0][0]), 3.3, 1e-9);
+        // point outside the graph (zoomed in) or no graph
+        assert.isNull(aflezen.tangent_to_axes([2, 3], 1, range));
+        assert.isNull(aflezen.tangent_to_axes([0.5, 3], 1, {xmin: 0, xmax: 0, ymin: 0, ymax: 1}));
     });
 
     it('eenheid van de helling', function() {

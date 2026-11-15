@@ -35,9 +35,10 @@ staat in **[DIDACTIEK.md](DIDACTIEK.md)**.
 - **Automatische grafieken.** Na Run kiest de webapp zelf de grafieken die bij het model passen: (x,t), (v,t),
   (a,t), de baan (y,x), ... Klik op een miniatuur om die groot te zien. Een andere grootheid kies je op de as zelf.
 - **Grafieken aflezen.** Klik op een punt in de grafiek: een stip met hulplijnen naar beide assen, zoals je op
-  papier afleest, en de rij in de tabel licht op (en andersom: klik op een rij). Bij één grafiek staat ook de
-  helling erbij, met een korte raaklijn (`helling Δv/Δt = 9,81`): zo bepaal je bijvoorbeeld de versnelling uit
-  het (v,t)-diagram.
+  papier afleest, en de rij in de tabel licht op (en andersom: klik op een rij). Bij één grafiek tekent de
+  webapp ook de raaklijn, tot aan de assen. Klik op de raaklijn: de snijpunten met de assen worden afgelezen en
+  de helling volgt uit Δy/Δx (`helling = Δy/Δt = 1,087/0,4525 = 2,403 m/s`): zo bepaal je bijvoorbeeld de
+  versnelling uit het (v,t)-diagram. Zie [DIDACTIEK.md](DIDACTIEK.md).
 - **Eenheden.** Schrijf een eenheid tussen rechte haken in het commentaar achter een startwaarde
   (`v = 0 '[m/s]`) en hij staat op de assen (`v (m/s)`), in de tabel en in de downloads.
 - **Stap voor stap.** Met **Stap** reken je het model regel voor regel door. Onder de runbalk staat de

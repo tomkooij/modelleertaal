@@ -1,4 +1,4 @@
-// screenshots.mjs: maak de screenshots van de webapp voor de README (images/webapp-*.png)
+// screenshots.mjs: maak de screenshots van de webapp voor de README en DIDACTIEK.md (images/*.png)
 //
 // Gebruik (in de hoofdmap van de repository):
 //   grunt build                      (de webapp heeft scripts/modelleertaal-app.browser.js nodig)
@@ -155,6 +155,39 @@ try {
   await sleep(1500);
   await js(`scrollTo(0, document.querySelector('.area_graph').getBoundingClientRect().top + scrollY - 8)`);
   await shot('webapp-telefoon.png');
+
+  // 5. en 6. raaklijn-*.png: kogelbaan met luchtweerstand, (y,t). Klik op een punt: de raaklijn tot aan de
+  // assen. Klik op de raaklijn: de helling uit de twee eindpunten (DIDACTIEK.md)
+  await view(1280, 800, false, 1);
+  await open('c3/kogelbaan_luchtweerstand');
+  await run();
+  await js(`document.querySelectorAll('#graph_tabs button')[2].click()`);   // (y,t)
+  await sleep(500);
+  await js(`document.getElementById('graph').scrollIntoView()`);
+  const graph_clip = () => js(`(function() {
+    var r = document.querySelector('.graph_wrap').getBoundingClientRect();
+    return {x: r.left + scrollX, y: r.top + scrollY, width: r.width, height: r.height};
+  })()`);
+  // het scherm-punt van (x, y) in de grafiek
+  const screen = (x, y) => js(`(function() {
+    var o = m.plot_object.pointOffset({x: ${x}, y: ${y}}), g = document.getElementById('graph').getBoundingClientRect();
+    return [g.left + o.left, g.top + o.top];
+  })()`);
+  const mouse_click = async ([x, y]) => {
+    for (const type of ['mouseMoved', 'mousePressed', 'mouseReleased']) {
+      await send('Input.dispatchMouseEvent', { type, x, y, button: 'left', clickCount: 1 });
+    }
+    // de muis weg: geen markering van flot bij het punt onder de muis
+    await send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 1, y: 1 });
+    await sleep(500);
+  };
+  const row = 25;   // t = 0,25 s
+  await mouse_click(await screen(`m.results[${row}][m.allVars.indexOf('t')]`, `m.results[${row}][m.allVars.indexOf('y')]`));
+  await shot('raaklijn-punt.png', await graph_clip());
+  // op de raaklijn, tussen het punt en het eind rechtsboven
+  await mouse_click(await screen(`(m.read_tangent.point[0] + m.read_tangent.line[1][0]) / 2`,
+                                 `(m.read_tangent.point[1] + m.read_tangent.line[1][1]) / 2`));
+  await shot('raaklijn-helling.png', await graph_clip());
 } finally {
   ws.close();
   chrome.kill();

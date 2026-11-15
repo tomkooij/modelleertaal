@@ -25,9 +25,13 @@
   as on paper) and a label with its values. The table shows that row and marks it.
   The other way around: a click on a row of the table puts the dot in the graph. A click
   next to the line removes it. The separate mini table under the graph (`#clickdata`) is gone.
-- With one graph the label also shows the slope at that point (`helling Δv/Δt = 9,81`, with
-  its unit), from the points before and after, with a short tangent. New module `aflezen.js`
-  (with tests).
+- With one graph the tangent at that point is drawn up to the axes (or the edge of the graph),
+  through the whole graph, without changing the axes. The slope comes from the points before
+  and after. A click on the tangent shows its two ends (where it crosses the axes) with their
+  values, and the label calculates the slope from them, with units: `Δy = ...`, `Δt = ...`,
+  `helling = Δy/Δt = 1,087/0,4525 = 2,403 m/s`. Another click hides it. Before that click the
+  label only says "klik op de raaklijn voor de helling". New module `aflezen.js` (with tests).
+  See DIDACTIEK.md, with screenshots made by `tools/screenshots.mjs`.
 - The table keeps the number of rows shown when it is drawn again.
 
 ### Grafiek
