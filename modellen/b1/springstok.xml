@@ -1,0 +1,34 @@
+﻿<modelleertaal>
+N=200
+<startwaarden>
+L = 1,1 'm lengte stok
+C = 12700 'N/m
+m = 70 'kg
+g = 9,81 'm/s2
+y = 1,19 'm
+v = 0 'm/s
+
+t = 0 's
+dt = 0,01 's
+
+
+</startwaarden>
+<modelregels>
+u = L - y
+als u > 0 dan
+  ' grondfase
+  Fv = C * u
+anders
+  ' zweeffase
+  Fv = 0
+eindals
+
+Fz = - m * g
+Fres = Fz + Fv
+a = Fres / m
+v = v + a * dt
+y = y + v * dt
+t = t + dt
+
+</modelregels>
+</modelleertaal>

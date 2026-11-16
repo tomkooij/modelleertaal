@@ -1,0 +1,32 @@
+﻿<modelleertaal>
+N=2000
+<startwaarden>
+' moeder
+N_m = 1000
+halveringstijd_m = ...
+
+' dochter
+N_d = 0
+halveringstijd_d = ...
+
+t = 0
+dt = 0,1
+</startwaarden>
+<modelregels>
+' verval moeder
+A_m = ln(2) / halveringstijd_m * N_m
+dN_m = A_m * dt
+N_m = N_m - dN_m
+
+' vervallen moeder atomen
+' worden dochter atomen
+N_d = N_d + dN_m
+
+' verval dochter
+A_d = ln(2) / halveringstijd_d * N_d
+dN_d = A_d * dt
+N_d = N_d - dN_d
+
+t = t + dt
+</modelregels>
+</modelleertaal>

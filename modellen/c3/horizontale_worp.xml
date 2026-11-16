@@ -1,0 +1,30 @@
+﻿<modelleertaal>
+N = 100
+<startwaarden>
+vx = 12 '[m/s]
+h = 10 '[m]
+
+g = 9,81 '[m/s^2]
+m = 1 '[kg]
+Fz = m*g '[N]
+  
+vy = 0 '[m/s]
+x = 0 '[m]
+t = 0 '[s]
+dt = 0,1 '[s]
+</startwaarden>
+<modelregels>
+'horizontale worp
+Fr = -Fz '[N]
+a = Fr/m '[m/s^2]
+
+vy = vy + a * dt
+h = h + vy * dt
+
+x = x + vx * dt
+
+t = t + dt
+  
+als h < 0 dan stop eindals
+</modelregels>
+</modelleertaal>

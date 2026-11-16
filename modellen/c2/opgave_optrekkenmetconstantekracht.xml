@@ -1,0 +1,29 @@
+<modelleertaal>
+N = 3000
+<modelregels>
+# Opgave optrekken met constante kracht
+Fwl = -k * v^2
+Fres = ...
+a = Fres / m
+
+dv = a * dt
+v = v + dv
+dx = v * dt
+x = x + dx
+t = t + dt
+
+Pm = Fm * ...
+Pw = (Fwrol + Fwl) * ...
+Pres = Pm + Pw
+</modelregels>
+<startwaarden>
+k = ...
+Fm = 600 'N
+Fwrol = - ... 'N
+m = 1200 'kg
+v = ... 'm/s
+x = 0 'm
+t = 0 's
+dt = 0,1 's
+</startwaarden>
+</modelleertaal>

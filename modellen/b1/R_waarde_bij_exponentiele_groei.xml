@@ -1,0 +1,12 @@
+﻿<modelleertaal>
+N=15
+<startwaarden>
+N = 10
+R = 1,2
+t = 0
+</startwaarden>
+<modelregels>
+N = ...
+t = t + 1
+</modelregels>
+</modelleertaal>

@@ -1,0 +1,28 @@
+﻿<modelleertaal>
+<startwaarden>
+t = 0
+dt = 0,001
+
+y = 0,68
+v = 0
+m = 85
+g = 9,81
+C = 8600
+yB = 1,12
+</startwaarden>
+<modelregels>
+Fz =-m * g
+als (y…..) dan
+Fafzet = C * (yB - y)
+anders
+…………….
+eindals
+Fres = Fafzet + Fz
+a = Fres / m
+v = v + a * dt
+y = y + v * dt
+t = t + dt
+als (……….) dan stop
+eindals
+</modelregels>
+</modelleertaal>

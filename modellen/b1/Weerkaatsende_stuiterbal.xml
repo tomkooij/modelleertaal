@@ -1,0 +1,36 @@
+﻿<modelleertaal>
+N=1000
+<startwaarden>
+b = 3 'breedte
+hb = b/2 'halve breedte
+C = 500
+m = 0,02
+
+v = 3
+u = 0
+t = 0
+dt = 0,005
+
+
+</startwaarden>
+<modelregels>
+Als u > hb
+	dan Fv = -C * (u - hb)
+    anders 
+    	Als u < -hb
+        	dan Fv = -C * (u + hb)
+    		anders Fv = 0
+   			Eindals
+	Eindals
+
+   
+Fres = Fv
+
+a = Fres / m
+v = v + a * dt
+u = u + v * dt
+t = t + dt
+
+
+</modelregels>
+</modelleertaal>

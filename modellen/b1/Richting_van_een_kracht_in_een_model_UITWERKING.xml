@@ -1,0 +1,31 @@
+﻿<modelleertaal>
+<startwaarden>
+m = 0,010
+g = 9,81
+alfa = 27
+Fz = m * g
+grootteFzx = Fz * sin(alfa)
+grootteFw = 0,003
+
+v = 0,001
+u = 0,30
+t = 0
+dt = 0,01
+
+</startwaarden>
+<modelregels>
+richtingFzx = -u / (u^2)^0,5
+Fzx = richtingFzx * grootteFzx
+
+richtingFw = -v / (v^2)^0,5
+Fw = richtingFw * grootteFw
+
+Fres = Fzx + Fw
+
+a = Fres / m
+v = v + a * dt
+u = u + v * dt
+t = t + dt
+
+</modelregels>
+</modelleertaal>

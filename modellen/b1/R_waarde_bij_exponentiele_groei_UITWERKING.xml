@@ -1,0 +1,13 @@
+﻿<modelleertaal>
+N=15
+<startwaarden>
+N = 10
+R = 1,2
+t = 0
+dt = 2,9
+</startwaarden>
+<modelregels>
+N = R * N
+t = t + dt
+</modelregels>
+</modelleertaal>

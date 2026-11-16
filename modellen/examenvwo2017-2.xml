@@ -1,0 +1,32 @@
+<modelleertaal>
+N=500
+<startwaarden>
+// Startwaarden
+// in SI-eenheden
+hoek = 75
+sAB = 2,00
+sBC = 7,00
+s = 0
+v = 0
+t = 0
+dt = 0,001
+m = 70
+g = 9,81
+k = 0,21
+</startwaarden>
+<modelregels>
+//Examen VWO 2017-II
+//X-Stream
+sAC = sAB + sBC
+als sAC > s > sAB dan hoek = 75/2 eindals
+als s > sAC dan hoek = 0 eindals
+Fvooruit = m * g * sin(hoek)
+Fw = k * m * g * cos(hoek)
+Fres = Fvooruit - Fw
+a = Fres / m
+v = v + a * dt
+s = s + v * dt
+t = t + dt
+als t > 2,5 dan stop eindals
+</modelregels>
+</modelleertaal>

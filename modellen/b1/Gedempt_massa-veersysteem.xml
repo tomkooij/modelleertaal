@@ -1,0 +1,26 @@
+﻿<modelleertaal>
+N=200
+<startwaarden>
+m = 1,2E3 ' kg
+C = 8,0E4' N/m
+b = 2*(m*C)^0,5' N/m*s
+
+v = 1
+u = 0
+t = 0
+dt = 0,01
+
+
+</startwaarden>
+<modelregels>
+Fveer = -C * u
+Fdemp = -b * v
+Fres = Fveer + Fdemp
+
+a = Fres / m
+v = v + a * dt
+u = u + v * dt
+t = t + dt
+
+</modelregels>
+</modelleertaal>

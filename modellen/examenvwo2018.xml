@@ -1,0 +1,23 @@
+<modelleertaal>
+N=500
+<startwaarden>
+// Startwaarden
+// in SI-eenheden
+t = 0
+dt = 0,01
+v = 33,3
+m = 1520
+k = 1,62
+Frol = 76
+</startwaarden>
+<modelregels>
+//Examen VWO 2018-I
+//Uitrijden van een auto
+Flucht = k * v^2
+Fres = Flucht + Frol
+a = - Fres / m
+dv = a * dt
+v = v + dv
+t = t + dt
+</modelregels>
+</modelleertaal>
