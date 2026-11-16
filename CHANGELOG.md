@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [6.7.1]
+
+16 nov 2026
+
 ### Rondleiding
 
 - The **Rondleiding** button is back at the top right, in the bar with the model choice, where it is easier to find.
