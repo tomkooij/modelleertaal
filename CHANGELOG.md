@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [6.7]
+
+16 nov 2026
+
 ### Rondleiding
 
 - New button **Rondleiding** at the bottom right of the page (in the footer, out of the way). It opens a small menu with two tours of
