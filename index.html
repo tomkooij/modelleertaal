@@ -236,10 +236,28 @@
         }
 
         /* Rondleiding: knop rechts in de bovenste balk. Valt op door de kleur, niet door beweging.
-           Tot de rondleiding een keer geopend is staat er een stip op (class nieuw). */
+           Tot de rondleiding een keer geopend is staat er een stip op (class nieuw).
+           De balk mag er niet hoger door worden; rondleiding.js (plaats_knop) kiest daarom de plek:
+           rechts in de balk, anders alleen het ?-rondje (class compact), anders rechts op de
+           titelregel (class tour_in_titel op de balk), anders rechts in de voettekst. */
+        .tour_plek {
+            position: relative;
+            display: flex;
+            margin-left: auto;
+        }
+
+        .brand .tour_plek {
+            align-self: center;
+            margin-top: -4px;
+            margin-bottom: -4px;
+        }
+
+        .tour_in_titel .brand {
+            flex: 1 1 auto;
+        }
+
         #rondleiding_knop {
             position: relative;
-            margin-left: auto;
             font-size: 1rem;
             display: inline-flex;
             align-items: center;
@@ -269,6 +287,14 @@
             font-weight: 700;
         }
 
+        #rondleiding_knop.compact {
+            padding: 5px 6px;
+        }
+
+        #rondleiding_knop.compact .tour_tekst {
+            display: none;
+        }
+
         #rondleiding_knop.nieuw::after {
             content: "";
             position: absolute;
@@ -284,7 +310,7 @@
         .tour_menu {
             position: absolute;
             right: 0;
-            bottom: calc(100% + 6px);
+            top: calc(100% + 6px);
             z-index: 1002;
             display: flex;
             flex-direction: column;
@@ -295,6 +321,11 @@
             border: 1px solid var(--border);
             border-radius: 10px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+        }
+
+        footer .tour_menu {
+            top: auto;
+            bottom: calc(100% + 6px);
         }
 
         .tour_menu[hidden] {
@@ -1528,6 +1559,10 @@
             <button id="download_xml" type="button" title="Sla dit model op je computer op (.xml). De naam van het bestand is de titel van het model.">Bewaar</button>
             <button id="permalink" type="button" title="Kopieer een link naar dit model (met jouw wijzigingen)">Deel link</button>
         </div>
+        <span class="tour_plek">
+            <button id="rondleiding_knop" type="button" aria-expanded="false" aria-label="Rondleiding"
+                title="Nieuw hier? Een korte rondleiding in vijf stappen, voor leerlingen of voor docenten"><span class="tour_icoon" aria-hidden="true">?</span><span class="tour_tekst">Rondleiding</span></button>
+        </span>
     </header>
 
     <main>
@@ -1691,8 +1726,6 @@
     <footer>
         <span id="version"></span>
         <span id="classic_link">&middot; Liever de oude indeling? Gebruik <a href="https://www.tomkooij.nl/modelleertaal-classic" title="De vorige versie van deze webapp, met de oude indeling">Modelleertaal classic</a>.</span>
-        <button id="rondleiding_knop" type="button" aria-expanded="false"
-            title="Nieuw hier? Een korte rondleiding in vijf stappen, voor leerlingen of voor docenten"><span class="tour_icoon" aria-hidden="true">?</span>Rondleiding</button>
     </footer>
 
     <!-- jQuery is included in head section -->

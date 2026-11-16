@@ -30,7 +30,7 @@ hoe je een grafiek kon maken in de software die ik op school gebruikte voor nume
 Waarom de webapp werkt zoals hij werkt (de didactische uitgangspunten, en per onderdeel de overweging erachter)
 staat in **[DIDACTIEK.md](DIDACTIEK.md)**.
 
-- **Rondleiding.** Nieuw hier? De knop **Rondleiding** rechtsonder laat in vijf stappen de belangrijkste
+- **Rondleiding.** Nieuw hier? De knop **Rondleiding** rechtsboven laat in vijf stappen de belangrijkste
   onderdelen zien: *voor leerlingen* de basis, *voor docenten* opdrachten maken, delen, demonstreren
   in de klas en het grafische model. De rondleiding doet het ook voor: hij leest een punt af en klikt op
   de raaklijn, drukt op Stap en klikt in het diagram. Hij start nooit vanzelf.

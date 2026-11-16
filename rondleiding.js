@@ -5,7 +5,7 @@
     - voor leerlingen: de basis (model kiezen, modelregels, Run en Stap, grafieken, diagram)
     - voor docenten: wat een docent extra kan (opdracht, Deel link, runs vergelijken in de klas,
       het diagram als invoer, het diagram uit het tekstmodel)
-    Start nooit vanzelf: alleen met de knop Rondleiding onderaan, die een keuzemenu opent.
+    Start nooit vanzelf: alleen met de knop Rondleiding bovenaan, die een keuzemenu opent.
     Bij een paar stappen doet de rondleiding het voor (zie DEMOS).
     Tot iemand de rondleiding een keer geopend heeft, staat er een kleine stip op de knop.
 
@@ -308,6 +308,59 @@ Rondleiding.prototype.knop = function(selector) {
     $(document).on('mousedown touchstart', function(e) {
         if (!$menu.prop('hidden') && !$(e.target).closest($menu.add($knop)).length) self.sluit_menu();
     });
+
+    // de plek van de knop: opnieuw kiezen als het venster of de keuzelijsten van breedte veranderen
+    var wacht = false;
+    var opnieuw = function() {
+        if (wacht) return;
+        wacht = true;
+        window.requestAnimationFrame(function() { wacht = false; self.plaats_knop(); });
+    };
+    this.plaats_knop();
+    $(window).on('resize load', opnieuw);
+    if (window.ResizeObserver) {
+        var breedtes = {};
+        var ro = new window.ResizeObserver(function(entries) {
+            var anders = false;
+            entries.forEach(function(e) {
+                var w = Math.round(e.contentRect.width);
+                if (breedtes[e.target.id] !== w) anders = true;
+                breedtes[e.target.id] = w;
+            });
+            if (anders) opnieuw();
+        });
+        $('#model_groep, #model_keuze').each(function() { ro.observe(this); });
+    }
+};
+
+// De knop staat zo hoog mogelijk, maar de bovenste balk mag er niet hoger door worden.
+// Probeer om de beurt: rechts in de balk, alleen het ?-rondje, rechts op de titelregel.
+// Past het nergens, dan rechts in de voettekst.
+Rondleiding.prototype.plaats_knop = function() {
+    var header = $('header.topbar')[0];
+    var plek = this.$knop.parent('.tour_plek')[0];
+    if (!header || !plek) return;
+    var knop = this.$knop[0];
+    var focus = document.activeElement === knop;
+    var brand = $(header).find('.brand')[0];
+    if (plek.parentNode) plek.parentNode.removeChild(plek);
+    header.classList.remove('tour_in_titel');
+    var basis = header.offsetHeight;   // de balk zonder knop
+    var pogingen = [[header, false], [header, true], [brand, false]];
+    var gelukt = false;
+    for (var i = 0; i < pogingen.length && !gelukt; i++) {
+        if (!pogingen[i][0]) continue;
+        pogingen[i][0].appendChild(plek);
+        knop.classList.toggle('compact', pogingen[i][1]);
+        header.classList.toggle('tour_in_titel', pogingen[i][0] === brand);
+        gelukt = header.offsetHeight <= basis;
+    }
+    if (!gelukt) {
+        header.classList.remove('tour_in_titel');
+        knop.classList.remove('compact');
+        $('footer').append(plek);
+    }
+    if (focus) knop.focus();
 };
 
 Rondleiding.prototype.open_menu = function() {

@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+### Rondleiding
+
+- The **Rondleiding** button is back at the top right, in the bar with the model choice, where it is easier to find.
+  The bar never gets an extra line for it: where there is not enough room the button shows only the "?",
+  on phones and tablets it sits at the right of the title line, and only at a few laptop widths
+  (about 1130-1190 px) it stays in the footer. The menu now opens downwards.
+
 ## [6.7]
 
 16 nov 2026
